@@ -65,29 +65,24 @@
 
 ```mermaid
 flowchart LR
-    subgraph Input[输入配置]
-        A[订阅关键词]
-        B[研究方向]
-        C[Intent Queries]
+    subgraph Frontend[前端链路]
+        A[订阅关键词 / 研究方向 / Intent Queries]
+        B[前端管理面板]
+        C[保存配置到仓库]
+        D[站点阅读 / AI 问答 / 持续追踪]
     end
 
-    subgraph Pipeline[自动化处理]
-        D[GitHub Actions 定时运行]
-        E[抓取 arXiv / OpenReview 新论文]
-        F[召回与过滤]
-        G[推荐排序与 LLM 精炼]
+    subgraph Backend[GitHub 后端链路]
+        E[GitHub Actions 定时运行 / 手动触发]
+        F[抓取 arXiv / OpenReview 新论文]
+        G[召回 / 过滤 / 推荐排序 / LLM 精炼]
         H[生成日报 / 论文页 / Sidebar]
-    end
-
-    subgraph Delivery[发布与使用]
         I[GitHub Pages 自动发布]
-        J[在线阅读 / AI 问答 / 持续追踪]
     end
 
-    A --> D
-    B --> D
-    C --> D
-    D --> E --> F --> G --> H --> I --> J
+    A --> B --> C --> E
+    E --> F --> G --> H --> I --> D
+    B -. 手动快速抓取 .-> E
 ```
 
 ## ⚡ 5 分钟内你能得到什么

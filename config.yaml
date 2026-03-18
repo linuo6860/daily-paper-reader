@@ -25,3 +25,48 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: BIO CA
+      description: 追踪癌症生物信息学新方法，重点关注多组学整合、生物标志物发现、预后预测及机器学习分析。
+      enabled: true
+      keywords:
+        - keyword: biomarker
+          keyword_cn: ''
+          query: biomarker
+        - keyword: survival analysis
+          keyword_cn: ''
+          query: survival analysis
+        - keyword: machine learning
+          keyword_cn: ''
+          query: machine learning
+        - keyword: multi-omics
+          keyword_cn: ''
+          query: multi-omics
+        - keyword: bioinformatics
+          keyword_cn: ''
+          query: bioinformatics
+        - keyword: cancer
+          keyword_cn: ''
+          query: cancer
+      intent_queries:
+        - query: Deep learning methods for cancer data analysis
+          query_cn: ''
+          enabled: true
+          source: manual
+          note: ''
+        - query: Machine learning studies for prognosis prediction and biomarker discovery in cancer
+          query_cn: ''
+          enabled: true
+          source: manual
+          note: ''
+        - query: Multi omics integration approaches in cancer analysis
+          query_cn: ''
+          enabled: true
+          source: manual
+          note: ''
+        - query: Novel bioinformatics methods and models for cancer research
+          query_cn: ''
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-03-18T11:51:37.077Z'

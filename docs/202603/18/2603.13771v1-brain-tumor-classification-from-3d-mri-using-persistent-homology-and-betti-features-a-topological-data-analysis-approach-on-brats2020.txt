@@ -1,0 +1,511 @@
+Title: Brain Tumor Classification from 3D MRI Using Persistent Homology and Betti Features: A Topological Data Analysis Approach on BraTS2020
+
+URL Source: https://arxiv.org/pdf/2603.13771v1
+
+Published Time: Tue, 17 Mar 2026 02:54:45 GMT
+
+Number of Pages: 21
+
+Markdown Content:
+# Brain Tumor Classification from 3D MRI Using Persistent Homology and Betti Features: A Topological Data Analysis Approach on BraTS 2020 
+
+Faisal Ahmed 1* 
+
+1* Department of Data Science and Mathematics, Embry-Riddle Aeronautical University, 3700 Willow Creek Rd, Prescott, 86301, Arizona, USA. Corresponding author(s). E-mail(s): ahmedf9@erau.edu; 
+
+Abstract 
+
+Accurate and interpretable brain tumor classification from medical imaging remains a challenging problem due to the high dimensionality and complex struc-tural patterns present in magnetic resonance imaging (MRI). In this study, we propose a topology-driven framework for brain tumor classification based on Topological Data Analysis (TDA) applied directly to three-dimensional (3D) MRI volumes. Specifically, we analyze 3D Fluid Attenuated Inversion Recov-ery (FLAIR) images from the BraTS 2020 dataset and extract interpretable topological descriptors using persistent homology. Persistent homology captures intrinsic geometric and structural characteristics of the data through Betti numbers, which describe connected components (Betti-0), loops (Betti-1), and voids (Betti-2). From the 3D MRI volumes, we derive a compact set of 100 topological features that summarize the underlying topology of brain tumor structures. These interpretable descriptors enable the repre-sentation of complex 3D tumor morphology while significantly reducing data dimensionality. Unlike many deep learning approaches that require large-scale training data, complex architectures, or extensive data augmentation, the proposed framework relies on computationally efficient topological features extracted directly from the 3D images. The resulting features are used to train classical machine learning classifiers, including Random Forest and XGBoost, for binary classification of high-grade glioma (HGG) and low-grade glioma (LGG). 
+
+1        
+
+> arXiv:2603.13771v1 [cs.CV] 14 Mar 2026 Experimental results on the BraTS 2020 dataset demonstrate that the pro-posed approach achieves competitive performance while maintaining strong interpretability and computational efficiency. In particular, the Random Forest classifier combined with selected Betti features achieves an accuracy of 89.19%. These findings highlight the potential of persistent homology as an effective and lightweight alternative for analyzing complex 3D medical images and performing interpretable brain tumor classification.
+> Keywords: Topological Data Analysis (TDA), Persistent Homology, Brain Tumor Classification, 3D MRI,Medical Image Analysis
+
+# 1 Introduction 
+
+Brain tumors are among the most severe neurological disorders, posing significant challenges for early diagnosis and treatment planning. Magnetic Resonance Imaging (MRI) is widely used in clinical practice for brain tumor detection due to its superior soft tissue contrast and ability to capture complex anatomical structures. In particular, multi-modal MRI datasets such as the Brain Tumor Segmentation (BraTS) challenge datasets have become important benchmarks for developing automated tumor analysis methods [1, 2]. Traditional machine learning and deep learning approaches have shown promising results for brain tumor classification and segmentation tasks. Convolutional neu-ral networks (CNNs) and other deep architectures have been widely used to learn hierarchical representations from MRI images [3]. However, these approaches often require large amounts of labeled data, extensive computational resources, and complex model architectures. Furthermore, deep learning models frequently suffer from limited interpretability, which is a critical concern in medical decision-making scenarios. Topological Data Analysis (TDA) has recently emerged as a powerful mathe-matical framework for capturing intrinsic geometric and structural characteristics of complex data [4]. Persistent homology, a central tool in TDA, provides a multi-scale representation of the topological structure of data by quantifying features such as con-nected components, loops, and voids. These structures are described by Betti numbers, commonly referred to as Betti-0, Betti-1, and Betti-2, respectively [5, 6]. In medical imaging, persistent homology has demonstrated promising capabilities in characteriz-ing structural patterns in biomedical images while providing interpretable descriptors [7–13]. Unlike conventional feature extraction techniques, TDA-based features capture the underlying topology of data rather than relying solely on intensity-based or texture-based representations. This makes topological descriptors particularly suitable for analyzing complex anatomical structures such as brain tumors. Moreover, TDA pro-vides compact and interpretable features that can significantly reduce computational complexity compared to high-dimensional image representations. In this study, we propose a topology-driven framework for brain tumor classification using persistent homology applied directly to three-dimensional (3D) MRI volumes. 2Specifically, we utilize the FLAIR modality from the BraTS 2020 dataset and extract topological descriptors from full 3D images rather than two-dimensional slices. From these volumes, we compute Betti-based features (Betti-0, Betti-1, and Betti-2), which capture structural characteristics of tumor morphology in a compact and interpretable manner (Figure 1, Figure 3, Figure 6). These features are then used to train classical machine learning models for binary classification of high-grade glioma (HGG) and low-grade glioma (LGG). 
+
+Our Contributions 
+
+• We propose a topology-driven framework for brain tumor classification using persistent homology applied directly to three-dimensional MRI volumes. 
+
+• We extract interpretable topological descriptors based on Betti-0, Betti-1, and Betti-2 features that capture structural characteristics of tumor morphology (Figure 1, Figure 3, Figure 6). 
+
+• The proposed method provides a computationally efficient alternative to deep learning approaches by using compact topological features without requiring data augmentation or complex model architectures. 
+
+• Extensive experiments on the BraTS 2020 dataset demonstrate that the proposed approach achieves competitive classification performance for distinguishing high-grade and low-grade gliomas. 
+
+# 2 Related Works 
+
+Automated analysis of brain magnetic resonance imaging (MRI) has been widely investigated for computer-aided diagnosis of neurological disorders and brain tumor assessment. The development of large public datasets such as the Brain Tumor Segmentation (BraTS) challenge has significantly accelerated research in automated brain tumor analysis by providing standardized multi-modal MRI data and eval-uation protocols [1, 2]. Early approaches primarily relied on handcrafted features derived from intensity statistics, texture descriptors, and morphological characteris-tics combined with conventional machine learning classifiers. Methods such as Support Vector Machines (SVMs) and Random Forests demonstrated promising performance in distinguishing tumor types by leveraging structural variations in MRI data [14]. In recent years, deep learning has become the dominant paradigm for medical image analysis. Convolutional Neural Networks (CNNs) have been widely adopted for brain tumor detection, segmentation, and classification due to their ability to automatically learn hierarchical feature representations from imaging data [3]. Both two-dimensional (2D) and three-dimensional (3D) CNN architectures have been proposed for analyz-ing volumetric MRI data. In particular, 3D CNN models are capable of capturing spatial context across slices, which is important for modeling tumor morphology in brain MRI [15]. Despite their strong performance, deep learning models often require large annotated datasets, extensive data augmentation, and substantial computational resources, which can limit their practical applicability in clinical environments. To address the limitations of purely data-driven approaches, researchers have explored alternative feature representations that capture structural characteristics of 32000 1000 0 1000 2000 3000 4000 
+
+> PC1
+> 2000
+> 1000
+> 0
+> 1000
+> 2000
+> 3000
+> 4000
+> PC2
+> 2D PCA Scatter Plot of Betti-0 Samples (LGG vs HGG)
+> LGG
+> HGG
+
+(a) 2D PCA projection of Betti-0 fea-tures extracted from BraTS2020 MRI vol-umes showing separation between LGG and HGG samples. 5000 0 5000 10000 
+
+> PC1
+> 10000
+> 7500
+> 5000
+> 2500
+> 0
+> 2500
+> 5000
+> 7500
+> PC2
+> 2D PCA Scatter Plot of Betti-1 Samples (LGG vs HGG)
+> LGG
+> HGG
+
+(b) 2D PCA projection of Betti-1 features highlighting structural differences between low-grade and high-grade gliomas. 6000 4000 2000 0 2000 4000 6000 8000 
+
+> PC1
+> 4000
+> 2000
+> 0
+> 2000
+> 4000
+> 6000
+> 8000
+> PC2
+> 2D PCA Scatter Plot of Betti-2 Samples (LGG vs HGG)
+> LGG
+> HGG
+
+(c) 2D PCA projection of Betti-2 features capturing cavity-related topological struc-tures in 3D MRI volumes. 
+
+Fig. 1 : Visualization of topological feature distributions using Principal Component Analysis (PCA). The plots show the first two principal components of Betti-based feature vectors derived from BraTS2020 MRI volumes: (a) Betti-0 features representing connected components, (b) Betti-1 features corresponding to loops or tunnels, and (c) Betti-2 features representing cavities. The separation between low-grade glioma (LGG) and high-grade glioma (HGG) samples demonstrates the discriminative capability of persistent homology-based topological descriptors for brain tumor classification. 
+
+medical images in a more interpretable manner. Topological Data Analysis (TDA) has recently emerged as a powerful mathematical framework for analyzing complex high-dimensional data by studying their intrinsic geometric and topological structures [4]. Persistent homology, one of the key tools in TDA, provides a multi-scale represen-tation of the topological properties of data by tracking the evolution of connected components, loops, and voids across different scales [5]. These topological structures are quantified using Betti numbers, which describe fundamental shape characteristics of the data. 4(a) Example LGG MRI slice from BraTS2020. (b) Example LGG MRI slice from BraTS2020. (c) Example LGG MRI slice from BraTS2020.  
+
+> (d)
+
+Example HGG MRI slice from BraTS2020.  
+
+> (e)
+
+Example HGG MRI slice from BraTS2020.  
+
+> (f)
+
+Example HGG MRI slice from BraTS2020. 
+
+Fig. 2 : Representative 2D slices from 3D FLAIR MRI volumes in the BraTS2020 dataset. The first row shows examples of low-grade glioma (LGG) cases, while the second row shows examples of high-grade glioma (HGG) cases. These images illustrate the structural differences in tumor appearance between LGG and HGG samples used for topological feature extraction. 
+
+TDA has been successfully applied to a variety of biomedical imaging tasks, includ-ing histopathology analysis, neuroimaging, and volumetric medical image analysis. Previous studies have demonstrated that topological descriptors derived from persis-tent homology can effectively capture global structural patterns that are difficult to represent using conventional intensity-based features [7, 16]. An increasing number of studies have highlighted the utility of topological data analysis (TDA) in medical imaging, with successful applications across brain MRI, histopathology, and volumet-ric imaging [6, 8–13, 17, 18]. In brain MRI analysis, topological features have shown promise in characterizing complex anatomical structures and providing robust rep-resentations that remain stable under noise and small perturbations. Recent studies have explored transfer learning and transformer-based architectures for medical image analysis, yet performance often degrades in small or imbalanced datasets [19–28]. Compared with deep learning approaches, TDA-based methods offer several advantages, including improved interpretability, lower computational complexity, and reduced dependence on large-scale annotated datasets. These properties make topo-logical descriptors particularly attractive for medical imaging tasks where data 50 20 40 60 80 
+
+> 0
+> 200
+> 400
+> 600
+> 800
+> Betti 0: 40 % Curves around median
+> LGG
+> HGG
+
+(a) Median Betti-0 curves with 40% confi-dence bands for LGG and HGG samples. 0 20 40 60 80  
+
+> 0
+> 500
+> 1000
+> 1500
+> 2000
+> 2500
+> Betti 1: 40 % Curves around median
+> LGG
+> HGG
+
+(b) Median Betti-1 curves with 40% confi-dence bands for LGG and HGG samples. 0 20 40 60 80 
+
+> 0
+> 250
+> 500
+> 750
+> 1000
+> 1250
+> 1500
+> 1750
+> Betti 2: 40 % Curves around median
+> LGG
+> HGG
+
+(c) Median Betti-2 curves with 40% confi-dence bands for LGG and HGG samples. 
+
+Fig. 3 : Visualization of Betti functions extracted from 3D MRI volumes in the BraTS2020 dataset. Each plot shows the median Betti curve along with 40% confidence bands for the two tumor classes: low-grade glioma (LGG) and high-grade glioma (HGG). The x-axis represents normalized grayscale filtration thresh-olds, while the y-axis represents the number of topological features at each threshold: connected components for Betti-0, loops for Betti-1, and cavities for Betti-2. These curves illustrate structural differences between LGG and HGG tumors captured by persistent homology. 
+
+availability and model interpretability are critical considerations. Motivated by these advantages, this work explores the use of persistent homology to extract interpretable Betti-based features from three-dimensional (3D) MRI volumes for brain tumor clas-sification. By leveraging the topological structure of the data, the proposed framework aims to provide an efficient and interpretable alternative to conventional deep learning approaches for analyzing complex brain tumor morphology. 
+
+# 3 Method 
+
+In this study, we propose a topological framework for classifying brain tumors from the BraTS2020 dataset using three-dimensional (3D) MRI volumes (Figure 2). Each MRI volume has spatial dimensions 155 × 240 × 240, corresponding to depth, height, and width respectively. Instead of directly training machine learning models on high-dimensional voxel intensities, we extract informative topological descriptors using Persistent Homology (PH), a key technique in Topological Data Analysis (TDA). 6Fig. 4 : Cubical sublevel filtration of an MRI slice. A grayscale 3D MRI is progres-sively thresholded to generate a sequence of binary images. The images X60 , X80 , and X120    
+
+> correspond to threshold values of 60, 80, and 120, respectively. As the threshold increases, additional voxels become activated, producing a nested sequence of cubical complexes. Dur-ing this filtration process, topological structures such as connected components ( k= 0), loops or tunnels ( k= 1), and cavities ( k= 2) appear and evolve, which are subsequently captured by persistent homology.
+
+These descriptors capture intrinsic geometric and structural patterns within MRI volumes across multiple spatial scales. The overall framework consists of four main stages: (i) construction of filtrations from MRI volumes, (ii) computation of persistence diagrams, (iii) vectorization of topological features using Betti curves, and (iv) classification using machine learning models with feature selection. An overview of the proposed pipeline is illustrated in Figure 5. 
+
+3.1 Persistent Homology for 3D MRI Volumes 
+
+Let X ⊂ R3 denote a 3D grayscale MRI volume consisting of voxels ∆ ijk with corresponding intensity values Υ ijk . Formally, 
+
+X = {∆ijk | 1 ≤ i ≤ 155 , 1 ≤ j ≤ 240 , 1 ≤ k ≤ 240 }.
+
+Since adjacent MRI slices often contain redundant information, we focus on the central portion of each volume where tumor structures are most prominent. Specif-ically, from the total 155 slices, we select slices indexed from 30 to 90, resulting in a reduced volume that preserves relevant anatomical structures while reducing com-putational complexity. Thus, the effective volume used for analysis has dimensions approximately 60 × 240 × 240. 
+
+3.2 Step 1: Constructing Filtrations 
+
+Persistent homology analyzes the evolution of topological structures by constructing a filtration of cubical complexes from the grayscale MRI volume (Figure 4). Let t1 <
+
+7t2 < · · · < t N denote a sequence of intensity thresholds. Using these thresholds, we define a sublevel filtration 
+
+X1 ⊂ X2 ⊂ · · · ⊂ XN ,
+
+where each cubical complex is defined as 
+
+Xn = {∆ijk ⊂ X | Υijk ≤ tn}.
+
+In this process, voxels are gradually activated as the threshold increases, produc-ing a nested sequence of binary volumes. This sequence forms a filtration in which the topology of the image evolves across intensity levels. The emergence and disap-pearance of topological structures during this process capture important geometric characteristics of the MRI data. An illustration of this cubical sublevel filtration is shown in Figure 4. Although sublevel filtration is used in this work, superlevel filtration could also be applied by activating voxels in decreasing order of grayscale intensity. Both approaches encode equivalent topological information due to Alexander duality. 
+
+3.3 Step 2: Persistence Diagrams 
+
+Persistent homology tracks the birth and death of topological structures throughout the filtration process. For each dimension k, the persistence diagram is defined as the multiset 
+
+P D k(X) = {(bσ , d σ ) | σ ∈ Hk(Xn), b σ ≤ n ≤ dσ },
+
+where bσ and dσ represent the birth and death filtration indices of a topological feature σ, and Hk(Xn) denotes the k-th homology group of the cubical complex Xn.For three-dimensional MRI data, the most relevant topological features arise in homology dimensions k = 0 , 1, and 2. In particular, k = 0 corresponds to connected components, which represent the number of distinct regions that appear during filtra-tion. The dimension k = 1 captures loops or tunnels within the image structure, while 
+
+k = 2 represents cavities or voids corresponding to enclosed volumetric regions. These features provide a multi-scale topological description of the anatomical structures present in the MRI volume. The persistence of each topological feature is defined as pers( σ) = dσ − bσ .
+
+Features with larger persistence correspond to dominant structural patterns in the image, whereas features with shorter persistence often correspond to minor variations or noise. 
+
+3.4 Step 3: Topological Feature Vectorization 
+
+Persistence diagrams consist of sets of birthdeath coordinate pairs and therefore cannot be directly used as input to machine learning models. To obtain fixed-length numerical representations, we transform persistence diagrams into Betti curves. The k-th Betti number at threshold t is defined as 8Fig. 5 : Overview of the proposed TDA-based classification framework. The pipeline begins with a 3D MRI volume composed of multiple 2D slices. Persistent homology is then applied using cubical filtration to compute persistence diagrams for homology dimensions k = 0 , 1, and 2, capturing connected components, loops, and cavities within the image structure. These diagrams are subsequently transformed into Betti curves, which describe the evolution of topological features across the filtration scale. The resulting Betti-0, Betti-1, and Betti-2 curves are converted into fixed-length feature vectors and concatenated to form a unified topological representation for each MRI volume. Feature selection is then performed to identify the most informative descriptors, and the selected features are finally used as input to machine learning classifiers to distinguish between low-grade glioma (LGG) and high-grade glioma (HGG) in the BraTS2020 dataset. 
+
+βk(t) = rank( Hk(Xt)) ,
+
+which counts the number of k-dimensional topological features present at threshold 
+
+t.In this study, the grayscale interval [0 , 255] is uniformly discretized into N = 100 filtration thresholds. For each threshold tn, the Betti numbers are computed to form Betti vectors 
+
+βk(X) = [ βk(t1), β k(t2), . . . , β k(t100 )] .
+
+Since Betti curves are computed for homology dimensions k = 0 , 1, and 2, the final topological representation of each MRI volume is obtained by concatenating these vectors: 
+
+f (X) = [ β0(X), β1(X), β2(X)] ∈ R300 .
+
+Thus, each MRI volume is represented by a 300-dimensional feature vector captur-ing multi-scale topological information describing connected components, loops, and cavities within the brain structure. 
+
+3.5 Feature Selection 
+
+Although the Betti vectors capture rich structural information, some features may be redundant or less informative for classification. To reduce dimensionality and improve model efficiency, we apply feature selection based on feature importance scores obtained from tree-based models. 9Let 
+
+F = {f1, f 2, . . . , f 300 }
+
+denote the set of extracted Betti features. For a trained ensemble model, each feature fj is assigned an importance score Ij representing its contribution to the classification task. A subset of features is selected using a threshold parameter τ defined as 
+
+Sτ = {fj ∈ F | Ij ≥ τ }.
+
+Different thresholds τ are evaluated to determine the optimal number of features that maximizes classification accuracy. The resulting reduced feature set is then used to train the final classifier. 
+
+3.6 Machine Learning Models 
+
+After feature extraction and selection, we apply supervised machine learning models to classify the MRI volumes into two tumor categories: low-grade glioma (LGG) and high-grade glioma (HGG). 
+
+Random Forest. 
+
+Random Forest is an ensemble learning method that constructs multiple decision trees and aggregates their predictions. Given a set of training samples 
+
+{(xi, y i)}ni=1 ,
+
+where xi ∈ Rd represents the topological feature vector and yi ∈ { 0, 1} denotes the class label, the Random Forest classifier predicts the class label using majority voting across T decision trees ˆy = mode {T1(x), T 2(x), . . . , T T (x)}.
+
+Random Forest models are robust to noise and can effectively capture nonlinear relationships between features. 
+
+Extreme Gradient Boosting (XGBoost). 
+
+XGBoost is a gradient boosting algorithm that builds an additive model of decision trees. The prediction for an input feature vector xi is given by ˆyi =
+
+> K
+
+X
+
+> k=1
+
+fk(xi),
+
+where fk represents the k-th decision tree. The model is trained by minimizing the regularized objective function 
+
+L =
+
+> n
+
+X
+
+> i=1
+
+l(yi, ˆyi) + 
+
+> K
+
+X
+
+> k=1
+
+Ω( fk),
+
+where l is the loss function and Ω is a regularization term that controls model complexity. 10 Compared to deep learning models that require extensive preprocessing and data augmentation, our approach directly utilizes topological feature vectors derived from the original MRI volumes. Since persistent homology is invariant under transforma-tions such as rotation and reflection, no data augmentation is required. This results in a computationally efficient and interpretable classification framework. 
+
+3.7 Hyperparameters 
+
+The performance of ensemble machine learning models depends on the selection of appropriate hyperparameters. In this study, we use Random Forest and Extreme Gradient Boosting (XGBoost) classifiers to learn discriminative patterns from the extracted topological features. The hyperparameters of both models were empirically selected based on preliminary experiments to achieve stable classification performance while avoiding overfitting. Random Forest is trained using multiple decision trees constructed from boot-strapped samples of the training data. The final prediction is obtained through majority voting among the individual trees. To increase model robustness, we employ a relatively large number of trees and an entropy-based splitting criterion. XGBoost is a gradient boosting algorithm that sequentially constructs decision trees to minimize a regularized objective function. Compared to traditional boosting methods, XGBoost includes additional regularization mechanisms and efficient tree construction strategies that improve both accuracy and computational efficiency. The main hyperparameters used for the Random Forest and XGBoost models are summarized in Table 1. 
+
+Table 1 : Hyperparameters used for Random Forest and XGBoost classifiers.              
+
+> Model Hyperparameter Value
+> Random Forest Number of trees ( n estimators )300 Split criterion Entropy Minimum samples for split ( min samples split )10 Random seed ( random state )0XGBoost Number of boosting trees ( n estimators )1000 Maximum tree depth ( max depth )25 Learning rate ( learning rate )0.1 Column sampling per tree ( colsample bytree )0.4 Column sampling per level ( colsample bylevel )0.4 Evaluation metric ( eval metric )mlogloss Random seed ( random state )0
+
+The relatively large number of trees in both models allows the algorithms to cap-ture complex nonlinear relationships among the extracted Betti features. The entropy criterion in Random Forest improves the quality of feature splits, while the depth and learning rate parameters in XGBoost control the complexity of the boosting pro-cess. Column subsampling parameters in XGBoost further help reduce overfitting by randomly selecting subsets of features when constructing each tree. 11 Algorithm 1: Topological Feature Extraction and Classification for BraTS2020 MRI 
+
+Input: 3D MRI dataset D = {(χi, y i)}Ni=1 where χi ∈ R155 ×240 ×240 , homology dimensions k ∈ { 0, 1, 2}, number of filtration thresholds Nf = 100 
+
+Output: Trained classifier and evaluation metrics 
+
+Step 1: MRI Volume Preparation for i ← 1 to N do 
+
+Load MRI volume χi with size 155 × 240 × 240 Normalize voxel intensities to range [0 , 255] Assign class label yi ∈ { LGG , HGG }
+
+Step 2: Cubical Filtration Construction for i ← 1 to N do 
+
+Construct sublevel filtration 
+
+X1 ⊂ X2 ⊂ · · · ⊂ XNf
+
+where 
+
+Xn = {∆ijk ⊂ χi | Υijk ≤ tn}
+
+Step 3: Persistent Homology Computation for each MRI volume χi do for k ∈ { 0, 1, 2} do 
+
+Compute persistence diagram 
+
+P D k(χi) = {(bσ , d σ )}
+
+Step 4: Betti Feature Extraction for k ∈ { 0, 1, 2} do 
+
+Compute Betti curves ⃗βk(χi) = [ βk(t1), . . . , β k(t100 )] Construct topological feature vector 
+
+fi = [ ⃗ β0(χi),⃗ β 1(χi),⃗ β 2(χi)] ∈ R300 
+
+Step 5: Feature Selection 
+
+Train a preliminary ensemble model and compute feature importance scores 
+
+Ij = importance( fj )Select feature subset 
+
+Sτ = {fj | Ij ≥ τ }
+
+Step 6: Machine Learning Classification Random Forest Model 
+
+ˆy = mode {T1(x), T 2(x), . . . , T 300 (x)}
+
+XGBoost Model 
+
+ˆyi =
+
+> K
+
+X
+
+> k=1
+
+fk(xi)Train models using selected topological features. 
+
+Step 7: Model Evaluation 
+
+Perform cross-validation on the dataset. Compute classification metrics: Accuracy , Precision , Recall , F1-score , AUC Generate confusion matrix for model predictions. 
+
+return Trained models and evaluation metrics 
+
+12 LGG 
+
+> HGG
+> 100
+> 200
+> 300
+> 400
+> 500
+> Mean Betti-0 Value
+> Violin Plot of Betti-0 Feature Distributions
+
+(a) Violin plot of Betti-0 (connected com-ponents) feature distributions for LGG and HGG samples. LGG 
+
+> HGG
+> 200
+> 400
+> 600
+> 800
+> Mean Betti-1 Value
+> Violin Plot of Betti-1 Feature Distributions
+
+(b) Violin plot of Betti-1 (topological loops) feature distributions for LGG and HGG samples. LGG 
+
+> HGG
+> 100
+> 200
+> 300
+> 400
+> 500
+> 600
+> 700
+> Mean Betti-2 Value
+> Violin Plot of Betti-2 Feature Distributions
+
+(c) Violin plot of Betti-2 (topological cav-ities) feature distributions for LGG and HGG samples. 
+
+Fig. 6 : Visualization of topological feature distributions derived from persistent homology applied to 3D MRI volumes in the BraTS2020 dataset. Each violin plot shows the distribution of aggregated Betti features for the two tumor classes: low-grade glioma (LGG) and high-grade glioma (HGG). (a) Betti-0 features represent connected components, (b) Betti-1 features correspond to loops or tunnels, and (c) Betti-2 features capture cavities within the MRI volume. Differences in the distributions between LGG and HGG indicate that topological descriptors extracted via persistent homology capture meaningful structural variations between tumor grades. 
+
+# 4 Experiment 
+
+4.1 Dataset 
+
+The experiments in this study were conducted using the Brain Tumor Segmentation 2020 (BraTS2020) dataset, a widely used benchmark for brain tumor analysis and medical image computing research. The dataset was released as part of the Multimodal Brain Tumor Segmentation Challenge and contains pre-operative magnetic resonance imaging (MRI) scans of patients diagnosed with gliomas. BraTS2020 consists of 369 subjects collected from multiple institutions and imag-ing scanners, providing a diverse dataset for robust algorithm evaluation. The dataset includes two clinically relevant tumor grades: High-Grade Glioma (HGG) and Low-Grade Glioma (LGG). Among the available subjects, 293 cases correspond to HGG and 13 76 cases correspond to LGG. Each subject includes four MRI modalities: T1-weighted (T1), contrast-enhanced T1-weighted (T1ce), T2-weighted (T2), and Fluid Attenu-ated Inversion Recovery (FLAIR). To ensure consistency across scans, all images were preprocessed by the challenge organizers using skull stripping, co-registration to a common anatomical template, and intensity normalization. In this study, we utilize the FLAIR modality because it highlights tumor-associated edema and abnormal tissue regions more clearly than other modalities, making it par-ticularly suitable for tumor analysis. Each MRI scan is provided as a three-dimensional volume with spatial dimensions of 240 × 240 × 155 voxels and stored in NIfTI ( .nii or 
+
+.nii.gz ) format. To focus on the most informative regions of the brain and reduce computational complexity, we use the central portion of each MRI volume. Specifically, slices indexed from 30 to 90 are extracted from the original 155 slices to construct the working 3D volume. Persistent homology is then applied to these volumes to extract topologi-cal descriptors in homology dimensions k = 0 , 1, and 2, corresponding to connected components, loops or tunnels, and cavities, respectively. The resulting topological features, represented through Betti curves, are subse-quently used to construct machine learning models for binary classification between High-Grade Glioma (HGG) and Low-Grade Glioma (LGG). 
+
+4.2 Experimental Setup 
+
+Training–Test Split: The dataset is divided into training and testing subsets using an 80:20 ratio, where 80% of the samples are used to train the machine learning models and the remaining 20% are reserved for performance evaluation. This split allows the models to learn representative patterns from the training data while ensuring that the final performance is assessed on unseen test samples. 
+
+No Data Augmentation: In contrast to conventional CNN-based and deep learning approaches that depend heavily on extensive data augmentation strategies to mitigate limited or imbalanced training data [29], the proposed model framework does not require any form of data augmentation. The extracted topological descriptors are inherently invariant to geometric transformations such as rotation and flipping, as well as to minor intensity variations, making the model robust to noise and small perturbations in MRI scans. This eliminates the need for augmentation, significantly reduces computational overhead, and improves training efficiency while maintaining strong generalization performance. 
+
+Runtime Efficiency and Platform: All experiments were conducted on a personal laptop equipped with an Apple M1 system-on-chip, featuring an 8-core CPU (4 perfor-mance cores and 4 efficiency cores) and 16 GB of unified memory. The implementation was carried out in Python using the TensorFlow/Keras framework, and all models were trained and evaluated on macOS. 
+
+# 5 Results 
+
+This section presents the experimental results obtained using topological features extracted from 3D FLAIR MRI volumes of the BraTS 2020 dataset. The proposed 14 Accuracy       
+
+> Precision
+> Recall
+> AUC
+> 65 70 75 80 85 90 95
+> XGBoost Performance: With vs Without Feature Selection (BraTS2020)
+> Feature Groups
+> B0 (No FS)
+> B1 (No FS)
+> B2 (No FS)
+> B1+B2 (No FS)
+> B0+B1+B2 (No FS)
+> B0 (FS)
+> B1 (FS)
+> B2 (FS)
+> B1+B2 (FS)
+> B0+B1+B2 (FS)
+
+(a) Radar plot illustrating the performance of the XGBoost classifier using different Betti feature combinations, both with and without feature selection. Accuracy 
+
+> Precision
+> Recall
+> AUC
+> 75
+> 80
+> 85
+> 90
+> 95
+> Random Forest Performance: With vs Without Feature Selection (BraTS2020)
+> Feature Groups
+> B0 (No FS)
+> B1 (No FS)
+> B2 (No FS)
+> B1+B2 (No FS)
+> B0+B1+B2 (No FS)
+> B0 (FS)
+> B1 (FS)
+> B2 (FS)
+> B1+B2 (FS)
+> B0+B1+B2 (FS)
+
+(b) Radar plot illustrating the performance of the Random Forest classifier using differ-ent Betti feature combinations, both with and without feature selection. 
+
+Fig. 7 : Radar plot comparison of classification performance for XGBoost and Random Forest models using topological features derived from persistent homology on the BraTS2020 3D MRI dataset. Each axis represents one evaluation metric: accuracy, precision, recall, and AUC. The curves correspond to different Betti feature configurations, including Betti-0, Betti-1, Betti-2, and their combinations. Results are shown both with and without feature selection, highlighting the impact of selecting the most informative topo-logical descriptors. The radar plots demonstrate that combining Betti features generally improves model performance, while feature selection further enhances classification accuracy and precision. 
+
+framework utilizes persistent homology to derive interpretable Betti-based descrip-tors, namely Betti-0 (B0), Betti-1 (B1), and Betti-2 (B2), which capture connected components, loops, and void structures in the volumetric data. These features were evaluated using two classical machine learning classifiers: XGBoost and Random For-est. Experiments were conducted both with and without feature selection to assess the impact of dimensionality reduction on classification performance. Visualization of the model performance, both without and with feature selection, is presented in Figure 7. 
+
+5.1 Performance without Feature Selection 
+
+Table 2 and Table 3 summarize the classification performance using the complete set of extracted Betti features. When individual Betti descriptors were evaluated indepen-dently, both classifiers achieved competitive performance. For XGBoost, the B0 and B1 feature sets achieved an accuracy of 83.78%, while B2 features resulted in a lower accuracy of 75.68%. Similarly, the Random Forest classifier achieved an accuracy of 83.78% using B1 features, demonstrating the discriminative capability of loop-based topological structures for tumor classification. Combining multiple Betti descriptors further improved the classification perfor-mance. In particular, the combination of B0, B1, and B2 features achieved the highest accuracy for XGBoost (86.49%) with an AUC of 89.33%. A similar trend was observed for Random Forest, where the combined Betti features achieved an accuracy of 83.78%. These results indicate that integrating multiple topological descriptors provides a richer representation of tumor morphology in 3D MRI data. 15 5.2 Performance with Feature Selection 
+
+To reduce feature redundancy and improve computational efficiency, feature selection was applied to identify the most informative topological descriptors. The results with selected features are also presented in Table 2 and Table 3. For XGBoost, feature selection improved classification performance across most feature groups. The best performance was achieved using the combined B0+B1+B2 feature set with 42 selected features, resulting in an accuracy of 87.84% and an AUC of 89.33%. This demonstrates that a compact subset of topological features can effectively capture the structural characteristics of brain tumors while reducing dimensionality. The Random Forest classifier showed further improvement after feature selection. The highest classification accuracy of 89.19% was obtained using both the B1+B2 feature combination (42 selected features) and the combined B0+B1+B2 feature set (14 selected features). In addition, the B1+B2 feature combination achieved the high-est precision of 90.50%, indicating strong discriminative capability when loop and void-based topological features are jointly considered. 
+
+5.3 Discussion 
+
+Overall, the experimental results highlight the effectiveness of topological descriptors derived from persistent homology for brain tumor classification. The results demon-strate that Betti-based features extracted from 3D MRI volumes provide meaningful structural information that can be leveraged by classical machine learning mod-els. Furthermore, feature selection significantly reduces the number of features while improving classification accuracy, which enhances the computational efficiency of the proposed framework. Among the evaluated models, Random Forest with selected Betti features achieved the best overall performance with an accuracy of 89.19%. These findings sug-gest that interpretable topological features can serve as a powerful alternative to high-dimensional deep learning representations, particularly in scenarios where computational efficiency and model interpretability are important considerations. 
+
+# 6 Conclusion 
+
+In this study, we presented a topology-driven framework for brain tumor classifi-cation using persistent homology applied to three-dimensional (3D) MRI volumes from the BraTS 2020 dataset. By leveraging Topological Data Analysis (TDA), we extracted interpretable Betti-based descriptors, including Betti-0, Betti-1, and Betti-2 features, which capture fundamental structural properties such as connected compo-nents, loops, and voids within the volumetric images. These features provide a compact representation of complex tumor morphology while preserving important topological information. The extracted topological features were used to train classical machine learning classifiers, including XGBoost and Random Forest, for binary classification of high-grade glioma (HGG) and low-grade glioma (LGG). Experimental results demonstrated 16 Table 2 : Performance of XGBoost using Betti features extracted via persistent homol-ogy from 3D FLAIR MRI volumes.                                                        
+
+> Feature Set # Features Accuracy (%) Precision (%) Recall (%) AUC (%)
+> Without Feature Selection
+> B0 100 83.78 83.72 83.78 82.97 B1 100 83.78 83.13 83.78 82.44 B2 100 75.68 71.05 75.68 86.96 B1 + B2 200 78.38 75.72 78.38 88.36 B0 + B1 + B2 300 86.49 88.47 86.49 89.33
+> With Feature Selection
+> B0 13 86.49 85.88 86.49 82.97 B1 73 85.14 84.34 85.14 82.44 B2 685.14 84.34 85.14 86.96 B1 + B2 160 85.14 84.34 85.14 88.36 B0 + B1 + B2 42 87.84 89.47 87.84 89.33
+
+Table 3 : Performance of Random Forest using Betti features extracted via persistent homology from 3D FLAIR MRI volumes.                                                        
+
+> Feature Set # Features Accuracy (%) Precision (%) Recall (%) AUC (%)
+> Without Feature Selection
+> B0 100 81.08 80.04 81.08 83.08 B1 100 83.78 83.72 83.78 89.98 B2 100 81.08 80.04 81.08 86.96 B1 + B2 200 83.78 86.56 83.78 88.36 B0 + B1 + B2 300 83.78 86.56 83.78 89.33
+> With Feature Selection
+> B0 885.14 84.34 85.15 83.08 B1 26 87.84 89.47 87.84 89.98 B2 583.78 86.56 83.78 86.96 B1 + B2 42 89.19 90.50 89.19 88.36 B0 + B1 + B2 14 89.19 89.27 89.19 89.33
+
+that combining Betti features improves classification performance, and feature selec-tion further enhances accuracy while significantly reducing the number of features. The best performance was achieved using the Random Forest classifier with selected Betti features, reaching an accuracy of 89.19% and strong precision and AUC values. Compared with conventional deep learning approaches, the proposed method offers several advantages, including improved interpretability, lower computational complex-ity, and reduced reliance on large-scale training data or data augmentation strategies. 17 By directly analyzing the topology of 3D MRI volumes, the proposed framework effec-tively captures global structural characteristics of brain tumors that are difficult to represent using traditional intensity-based features. Future work will explore integrating topological descriptors with deep learning rep-resentations to further enhance classification performance. Additionally, extending the proposed framework to multi-modal MRI data and other medical imaging applications may provide deeper insights into complex anatomical structures and disease patterns. 
+
+# Declarations 
+
+Funding 
+
+The author received no financial support for the research, authorship, or publication of this work. 
+
+Author’s Contribution 
+
+Faisal Ahmed conceptualized the study, downloaded the data, prepared the code, performed the data analysis and wrote the manuscript. Faisal Ahmed reviewed and approved the final version of the manuscript. 
+
+Acknowledgement 
+
+The authors utilized an online platform to check and correct grammatical errors and to improve sentence readability. 
+
+Conflict of interest/Competing interests 
+
+The authors declare no conflict of interest. 
+
+Ethics approval and consent to participate 
+
+Not applicable. This study did not involve human participants or animals, and publicly available datasets were used. 
+
+Consent for publication 
+
+Not applicable. 
+
+Data availability 
+
+The datasets used in this study are publicly available online. 
+
+Materials availability 
+
+Not applicable. 18 References 
+
+[1] Menze, B.H., Jakab, A., Bauer, S., et al. : The multimodal brain tumor image segmentation benchmark (brats). IEEE Transactions on Medical Imaging 34 (10), 1993–2024 (2014) [2] Bakas, S., Reyes, M., Jakab, A., et al.: Identifying the best machine learning algorithms for brain tumor segmentation, progression assessment, and overall survival prediction in the brats challenge. arXiv preprint arXiv:1811.02629 (2018) [3] Litjens, G., Kooi, T., Bejnordi, B., et al. : A survey on deep learning in medical image analysis. Medical Image Analysis 42 , 60–88 (2017) [4] Carlsson, G.: Topology and data. Bulletin of the American Mathematical Society 
+
+46 (2), 255–308 (2009) [5] Edelsbrunner, H., Harer, J.: Persistent homologya survey. Contemporary Mathe-matics 453 , 257–282 (2008) [6] Ahmed, F.: 3d-tda: Topological feature extraction from 3d mri for alzheimer’s disease classification. Available at SSRN 5882122 (2025) [7] Byrne, N., Chazal, F., et al. : Persistent homology analysis of brain artery trees. Annals of Applied Statistics 10 (1), 206–233 (2016) [8] Ahmed, F., Coskunuzer, B.: Tofi-ml: Retinal image screening with topological machine learning. In: Annual Conference on Medical Image Understanding and Analysis, pp. 281–297 (2023). Springer [9] Ahmed, F.: Topological machine learning in medical image analysis. PhD thesis, The University of Texas at Dallas (2023) [10] Ahmed, F., Nuwagira, B., Torlak, F., Coskunuzer, B.: Topo-CXR: Chest X-ray TB and Pneumonia Screening with Topological Machine Learning. In: Proceedings of the IEEE/CVF International Conference on Computer Vision, pp. 2326–2336 (2023) [11] Ahmed, F., Bhuiyan, M.A.N., Coskunuzer, B.: Topo-cnn: Retinal image analysis with topological deep learning. Journal of Imaging Informatics in Medicine, 1–17 (2025) [12] Ahmed, F.: Topological signatures vs. gradient histograms: A comparative study for medical image classification. arXiv preprint arXiv:2507.03006 (2025) [13] Yadav, A., Ahmed, F., Daescu, O., Gedik, R., Coskunuzer, B.: Histopatholog-ical cancer detection with topological signatures. In: 2023 IEEE International Conference on Bioinformatics and Biomedicine (BIBM), pp. 1610–1619 (2023). IEEE 19 [14] Bauer, S., Wiest, R., Nolte, L.-P., Reyes, M.: A survey of mri-based medical image analysis for brain tumor studies. Physics in Medicine & Biology 58 (13), 97–129 (2013) [15] iek, ., Abdulkadir, A., Lienkamp, S., Brox, T., Ronneberger, O.: 3d u-net: Learn-ing dense volumetric segmentation from sparse annotation. In: International Conference on Medical Image Computing and Computer-Assisted Intervention, pp. 424–432 (2016) [16] Qaiser, T., Tsang, Y.-W., Taniyama, Y., et al. : Persistent homology for digital pathology image analysis. IEEE Transactions on Medical Imaging 38 (9), 2039– 2049 (2019) [17] Ahmed, F.: Four-stage alzheimer’s disease classification from mri using topolog-ical feature extraction, feature selection, and ensemble learning. arXiv preprint arXiv:2601.00918 (2026) [18] Ahmed, F.: Hybrid topological and deep feature fusion for accurate mri-based alzheimer’s disease severity classification. arXiv preprint arXiv:2602.00956 (2026) [19] Ahmed, F.: Colormap-enhanced vision transformers for mri-based multiclass (4-class) alzheimer’s disease classification. arXiv preprint arXiv:2512.16964 (2025) [20] Ahmed, F.: Hog-cnn: Integrating histogram of oriented gradients with con-volutional neural networks for retinal image classification. arXiv preprint arXiv:2507.22274 (2025) [21] Ahmed, F., Uddin, M.J.: Ocuvit: A vision transformer-based approach for auto-mated diabetic retinopathy and amd classification. Journal of Imaging Informatics in Medicine, 1–11 (2025) [22] Ahmed, F., Alfrad Nobel Bhuiyan, M.: Robust five-class and binary diabetic retinopathy classification using transfer learning and data augmentation. arXiv e-prints, 2507 (2025) [23] Ahmed, F.: Histovit: Vision transformer for accurate and scalable histopatholog-ical cancer diagnosis. arXiv preprint arXiv:2508.11181 (2025) [24] Ahmed, F.: Addressing high class imbalance in multi-class diabetic retinopa-thy severity grading with augmentation and transfer learning. arXiv preprint arXiv:2507.17121 (2025) [25] Ahmed, F.: Repvit-cxr: A channel replication strategy for vision transform-ers in chest x-ray tuberculosis and pneumonia classification. arXiv preprint arXiv:2509.08234 (2025) [26] Ahmed, F.: Pseudocolorvit-cxr: Colormap-enhanced vision transformers for 20 tuberculosis and pneumonia detection from grayscale chest x-ray images. Avail-able at SSRN 5547319 (2025) [27] Rawat, R., Ahmed, F.: Efficient breast and ovarian cancer classification via vit-based preprocessing and transfer learning. arXiv preprint arXiv:2509.18553 (2025) [28] Ahmed, F.: Transfer learning with efficientnet for accurate leukemia cell classifi-cation. arXiv preprint arXiv:2508.06535 (2025) [29] Goutam, B., Hashmi, M.F., Geem, Z.W., Bokde, N.D.: A comprehensive review of deep learning strategies in retinal disease diagnosis using fundus images. IEEE Access (2022) 21

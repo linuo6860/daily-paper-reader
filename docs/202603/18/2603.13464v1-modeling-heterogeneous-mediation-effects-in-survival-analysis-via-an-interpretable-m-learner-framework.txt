@@ -1,0 +1,1407 @@
+Title: M_survival_learner0313
+
+URL Source: https://arxiv.org/pdf/2603.13464v1
+
+Published Time: Tue, 17 Mar 2026 00:16:44 GMT
+
+Number of Pages: 29
+
+Markdown Content:
+Biometrics 59, 1 –25 DOI: 10.1111/j.1541 -0420.2005.00454.x 
+
+December 2006 
+
+Modeling Heterogeneous Mediation Effects in Survival Analysis via an 
+
+Interpretable M -Learner Framework 
+
+Xingyu Li 1, Qing Liu 2, Xun Jiang 2, Hong Amy Xia 2, Brian P. Hobbs 3, Peng Wei 1
+
+> ∗
+
+1. Department of Biostatistics, The University of Texas MD Anderson Cancer Center, 
+
+Houston, TX, 77030, USA. 
+
+2. Center for Design and Analysis, Amgen, Thousand Oaks, CA, 91320, USA. 
+
+3. Telperian Inc, TX, 78738, USA. 
+
+*email: PWei2@mdanderson.org 
+
+Summary: Mediation analysis is a useful tool to evaluate surrogate endpoints in clinical trials. We propose a novel method, 
+
+the M -survival learner, for estimating heterogeneous indirect treatment effects in the presence of censored outcomes. The 
+
+proposed approach e nables the identi<ication of interpretable patient subgroups characterized by distinct mediation 
+
+pathways. To distinguish heterogeneous from homogeneous mediation effects, we introduce a new statistical criterion 
+
+speci<ically designed for survival data. The method provides a principled framework for evaluating heterogeneity in 
+
+surrogate biomarker performance across patient populations, offering evidence to support accelerated approval drug. By 
+
+explicitly assessing subgroup -speci<ic surrogate validi ty, the proposed approach addresses key regulatory concerns 
+
+regarding the reliability of surrogate endpoints. We further establish theoretical properties of the method to justify its 
+
+statistical guarantees. We apply the approach to data from a Phase III ra ndomized clinical trial of HIV treatment, 
+
+demonstrating its practical utility in real -world settings. Extensive simulation studies further evaluate and demonstrate its 
+
+<inite -sample performance. 
+
+Key words: Accelerated approval; causal mediation analysis; heterogeneity; machine learning; survival analysis. M-survival -learner 1
+
+This paper has been submitted for consideration for publication in Biometrics 
+
+1. Introduction 
+
+Evaluating the clinical bene7it of a new therapeutic intervention, de7ined by improvements in 
+
+survival, symptoms, or functional outcomes, often requires prolonged follow -up, particularly 
+
+in chronic or life -threatening diseases. To address the inherent dela ys associated with 
+
+measuring such endpoints, the U.S. Food and Drug Administration (FDA) established the 
+
+Accelerated Approval pathway in 1992 (FDA, 1992). This regulatory mechanism permits 
+
+approval of drugs for serious conditions with unmet medical needs o n the basis of surrogate 
+
+or intermediate clinical endpoints, thereby expediting patient access to potentially effective 
+
+therapies. 
+
+A surrogate endpoint is a biomarker, such as a laboratory measurement, radiographic 
+
+7inding, or physical sign, that is intended to predict clinical bene7it but does not itself directly 
+
+measure it (FDA, 2014). An intermediate clinical endpoint similarly re7 lects a therapeutic 
+
+effect that is reasonably likely to forecast ultimate clinical bene7it, for example through its 
+
+in7luence on irreversible morbidity or mortality. By substituting such endpoints for de7initive 
+
+outcomes, the accelerated approval framework can substantially shorten the drug 
+
+development timeline. In oncology, for instance, regulatory approval may be granted based 
+
+on tumor response rather than overall survival (OS), under the assumption that tumor 
+
+shrinkage is reasonably likely to predict mea ningful clinical bene7it. 
+
+Despite widespread reliance on surrogate endpoints, existing evaluation frameworks 
+
+implicitly treat surrogacy as a homogeneous, population -level property, an assumption that 
+
+is rarely scrutinized and may be untenable in the presence of biological and clini cal 
+
+heterogeneity. As a result, a fundamental gap remains in our ability to characterize when and 
+
+for whom a 
+
+surrogate reliably predicts clinical bene7it. 
+
+Surrogate endpoints introduces substantial challenges. Post -approval con7irmatory trials 
+
+are required to verify that treatment effects on the surrogate translate into true clinical 2 Biometrics, December 2006 
+
+bene7it, for example, OS, yet an increasing number of such trials have failed to do so. To date, 
+
+the FDA has withdrawn accelerated approval for 31 oncology drugs, 25 of them after 2020, 
+
+as well as nine additional drugs in non -oncology indications. In respo nse, between 2023 and 
+
+2025 the FDA issued multiple draft guidances that strengthened oversight of accelerated 
+
+approvals based on surrogate biomarkers, including requirements that con7irmatory trials 
+
+be underway at the time of approval (FDA, 2023, 2024, 202 5). These developments 
+
+underscore growing concern regarding the validity and reliability of surrogate endpoints, 
+
+particularly when treatment effects and surrogate –outcome relationships are heterogeneous. 
+
+The history of ge7itinib illustrates the potential heterogeneity in surrogate performance 
+
+across patient subgroups. In 2003, ge7itinib received accelerated approval for patients with 
+
+advanced non –small cell lung cancer based on an objective response rate ( ORR) of 
+
+approximately 10 .6% in the overall population, where tumor response was considered a 
+
+surrogate endpoint reasonably likely to predict clinical bene7it (Cohen et al., 2003). However, 
+
+subsequent con7irmatory trials failed to demonstrate an OS bene7it in the overall population, 
+
+suggesting that tumor response did not reliably translate into improved survival at the 
+
+population level. In contrast, when evaluated in patients with EGFR -mutant tumors, ge7itinib 
+
+achieved substantially higher response rates and clear survival bene7its (Kazandjian et al., 
+
+2016). This example demonstrates that the relationship between surrogate endpoints and 
+
+clinical outcomes may vary across patient subgroups, and that population -level analyses may 
+
+obscure subgroup -speci7ic mechan isms. 
+
+In practice, this assumption may fail when surrogate performance varies across individuals 
+
+or subgroups, leading to inconsistencies between early -phase surrogate -based evidence and 
+
+de7initive clinical outcomes. Although these examples exhibit substantial t reatment effect 
+
+heterogeneity, our focus is on heterogeneity in surrogacy. Treatment heterogeneity alone 
+
+does not invalidate a surrogate if improvements in the surrogate consistently translate into 
+
+clinical bene7it across populations. The concern arises wh en the relationship between 
+
+surrogate improvement and survival bene7it varies by subgroup or trial context. In such M-survival -learner 3
+
+settings, surrogate validity itself becomes heterogeneous rather than a purely 
+
+populationlevel property. 
+
+Together, these examples highlight a fundamental limitation of commonly used surrogate 
+
+endpoints such as ORR: the surrogacy relationship between the surrogate and the clinical 
+
+endpoint may differ across patient subgroups. These discrepancies motivate a shi ft from 
+
+viewing surrogate validity as a global property toward explicitly modeling heterogeneity in 
+
+treatment effects associated with the surrogate. Rather than treating surrogacy as a 
+
+population -level characteristic, its scienti7ic value lies in identifyi ng the populations for 
+
+which changes in a surrogate endpoint are predictive of survival bene7it. 
+
+Beyond their role in regulatory approval, surrogate endpoints have broad implications for 
+
+drug development and precision medicine. When appropriately validated, they can improve 
+
+early -phase decision -making by providing timely signals of ef7icacy, enabling more informed 
+
+“go/no -go” decisions and reducing the 7inancial and temporal risks of late -stage trials. 
+
+Despite these potential advantages, both regulatory agencies and methodological 
+
+researchers have increasingly emphasized the need for more rigorous statistical frameworks 
+
+to assess surrogate validity, particularly in the presence of treatment effect hetero geneity. 
+
+Existing surrogate validation approaches, including classical criteria -based methods, meta -
+
+analytic frameworks, and principal strati7ication –based approaches, primarily rely on 
+
+populationlevel summaries or latent strata. As a result, they are not designed to uncover 
+
+heterogeneity in surrogate -mediated treatment effects at the individual or subgroup level (Li 
+
+et al., 2011; Zhou et al., 2021). 
+
+To address this limitation, several recent studies have proposed covariate -adjusted causal 
+
+mediation frameworks. For example, Parast et al. (2023) introduced a covariate -adjusted 
+
+approach that evaluates surrogate validity using the proportion of treatment effect explained 
+
+by the surrogate conditional on baseline characteristics. This framework was later extended 
+
+by Parast et al. (2024) to accommodate survival outcomes. However, these approaches are 
+
+limited in their ability to detect complex forms of heterog eneity in surrogate effects. Building 4 Biometrics, December 2006 
+
+on these methods, Knowlton et al. (2025) proposed a grid -based procedure that probes the 
+
+covariate space to identify regions where surrogate strength exceeds a clinically meaningful 
+
+threshold while controlling for multiplicity. Although this approach allow s for more 7lexible 
+
+detection of heterogeneous regions, it becomes computationally challenging as the number 
+
+of covariates increases and may struggle to identify regions with complex boundaries. 
+
+These limitations motivate the development of the M -survival learner. The primary 
+
+objective of this approach is to characterize heterogeneity in surrogate -mediated treatment 
+
+effects and to evaluate surrogate validity across clinically relevant subgroups. B y explicitly 
+
+modeling individual -level variation in indirect treatment effects, the proposed framework 
+
+aims to identify patient populations in which the surrogate reliably mediates the treatment 
+
+effect on the clinical endpoint. This subgroup -level perspect ive not only provides a more 
+
+nuanced assessment of surrogate validity but also generates actionable evidence that can 
+
+inform regulatory decision -making within the FDA’s accelerated approval pathway. 
+
+Speci7ically, our contributions are: we formalize surrogate validity as a heterogeneous, 
+
+individual -level property rather than a global characteristic. We develop a learner -based 
+
+(7lexible machine learning method, such as XGboost and neural network) framew ork to 
+
+estimate indirect treatment effects on survival outcome. We introduce a clustering and 
+
+pro7iling strategy to identify clinically interpretable subgroups with distinct surrogate -
+
+mediated 
+
+effects. 
+
+The remainder of this article is organized as follows. In Section 2, we introduce the 
+
+surrogate biomarker and mediation framework and describe their conceptual relationship. 
+
+Section 3 presents a heterogeneous mediation model that allows indirect treatment effects 
+
+to vary across individuals. In Section 4, we develop a clustering strategy to identify subgroups 
+
+with distinct surrogate effects, and introduces an interpretable pro7iling approach to 
+
+characterize these subgroups. Section 5 evaluates 7inite -sample performance under a range 
+
+of scenarios, and Section 6 illustrates the proposed methods using data from a phase III M-survival -learner 5
+
+randomized clinical trial on HIV. Finally, Section 7 summarizes our 7indings and discusses 
+
+their implications and potential extensions. 
+
+2. Surrogate Biomarker and Mediation Model 
+
+This section provides the conceptual foundation for the proposed methodology by reviewing 
+
+surrogate biomarkers and mediation analysis, and clarifying their connections from a causal 
+
+inference perspective. We 7irst introduce surrogate endpoints and discuss ideal and nonideal 
+
+surrogacy through causal diagrams. We then review existing approaches to surrogate 
+
+validation and highlight their limitations in the presence of heterogeneity, thereby motivating 
+
+the need for heterogeneous mediation models. 
+
+2.1 Surrogate Biomarkers 
+
+Surrogate endpoints are post -treatment variables intended to capture the effect of an 
+
+intervention on a clinically meaningful outcome, particularly in settings where de7initive 
+
+endpoints such as OS are rare, delayed, or costly to observe. By leveraging tre atment effects 
+
+on surrogate endpoints, investigators aim to infer treatment effects on the true clinical 
+
+outcome, thereby accelerating evaluation and decision -making in clinical trials (Buyse et al., 
+
+2010). Surrogate endpoints have played a prominent role in regulatory science; for example, 
+
+pathological complete response has been used in breast cancer, and durable ORR has 
+
+frequently served as a surrogate endpoint for regulatory approval in solid tumors (FDA, 
+
+2025). 
+
+From a causal perspective, surrogate endpoints are most naturally viewed as mediators 
+
+lying on the pathway between treatment and the clinical outcome. Figure 1 illustrates two 
+
+stylized causal structures. In panel (a), the surrogate endpoint M represents an ideal 
+
+surrogate, in which the entire causal effect of treatment on the clinical outcome T is 
+
+mediated through M, and there is no residual direct effect of treatment on T once M is 
+
+controlled for. A canonical example arises in chronic myeloid leukemia, whe re levels of 6 Biometrics, December 2006 
+
+BCR -ABL transcripts serve as a molecular marker of disease burden (FDA, 2021). Tyrosine 
+
+kinase inhibitors, such as imatinib, are designed to directly inhibit the BCR –ABL fusion 
+
+protein, and reductions in BCR –ABL transcript levels closely re7lect the biolog ical 
+
+mechanism of treatment action. As a result, molecular response has been widely accepted 
+
+as a surrogate for long -term clinical outcomes, including progression -free and overall 
+
+survival, particularly in early -phase trials. 
+
+[Figure 1 about here.] 
+
+In contrast, most surrogate endpoints encountered in practice are non -ideal. Panel (b) of 
+
+Figure 1 depicts a setting in which the surrogate captures only part of the treatment effect on 
+
+the clinical outcome, with a remaining direct effect of treatment acti ng independently of the 
+
+surrogate. Tumor response provides a paradigmatic example of such an imperfect surrogate. 
+
+Although reductions in tumor burden indicate biological activity of treatment, they often fail 
+
+to fully account for downstream effects on surv ival, toxicity, or disease progression, resulting 
+
+in substantial residual treatment effects that are not mediated by the surrogate. 
+
+2.2 Existing Approaches and the Challenge of Heterogeneity 
+
+A large body of methodological literature has developed to assess the validity of surrogate 
+
+biomarkers. Most existing approaches, however, focus on average effects at the population or 
+
+latent stratum level, implicitly assuming homogeneous surrogate validit y across patients (Li 
+
+et al., 2011). Prominent examples include principal strati7ication based methods, which 
+
+de7ine surrogate -related causal effects within latent subgroups characterized by potential 
+
+outcomes; meta -analytic approaches, which aggregate sur rogate outcome associations 
+
+across multiple trials to evaluate population -level surrogacy; and mediation analysis 
+
+methods, such as the proportion -explained framework originally proposed by Freedman 
+
+(Freedman and Schatzkin, 1992). While these frameworks pro vide valuable insights into 
+
+overall or latent surrogate effects, they are not designed to characterize how surrogate -
+
+mediated treatment effects vary across individuals or clinically de7ined subpopulations. M-survival -learner 7
+
+These 7indings highlight a fundamental limitation of population -level surrogate validation. 
+
+Even when a biomarker satis7ies commonly used criteria for surrogate validity on average, 
+
+its reliability as a surrogate may vary substantially across individuals o r subgroups, re7lecting 
+
+heterogeneity in the underlying causal pathways linking treatment, biomarker, and clinical 
+
+outcome. Reliance on population -level validation alone may therefore lead to erroneous 
+
+decisions in early trial termination, accelerated regu latory approval, or individualized clinical 
+
+decision -making. These concerns have contributed to increasing caution among regulatory 
+
+agencies, including the FDA, regarding the use of surrogate endpoints in settings 
+
+characterized by biological and clinical h eterogeneity. 
+
+Together, these considerations motivate the development of methodological frameworks 
+
+that explicitly account for heterogeneity in surrogate validity. In particular, there is a need for 
+
+approaches that characterize individual - and subgroup -level variation i n surrogate -mediated 
+
+treatment effects, rather than relying solely on population -average measures. Our framework 
+
+is based on heterogeneous mediation analysis. Xue et al. (2022); Li et al. (2025) investigate 
+
+heterogeneity in mediation effects. However, thes e approaches have not been developed for 
+
+survival outcomes. 
+
+Section 3 introduces a heterogeneous mediation framework designed to address this need 
+
+by estimating individual -level surrogate -mediated treatment effects. Section 4 presents a 
+
+clustering -based approach for identifying subgroups with distinct surrogate val idity pro7iles. 
+
+Taken together, these components constitute the proposed methodology. Figure 1 (c, d) 
+
+illustrates the overall analytical pipeline of the proposed approach. 
+
+3. Heterogeneous Mediation Treatment Effects 
+
+In this section, we characterize heterogeneity in treatment effects transmitted through a 
+
+surrogate biomarker by modeling heterogeneous mediation effects within a causal mediation 
+
+framework. 8 Biometrics, December 2006 
+
+We consider a randomized controlled trial (RCT) with n independent and identically 
+
+distributed individuals. For notational simplicity, we suppress the individual index 
+
+throughout and work with generic random variables. Let W ∈ { 0,1} denote the treatment 
+
+indicator, and let X ∈ Rp denote a vector of baseline covariates taking values in a covariate 
+
+space X ⊆ Rp. Let M ∈ R denote a post -treatment mediator with support M ⊆ R.
+
+The primary outcome of interest is a time -to -event variable T ∈ R+, and let C ∈ R+ denote the 
+
+censoring time. Due to right censoring, the observed data consist of ( U, δ), where U = min( T,C )
+
+and δ = I(T ⩽ C). Throughout this paper, we assume that the mediator is measured prior to 
+
+the occurrence of the event or censoring. 
+
+Within the potential outcomes framework, let M(w) denote the mediator value that would 
+
+be observed under treatment level w. Let T(w,m ) denote the potential event time that would 
+
+have been observed if, possibly contrary to fact, treatment were set to w and the mediator 
+
+were set to level m ∈ M . For example, T(0 ,M (1)) represents the event time that would have 
+
+been observed had the individual not received treatment while the mediator were set to the 
+
+level it would have attained under treatment. 
+
+We link the potential outcomes to the observed data through the consistency assumption, 
+
+which states that we observe the mediator M = M(W),T = T(W,M ). Moreover, because the 
+
+potential mediator values and potential outcomes are de7ined solely as functions of an 
+
+individual’s own treatment assignment, and not of the treatment assignments received by 
+
+other individuals, this formulation also implicitly rule s out interference between units. This 
+
+condition is commonly referred to as the Stable Unit Treatment Value Assumption (SUTVA) 
+
+(Rubin et al., 1990). 
+
+3.1 IdentiEication 
+
+Following Imai et al. (2010), we make the following sequential ignorability assumption 
+
+throught, allowing for the identi7ication of the natural direct and indirect treatment effects. M-survival -learner 9
+
+Assump)on 1 (Randomization): In a randomized controlled trial, the treatment indicator W
+
+is independent of baseline covariates X, that is, 
+
+W ⊥⊥ X, X ∈ X .
+
+Assump)on 2 (Ignorability of treatment assignment): Conditional on baseline covariates X,
+
+the treatment assignment is ignorable with respect to the potential mediator and potential 
+
+outcomes, that is, 
+
+{T(w∗,M (w)) ,M (w)} ⊥⊥ W | X, w,w ∗ ∈ { 0,1}.
+
+Assump)on 3 (Ignorability of the mediator): Conditional on the observed treatment 
+
+assignment and baseline covariates, the mediator is ignorable with respect to the potential 
+
+outcomes, that is, 
+
+T(w∗,M (w)) ⊥⊥ M | W = w, X, w,w ∗ ∈ { 0,1}.
+
+Assump)on 4 (Positivity): We assume positivity of the mediator, such that 
+
+fM{M(w) = m | W = w, X} > 0, for all m ∈ M , w ∈ { 0,1}, X ∈ X .
+
+The 7irst assumption formalizes the randomization mechanism of the treatment assignment 
+
+in an RCT, ensuring that the treatment indicator is independent of baseline covariates. This 
+
+assumption re7lects the study design and is typically guaranteed by proper randomization. 
+
+The second assumption states that, conditional on baseline covariates, the treatment 
+
+assignment is ignorable with respect to the potential mediator and potential outcomes. 
+
+This assumption is automatically satis7ied in randomized experiments and allows the 
+
+treatment effects on both the mediator and the primary outcome to be identi7ied. 
+
+The third assumption requires ignorability of the mediator given the observed treatment 
+
+and baseline covariates, namely that the mediator is independent of the potential outcomes 
+
+after conditioning on treatment and covariates. Unlike the ignorability of tr eatment 
+
+assignment, this assumption is generally not guaranteed even in randomized experiments, as 10 Biometrics, December 2006 
+
+the mediator is not randomly assigned. Consequently, this assumption is not directly testable 
+
+from the observed data and must be justi7ied based on substantive knowledge and careful 
+
+study design. 
+
+The fourth assumption is a positivity condition for the treatment and the mediator, 
+
+requiring that each treatment level and a suf7icient range of mediator values occur with 
+
+positive probability within each covariate stratum. This assumption ensures that th e causal 
+
+mediation effects are identi7iable from the observed data and can be consistently estimated. 
+
+Many existing mediation analysis methods for time -to -event outcomes under the Cox 
+
+proportional hazards model de7ine the mediation effect on the log -hazard scale 
+
+(VanderWeele, 2011), we de7ine the conditional direct and indirect treatment effects on the 
+
+log -hazard scale under a Cox proportional hazards framework. The outcome model is 
+
+speci7ied as 
+
+λ(t|X,W,M ) = λ0(t)exp (g(X,W,M )) , (1) 
+
+where 
+
+g(X,W,M ) = κ1(X) + κ2(X) · W + κ3(X) · M. (2) 
+
+Here, λ0(t) denotes the baseline hazard function. The function κ1(X) captures the effect of 
+
+baseline covariates, κ2(X) represents the treatment effect on the outcome not operating 
+
+through the mediator, and κ3(X) is a covariate -dependent coef7icient characterizing effect 
+
+modi7ication of the mediator on the hazard. When κ1(X) and κ2(X) are linear in X and κ3(X) is 
+
+constant, the model corresponds to a linear assumption. More generally, these functions are 
+
+allowed to be general functions with 7inite expectations, accommodating 7lexible and 
+
+potentially nonlinear relationships, we call it complex assumption; more d isscussion can be 
+
+found in Appendix A. 
+
+The mediator is modeled as 
+
+M = κ4(X) + κ5(X) · W + ϵ, (3) M-survival -learner 11 
+
+where κ4(X) represents the baseline covariate effects on the mediator, κ5(X) denotes the 
+
+treatment effect on the mediator, and ϵ is a mean -zero term. Both κ4(X) and κ5(X) can be 
+
+nonlinear functions. Under these notations, the total treatment effects (TTE) and natural 
+
+direct and indirect treatment effects (DTE, ITE) on log hazard scale conditional on covariates 
+
+are given by,  
+
+> ww∗
+
+For simplicity of notation, Tw,M w is denoted as T(w,M (w)), counterfactual log hazard conditonal 
+
+on covariates X = x is denoted as log {λTw,Mw (t|X = x)}.
+
+Since we focus on the natural indirect treatment effects conditional on W = 1, we 7ix w = 1 
+
+in the outcome model and set w∗ = 0 in the mediator distribution. Substituting w = 1 and w∗ =
+
+0 into the expression (4) therefore yields the indirect treatment effect considered throughout 
+
+this paper. 
+
+Theorem 1 (Identi7ication) : Under Assumption 1 -4 with rare event assumption, the indirect 
+
+treatment effect could be identiEied as 
+
+ITE (t|X = x) = κ3(x)κ5(x) = g(x|W = 1 ,M = E[M|w = 1 ,X = x]) −
+
+g(x|W = 1 ,M = E[M|w = 0 ,X = x]) . (5) 
+
+Remark 1: Under Assumptions 1 –4 and the rare event assumption, ITE (t|X), which we refer 
+
+to as the natural indirect effect conditional on covariates (NIECC), admits a particularly 
+
+simple form. Speci7ically, although the NIECC is de7ined at time t, its 7inal expression does not 
+
+depend on t. The NIECC is given by the product κ3(x)κ5(x), which captures the effect of the 
+
+mediator on the outcome and the effect of the treatment on the mediator, respectively. 
+
+TTE (t|X = x) := log {λTw,Mw (t|X = x)} − log {λTw∗,M w∗(t|X = x)},
+
+ITE (t|X = x) := log {λTw,Mw (t|X = x)} − log {λTw,M w∗(t|X = x)},
+
+DTE (t|X = x) := log {λTw,M ∗(t|X = x)} − log {λTw∗,M (t|X = x)}. (4) 12 Biometrics, December 2006 
+
+Equivalently, the same quantity can be expressed as the difference in the outcome regression 
+
+function g(·) evaluated at the expected mediator values under W = 1 and W = 0, conditional 
+
+on X = x.
+
+Remark 2: To illustrate heterogeneous mediation effects, we provide an example in Figure 1 
+
+(c) and (d). In this setting, patients in Group 1 (Var1 > 0,Var2 > 0) have both ITE and DTE, 
+
+whereas patients in Groups 2 and 3 exhibit only DTE. 
+
+The NIECC admits a particularly simple representation. Proof of Theorem 1 is provided in 
+
+Appendix D and additional discussion and details of the estimation procedure are provided 
+
+in Appendix A. 
+
+4. Clustering and Identify Patient ProJiles 
+
+4.1 Clustering based on similarity 
+
+We quantify the treatment effect transmitted through the surrogate using a heterogeneous 
+
+mediation analysis framework that allows the NIECC to vary with baseline covariates. In 
+
+many clinical settings, the validity and strength of a surrogate biomarker are not 
+
+homogeneous across the study population but instead depend critically on patient 
+
+characteristics. Consequently, a surrogate biomarker may be informative only within speci7ic 
+
+regions of the covariate space, exhibiting substantial heterogeneity across in dividuals. From 
+
+a practical perspective, it is therefore important to identify interpretable covariate -de7ined 
+
+regions or subgroups in which the surrogate consistently captures the treatment effect, as 
+
+well as regions in which its performance differs or de teriorates. This task can be viewed as 
+
+the identi7ication of surrogate -relevant subgroups, characterized by relatively homogeneous 
+
+indirect treatment effects within subgroups and substantial heterogeneity across subgroups. 
+
+Motivated by this objective, we propose a novel similarity -based clustering approach built 
+
+upon a modi7ied t -SNE representation combined with K -means clustering. t -SNE is a 
+
+dimensionality reduction algorithm that preserves similarity among observations by M-survival -learner 13 
+
+modeling pairwise distances and projecting the data into a lower -dimensional space. In our 
+
+framework, the pairwise distance between observations is de7ined based on the NIECC. 
+
+Detailed descriptions of the method and the corresponding theoretical analyses a re provided 
+
+in Appendices B, E, F, and G. 
+
+4.2 Identify Patient ProEiles 
+
+Interpretability is crucial for translating statistical patterns into clinical practice. Machine 
+
+learning models, when applied in clinical research, should ideally yield interpretable results 
+
+that are both understandable and logically sound for practicing clinicians. Although accurate 
+
+outcome prediction is necessary, it is not suf7icient for developing effective models to guide 
+
+treatment selection. Owing to the properties of t -SNE, similar observations tend to 
+
+concentrate near the centers of clusters in the embedded space. Consequently, we apply K -
+
+means clustering to identify concrete subgroups. Decision trees offer a highly interpretable 
+
+framework for clinical decision making that is easy to disseminate through structured 
+
+diagrams depicting a step -by -step s equence of variable assessments. Assessing a tree’s 
+
+alignment with clinical reasoning is straightforward for clinicians, as it does not require an 
+
+understanding of the potentially complex modeling processes used to generate it. 
+
+Both t -SNE and K -means involve random initialization and tuning parameters. In particular, 
+
+K-means requires the number of clusters to be speci7ied within a prede7ined range and is 
+
+sensitive to this choice, which can lead to variability in the resulting pat ient pro7iles across 
+
+repeated runs. To address this issue, we propose a custom metric to identify the most 
+
+representative patient pro7ile among the solutions obtained under different clustering 
+
+speci7ications. We make the following rules to select the 7ina l clustering result: For each pre -
+
+de7ined k clusters, we note them as C1,··· ,Ck.
+
+Step 1: We use a decision tree to 7it k clusters from the K -means clustering, denoting each 
+
+terminal node of the decision tree leaf. 
+
+Step 2: Two Cox models are 7itted, 14 Biometrics, December 2006 
+
+λ(t) = λ0(t)exp {β1W}, (6) 
+
+λ(t) = λ0(t)exp {β2W + β3leaf + β4leaf ∗ W}. (7) 
+
+Let l1 and l2 denote the maximized partial log -likelihoods of models (6) and (7), respectively. 
+
+The likelihood ratio test statistic, 
+
+−2( l2 − l1) → χ2(df ), (8) 
+
+where df = number of leaves is the p value of model (8). 
+
+Step 3: Two linear models are 7itted, 
+
+M = β5W, (9) 
+
+M = β6W + β7leaf + β8leaf ∗ W. (10) 
+
+Let l3 and l4 denote the maximized likelihoods of models (9) and (10), respectively. The 
+
+likelihood ratio test statistic, 
+
+−2( l2 − l1) → χ2(df ), (11) 
+
+where df = number of leaves is the p value of model (11) 
+
+Step 4: The selection metric is: 
+
+, (12) 
+
+where pY ∗ and pM∗ serve as the threshold for determining the presence of heterogeneity in 
+
+the data and is selected through a calibration procedure. In the simulation studies, pleaf is 
+
+calibrated under the non -heterogeneous scenario to control the Type I error rate. In 
+
+practical applications, the corresponding threshold can be determined via a 
+
+permutationbased procedure. More details are provided in Appendix C. 
+
+5. Simulation Study 
+
+This Section presents a comprehensive evaluation of the proposed method via a series of 
+
+simulation studies. We also describe the calibration procedure incorporated in the proposed 
+
+approach. The simulation study consisted of two parts. The 7irst part is lin ear assumption. 
+
+The second part is complex assumption. In the following, we describe seperately. 
+
+5.1 Linear assumption 
+
+The OS outcomes and mediators were generated according to the following models: M-survival -learner 15 
+
+,
+
+(13) 
+
+where λ(t|M,W, X) denoted the hazard function of the survival time conditional on the 
+
+mediator M, treatment assignment W, and baseline X. The baseline hazard function λ0(t) = 
+
+νtν−1/λν followed a Weibull distribution with shape parameter ν and scale parameter λ, given 
+
+by λ0(t) = νtν−1/λν. The true parameter values were set to ν = 2 and λ = 1 /300. 
+
+The covariate vector X = ( X(1) ,··· ,X (10) ) consisted of 10 baseline covariates, where each X(j)
+
+was independently generated from a standard normal distribution. The coef7icients β1,··· ,β 10 
+
+corresponded to the effects of the baseline covariates, βm represented the coef7icient of 
+
+mediator, and βw represented the treatment effect associated with the binary treatment 
+
+indicator W. Subjects were randomly assigned to the treatment group ( W = 1) or the control 
+
+group ( W = 0) in a 1 : 1 ratio, and the sample size was 1000. In the mediator model, κ1(X)
+
+repr esented the non -treatment -related component of the mediator, while κ2(X) captured 
+
+treatment –covariate interactions and thus induced treatment effect heterogeneity. The error 
+
+term ϵ was generated independently to represent unexplained variability in the mediator. We 
+
+considered three simulation scenarios: Heterogeneous, Global, and Null. In the 
+
+Heterogeneous setting, the mediator mediated the treatment effect only in certain regions of 
+
+the covariate space; in the Global setting, it mediated the treatment effe ct for all individuals; 
+
+and in the Null setting, the surrogate did not mediated the treatment effect in any subgroup. 
+
+Additional experimental details and full speci7ications of each scenario were provided in 
+
+Appendix H. 
+
+5.2 Complex assumption 
+
+The OS outcomes, mediators were generated according to the following models: 
+
+λ(t|M,W, X) = λ0(t) × exp {κ1(X) + κ2(X) · W + κ3(X) · M},
+
+M = κ4(X) + κ5(X) · W + ϵ, (14) 16 Biometrics, December 2006 
+
+where κ1(X) denoted the effects of baseline covariates, κ2(X) denoted the treatment effects 
+
+not via the mediator, and κ3(X) was the varying coef7icient on the mediator. In the mediator 
+
+model, κ4(X) represented the non -treatment -related component of the mediator, while κ5(X)
+
+captured treatment –covariate interactions. Other settings were similar to Subsection 5.1. 
+
+We considered six simulation scenarios: All1, Part1, All2, Part2, Global, and Null. In the 7irst 
+
+four scenarios (All1, Part1, All2, and Part2), mediator validity held only within certain regions 
+
+of the covariate space. The labels All and Part indicated whe ther the treatment effect was fully 
+
+or partially mediated through the mediators, respectively. In All1 and Part1, the treatment 
+
+effect was constant and did not vary with covariates, whereas in All2 and Part2, the treatment 
+
+effect varied as a function of co variates. In the Global scenario, the mediator re7lected the 
+
+treatment effect for all individuals, while in the Null scenario, the mediator did not re7lect the 
+
+treatment effect in any subgroup. Detailed speci7ications of each scenario were provided in 
+
+the Appendix H. 
+
+5.3 Simulation Results 
+
+All results under the linear model assumption were provided in Appendix H. Under the 
+
+complex assumption, Figure 2 illustrated the selected threshold used for subgroup 
+
+identi7ication. The 7igure showed that the proposed method successfully identi7ied region s
+
+with heterogeneous mediation effects, effectively distinguishing subgroups with distinct 
+
+mediation patterns. Figure 3 showed the empirical cumulative distribution function of pleaf ,
+
+the results showed the ability of the proposed metric to distinguish the heterogeneous 
+
+scenarios and homogeneous scenarios. The estimation accuracy of NIECC was evaluated in 
+
+Appendix H, Web Table 1. More discussion and additional details regarding covariate 
+
+selection and the exclusion of cases following calibration were presen ted in Appendix I. 
+
+These results suggested that the proposed method was able to identify regions exhibiting 
+
+heterogeneity in mediation treatment effects. 
+
+[Figure 2 about here.] M-survival -learner 17 
+
+[Figure 3 about here.] 
+
+6. Real Data Application: The ACTG175 Trial 
+
+We analyzed data from a phase III randomized HIV clinical trial originally reported by 
+
+(Hammer et al., 1996). Eligible participants were aged 12 years or older, had 
+
+laboratorycon7irmed HIV -1 infection, a baseline CD4 cell count between 200 and 500 
+
+cells/mm 3 measured within 30 days prior to randomization, no history of AIDS -de7ining 
+
+illness other than minimal mucocutaneous Kaposi’s sarcoma, a Karnofsky performance score 
+
+of at least 70, and acceptable baseline laboratory values. The trial was strati7ied by pr ior 
+
+antiretroviral therapy exposure. For illustration, we focused on two treatment arms: the 
+
+control arm with Zidovudine (ZDV) monotherapy, and the treatment arm with Zidovudine 
+
+plus Didanosine (ZDV+DDI). Among the 1,054 participants, 532 were assigned to the control 
+
+arm and 522 to the treatment arm. The control arm served as the control group receiving the 
+
+standard -of -care regimen at the time of the study, whereas the treatment arm represented 
+
+an experimental combination therapy. 
+
+The analysis adjusted for the following baseline covariates: age, body weight (wtkg), 
+
+hemophilia status (hemo), homosexual activity (homo), Karnofsky performance score 
+
+(karnof), prior antiretroviral therapy exposure measured as days of pre -ACTG 175 treatme nt 
+
+(preanti), race, gender, symptomatic status, and baseline CD4 cell count (CD40). CD4 cell count 
+
+measured at 20 weeks after randomization ( ±5 weeks) was selected as the surrogate 
+
+biomarker, representing an early immunologic response relative to the media n follow -up 
+
+duration of 143 weeks. This surrogate precedes the clinical endpoint and captures short -term 
+
+treatment effects. The primary endpoint was de7ined as a greater than 50% decline in CD4 cell 
+
+count from baseline, progression to acquired immunode7ici ency syndrome (AIDS), or death. 
+
+For simplicity, this composite endpoint is hereafter referred to as OS. 
+
+Our analysis consisted of two parts. We 7irst conducted the analysis under linear model 
+
+assumptions and then extended the analysis to a more complex modeling framework. We 18 Biometrics, December 2006 
+
+presented only the results obtained under the complex assumptions, while the results and 
+
+discussion based on the linear analysis were provided in Appendix I. 
+
+Subgroup 1 consisted of patients with low baseline CD4 levels and exhibited a substantially 
+
+stronger mean NIECC compared with the other subgroups (Figure 4). Patients in this 
+
+subgroup have poorer baseline immune status, and the treatment effect could be cl early 
+
+mediated by the increase in CD4 counts at 20 weeks. This pattern suggested that CD4 served 
+
+as an informative surrogate biomarker for treatment ef7icacy among patients with low 
+
+baseline CD4 levels. 
+
+In contrast, Subgroup 2 and 3 both consisted of patients with relatively high baseline CD4 
+
+levels. Because these patients already had comparatively preserved immune function at 
+
+baseline, the treatment effect mediated through CD4 improvement was considerabl y weaker. 
+
+Nevertheless, meaningful differences remain between the two subgroups. Subgroup 3 
+
+included patients who had received antiretroviral treatment prior to enrollment (preanti ⩾
+
+8 days), whereas Subgroup 2 consisted primarily of treatment -na¨ıve patie nts. For patients in 
+
+Subgroup 3, the treatment effect mediated through CD4 appeared to have a delayed impact. 
+
+As shown in the counterfactual survival curves in Figure 5 (c), the three survival curves began 
+
+to separate at later time points, indicating that the treatment effect mediated by CD4 
+
+improvement became more apparent over longer follow -up periods. 
+
+In contrast, for Subgroup 2, the curves for S(1 ,M (1)) and S(1 ,M (0)) almost completely 
+
+overlap (Figure 5 (b)), suggesting that CD4 did not meaningfully capture the treatment effect 
+
+in this subgroup. This observation is consistent with the distribution of individual NIECC 
+
+shown in Figure 5 (a). Compared with Subgroup 2, Subgroup 3 exhibited greater 
+
+heterogeneity in individual NIECC values, whereas Subgroup 2 showed a relatively 
+
+concentrated distribution around zero, indicating a more stable but negligible med iation 
+
+effect. 
+
+Overall, Figures 4 and 5 together revealed clinically interpretable heterogeneity in 
+
+surrogate mediation effects and supported the validity of the identi7ied subgroups. M-survival -learner 19 
+
+[Figure 4 about here.] 
+
+[Figure 5 about here.] 
+
+7. Discussion 
+
+This work makes several methodological contributions to the evaluation of surrogate 
+
+endpoints for survival outcomes. First, we formulate surrogate validity as a heterogeneous, 
+
+individual -level property rather than a homogeneous population -level characteris tic, 
+
+allowing the degree to which a surrogate captures the treatment effect to vary across patients. 
+
+Second, we develop a learner -based framework to estimate indirect treatment effects on 
+
+survival outcomes, which accommodates 7lexible, potentially nonlinea r relationships among 
+
+treatment, surrogate, covariates, and time -to -event outcomes. Third, we introduce a
+
+clustering and pro7iling strategy to summarize this heterogeneity and to identify clinically 
+
+interpretable subgroups characterized by distinct surroga te -mediated effects. Taken together, 
+
+these innovations provide a 7lexible, data -adaptive framework for investigating 
+
+heterogeneity in surrogate validity and for understanding when surrogate endpoints are 
+
+more or less informative of treatment effects on sur vival. 
+
+Understanding heterogeneity in surrogate performance is particularly important in the 
+
+context of clinical development, where surrogate endpoints are frequently used to support 
+
+decision -making across the drug development continuum. The informativeness of a
+
+surrogate depends on multiple interacting factors, including the mechanism of action of the 
+
+intervention, patient characteristics, disease etiology, and the de7inition of the downstream 
+
+clinical endpoint. Consequently, the behavior of surrogate endpoints i s often more complex 
+
+than that of the clinical outcomes they are intended to predict. Population -average 
+
+assessments of surrogate validity may therefore mask meaningful variation across patient 
+
+subgroups. 20 Biometrics, December 2006 
+
+These issues are especially salient in Phase II screening trials, which aim to determine 
+
+whether a treatment demonstrates suf7icient biological activity or preliminary ef7icacy to 
+
+justify evaluation in a con7irmatory Phase III trial. When direct assessment of the primary 
+
+clinical outcome is impractical due to long follow -up times or limited sample sizes, surrogate 
+
+endpoints such as tumor response, intermediate time -to -event outcomes, or biomarkers are 
+
+often used to facilitate early go/no -go decisions. For e xample, in oncology trials, single -arm 
+
+Phase II studies have historically relied on ORR, de7ined using RECIST criteria, as a primary 
+
+endpoint for evaluating cytotoxic therapies (Zabor et al., 2020). 
+
+However, the therapeutic landscape has shifted markedly toward targeted and 
+
+immunomodulatory agents with substantially more complex mechanisms of action. For such 
+
+therapies, the relationship between early surrogate signals and long -term clinical bene7it is 
+
+often indirect, context -dependent, and heterogeneous across patient subgroups. As a result, 
+
+surrogate endpoints that appear promising at the population level may fail to reliably predict 
+
+downstream outcomes in con7irmatory trials. These challenges have be en re7lected in recent 
+
+regulatory actions, including the withdrawal of several drugs previously granted accelerated 
+
+approval and the adoption of more stringent requirements for con7irmatory evidence. A 
+
+central driver of this increased scrutiny is the limit ed ability of existing evaluation 
+
+frameworks to characterize how surrogate performance varies across patient populations 
+
+and treatment contexts. 
+
+Most existing surrogate -based methods implicitly treat surrogate validity as a
+
+homogeneous, population -level property and do not explicitly model heterogeneity in the 
+
+relationships among surrogate biomarkers, predictive biomarkers, and clinical outcomes. 
+
+Consequently, these approaches rely on simpli7ied assumptions that may be inadequate in 
+
+modern therapeutic settings. Compared with Parast et al. (2024), our proposed method can 
+
+directly identify heterogeneous regions of surrogate validity while simultaneous ly 
+
+considering all covariates. In addition, our framework is grounded in a causal mediation 
+
+analysis framework, which provides clearer interpretability for the surrogate -mediated M-survival -learner 21 
+
+treatment effects. Furthermore, our approach can detect more complex heterogeneous 
+
+regions in the covariate space without requiring pre -speci7ied grids to search for subgroup 
+
+regions, allowing for a more 7lexible and data -adaptive identi7ication of surroga te -valid 
+
+subpopulations. 
+
+Importantly, the proposed approach is designed to distinguish genuine heterogeneity from 
+
+spurious subgroup structure, thereby mitigating the risk of over -partitioning and false 
+
+discoveries. By representing treatment effects along continuous dimensions of p atient 
+
+characteristics rather than relying on ad hoc subgroup de7initions, the method yields a more 
+
+interpretable and clinically meaningful characterization of heterogeneity. This 
+
+representation has direct implications for precision treatment strategies an d for the design 
+
+of adaptive or subgroupenriched clinical trials. 
+
+Application of the proposed method to the ACTG 175 HIV trial further illustrates its 
+
+practical utility. The analysis revealed substantial heterogeneity primarily along baseline CD4 
+
+cell count and prior ART exposure. These 7indings are biologically plausibl e and consistent 
+
+with established clinical knowledge: baseline CD4 count re7lects immune reserve and 
+
+capacity for immune reconstitution, while prior ART exposure captures treatment history, 
+
+disease chronicity, and potential resistance, all of which are kno wn to in7luence immunologic 
+
+response to therapy (Dybul et al., 2002; Kaufmann et al., 2003; Clavel and Hance, 2004). The 
+
+recovery of these well -recognized effect modi7iers supports the validity of the proposed 
+
+method and suggests that it captures clinicall y meaningful structure rather than noise. 
+
+From a practical perspective, these results indicate that the proposed framework can 
+
+inform more precise treatment allocation and provide actionable insights for future trial 
+
+design, including strati7ied or enrichment -based strategies. More broadly, system atic 
+
+characterization of surrogate heterogeneity may help reconcile discrepancies between Phase 
+
+II and Phase III 7indings, reduce uncertainty in early development decisions, and strengthen 
+
+the evidentiary foundation underlying accelerated approval pathways .22 Biometrics, December 2006 
+
+Several limitations merit consideration. In real -world applications, calibration of the 
+
+heterogeneity detection procedure relies on permutation -based approximations to the null 
+
+distribution. While practical, such approaches are inherently constrained by th e number of 
+
+permutations and cannot guarantee exact Type I error control, in contrast to simulation 
+
+settings where homogeneous scenarios can be explicitly speci7ied. Developing more accurate 
+
+and scalable inferential procedures for heterogeneity detection i n data -driven subgroup 
+
+analyses therefore represents an important direction for future research. 
+
+8. Code Availability 
+
+An R package MLearner implementing the proposed method will be available on GitHub 
+
+soon. 
+
+References 
+
+Buyse, M., Sargent, D. J., Grothey, A., Matheson, A., and De Gramont, A. (2010). Biomarkers and 
+
+surrogate end points —the challenge of statistical validation. Nature reviews Clinical 
+
+oncology 7, 309 –317. 
+
+Clavel, F. and Hance, A. J. (2004). Hiv drug resistance. New England Journal of Medicine 
+
+350, 1023 –1035. 
+
+Cohen, M. H., Williams, G. A., Sridhara, R., Chen, G., and Pazdur, R. (2003). Fda drug approval 
+
+summary: ge7itinib (zd1839)(iressa ®) tablets. The oncologist 8, 303 –306. 
+
+Dybul, M., Fauci, A. S., Bartlett, J. G., Kaplan, J. E., and Pau, A. K. (2002). Guidelines for using 
+
+antiretroviral agents among hiv -infected adults and adolescents: the panel on clinical 
+
+practices for treatment of hiv. Annals of internal medicine 137, 381 –433. 
+
+FDA (1992). New Drug, Antibiotic, and Biological Drug Product Regulations; Accelerated 
+
+Approval .
+
+FDA (2014). Guidance for industry: Expedited programs for serious conditions – drugs and 
+
+biologics. M-survival -learner 23 
+
+FDA (2021). Center for drug evaluation and research approval package for application 
+
+numbers. Approval Package for Scemblix tablets (asciminib) for Ph+ CML. 
+
+FDA (2023). Clinical trial considerations to support accelerated approval of oncology 
+
+therapeutics: Draft guidance for industry. Draft guidance; available for comment. 
+
+FDA (2024). Expedited program for serious conditions — accelerated approval of drugs and 
+
+biologics: Draft guidance for industry. Draft guidance; accessed 2025 -12 -22. 
+
+FDA (2025). Accelerated approval and considerations for determining whether a
+
+con7irmatory trial is underway: Draft guidance for industry. Accessed 2025 -12 -22. 
+
+FDA (2025). Table of surrogate endpoints that were the basis of drug 
+
+approval or licensure. h9ps://www.fda.gov/drugs/development -resources/ table -
+
+surrogate -endpoints -were -basis -drug -approval -or -licensure .
+
+Freedman, L. S. and Schatzkin, A. (1992). Sample size for studying intermediate endpoints 
+
+within intervention trials or observational studies. American Journal of Epidemiology 136, 
+
+1148 –1159. 
+
+Hammer, S. M., Katzenstein, D. A., Hughes, M. D., Gundacker, H., Schooley, R. T., Haubrich, R. H., 
+
+Henry, W. K., Lederman, M. M., Phair, J. P., Niu, M., et al. (1996). A trial comparing 
+
+nucleoside monotherapy with combination therapy in hiv -infected adults with cd4 cell 
+
+counts from 200 to 500 per cubic millimeter. New England Journal of Medicine 335, 1081 –
+
+1090. 
+
+Imai, K., Keele, L., and Tingley, D. (2010). A general approach to causal mediation analysis. 
+
+Psychological methods 15, 309. 
+
+Kaufmann, G. R., Perrin, L., Pantaleo, G., Opravil, M., Furrer, H., Telenti, A., Hirschel, B., 
+
+Ledergerber, B., Vernazza, P., Bernasconi, E., et al. (2003). Cd4 t -lymphocyte recovery in 
+
+individuals with advanced hiv -1 infection receiving potent antiretrovi ral therapy for 4 
+
+years: the swiss hiv cohort study. Archives of internal medicine 163, 2187 –2195. 24 Biometrics, December 2006 
+
+Kazandjian, D., Blumenthal, G. M., Yuan, W., He, K., Keegan, P., and Pazdur, R. (2016). Fda 
+
+approval of ge7itinib for the treatment of patients with metastatic egfr mutation – positive 
+
+non –small cell lung cancer. Clinical Cancer Research 22, 1307 –1312. 
+
+Knowlton, R., Tian, L., and Parast, L. (2025). A general framework to assess complex 
+
+heterogeneity in the strength of a surrogate marker. Statistics in medicine 44, e70001. 
+
+Li, X., Liu, Q., Jiang, T., Xia, H. A., Hobbs, B. P., and Wei, P. (2025). M -learner:a 7lexible and 
+
+powerful framework to study heterogeneous treatment effect in mediation model. 
+
+Li, Y., Taylor, J. M., Elliott, M. R., and Sargent, D. J. (2011). Causal assessment of surrogacy in a 
+
+meta -analysis of colorectal cancer trials. Biostatistics 12, 478 –492. 
+
+Parast, L., Cai, T., and Tian, L. (2023). Testing for heterogeneity in the utility of a surrogate 
+
+marker. Biometrics 79, 799 –810. 
+
+Parast, L., Tian, L., and Cai, T. (2024). Assessing heterogeneity in surrogacy using censored 
+
+data. Statistics in medicine 43, 3184 –3209. 
+
+Rubin, D. B. et al. (1990). Comment: Neyman (1923) and causal inference in experiments and 
+
+observational studies. Statistical Science 5, 472 –480. 
+
+VanderWeele, T. J. (2011). Causal mediation analysis with survival data. Epidemiology 22, 
+
+582 –585. 
+
+Xue, F., Tang, X., Kim, G., Koenen, K. C., Martin, C. L., Galea, S., Wildman, D., Uddin, M., and Qu, 
+
+A. (2022). Heterogeneous mediation analysis on epigenomic ptsd and traumatic stress in 
+
+a predominantly african american cohort. Journal of the American Statistical Association 
+
+117, 1669 –1683. 
+
+Zabor, E. C., Kaizer, A. M., and Hobbs, B. P. (2020). Randomized controlled trials. Chest 158, 
+
+S79 –S87. 
+
+Zhou, J., Jiang, X., Amy Xia, H., Wei, P., and Hobbs, B. P. (2021). A survival mediation model with 
+
+bayesian model averaging. Statistical Methods in Medical Research 30, 2413 – 2427. 
+
+Received October 2004. Revised February 2005. 
+
+Accepted March 2005. M-survival -learner 25 
+
+Figure 1 : Causal diagrams for surrogate endpoint validation and mediation model. Panels 
+
+(a) –(c) depict three scenarios of surrogate relationships. These scenarios provide illustrative 
+
+examples for the analytical work7low presented in panel (d). (a) represents an i deal surrogate 
+
+scenario, in which the surrogate endpoint M fully captures the treatment effect on the clinical 
+
+outcome T. (b) represents a non -ideal surrogate scenario, in which the surrogate endpoint 
+
+captures only part of the treatment effect, with the remaining effect acting directly on the 
+
+clinical outcome. W denotes treatment, M denotes surrogate biomarker, T denotes clinical 
+
+outcome. (c) represents M is not surrogate endpoint, with no treatment effect mediated by 
+
+M. (d) the overall pipeline of the proposed method. Illustration of subgroup identi7ication 
+
+when the surrogate is valid only in the region (Var1 > 0&Var2 > 0) and (Var1 > 0&Var2 < 0) 
+
+and invalid elsewhere. The proposed method constructs an NIECC -based dissimilarity matrix, 
+
+projects observations into a two -dimensional space via a modi7ied t -SNE, and then applies K -
+
+means clustering followed by a decision tree to obtain interpretable s ubgroup rules. 26 Biometrics, December 2006 
+
+Figure 2 : Distribution of thresholds of complex assumption. The mediator is active only in 
+
+the region X(1) > 0 and X(2) > 0. Each point represents the estimated boundary threshold of the 
+
+mediator -heterogeneous region obtained from the selected pro7ile in a single simulation 
+
+replicate. Black points denote replicate -speci7ic estimates, and the red curves represent the 
+
+correspon ding density estimates. Scenarios All1 and All2 correspond to complete mediation 
+
+of the treatment effect through the mediator, whereas Part1 and Part2 correspond to partial 
+
+mediation. The treatment effect is constant in All1 and Part1, and covariate -depend ent in All2 
+
+and Part2. 
+
+Figure 3 : Empirical cumulative distribution function (ECDF) of pMleaf and pYleaf in complex 
+
+assumption. Scenarios All1 and All2 correspond to complete mediation of the treatment 
+
+effect through the mediator, whereas Part1 and Part2 correspond to partial mediation. The 
+
+treatment effect is constant in All1 and Part1, and covariate -depende nt in All2 and Part2. M-survival -learner 27 
+
+Figure 4 : Pro7ile of heterogeneous surrogate biomarker CD4 level at 20 weeks. mean NIECC: 
+
+mean natural indirect treatment effect conditional on covariates in this group. preanti: prior 
+
+antiretroviral therapy exposure measured as days of pre -ACTG 175 treatment. pre anti < 8
+
+days indicates that the duration of antiretroviral therapy is close to zero, corresponding to 
+
+patients who are essentially treatment -na¨ıve.                                             
+
+> CD4 (baseline )<298 ?
+> samples =1054
+> preanti<8?
+> samples =678
+> No
+> Subgroup 1
+> CD4 ()baseline <298
+> samples =,376
+> mean NIE =-0.53
+> Yes
+> Subgroup 2
+> CD4 (baseline )>= ,298 preanti <8
+> samples =310 ,
+> mean NIECC =-0.03
+> Yes
+> Subgroup 3
+> CD4 ()baseline >= ,298 preanti >= 8
+> samples =368 ,
+> mean NIECC =-0.06
+> No 28 Biometrics, December 2006
+
+Figure 5 : (a) Distribution of individual indirect treatment effects conditional on covariates 
+
+across three subtypes. Each point represents an individual -level indirect treatment effect 
+
+conditional on covariates. Boxes indicate the interquartile range with medians shown as 
+
+horizontal lines, and red diamonds denote subgroup means. The mean indirect effects are 
+
+−0.53 for Subgroup 1, −0.03 for Subgroup 2, and −0.06 for Subgroup 3. The reported values 
+
+are intended to illustrate relative patterns and should not b e interpreted as exact quantitative 
+
+estimates. The indirect treatment effect estimates are truncated by displaying only 
+
+individuals whose estimated indirect treatment effects lie between the 10th and 90th 
+
+percentiles. The 7igures (b), (c), (d) show counter factual survival curves under different 
+
+treatment and mediator settings. The curve S(1 ,M (1)) represents the survival probability if 
+
+all individuals received treatment and the mediator took its natural value under treatment. 
+
+The curve S(1 ,M (0)) represents t he survival probability if all individuals received treatment 
+
+while the mediator was 7ixed at the level it would have taken under control. The curve 
+
+S(0 ,M (0)) represents the survival probability if all individuals received control and the 
+
+mediator took its natural value under control. The vertical purple line indicates the time of 
+
+surrogate measurement (20 weeks, i.e., 140 days). (a) Subgroup 1, (b) Subgrou p 2, (c) 
+
+Subgroup 3. Details on the construction of the counterfactual survival plots are provided in 
+
+Appendix I.

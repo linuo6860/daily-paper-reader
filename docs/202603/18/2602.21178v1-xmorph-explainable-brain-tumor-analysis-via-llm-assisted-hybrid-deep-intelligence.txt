@@ -1,0 +1,607 @@
+Title: XMorph: Explainable Brain Tumor Analysis Via LLM-Assisted Hybrid Deep Intelligence
+
+URL Source: https://arxiv.org/pdf/2602.21178v1
+
+Published Time: Wed, 25 Feb 2026 02:15:02 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# XMorph: Explainable Brain Tumor Analysis Via LLM-Assisted Hybrid Deep Intelligence 
+
+Sepehr Salem Ghahfarokhi 1, M. Moein Esfahani 2, Raj Sunderraman 1, Vince Calhoun 2, Mohammed Alser 1
+
+> 1
+
+Department of Computer Science, Georgia State University , Atlanta, GA, USA 
+
+> 2
+
+TReNDS Center, Georgia State University , Atlanta, GA, USA Corresponding authors: ssalemghahfarokhi1@gsu.edu, malser@gsu.edu 
+
+Abstract —Deep learning has significantly advanced automated brain tumor diagnosis, yet clinical adoption remains limited by interpretability and computational constraints. Conventional models often act as opaque “black boxes” and fail to quantify the complex, irregular tumor boundaries that characterize malignant growth. To address these challenges, we present XMorph, an explainable and computationally efficient framework for fine-grained classification of three prominent brain tumor types: glioma, meningioma, and pituitary tumors. We propose an Information-Weighted Boundary Normalization (IWBN) mecha-nism that emphasizes diagnostically relevant boundary regions alongside nonlinear chaotic and clinically validated features, enabling a richer morphological representation of tumor growth. A dual-channel explainable AI module combines GradCAM++ visual cues with LLM-generated textual rationales, translating model reasoning into clinically interpretable insights. The pro-posed framework achieves a classification accuracy of 96.0%, demonstrating that explainability and high performance can co-exist in AI-based medical imaging systems. The source code and materials for XMorph are all publicly available at: https: //github.com/ALSER-Lab/XMorph. 
+
+Index Terms —Brain Tumor Classification, Explainable Artifi-cial Intelligence (XAI), Nonlinear Chaotic Features, Deep Learn-ing, Large Language Models (LLM), Medical Image Analysis. 
+
+I. I NTRODUCTION 
+
+Brain tumors are among the most lethal forms of cancer, with patient prognosis heavily dependent on early and accurate diagnosis. Magnetic Resonance Imaging (MRI) is the standard modality for non-invasive tumor detection, and the rise of deep learning, particularly Convolutional Neural Networks (CNNs), has led to significant advances in automated image analysis [1]. These methods have been especially effective in classifying gliomas , meningiomas , and pituitary tumors —three of the most prevalent and clinically consequential intracranial tumor types. Together, these tumors account for the majority of adult brain tumor diagnoses and present distinct morphological and clinical characteristics, making them ideal targets for developing explainable and fine-grained AI-based diagnostic systems. However, three major challenges hinder the widespread clinical adoption of these systems. First, the inherent “black box” nature of deep neural networks creates a substantial trust deficit among clinicians [2]. Without transparent insight into a model’s reasoning, its predictions are difficult to rely on for critical patient-care decisions, a limitation widely discussed in medical AI surveys [3]. Second, high-performing models are often computationally expensive. For example, the MGMT-net model reports 97.2% accuracy but requires 3.42 seconds per MRI slice during inference due to its deep architecture [4]. Such heavy networks impose significant memory and processing demands, reduc-ing their practicality in real-time diagnostic workflows and resource-limited clinical settings—an issue further magnified by the rise of portable MRI devices. Third, existing approaches often struggle to capture the irregular, non-Euclidean tumor boundaries characteristic of malignant growth. Building on our previous work [5], [6], we emphasize the importance of metrics from nonlinear dy-namics—such as Fractal Dimension (FD) and Approximate Entropy (ApEn)—which are computationally lightweight yet sensitive to subtle boundary irregularities frequently over-looked by CNN-based features. To address the first two challenges, recent studies have explored two primary directions. Post-hoc explainability tools, such as GradCAM++, are widely used to highlight influential regions in MRI slices [7], [8], while LLM-based approaches generate textual rationales for model predictions [9]. In paral-lel, lightweight architectures aim to reduce parameter counts while maintaining competitive accuracy [8]. However, these solutions are typically developed in isolation and, critically, do not address the challenge of modeling complex tumor morphology through integrated clinical and mathematical descriptors. Our goal is to develop a diagnostic system that bridges the gap between high-performance automated classification and clinical transparency. To this end, we introduce XMorph, a clinically interpretable framework for the fine-grained clas-sification of glioma, meningioma, and pituitary tumors. The key idea of XMorph is the synergistic integration of deep convolutional features, metrics from nonlinear dynamics, and quantitative clinical biomarkers into a unified diagnostic pipeline. To our knowledge, XMorph is the first framework to provide a dual-channel explainability module that inter-prets both handcrafted morphological features and radiologi-cal markers through natural language, grounding AI predic-1
+
+> arXiv:2602.21178v1 [cs.CV] 24 Feb 2026
+
+tions in established clinical practice. We evaluate XMorph through a comparative analysis against prominent state-of-the-art methodologies, demonstrating that our framework provides a superior foundation for interpretable brain tumor analysis. The contributions of this work are as follows:  
+
+> •
+
+Novel Information-Weighted Boundary Normaliza-tion (IWBN): a first-of-its-kind boundary enhancement method that automatically prioritizes informative bound-ary segments, producing a more discriminative charac-terization of infiltrative growth than conventional global shape features.  
+
+> •
+
+Hybrid Feature Representation: a unified feature space that fuses CNN embeddings, metrics from nonlinear dynamics (FD, ApEn, LE), and clinical biomarkers (REI, MLS), enabling richer and more stable tumor character-ization.  
+
+> •
+
+Dual-channel Explainable AI (XAI): a modular XAI system that couples spatial visualizations (GradCAM++) with LLM-generated clinical narratives, effectively trans-lating the reasoning behind our entire hybrid feature set into human-readable insights.  
+
+> •
+
+Comprehensive Benchmarking and Efficiency: We demonstrate through quantitative benchmarks that XMorph achieves competitive classification accuracy while operating with significantly lower computational overhead than heavy state-of-the-art architectures. II. R ELATED WORK 
+
+To our knowledge, XMorph is the first hybrid intelligence framework for brain tumor analysis that holistically integrates deep convolutional features, nonlinear boundary dynamics, and quantitative clinical biomarkers within a dual-channel explainable AI (XAI) module. While prior works have separately explored these areas, they often focus on either deep learning accuracy, post-hoc explainability, or nonlinear feature analysis in isolation. Our work bridges the gaps between these domains by proposing a unified, lightweight, and interpretable system. In this section, we review the existing literature across three key areas that our framework synthesizes: (1) CNN-based and nonlinear feature approaches for tumor analysis, (2) explainable AI in medical imaging, and (3) the emerging role of Large Language Models (LLMs). 
+
+1) CNN-Based and Nonlinear Feature Approaches for Brain Tumor Analysis: CNN architectures like VGG, DenseNet, and ResNet, often combined with transfer learn-ing, are the cornerstone of modern image-based classification [1]. For precise localization, segmentation models such as YOLOv8 and DeepLabV3+ are commonly employed as a pre-liminary step to isolate the tumor region before classification [1], [2]. More recently, custom lightweight CNNs have been explored to reduce computational overhead. For instance, the work in [10] introduces a lightweight CNN optimized via a novel Nonlinear L´ evy Chaotic Moth Flame Optimiser (NL-CMFO) for efficient hyperparameter tuning, achieving high accuracy in an end-to-end fashion. Similarly, [11] proposes CDCG-UNet, a segmentation framework enhanced by Chaotic Harris Shrinking Spiral Optimization (CHSOA), which signifi-cantly boosts tumor boundary delineation on BRATS datasets. Another related effort [12] combines fuzzy logic with CNN and U-Net architectures to improve tumor classification and segmentation accuracy through nonlinear feature handling. While effective, these approaches primarily focus on architec-tural optimization and may not explicitly capture the rich infor-mation contained in the nonlinear dynamics of tumor growth. Furthermore, like many deep learning systems, they often lack built-in interpretability, a well-documented challenge that can hinder clinical trust and adoption [2], [3]. Beyond chaos-inspired methods, several studies have ex-plored nonlinear and fractal-based features for brain tumor analysis. The PFA-Net framework [13] embeds fractal dimen-sion estimation into a CNN segmentation pipeline, effectively modeling the morphological complexity of tumor regions. The MFDNN model [14] incorporates multiresolution fractal texture features, derived from fractional Brownian motion, into deep networks for robust and uncertainty-aware tumor segmentation. In addition, [15] demonstrates that fractal di-mension metrics of tumor structure, boundary, and skeleton are effective biomarkers for distinguishing high-grade from low-grade gliomas, achieving strong diagnostic accuracy. While these approaches enrich tumor representation with nonlinear morphological insights, they often lack integration with clini-cal priors or multimodal interpretability mechanisms. 
+
+2) Explainable AI (XAI) in Medical Imaging: Recognizing the ”black box” problem, researchers have begun integrating XAI techniques. Visualization methods like Gradient-weighted Class Activation Mapping (GradCAM) are widely used to produce heatmaps that highlight the image regions most in-fluential to a model’s decision [2], [7]. This provides a crucial visual aid for clinicians. However, these visual maps alone may not fully articulate the reasoning behind a classification, such as the specific textural or morphological properties the model identified. Beyond GradCAM heatmaps, recent works have introduced alternative XAI strategies in medical imaging. Muhammad et al. [16] present a systematic review covering gradient-based, perturbation-based, and example-based methods, highlighting their applicability and limitations for clinical adoption. Dravid et al. [17] propose medXGAN, a GAN-based framework that perturbs input images in a learned manner to generate realis-tic counterfactuals, revealing which structures most influence a model’s decision and offering richer interpretability than saliency maps alone. 
+
+3) The Role of Large Language Models (LLMs): The advent of powerful LLMs has opened new frontiers for med-ical AI. Initial applications focused on generating diagnostic reports from model outputs, as seen with BioMistral-7B [9], or using multimodal LLMs like LLaVA and GPT-4 for direct image classification via prompting [8], [10]. These models can provide “soft explainability” by generating textual descriptions of their findings. However, when used in isolation for clas-sification, they may not leverage the specialized, fine-grained 2features that CNNs excel at extracting. Furthermore, work like EEG-GPT [3] shows that LLMs can interpret pre-extracted, Tumor Specific features, but this has not yet been explored in the context of chaotic features for brain tumor imaging. Despite these advances, a clear research gap remains. Ex-isting models often: (a) provide either visual (GradCAM) or textual (LLM) explanations, but rarely integrate both into a cohesive framework; (b) rely on computationally intensive architectures that are not optimized for rapid, lightweight analysis; and (c) have not explored the rich, descriptive power of nonlinear chaotic features for characterizing tumor mor-phology. Our work directly addresses this gap by proposing a hybrid framework that is lightweight, multimodally explain-able, and specifically tailored for the fine-grained, three-class brain tumor classification task. III. P ROPOSED METHODOLOGY 
+
+Our proposed framework, XMorph, employs a multi-stage pipeline to accurately classify brain tumors (Glioma, Menin-gioma, and Pituitary) while providing transparent, clinically relevant explanations. As illustrated in Figure 1, the methodol-ogy consists of six primary stages that synergistically integrate deep learning with nonlinear dynamic analysis:  
+
+> •
+
+Stage 1: Automated Tumor Segmentation: An input MRI is first processed using a DeepLabV3 model to automatically localize the tumor and extract its precise Region of Interest (ROI).  
+
+> •
+
+Stage 2: Chaotic Feature Extraction: The tumor bound-ary is converted into a 1D signal to extract nonlinear chaotic features that quantify morphological complex-ity. This stage is enhanced by our novel Information-Weighted Boundary Normalization (IWBN) method, which amplifies diagnostically significant boundary irreg-ularities.  
+
+> •
+
+Stage 3: Deep Feature Extraction: In a parallel stream, the MRI brain image is fed into a pre-trained ResNet-50 to learn high-level textural and contextual representations that are robust to variations in appearance.  
+
+> •
+
+Stage 4: Hybrid Feature Fusion: The outputs from the complementary streams—chaotic features, deep fea-tures, and quantitative clinical biomarkers (e.g., Ring Enhancement Index, Midline Shift)—are concatenated into a single, comprehensive diagnostic signature.  
+
+> •
+
+Stage 5: Tumor Classification: A computationally ef-ficient XGBoost classifier predicts the final tumor class based on the fused feature vector.  
+
+> •
+
+Stage 6: Dual-Channel Visual-Textual Explainability: 
+
+Finally, a dual-channel XAI module generates both a 
+
+visual explanation (via GradCAM++) to highlight influ-ential image regions and a textual explanation (via an LLM) to articulate the model’s diagnostic reasoning in clear, human-readable language. Each of these stages is detailed in the subsequent subsec-tions. 
+
+A. Stage 1: Automated Tumor Segmentation 
+
+The goal of this stage is to accurately isolate the tumor region from the input MRI, producing a reliable ROI for downstream feature extraction. High-quality segmentation is essential because boundary morphology, chaotic descriptors, and clinical biomarkers all depend on precise delineation of the tumor contour. To achieve this, we employ the DeepLabV3 architecture with a ResNet-50 backbone [18], adapted specifically for medical image segmentation. The standard DeepLabV3 output layer, originally designed for 21 semantic classes in PASCAL VOC, is replaced with a binary tumor–background classifier to focus the network exclusively on pathological region iden-tification. To improve robustness under class imbalance—where tumor pixels constitute only a small fraction of the image—we use a hybrid loss function combining cross-entropy and Dice loss: 
+
+Lcombined = LCE + LDice . (1) Cross-entropy ensures pixel-level classification consistency, while Dice loss directly optimizes the overlap between the predicted mask and ground truth mask. Dice loss is particularly effective in cases of imbalance, as it measures the ratio of the intersection over the union of the two regions, preventing the model from being biased toward predicting the dominant background class. To enhance generalization, we apply medical-specific data augmentation, including controlled rotations ( ±15 ◦), horizon-tal flips, and intensity variations. The 15 ◦ rotation limit was selected to reflect plausible patient head-orientation differ-ences during MRI acquisition without introducing unrealistic anatomical distortions. For model selection, we prioritize the Dice coefficient dur-ing validation, as Dice directly reflects segmentation quality by quantifying how much of the predicted mask overlaps with the annotated tumor. This criterion is more clinically meaningful than validation loss alone, since accurate boundary extraction is critical for subsequent morphological and chaotic feature computation. This segmentation stage is not intended to introduce ar-chitectural novelty; rather, it provides a reliable and effi-cient foundation for extracting boundary-dependent descrip-tors, which are central to our contribution. We evaluated both DeepLabV3 and U-Net, with U-Net achieving a Dice score of 
+
+89 .72% ± 0.146 , while DeepLabV3 delivered higher and more stable boundary accuracy. For this reason, model selection prioritized the Dice coefficient—an indicator of mask–ground-truth overlap—over validation loss, ensuring clinically mean-ingful segmentation quality. 
+
+B. Stage 2: Tumor Specific Features Extraction 
+
+The goal of this stage is to capture a rich, interpretable signature of the tumor’s morphology and clinical presentation. Drawing on evidence that malignant tumor growth exhibits chaotic behavior [5], [19], our pipeline extracts features from three complementary sources. 3Raw input:     
+
+> MRI Image
+> Boundary to Time Series
+> Conversion
+> Entropies Lyapunov
+> Exponents
+> Fractal
+> Dimension
+> MRI image Pre -Trained
+> ResNet 50
+> Deep Features
+> Stage 3 : Deep Features Extraction
+> Stage 4 :
+> Features Fusion
+> Glioma
+> Meningioma
+> Pituitary XGBoost
+> Classifier
+> Stage 5 : Classification
+> The model predicted a pituitary tumor
+> (Confidence = 0.94) because the lesion
+> appears centered in the sellar region —
+> the skull base cavity housing the pituitary
+> gland...
+> GradCam ++ LLM Explanation
+> Stage 6 : Dual -Channel Visual –Textual Explainability)
+> Time Series
+> from
+> Tumor
+> Boundary
+> Information -Weighted Boundary
+> Normalization (IWBN)
+> Clinical Features
+> Stage 2 : Tumor Specific Features
+> Tumor Predicted
+> Mask
+> Tumor Boundary
+> Stage 1 : Automated Tumor Segmentation
+> (DeepLabV3)
+> THE "XMORPH" MODEL BOX
+
+Fig. 1. The end-to-end pipeline of the proposed XMorph framework for explainable brain tumor classification, illustrating the six-stage workflow. Stage 1 (Automated Tumor Segmentation): An input MRI is processed by a DeepLabV3 model to generate a tumor mask and extract the ROI (tumor boundary). 
+
+Stage 2 (Tumor Specific Features Extraction): A multi-faceted feature set is extracted. The tumor boundary is converted to a time series to compute nonlinear chaotic descriptors (e.g., Entropies, Fractal Dimension), features from our novel Information-Weighted Boundary Normalization (IWBN), and quantitative clinical biomarkers. Stage 3 (Deep Features Extraction): In a parallel stream, a pre-trained ResNet-50 extracts high-level textural features from the input MRI. Stage 4 (Features Fusion): The Tumor Specific and deep feature sets are concatenated into a single feature vector. Stage 5 (Classification): 
+
+An XGBoost classifier uses the fused vector to predict the tumor class (Glioma, Meningioma, or Pituitary). Stage 6 (Dual-Channel Explainability): The framework provides two complementary explanations for transparency. A visual GradCAM++ heatmap, generated from the deep feature model, shows where 
+
+the model focuses. A textual rationale from an LLM explains why the final XGBoost classifier made its decision by interpreting the most influential features from the fused set, including the novel chaotic and clinical descriptors. 
+
+First, the 2D tumor boundary is converted into a 1D radial signal to compute a suite of morphological and chaotic features. This includes geometric metrics (e.g., Irregularity), nonlinear indices (e.g., Fractal Dimension), and advanced descriptors from our novel Information-Weighted Boundary Normalization (IWBN) method. Second, we extract quanti-tative clinical biomarkers from the MRI, such as the Ring Enhancement Index (REI) and Midline Shift (MLS), to ground the analysis in radiological practice. This multi-faceted approach yields a comprehensive feature set that quantifies the tumor’s shape, complexity, and clinical characteristics, providing crucial information that is comple-mentary to the deep features learned in the next stage. 
+
+1) Boundary-to-Signal Conversion: For each predicted tu-mor mask, we extract the primary 2D boundary contour and resample it to a fixed arc-length of N = 256 points to ensure consistent spatial resolution across all tumors. Let (xi, y i)
+
+denote the coordinates of the i-th resampled boundary point, and let (cx, c y ) represent the centroid of the tumor mask. The radial distance from the centroid to each boundary point is computed as: 
+
+ri =
+
+q
+
+(xi − cx)2 + ( yi − cy )2, i = 1 , . . . , N, (2) where ri represents the radius at position i along the boundary. To make the representation scale-invariant —that is, inde-pendent of the absolute tumor size—we normalize each radius by the mean radius ¯r = 1
+
+N
+
+PNi=1 ri. This yields the standard radial signal: 
+
+Sstd ,i = ri
+
+¯r , (3) where Sstd ,i > 1 indicates a protrusion relative to the average radius, and Sstd ,i < 1 indicates an indentation. By removing the effect of tumor scale, this normalized signal captures only the shape variability of the boundary, forming the foundation for our geometric and nonlinear feature analysis. 
+
+2) Geometric and Statistical Feature Extraction: First, we extract a set of interpretable features that describe the fun-damental geometry and statistical properties of the tumor boundary. 
+
+• Irregularity Index: This is our primary measure of global boundary fluctuation, defined as the standard de-viation of the normalized radial distance signal ( σ(Sstd )). 
+
+Rationale: A perfectly circular tumor would have an Irregularity Index of zero. A higher value indicates a greater deviation from a simple, regular shape, which is a key hallmark of infiltrative tumor growth. 
+
+• Roughness Index: This feature quantifies the fine-scale jaggedness of the boundary by summing the absolute dif-ferences between consecutive points: P |Sstd ,i +1 −Sstd ,i |.
+
+Rationale: Unlike the Irregularity Index, which captures large-scale fluctuations, the Roughness Index is sensitive to small, high-frequency oscillations like serrations or microlobulations, providing a complementary view of the boundary texture. 
+
+3) Information-Weighted Boundary Normalization (IWBN): 
+
+To capture local morphological irregularities beyond global descriptors, we introduce the IWBN framework. While prior works often characterize tumor boundaries using single, global metrics like fractal dimension [15], these methods do not 4capture the localized variations in complexity that are often hallmarks of malignancy. Our IWBN approach is, to the best of our knowledge, the first to compute a local entropy value at each point along the boundary and use this information to create a new, weighted signal. This method enhances the boundary representation by amplifying regions of high structural complexity, thereby yielding a more discriminative descriptor for classification. 
+
+a) Process Overview: For each boundary point i, we compute a local entropy value Ei representing the variability of its neighborhood (e.g., curvature or radial distance vari-ance). From these, we derive normalized information weights: 
+
+wi = 0.1 + λ · ˆEi
+
+> 1
+> N
+
+PNj=1 (0 .1 + λ · ˆEj ) , ˆEi = Ei − Emin 
+
+Emax − Emin 
+
+(4) where λ controls the weighting strength. These weights mod-ulate the standard normalized distances Sstd ,i to form the enhanced signal: 
+
+Siw ,i = Sstd ,i · wi
+
+> 1
+> N
+
+PNj=1 Sstd ,j · wj
+
+(5) thus emphasizing boundary regions with higher information content. 
+
+b) Derived Indices: From IWBN, we define three key quantitative indices:  
+
+> •
+
+Mean Local Entropy: 
+
+¯E = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+Ei (6) where Ei is the local entropy at boundary point i, and 
+
+N is the total number of sampled boundary points. This index measures the average structural complexity along the tumor boundary, with higher values indicating more globally irregular contours.  
+
+> •
+
+Weight Range: 
+
+∆w = max( wi) − min( wi) (7) where wi is the information weight assigned to boundary point i. This index measures how widely the weights vary along the boundary; a larger ∆w indicates greater het-erogeneity in local information emphasis, meaning some regions contain substantially more structural complexity than others.  
+
+> •
+
+Enhancement Factor: 
+
+EF = σ(Siw )
+
+σ(Sstd ) (8) where σ(Siw ) is the standard deviation of the information-weighted signal and σ(Sstd ) is the standard deviation of the standard normalized radial signal. This ratio quan-tifies how strongly IWBN increases the variability of the boundary representation. Values EF > 1.0 indicate that IWBN successfully amplifies diagnostically relevant shape irregularities, enhancing the discriminative power of the representation for downstream classification. 
+
+4) Nonlinear and Chaotic Feature Descriptors: To capture complex and self-organizing boundary behaviors beyond geo-metric shape, we extract nonlinear descriptors that quantify fractality, randomness, and chaos. The Fractal Dimension, estimated via box-counting as 
+
+D = lim 
+
+> ϵ→0
+
+log N (ϵ)log(1 /ϵ ) , (9) measures the self-similar complexity and space-filling capac-ity of the contour, where higher D values correspond to more irregular, infiltrative growth. Entropy-based measures (Approximate, Sample, and Permutation Entropy) evaluate the unpredictability of boundary fluctuations, while the Largest Lyapunov Exponent: 
+
+λ = lim 
+
+> t→∞
+
+1
+
+t ln d(t)
+
+d(0) (10) quantifies sensitivity to initial conditions, with positive λ
+
+indicating chaotic divergence. Together, these metrics provide a compact yet expressive characterization of nonlinear mor-phological complexity associated with malignant progression. 
+
+5) Clinical Feature Extraction: Alongside chaotic bound-ary descriptors, we integrated three radiological biomarkers commonly evaluated in neuro-oncology [20], each imple-mented in our pipeline to capture vascularity, location, and mass effect.  
+
+> •
+
+Ring Enhancement Index (REI) quantifies peripheral contrast uptake relative to the core: REI = μring − μcore 
+
+μcore + ϵ , (11) where μring and μcore are mean intensities of the enhanc-ing rim and core.  
+
+> •
+
+Skull-to-Tumor Distance (dskull) measures the mini-mum distance between the tumor boundary and the inner skull surface: 
+
+dskull = min  
+
+> p∈∂T
+
+∥p − ∂S∥ 2. (12)  
+
+> •
+
+Midline Shift (MLS) quantifies displacement of the brain’s anatomical midline: MLS = |xmidline − xfalx |
+
+brain width × 100% . (13) All three metrics were derived directly from MRI masks and intensity data, quantifying vascularity (REI), anatomical location (skull distance), and mass effect (midline shift). The midline shift was computed only on axial scans, while REI and skull distance were measured across all orientations. These features complement the boundary-based analysis by linking morphological irregularity to clinically interpretable imaging biomarkers. 
+
+C. Stage 3: Deep Feature Extraction 
+
+We use a pre-trained ResNet-50 model as our deep feature extractor. The full MRI slice—rather than the cropped ROI— is resized to 224 × 224 and passed through the network. Features are taken from the global average pooling layer, 5producing a 2048-dimensional vector. To reduce redundancy and maintain computational efficiency, we apply Principal Component Analysis (PCA) to obtain a compact deep feature representation. ResNet-50 enables efficient transfer learning, providing rich semantic representations without training a deep network from scratch. Using the full MRI preserves global context that may be relevant for classification, while PCA ensures that only the most informative components contribute to the fusion stage. 
+
+D. Stage 4: Hybrid Feature Fusion 
+
+The objective of this stage is to create a single, unified diagnostic signature that synergistically combines the strengths of the different feature types. This hybrid representation is designed to be more robust and discriminative than any individual feature set alone. We construct the final feature vector by concatenating the outputs from the preceding stages. The PCA-reduced deep feature vector from Stage 3 is combined with the full set of Tumor Specific features from Stage 2 (which includes morphological, chaotic, and clinical biomarkers). The resulting fused representation is defined as: 
+
+f fusion = [ f deep PCA ∥ f tsf ], (14) where f deep PCA represents the deep features after PCA and f tsf 
+
+represents the complete set of Tumor Specific features. This hybrid fusion strategy is a core contribution of our framework. It enhances discriminative performance by in-tegrating the abstract, learned visual embeddings from the CNN with the interpretable, domain-specific Tumor Specific features. This combination allows the model to make decisions based on both the tumor’s internal texture (from deep features) and its external morphology and clinical context (from Tumor Specific features). 
+
+E. Stage 5: Tumor Classification 
+
+The final goal of the predictive pipeline is to accurately classify the brain tumor into one of three classes: glioma, meningioma, or pituitary. For classification, we employ an XGBoost classifier, an efficient gradient boosting algorithm. The classifier is trained on the fused feature vectors ( f fusion )from Stage 4. The model minimizes a regularized objective function to prevent overfitting and improve generalization. The objective function at a given step t can be expressed as: 
+
+L(t) =
+
+> n
+
+X
+
+> i=1
+
+l(yi, ˆy(t−1)  
+
+> i
+
++ ft(xi)) + Ω( ft) (15) where l is the loss function (in our case, multiclass logistic loss), yi is the true label for sample i, ˆy(t−1)  
+
+> i
+
+is the prediction from the previous t − 1 trees, and ft(xi) is the prediction of the new tree being added. The term Ω( ft) is a regularization penalty on the complexity of the new tree, which helps to control the model’s complexity. We evaluated our model’s per-formance using a five-fold stratified cross-validation strategy to ensure robust and unbiased results. 
+
+F. Stage 6: Multi-Modal Explainable AI (XAI) Framework 
+
+A complementary contribution of this work is a dual-channel (XAI) framework that enhances model interpretabil-ity by integrating visual attention maps with language-based reasoning, enabling transparent and clinically meaningful ex-planations of the model’s decisions. 
+
+1) Visual Explanation with GradCAM++: To provide vi-sual context, we apply GradCAM++ to the final convolutional layer of our CNN feature extractor. This generates a class-specific heatmap that is overlaid on the input MRI, visually highlighting the pixels and regions that were most influential in the model’s decision to select a particular class (e.g., Malignant). 
+
+2) Large Language Model–Based Explainability: While visual explainability methods such as GradCAM++ highlight influential image regions, they do not communicate the di-agnostic reasoning behind the model’s output. To overcome this, we incorporated a Large Language Model (LLM)–based explainability layer that translates quantitative model evidence into concise, clinically interpretable narratives. For each test sample xi, the XGBoost model outputs a probability distribution ˆyi = f (xi) across the tumor classes. Using SHAP analysis, we decompose the model’s prediction into additive feature contributions: 
+
+f (xi) = ϕ0 +
+
+> M
+
+X
+
+> j=1
+
+ϕij , (16) where ϕ0 is the model’s global bias term and ϕij denotes the contribution of feature j to the prediction of sample i. The 
+
+k features with the highest absolute SHAP values |ϕij | are selected as the primary explanatory factors: 
+
+Fi = Top-k{| ϕij |} Mj=1 . (17) Each feature triplet (fj , ϕ ij , x ij ), along with the predicted class ci and confidence pi = max( f (xi)) , is formatted into a structured textual prompt Pi:
+
+Pi = {ci, p i, [( fj , ϕ ij , x ij )] j∈F i }. (18) The prompt Pi is then provided to a pre-trained LLM (GPT-5), which generates a clinical-style explanation Ei that describes the key diagnostic cues supporting the predicted class: 
+
+Ei = LLM (Pi). (19) These LLM-generated narratives effectively translate quan-titative model reasoning into interpretable medical language. When combined with GradCAM++ visualizations, the dual-channel XAI system provides both spatial and semantic trans-parency, allowing clinicians to simultaneously visualize where 
+
+and understand why the model reached its decision. To operationalize this process, Algorithm 1 outlines the procedure for generating an LLM prompt for a specific test case. Given the model’s predicted class, confidence score, and top-k SHAP-ranked features, the algorithm constructs a structured natural-language query that integrates both quanti-tative evidence (feature names, SHAP values, and raw feature 6magnitudes) and qualitative instruction (“Write a clinical-style explanation and note uncertainty”). This formatted prompt is then passed to the LLM, which produces a concise, in-terpretable diagnostic rationale Ecase grounded in the same features that drove the model’s decision. 
+
+Algorithm 1 LLM Prompt Generation with Safety Constraints 
+
+Input: Predicted class c, Confidence p, SHAP values Φ,Feature set X
+
+Output: Clinical Explanation Ecase  
+
+> 1:
+
+Step 1: Feature Selection  
+
+> 2:
+
+Ftop ← Select top-k features based on |Φ| 
+
+> 3:
+
+Step 2: Contextualization  
+
+> 4:
+
+Psys ← ”You are an expert neuro-oncologist. Analyze the provided quantitative features to explain the tumor classification. Do NOT hallucinate clinical history not present in the data.”  
+
+> 5:
+
+Puser ← ”Diagnosis: ” + c + ” (” + p + ”%).”  
+
+> 6:
+
+Puser ← Puser + ” Key Features: ”  
+
+> 7:
+
+for each feature fi in Ftop do  
+
+> 8:
+
+val ← GetValue( fi) 
+
+> 9:
+
+contrib ← GetSHAP( fi) 
+
+> 10:
+
+Puser ← Puser + fi.name + ” : ” + val + ”( Impact :” + contrib + ”); ”  
+
+> 11:
+
+end for  
+
+> 12:
+
+Step 3: Generation  
+
+> 13:
+
+Ecase ← GPT-5-API (system = Psys , user = Puser ) 
+
+> 14:
+
+return Ecase 
+
+IV. E XPERIMENTAL RESULTS 
+
+This section evaluates X-Morph AI in terms of (i) tumor segmentation quality, (ii) boundary-based and clinical feature behavior, (iii) classification performance under different fea-ture configurations, and (iv) the effectiveness of the proposed dual-channel XAI framework. 
+
+A. Datasets 
+
+We evaluate our framework on publicly available brain MRI datasets, such as the Figshare 2024 collection dataset [21]. These datasets provide a large number of MRI scans with different tumor types, which are essential for training and validating our three-class model. 
+
+B. Segmentation Results 
+
+We evaluated the performance of our DeepLabV3-based segmentation model using five standard metrics: Dice Score, Intersection over Union (IoU), Precision, Recall, and F1 Score. The dataset comprised 3,564 brain MRI scans: Glioma (n=1,426), Meningioma (n=708), Pituitary tumors (n=930), and non-tumor cases (n=500). To improve model specificity and prevent false positives on healthy brain scans, we in-cluded non-tumor images with empty ground truth masks (all background pixels). This approach addresses a common limitation where models trained exclusively on tumor-positive cases exhibit overconfidence and hallucinate tumors in healthy tissue. 
+
+1) Performance Metrics: As shown in Table I, the model achieved an overall Dice score of 0.932 , indicating strong agreement with ground truth. Performance was highest for Non-Tumor cases ( 0.958 ± 0.068 ), suggesting the model dis-tinguishes healthy tissue from tumors reliably. Among tumor types, Meningioma achieved strong results ( 0.928 ± 0.105 ), while Glioma remained the most challenging ( 0.913 ± 0.130 )due to their infiltrative margins. Pituitary tumors performed moderately well (0.940 ± 0.080 ). High overall precision (0.932 ) and recall ( 0.940 ) further demonstrate robustness and clinical relevance. 
+
+2) Qualitative Analysis: Figure 2 illustrates a representative case (likely a glioma) with irregular and infiltrative morphol-ogy. The predicted mask (green) shows strong overlap with the ground truth (red), capturing complex tumor boundaries. The difference map highlights minimal false negatives (red) and false positives (blue), supporting the high Dice, precision, and recall scores. This visual evidence further confirms the model’s reliability for clinical tumor delineation.  
+
+> Fig. 2. Example of brain tumor segmentation results showing original MRI, masks, and differences.
+
+3) Segmentation Model Performance Comparison: To eval-uate the effectiveness of different segmentation architectures on brain tumor detection, we implemented and compared two state-of-the-art models: DeepLabV3 with a ResNet-50 backbone and U-Net. Both models were trained on input images with a resolution of 256 × 256 pixels. Training was performed for 50 epochs using the Adam optimizer with a learning rate of 1e − 4 and a weight decay of 1e − 4.The loss function combined CrossEntropy and Dice loss. To improve generalization, data augmentation techniques such as random horizontal flipping, rotation within ±15 ◦, and brightness/contrast adjustments were applied. Table II reveals that DeepLabV3 consistently outperforms U-Net across all evaluation metrics. DeepLabV3 achieved a Dice Score of 93.21% compared to U-Net’s 89.72%, representing a 3.49 percentage point improvement. Similarly, DeepLabV3 demon-strated superior IoU performance (88.48% vs 83.42%) and higher precision (93.22% vs 90.91%). Notably, DeepLabV3 7TABLE I PERFORMANCE METRICS FOR BRAIN TUMOR SEGMENTATION .                                                                                
+
+> Tumor Type Dice Score IoU Score Precision Recall F1 Score
+> Glioma 0.913 ±0.130 0.860 ±0.155 0.914 ±0.131 0.924 ±0.136 0.913 ±0.130
+> Meningioma 0.928 ±0.105 0.882 ±0.128 0.929 ±0.107 0.938 ±0.109 0.928 ±0.105
+> Pituitary 0.940 ±0.080 0.890 ±0.099 0.937 ±0.085 0.948 ±0.085 0.940 ±0.080
+> Non-Tumor 0.958 ±0.068 0.923 ±0.085 0.959 ±0.076 0.959 ±0.068 0.958 ±0.068
+> Overall 0.932 ±0.104 0.885 ±0.127 0.932 ±0.106 0.940 ±0.108 0.932 ±0.104
+
+also exhibited better consistency, as evidenced by lower stan-dard deviations across all metrics. The standard deviation for Dice Score was ±0.104 for DeepLabV3 compared to ±0.146 
+
+for U-Net, indicating more reliable and stable predictions across different samples and tumor types.                                    
+
+> TABLE II PERFORMANCE COMPARISON BETWEEN DEEP LAB V3 AND U-N ET .
+> Metric DeepLabV3 U-Net
+> Dice Score 93.21% ±0.104% 89.72% ±0.146% IoU Score 88.50% ±0.126% 83.42% ±0.160% Precision 93.22% ±0.106% 90.91% ±0.145% Recall 94.00% ±0.108% 89.98% ±0.157% F1 Score 93.20% ±0.104% 89.71% ±0.146%
+
+C. Boundary Morphology and Signal Characteristics 
+
+To validate our feature engineering approach, we first qual-itatively analyzed the relationship between the known clinical morphology of different tumor types and their correspond-ing 1D boundary signals. Figure 3 illustrates our complete boundary-to-signal pipeline for three representative cases, re-vealing distinct and class-specific morphological signatures. The pipeline successfully transforms the complex 2D tumor boundary into a quantitative, size-invariant time series. The visual and quantitative differences between the tumor classes are immediately apparent:  
+
+> •
+
+Pituitary Tumor (Figure 3a): As a typically benign and well-circumscribed lesion, the pituitary tumor exhibits a highly regular, ovoid shape. This translates into asmooth, periodic time series with low-amplitude oscilla-tions. The resulting Irregularity Index is correspondingly low, quantitatively confirming the boundary’s high degree of regularity.  
+
+> •
+
+Meningioma (Figure 3b): This meningioma, while also benign, presents with a characteristic lobulated morphol-ogy. These large-scale indentations and protrusions are accurately captured by the pipeline, producing a time series with more pronounced, yet still relatively smooth, variations. The Irregularity Index is moderately higher, reflecting this intermediate level of structural complexity.  
+
+> •
+
+Glioma (Figure 3c): In stark contrast, the malignant glioma displays a highly infiltrative and poorly defined boundary. This aggressive growth pattern generates a chaotic and non-periodic time series characterized by sharp, high-amplitude, and unpredictable oscillations. This is quantitatively reflected in a significantly higher Irregularity Index, which captures the extreme irregularity of the malignant contour. The clear monotonic progression observed—from the smooth signal of the benign pituitary tumor to the chaotic signal of the malignant glioma—provides strong initial evi-dence that our 1D signal representation robustly captures clin-ically relevant morphological differences. This demonstrates that boundary irregularity, as quantified by our pipeline, is a powerful biomarker for distinguishing between tumor types, thereby motivating the quantitative analysis across the entire dataset presented in the following section. 
+
+D. Validation of Information-Weighted Normalization 
+
+Having established the baseline morphological signatures, we now evaluate the effectiveness of our novel IWBN. The objective of IWBN is to selectively amplify boundary signal irregularities in diagnostically relevant regions of high local complexity. Figure 4 illustrates this effect across representative tumor cases, while quantitative values further confirm the interpretability of the approach.  
+
+> •
+
+For the Pituitary tumor , the boundary exhibits globally low complexity. Both the Mean Local Entropy (0.19) and Weight Range (3.14) are small, indicating a smooth, homogeneous contour. The IWBN method thus correctly identifies this tumor as compact and well-circumscribed.  
+
+> •
+
+For the Meningioma , the Mean Local Entropy is modest (0.29), yet the Weight Range is relatively high (3.39). This pattern reveals that the tumor boundary is largely regular but contains localized lobulations, which are effectively highlighted by IWBN as focal sources of complexity.  
+
+> •
+
+For the Glioma , the Mean Local Entropy (0.76) and its variability (0.67) are markedly higher than in the other two tumor types, while the Weight Range (2.99) indicates widespread but uneven irregularities. IWBN generates multiple high-weight “hot spots,” capturing the diffuse, chaotic protrusions characteristic of infiltrative malignancy. The quantitative trends align with known tumor biology: gliomas are globally chaotic, meningiomas are mostly smooth with localized irregularities, and pituitary adenomas are highly regular. Most importantly, the Enhancement Factor defined as the ratio of the standard deviation of the IWBN signal to that of the standard normalized signal provides a direct measure of irregularity amplification. Higher values indicate stronger emphasis of irregular features. In our representative cases, the 8Original image  Tumor Mask  Uniform Sampling + Radial Lines  Polar Representation  Normalized Time Series 
+
+(a) 
+
+(b) 
+
+(c) Fig. 3. The boundary-to-signal pipeline reveals distinct morphological signatures across different tumor types. The pipeline converts 2D tumor boundaries (Column 2) into 1D normalized time-series signals (Column 5). Each row illustrates a representative clinical case, demonstrating the direct relationship between visual morphology and the resulting signal characteristics. (a) Pituitary Tumor: A visually regular, well-circumscribed boundary translates into a smooth, low-amplitude signal, quantitatively confirmed by a low Irregularity Index (STD = 0.142). (b) Meningioma: A characteristic lobulated boundary produces a signal with more pronounced variations, reflecting an intermediate structural complexity (Irregularity Index = 0.157). (c) Glioma: A highly infiltrative and poorly defined malignant boundary generates a chaotic, non-periodic signal with sharp, high-amplitude oscillations, corresponding to a significantly higher Irregularity Index (STD = 0.253). This clear monotonic progression from a smooth to a chaotic signal provides strong visual evidence that the pipeline robustly captures clinically relevant morphological differences. 
+
+glioma exhibited the strongest enhancement, confirming that IWBN is most sensitive to malignant boundary morphology. This demonstrates that IWBN not only preserves clinically relevant shape information but also magnifies subtle irregular-ities, thereby yielding a more discriminative feature space for classification. 
+
+E. Visualization of Clinical Features Across Tumor Types 
+
+Figure 5 illustrates three clinically interpretable radiological biomarkers—(REI), Midline Shift, and Skull-to-Tumor Dis-tance—for representative cases of glioma, meningioma, and pituitary adenoma. For the glioma, the high REI of 0.47% indicates strong peripheral enhancement around a necrotic core, a characteristic of infiltrative, high-grade lesions. This is accompanied by a pronounced mass effect, evidenced by a significant midline shift of 13.82%. As the tumor has expanded to the brain’s surface, its partial skull contact (contact ratio 
+
+≈ 0.12 ) is also apparent. In the provided meningioma example, the lesion exhibits a lower REI (0.32), suggesting more uniform enhancement. Unlike a typical extra-axial tumor, this particular case shows a lesion located deep within the brain parenchyma. This deep-seated position is quantified by a large minimum skull-to-tumor distance of 69.34 px and a contact ratio of zero. The mass effect results in a moderate midline shift of 7.71%. In contrast, the pituitary adenoma demonstrates features consistent with its typical location. A minimal REI (0.01) confirms its homogeneous enhancement without a necrotic rim. Its origin in the sella turcica, at the center of the skull base, logically results in a negligible midline shift (0.03%) and the largest measured skull-to-tumor distance (144.17 px). To further validate these observations, we computed class-level statistics of all extracted geometric and irregularity-based features across glioma, meningioma, and pituitary tumors. The aggregated results (Table III) highlight consistent differences that align with known clinical behavior of benign and malig-nant tumors. This clear separation between malignant and benign dis-tance signals demonstrates that nonlinear complexity measures provide robust, discriminative features for classification of brain tumors. V. C LASSIFICATION PERFORMANCE 
+
+This section evaluates the performance of our proposed hy-brid fusion strategy. We first detail the experimental setup used 9Mean Local Entropy ( ത𝐸 = 0.18) 
+
+Weight Range (Δ𝑤 = 3.04 )
+
+Pituitary Sample 
+
+Weight Range (Δ𝑤 = 3.24 )
+
+Mean Local Entropy ( ത𝐸 = 0.26) 
+
+Meningioma Sample  Glioma Sample 
+
+Weight Range (Δ𝑤 = 2.54 )
+
+Mean Local Entropy ( ത𝐸 = 0.76) Fig. 4. Visual Validation of IWBN across Tumor Types. This figure illustrates how our novel IWBN method identifies and emphasizes regions of high morphological complexity. Each column represents a different tumor class, with the top row showing the final Information Weights and the bottom row showing the underlying Local Entropy that generated them. Top Row (Information Weights): Visualizes the amplification factor applied to each point on the boundary. Hotter colors (red/yellow) indicate higher weights, signifying regions of greater diagnostic interest. Bottom Row (Local Entropy): Maps the intrinsic complexity of the boundary. Brighter colors (yellow) correspond to segments with higher irregularity and unpredictability. Pituitary: The benign, regular boundary exhibits uniformly low entropy, resulting in low and evenly distributed weights. The method correctly identifies this as a simple structure. 
+
+Meningioma: The method accurately pinpoints the lobulated portion of the boundary as a localized region of high entropy, assigning it a correspondingly high weight. Glioma: The malignant, infiltrative boundary shows widespread, high-magnitude entropy. The IWBN method correctly assigns high weights to these numerous chaotic segments, effectively highlighting the features of malignancy. TABLE III SUMMARY OF MORPHOLOGICAL AND INFORMATION -WEIGHTED FEATURES ACROSS TUMOR CLASSES . H IGHER ROUGHNESS AND IRREGULARITY IN GLIOMAS REFLECT DIFFUSE INFILTRATION , WHILE HIGHER ENHANCEMENT AND WEIGHT RANGE IN MENINGIOMAS INDICATE STRONGER LOCAL HETEROGENEITY CAPTURED BY THE IWBN METHOD .
+
+Class Irregularity Roughness Area Mean Radius Mean Local Entropy Weight Range Enh. Factor 
+
+Glioma 0.1801 ± 0.0936 3.001 ± 1.0483 5778.9 ± 4044.0 41.4 ± 15.4 0.7563 ± 0.3399 2.99 ± 0.65 5.28 ± 2.87 Meningioma 0.1215 ± 0.0632 2.443 ± 0.6120 4650.0 ± 3128.7 36.7 ± 12.9 0.2899 ± 0.2939 3.39 ± 0.58 7.19 ± 3.25 Pituitary 0.1435 ± 0.0738 2.750 ± 0.6749 2163.9 ± 1633.0 25.1 ± 8.8 0.1901 ± 0.2301 3.14 ± 0.53 6.19 ± 3.25 
+
+for a fair comparison and then present the quantitative results, including an analysis of the Receiver Operating Characteristic (ROC) curves. 
+
+A. Experimental Setup 
+
+To validate the effectiveness of our hybrid approach, we conducted a comparative analysis of three distinct feature configurations: 1) Tumor Specific Features Only: Using the full set of morphological, chaotic, and clinical biomarkers from Stage 2. 2) Deep Features Only: Using the PCA-reduced ResNet-50 features from Stage 3. 3) Fused Hybrid Features: Using the concatenated vector of both Tumor Specific and deep features, as described in Stage 4. To ensure reproducibility and fair comparison, all configu-rations were evaluated using the same XGBoost classifier. The deep feature extraction used a ResNet-50 pre-trained on Im-ageNet, implemented in PyTorch 2.0 on NVIDIA GPUs. De-tailed hyperparameters for every stage of the pipeline—from segmentation to classification—are provided in Table IV. 
+
+TABLE IV DETAILED HYPERPARAMETER CONFIGURATION FOR XM ORPH MODULES .                    
+
+> Stage Configuration / Parameters Segmentation DeepLabV3 (ResNet-50), Input 256 ×256 , Batch 16 Optimizer: Adam ( lr = 10 −4), Loss: LCE +LDice
+> Specific Features Boundary N= 256 , IWBN α= 0 .5, REI ϵ= 10 −6
+> Entropy ( m= 2 , r = 0 .2σ), Fractal Dim. (Box-counting)
+> Deep Features ResNet-50 (ImageNet), Global Avg Pooling, PCA (95% var)
+> Classification XGBoost: 300 estimators, Max Depth 8, Learning Rate 0.05
+
+Feature vectors were z-score normalized within each train-ing fold. Model performance was assessed using a five-fold 10 Fig. 5. Visualization of three key radiological biomarkers across tumor types: (Left) Ring Enhancement Index (core vs. rim intensity), (Center)      
+
+> Midline Shift (centroid deviation from the anatomical midline), and (Right)
+> Skull-to-Tumor Distance (minimum distance and contact ratio). The figure demonstrates increasing enhancement irregularity and deformation gradient from pituitary →meningioma →glioma, reflecting both vascular and spatial indicators of malignancy.
+
+stratified cross-validation, and we report the mean and standard deviation for key metrics, including accuracy, sensitivity, and specificity. 
+
+B. Model Performance and ROC Analysis 
+
+As shown in Table V, Tumor Specific features alone form a strong baseline, achieving an accuracy of 0.90 ± 0.01 with balanced sensitivity ( 0.89 ) and specificity ( 0.95 ). These inter-pretable descriptors capture key aspects of tumor morphology, vascularity, and structural displacement, demonstrating their diagnostic value even without deep representations. Using deep features extracted from the pretrained ResNet-50 further improved performance to 0.93 ± 0.008 accuracy, with sen-sitivity of 0.92 and specificity of 0.96 . This gain highlights the network’s ability to learn high-level visual and contextual cues from MRI data. The best results were obtained by fusing Tumor Specific and deep features, reaching 0.964 ± 0.010 
+
+accuracy, 0.962 sensitivity, and 0.983 specificity—confirming that the two feature types provide complementary diagnostic information. For ROC analysis, as shown in Figure 6, the fusion model consistently outperformed both individual modalities across all tumor types. These findings indicate that Tumor Specific features contribute complementary, clinically interpretable in-formation that enhances the discriminative power and gener-alization of deep learning models.  
+
+> Fig. 6. ROC curves comparing the performance of Tumor Specific, deep, and fused feature configurations for brain tumor classification. The fusion model demonstrates a consistently higher true positive rate across all tumor classes, indicating improved sensitivity–specificity balance. The top panels illustrate per-class ROC curves for glioma, meningioma, and pituitary tumors, while the bottom panels present macro-averaged ROC, AUC comparisons, and performance summaries.
+
+C. Dual-Channel Visual–Textual Explainability 
+
+Our framework’s final stage moves beyond simple predic-tion to provide transparent, clinically relevant explanations. As shown in Figure 7, we integrate GradCAM++ visual maps with our LLM-based textual reasoning module to create a co-hesive dual-channel explanation. While GradCAM++ localizes spatially salient regions in the MRI, the LLM translates the model’s internal reasoning into a concise clinical narrative. A key strength of this approach is the LLM’s ability to interpret and articulate the diagnostic significance of our novel Tumor Specific features. Standard XAI methods can explain which pixels are important, but they cannot explain concepts like “high boundary entropy” or “infiltrative growth patterns.” Our LLM-based module bridges this gap. By receiving the top-k SHAP-ranked features—which often include our chaotic and IWBN-derived metrics—the LLM can generate reasoning grounded in advanced morphological concepts. For example, in the glioma case (Malignant), the explanation is not just based on pixel intensity but is directly linked to quantitative evidence of malignancy, such as high local entropy, a large mean radius, and a strong ring enhancement index. These are precisely the nonlinear and clinical features our framework is designed to capture. The LLM effectively translates these numerical descriptors into a clinically intuitive rationale: the tumor is likely a glioma because it exhibits features consistent with “diffuse, infiltrative pathology.” In contrast, for the pitu-itary case (Benign), the LLM highlights features of benignancy like minimal midline shift and low boundary entropy. By jointly leveraging quantitative chaotic descriptors and semantic LLM interpretation, XMorph creates an interpretable pathway from complex numerical features to actionable clinical insight, 11 TABLE V COMPARISON OF CLASSIFICATION PERFORMANCE (MEAN ± STANDARD DEVIATION ) ACROSS FEATURE CONFIGURATIONS USING FIVE -FOLD CROSS -VALIDATION .
+
+Feature Configuration Accuracy Specificity Sensitivity 
+
+Tumor Specific Features (XGBoost) 0.900 ± 0.013 0.950 ± 0.007 0.895 ± 0.012 
+
+Deep Features (ResNet-50 + XGBoost) 0.930 ± 0.008 0.962 ± 0.005 0.918 ± 0.010 
+
+Fused Deep + Tumor Specific Features 0.960 ± 0.010 0.983 ± 0.005 0.962 ± 0.012 The model predicted a pituitary tumor (Confidence = 0.94) 
+
+because the lesion appears centered in the sellar region —the 
+
+skull base cavity housing the pituitary gland —showing 
+
+minimal midline shift and a large distance from the skull, 
+
+typical of pituitary masses confined within the sella turcica. 
+
+The moderate size and smooth borders also fit benign 
+
+pituitary patterns. 
+
+A small uncertainty remains since slight vertical irregularity 
+
+could resemble an atypical meningioma. 
+
+The model predicted a glioma (confidence = 0.96) mainly due 
+
+to the large tumor area and high local entropy, indicating an 
+
+extensive, heterogeneous lesion consistent with infiltrative 
+
+glial growth. The moderate ring enhancement and large mean 
+
+radius further align with diffuse glioma patterns rather than 
+
+well -circumscribed masses. Some uncertainty remains 
+
+because the relatively low enhancement heterogeneity could 
+
+also appear in low -grade or partially necrotic tumors. 
+
+MRI Images  Extracted Tumor  Grad -CAM++  LLM Explanation 
+
+Fig. 7. Dual-channel explainability results highlighting the role of chaotic and information-weighted features. Each row shows: (1) the original MRI, (2) the extracted tumor mask, (3) GradCAM++ visualization of salient regions, and (4) the LLM-generated explanation derived from fused SHAP-weighted features. The pituitary case (top) demonstrates low boundary entropy and minimal mass effect, while the glioma case (bottom) reflects high local entropy, large radius, and heterogeneous enhancement-patterns amplified by our chaotic feature extraction. Together, the spatial (GradCAM++) and semantic (LLM) channels reveal how nonlinear boundary irregularity and entropy-based cues contribute to diagnostic reasoning, translating complex quantitative patterns into human-interpretable clinical insight. 
+
+demonstrating the unique value of combining Tumor Specific feature engineering with modern language models. VI. C OMPARATIVE ANALYSIS 
+
+To highlight the unique positioning of XMorph within the current landscape of brain tumor diagnostics, we con-duct a comparative analysis against prominent state-of-the-art (SOTA) methodologies. A primary barrier to the clinical adoption of AI in oncology is the “black box” nature of deep learning. While earlier studies such as [4] and [19] achieved high accuracy, they provided no interpretability for clinical verification. Newer models like [7] and [9] introduced visual XAI via Grad-CAM heatmaps, but they lack the semantic reasoning required to articulate complex diagnostic logic. Con-versely, newer LLM-based approaches like [8] generate textual reports but ignore the morphological boundary complexity (captured by metrics like FD, ApEn, and LE) that is vital for identifying infiltrative tumor growth. As illustrated in Table VI, XMorph is the first framework to holistically unify nonlinear boundary metrics (IWBN), quantitative clinical biomarkers (REI, MLS, dskull), and dual-channel (visual-textual) explain-ability. While [13] and [14] utilize fractal dimension for characterization, they do not integrate the specific chaotic measures or the radiological biomarkers required to ground the diagnosis in established medical practice. By bridging these gaps, XMorph provides a more comprehensive and clinically-grounded foundation for brain tumor classification than existing unimodal or partially explainable systems. 
+
+TABLE VI CAPABILITY COMPARISON OF XM ORPH VS . STATE -OF -THE -ART APPROACHES .                                                                
+
+> Feature / Capability [4] [19] [7] [9] [13] [14] [8] XMorph
+> Deep Feature Learning ✓✓✓✓✓✓✓✓
+> Fractal Dimension (FD) ✗✗✗✗✓✓✗✓
+> Chaotic Metrics (ApEn, LE) ✗✗✗✗✗✗✗✓
+> IWBN (Boundary Enhancement) ✗✗✗✗✗✗✗✓
+> Clinical Biomarkers (REI, MLS, Dskull) ✗✗✗✗✗✗✗✓
+> Visual XAI (Heatmaps) ✗✗✓✓✓✗✗✓
+> Textual XAI (LLM Rationales) ✗✗✗✗✗✗✓✓
+
+VII. C ONCLUSION 
+
+In this work, we introduced XMorph, a hybrid deep in-telligence framework for explainable three-class brain tumor classification that synergizes deep learning with nonlinear dynamics. Our primary contribution is the novel Information-Weighted Boundary Normalization (IWBN) scheme, which enhances morphological representation by selectively ampli-fying diagnostically relevant regions of the tumor boundary. The IWBN-derived indices, combined with other chaotic and clinical features, capture clinically consistent differences be-tween glioma, meningioma, and pituitary tumors. Our sec-ond contribution is a dual-channel XAI module that couples 12 GradCAM++ heatmaps with LLM-generated clinical narra-tives, linking spatial attention to feature-driven reasoning in a form accessible to radiologists. Experimentally, our frame-work demonstrated strong performance, with the segmentation backbone achieving a Dice score of 0.932 and the hybrid classification model reaching an accuracy of 96.0%. Our results confirm that the fused representation, which combines Tumor Specific features with deep embeddings, significantly outperforms models based on either feature set alone. This finding highlights a key takeaway: IWBN-derived morphology, chaotic descriptors, and clinical biomarkers provide comple-mentary information that enhances both the discriminative power and the interpretability of deep learning systems. Future work will extend XMorph to exploit multi-parametric MRI by jointly modeling T1, T1c, T2, and FLAIR sequences. We also plan to evaluate the framework on larger, multi-center cohorts and explore the integration of advanced Vision–Language Models (VLMs) for more deeply grounded clinical reasoning. Ultimately, our goal is to develop a fully integrated, end-to-end system that unifies multimodal imaging and language-based explainability for real-time, clinically deployable decision sup-port, paving the way for more transparent and trustworthy medical AI. ACKNOWLEDGMENTS 
+
+M.A. acknowledges a startup fund from Georgia State University (GSU), provided by the Department of Computer Science and the College of Arts and Sciences. M.A. also acknowledges a Faculty Internal Grant (FIG) from Georgia State University (GSU), and an industrial grant from Advanced Micro Devices (AMD), Inc. REFERENCES [1] M. Havaei, A. Davy, D. Warde-Farley, A. Biard, A. Courville, Y. Bengio, C. Pal, P.-M. Jodoin, and H. Larochelle, “Brain tumor segmentation with deep neural networks,” Medical Image Analysis , vol. 35, pp. 18–31, 2017. [2] C. Rudin, “Stop explaining black box machine learning models for high stakes decisions and use interpretable models instead,” Nature Machine Intelligence , vol. 1, no. 5, pp. 206–215, 2019. [3] G. Litjens, T. Kooi, B. E. Bejnordi, A. A. A. Setio, F. Ciompi, M. Ghafoorian, J. A. van der Laak, B. van Ginneken, and C. I. S´ anchez, “A survey on deep learning in medical image analysis,” Medical Image Analysis , vol. 42, pp. 60–88, 2017. [4] S. Deepak and P. Ameer, “Brain tumor classification using deep cnn features via transfer learning,” Computers in biology and medicine , vol. 111, p. 103345, 2019. [5] S. S. Ghahfarrokhi et al. , “Malignant melanoma diagnosis applying a machine learning method based on the combination of nonlinear and texture features,” Biomedical Signal Processing and Control , vol. 80, p. 104300, 2023. [6] S. S. Ghahfarrokhi and H. Khodadadi, “Human brain tumor diagnosis using the combination of the complexity measures and texture features through magnetic resonance image,” Biomedical Signal Processing and Control , vol. 61, p. 102025, 2020. [7] T. R. Mahesh et al. , “An xai-enhanced efficientnetb0 framework for precision brain tumor detection in mri imaging,” Journal of Neuroscience Methods , vol. 410, p. 110227, 2024. [8] T. Saeed et al. , “Neuro-xai: Explainable deep learning framework based on deeplabv3+ and bayesian optimization for segmentation and classification of brain tumor in mri scans,” Journal of Neuroscience Methods , vol. 410, p. 110247, 2024. [9] E. A. Rashed et al. , “Automatic generation of brain tumor diagnostic reports from multimodality mri using large language models,” in 2025 IEEE 22nd International Symposium on Biomedical Imaging (ISBI) .IEEE, 2025. [10] A. A. Dehkordi et al. , “Lightweight convolutional neural networks using nonlinear L´ evy chaotic moth flame optimisation for brain tumour classification via efficient hyperparameter tuning,” Scientific Reports ,vol. 15, no. 1, p. 22586, 2025. [11] K. Bhagyalaxmi and B. Dwarakanath, “Cdcg-unet: Chaotic optimiza-tion assisted brain tumor segmentation based on dilated channel gate attention u-net model,” Neuroinformatics , vol. 23, no. 2, p. 12, 2025. [12] R. N. Asif et al. , “Brain tumor detection empowered with ensemble deep learning approaches from mri scan images,” Scientific Reports , vol. 15, no. 1, p. 15002, 2025. [13] H. Sultan et al. , “Estimation of fractal dimension and segmentation of brain tumor with parallel features aggregation network,” Fractal and Fractional , vol. 8, no. 6, p. 357, 2024. [14] A. Temtam, L. Pei, and K. Iftekharuddin, “Computational modeling of deep multiresolution-fractal texture and its application to abnormal brain tissue segmentation,” arXiv preprint arXiv:2306.04754 , 2023. [15] D. Battalapalli et al. , “Fractal dimension: analyzing its potential as a neuroimaging biomarker for brain tumor diagnosis using machine learning,” Frontiers in Physiology , vol. 14, p. 1201617, 2023. [16] D. Muhammad and M. Bendechache, “Unveiling the black box: A systematic review of explainable artificial intelligence in medical image analysis,” Computational and Structural Biotechnology Journal , vol. 24, pp. 542–560, 2024. [17] A. Dravid et al. , “medxgan: Visual explanations for medical classifiers through a generative latent space,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2022. [18] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image recognition,” Proceedings of the IEEE conference on computer vision and pattern recognition , pp. 770–778, 2016. [19] S. Salem, M. M. Esfahani, J. Liu, and V. Calhoun, “Breast cancer detection in thermographic images via diffusion-based augmentation and nonlinear feature fusion,” 2025. [Online]. Available: https: //arxiv.org/abs/2509.07277 [20] R. Goldbrunner, G. Minniti, M. Preusser, and et al., “Eano guideline on the diagnosis and management of meningiomas,” The Lancet Oncology ,vol. 22, no. 9, pp. e281–e292, 2021. [21] J. Cheng, “Brain tumor dataset,” 2017. [Online]. Available: https: //doi.org/10.6084/m9.figshare.1512427.v8 
+
+13

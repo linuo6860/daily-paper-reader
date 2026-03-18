@@ -1,0 +1,2413 @@
+Title: Causal Survival Analysis in Platform Trials with Non-Concurrent Controls
+
+URL Source: https://arxiv.org/pdf/2603.10989v1
+
+Published Time: Thu, 12 Mar 2026 01:20:38 GMT
+
+Number of Pages: 72
+
+Markdown Content:
+# Causal Survival Analysis in Platform Trials with Non-Concurrent Controls 
+
+## Antonio D’Alessandro, Samrachana Adhikari, and Michele Santacatterina ∗
+
+## Division of Biostatistics, Department of Population Health, New York University School of Medicine, New York, NY, 10016 
+
+Abstract 
+
+Platform trials allow treatment arms to enter and exit over time while maintain-ing a shared control arm, yielding concurrent and non-concurrent controls (NCC). Pooling NCC is often motivated as a strategy to improve statistical efficiency, but it is unclear which estimand is targeted, what assumptions justify identification and estimation, and when precision gains are achievable; these questions are further com-plicated by time-to-event/survival data. Motivated by the Adaptive COVID-19 Treat-ment Trial (ACTT) platform trial with time to recovery as the primary endpoint, we develop an estimand-first causal survival framework targeting the treatment-specific counterfactual survival curve in the concurrent population and the corresponding functionals including the concurrent restricted mean survival time (RMST). We give nonparametric identification results and formalize conditions that justify pooling us-ing NCC. We study covariate-adjusted outcome-regression (OR) and doubly robust (DR) estimators for the concurrent RMST, comparing concurrent-only versions to pooled-control versions. Pooling improves precision for OR estimators only when the pooling assumption holds and parametric hazard models are correctly specified; oth-erwise, pooling can induce bias. Moreover, in certain settings, pooling NCC yields no 
+
+> ∗
+
+This article is based upon work supported by the National Science Foundation under Grant No 2306556, and the National Institute of Health Grant No 1R01AI197146-01. 
+
+1
+
+> arXiv:2603.10989v1 [stat.ME] 11 Mar 2026
+
+efficiency gain for the DR estimator. Overall, the most robust route to improve preci-sion is to target concurrent causal survival estimands and use a covariate-adjusted DR estimation that uses only concurrent controls. An ACTT application corroborates these results. 
+
+Keywords: Causal survival estimands; Doubly robust estimation; Non-concurrent controls; Platform trials; Restricted mean survival time 21 Introduction 
+
+A platform trial is an adaptive multi-arm experimental design that allows for the simulta-neous evaluation of multiple treatments for a single disease (Berry et al. 2015). Traditional randomized controlled trials (RCTs) feature parallel arms which remain fixed by design through the duration of the experiment, while platform designs allow different treatment arms to enter and exit at distinct times, while also maintaining a shared control arm through the end of the study. This shared control arm is composed of concurrent controls , subjects who entered the trial concurrent with the treatment of interest and could have been ran-domized to the treatment of interest or control arm, and non-concurrent controls (NCC), subjects who entered the trial when the treatment of interest was unavailable and had zero probability of being assigned to the treatment of interest. This design has seen widespread use during the COVID-19 pandemic (Hayward et al. 2021). For example, the Adaptive COVID-19 Treatment Trial (ACTT) (Kalil et al. 2021) evaluated multiple regimens across stages, with remdesivir serving as a shared arm across ACTT-1 and ACTT-2. Time-to-event endpoints are common in platform trials and require methods that ac-commodate censoring. Although analyses often rely on the Cox proportional hazards model (Cox 1972), the hazard ratio targets an instantaneous risk-set contrast that may not cor-respond to a clinically meaningful causal effect on survival time (Hern´ an 2010, Stensrud et al. 2019). This motivates complementary estimands such as the restricted mean survival time (RMST), which summarizes average survival up to a clinically relevant horizon and yields interpretable contrasts between treatment arms (Royston & Parmar 2013). While platform trials like the ACTT offer increased flexibility, they also create an ap-parent opportunity to increase precision by pooling earlier-stage control patients with con-current controls for a given treatment comparison. However, it is not generally clear when 3such pooling is valid, what causal quantity is targeted, or how pooling should be imple-mented for time-to-event endpoints in the presence of censoring. This raises three practical 
+
+questions: 1) how should causal survival estimands be defined when controls are partly non-concurrent; 2) under what assumptions are these estimands identifiable and estimable; and 3) when, if at all, does incorporating NCC improve precision for the concurrent treatment comparison? Answering these questions requires thinking carefully about how calendar time can enter the data-generating process in a platform trial. When the distribution of baseline covariates change over the enrollment period, na¨ ıvely pooling NCC and concurrent controls can bias estimated treatment effects; this is commonly referred to as “time drift” or “temporal drift”. Proposed solutions to deal with this bias include test-then-pool proce-dures (Viele et al. 2014), regression adjustment (Saville et al. 2022), propensity weighting (Chen et al. 2020), and robust borrowing approaches (Kaizer et al. 2018, Wang et al. 2023). While these approaches enable the use of NCC, the causal target is often implicit and the estimand can be tied closely to a chosen modeling strategy (e.g., a particular regression coefficient or hazard ratio) rather than stated upfront as a clinically meaningful causal contrast and research question. This emphasis on specifying the scientific question first is central to the estimand-first framework advocated by the FDA (FDA 2021) and the ICH E9(R1) guidance (ICH 2017). Recent reviews note that, despite substantial methodological development, there remains a need for a unified estimand-first framework for platform trials that clearly links causal questions, identifying assumptions, and estimation strategies, including for time-to-event endpoints (Collignon et al. 2022, Koenig et al. 2024). Motivated by the ACTT platform trial with time to recovery as the primary endpoint, this paper addresses the practical questions raised above using an estimand-first framework. We give nonparametric identification results, formalize conditions for pooling NCC, and study covariate-adjusted outcome-regression and doubly robust estimators. Pooling NCC 4improves precision for outcome-regression estimators only under valid pooling assumptions and correct parametric hazard specification; otherwise it can induce bias. When treatment availability is deterministic in entry time, pooling NCC gives no efficiency gain for the dou-bly robust estimator. Overall, the most robust strategy is to target concurrent estimands and use covariate-adjusted doubly robust estimation with concurrent controls only. An ACTT application supports these findings. 
+
+# 2 Additional Related Work 
+
+Platform trials extend traditional parallel-arm designs through features such as shared control arms and adaptive treatment entry and removal (Berry & Saville 2016, Coalition 2019). Methodological development continues from both Bayesian and frequentist per-spectives (Mu et al. 2024, Greenstreet et al. 2025), with recent reviews documenting the diversity of design characteristics and analytic strategies (Massonnaud et al. 2025). A cen-tral statistical question concerns how best to leverage shared or pooled control information. Borrowing of control data, including from external sources, has a long history (Viele et al. 2014), and its potential efficiency gains in platform settings have been studied in Huang & Luedtke (2023) and Santacatterina et al. (2025); see Roig et al. (2023) for a review. For time-to-event endpoints, both frequentist and Bayesian approaches exploit shared controls. Frequentist proposals build on multi-arm multi-stage survival designs using stan-dard time-to-event methods under proportional hazards working models (Royston et al. 2011). Bayesian approaches include adaptive platform designs such as MIDAS (Yuan et al. 2016) and commensurate or MAP-style borrowing strategies for censored outcomes (Roy-choudhury & Neuenschwander 2020). Applications include REMAP-CAP (REMAP-CAP Investigators 2021) and the HEALEY ALS Platform Trial (HEALEY ALS Writing Com-5mittee 2025). Across these strands, inference is typically framed in terms of model-based parameters (e.g., hazard ratios or borrowing parameters), underscoring the importance of clearly specifying the causal estimand. We focus on estimating causal survival contrasts in platform trials using the restricted mean survival time (RMST), which offers interpreta-tional advantages over hazard ratios (Hasegawa et al. 2020); see Kloecker et al. (2020) for applied illustrations. Our estimators rely on semiparametric efficiency theory and double robustness (Kennedy et al. 2021, Hines et al. 2021), building on weighted estimating-equation approaches originally developed in Robins et al. (1994). 
+
+# 3 Notation and setup 
+
+Suppose we observe an independent and identically distributed (iid) sample ( Z1, . . . , Z n)drawn from some joint distribution P, assumed to be an element of a nonparametric model. For each i ∈ { 1, . . . , n }, let Wi denote baseline covariates and let Ei denote the (random) study entry time and Xi = ( Wi, E i) be the combined vector. Let Ai de-note the randomized treatment assignment, taking values in {0, . . . , A} , where Ai = 0 denotes the shared control arm and Ai = a for a ∈ { 1, . . . , A} denotes active treatment 
+
+a. Throughout, we use a ∈ { 0, . . . , A} as a generic arm index (with a = 0 for con-trol). Let Vi = ( V0,i , . . . , V A,i ) denote the treatment availability vector at entry time Ei,where V0,i ≡ 1 and Va,i = 1(treatment a was available at time Ei) for a ∈ { 1, . . . , A} . We also fix an active treatment index ˜ a ∈ { 1, . . . , A} to define the concurrent population for the comparison of treatment ˜ a versus control. The observed data are D = ( Z1, . . . , Z n)with Zi = ( Wi, E i, A i, V i, ∆i, ˜Ti) ∼ P. For notational simplicity, we omit the subject index i when no confusion can arise and write Va for the ath component of V . Note that P(A = ˜ a | V˜a = 0) = 0 by design. Further, assume K equally spaced discrete 6time points {1, . . . , K }. Let T be the time-to-event outcome variable taking values in 
+
+{1, . . . , K } ∪ {∞} where T = ∞ corresponds to no event occurring during any time in 1, . . . , K . Let C ∈ { 0, . . . , K } represent the censoring time defined to be the time at which the subject was last observed in the study. If a subject remains through to the end of the study we say C = K and refer to this as administrative censoring. Let the observed event time be denoted by ˜T = min( C, T ) and let ∆ = 1(T ≤ C) be the indicator variable record-ing whether a subjects event time was observed (∆ = 1) or censored (∆ = 0). For each subject, the observed vector Z may be equivalently represented using a longitudinal data structure given by: Z = ( W, E, A, V, R 0, L 1, R 1, L 2, . . . , R K−1, L K )where for t = 0 , . . . , K −1we define Rt = 1( ˜T = t, ∆ = 0) and for t = 1 , . . . , K we define Lt = 1( ˜T = t, ∆ = 1). The sequence of indicators ( R0, L 1, R 1, L 2, . . . , R K−1, L K ) is composed of all zeros until the first time the event is observed or censoring occurs (and if all indicators are zero, we set C = K,∆ = 0, and ˜T = K, i.e., the subject is observed event-free through time K). Additionally, for any random variable H we define the history of H through time t as ¯Ht = ( H0, . . . , H t). For a given scalar h, the expression ¯Ht = h denotes element-wise equality, and we adopt the convention L0 ≡ 0. Using this idea of a random variable’s history we introduce two additional indicator functions It = 1( ¯Rt−1 = 0 , ¯Lt−1 = 0) and Jt = 1( ¯Rt−1 = 0 , ¯Lt = 0) for each t ≥ 1. The variable It denotes whether a subject is at risk of the event being observed at time t, analogously Jt denotes whether a subject is at risk of censoring at time t where we let J0 = 1 by convention. 
+
+## 3.1 Time-to-event quantities 
+
+In this section we introduce statistical quantities used in the analysis of time-to-event outcomes. Using the previously established notation, fix ˜ a ∈ { 1, . . . , A} and consider the two-arm comparison a ∈ { 0, ˜a} within the concurrent population {V˜a = 1 }.7The discrete-time hazard for the event at m ∈ { 1, . . . , K } is 
+
+h(m, a, ˜a, e, w ) = P(T = m | T ≥ m, C ≥ m, A = a, V ˜a = 1 , E = e, W = w)= P(Lm = 1 | Im = 1 , A = a, V ˜a = 1 , E = e, W = w).
+
+The discrete-time censoring hazard for m ∈ { 1, . . . , K − 1} is 
+
+g(m, a, ˜a, e, w ) = P(C = m | T > m, C ≥ m, A = a, V ˜a = 1 , E = e, W = w)= P(Rm = 1 | Jm = 1 , A = a, V ˜a = 1 , E = e, W = w).
+
+Fix a truncation time τ ∈ { 1, . . . , K }. For t ∈ { 0, . . . , τ } and a ∈ { 0, ˜a} define 
+
+S(t | A = a, V ˜a = 1 , E = e, W = w) = P(T > t | A = a, V ˜a = 1 , E = e, W = w)
+
+G(t | A = a, V ˜a = 1 , E = e, W = w) = P(C ≥ t | A = a, V ˜a = 1 , E = e, W = w).
+
+Finally, denote the propensity function by, 
+
+π(a, ˜a, w, e ) = P(A = a | V˜a = 1 , E = e, W = w), a ∈ { 0, ˜a}.
+
+## 3.2 Causal model and associated directed acyclic graph 
+
+To formalize entry time, covariates, treatment assignment, and treatment availability in a platform trial, we adopt the following structural causal model (Pearl 1995), 
+
+E = fE (UE ), W = fW (E, U W ), (1) 
+
+V = ( V0, . . . V A), Va = fVa (E, U Va ) a ∈ { 0, . . . , A} ,A = fA(W, V, U A), T = fT (A, W, E, U T ), C = fC (A, W, E, U C ).
+
+8Fix ˜ a ∈ 1, . . . , A and consider the comparison of treatment ˜ a versus shared control (A = 0) within the concurrent population V˜a = 1, assuming the control arm is always available ( V0 ≡ 1). The model allows variables to depend on entry time E, accommodating temporal drift. Treatment assignment A may depend on baseline covariates W (e.g., strat-ified randomization) but depends on E only through treatment availability V , so subjects are randomized only among arms available at entry, with fixed randomization probabilities over time. Event and censoring times ( T, C ) depend on realized treatment A and entry time E, but not directly on availability V , and no direct causal relationship between T and 
+
+C is imposed. Availability V depends on calendar time but not on individual covariates W .Baseline covariates W may vary with entry time, while E does not depend on W , allow-ing population composition to evolve over time. Functional forms for fE , f W , f T , and fC
+
+are unrestricted, whereas treatment assignment and availability are known by design and may be deterministic or stochastic in entry time. Exogenous variables UE , U W , U T , U Va , U C
+
+represent unmeasured factors, and UA encodes the randomization mechanism. 
+
+# 4 Definition and identification of the concurrent treatment-specific counterfactual survival curve 
+
+Throughout this paper, we employ counterfactual notation (Pearl 2010). For each a ∈{0, ˜a}, let T (a, K ) denote the event time that would be observed under the joint intervention setting treatment assignment to A = a and eliminating censoring by setting the censoring time to C = K with probability one. For notational simplicity, we write T (a) ≡ T (a, K )throughout. For a cutoff denoted by τ ∈ { 1, . . . , K } the target estimand of interest is the area under the treatment specific survival curve among those patients in the concurrent population: 9We focus on the comparison of the active treatment ˜ a versus control within the concur-rent population for ˜ a, i.e., among those with V˜a = 1. 
+
+Definition 4.1 (Concurrent treatment-specific counterfactual survival curve) . For a ∈{0, ˜a} and t ∈ { 0, 1, . . . , K }, the concurrent treatment-specific counterfactual survival curve is 
+
+θ(a, t ) = S∗ 
+
+> a
+
+(t) := P{T (a) > t | V˜a = 1 }.
+
+The curve θ(a, t ) is defined in terms of counterfactual outcomes T (a) and is therefore not, in general, a functional of the observed-data distribution without additional assumptions. In particular, for any given subject we observe at most one of the potential event times 
+
+{T (0) , T (˜ a)}, so the joint distribution of counterfactual outcomes is not identified from the observed data alone. Nonparametric identification provides conditions under which S∗ 
+
+> a
+
+(t)can nonetheless be expressed uniquely as a functional of the observed-data distribution 
+
+P, without imposing parametric restrictions on outcome or censoring models (Pearl 1995). Such an observed-data representation motivates estimators and frequentist inference. To discuss identification of θ(a, t ), we introduce the following assumptions: 
+
+A1 (Exchangeability) . For each a ∈ { 0, ˜a},
+
+T (a) ⊥ A (W, E, V ˜a = 1) .
+
+Assumption A1 states that within the concurrent population and conditional on ( W, E ), treatment is as-if randomized so there is no residual confounding of A and T (a); this is fundamentally untestable because it involves counterfactual outcomes, however we expect it to hold by design under proper randomization. 
+
+A2 (Consistency) . If A = a, then the latent event time satisfies T = T (a) for a ∈ { 0, ˜a}.10 Assumption A2 states that for subjects who in fact receive arm a, the observed event time equals the corresponding potential event time T (a); this is a definitional/measurement assumption (not empirically testable in the counterfactual sense) and can fail only via treatment-version ambiguity or interference. 
+
+A3 (Random censoring) . For each a ∈ { 0, ˜a},
+
+T (a) ⊥ C (A, E, W, V ˜a = 1) .
+
+Given ( A, E, W ) in the concurrent population, censoring carries no additional informa-tion about T (a) beyond these variables; this is untestable without additional structure. 
+
+A4 (Positivity of shared control assignment) . For all ( e, w ) such that P(E = e, W = w) > 0, 
+
+P(A = 0 | E = e, W = w) > 0.
+
+Every ( E, W ) stratum that occurs in the data has nonzero probability of being ran-domized to control, preventing empty control strata; this is checkable from the design and the realized data (violations appear as zero counts/zero estimated probabilities). This as-sumption should hold by design. Note that, because the shared control arm is available throughout the platform trial ( V0 ≡ 1), the positivity condition for control assignment does not depend on treatment availability; consequently, we state Assumption A4 uncondi-tionally in ( E, W ) (and it therefore holds, in particular, within the concurrent population 
+
+{V˜a = 1 }). 
+
+A5 (Probability of censoring) . For all t ∈ { 0, . . . , K − 1},
+
+P(C = t | C ≥ t, A = a, E = e, W = w, V ˜a = 1) < 1 for each a ∈ { 0, ˜a}.
+
+11 Among those still under follow-up, censoring is not deterministic at any time point within any ( A, E, W ) stratum in the concurrent population; this assumption can be checked empirically (violations appear as P(C = t | C ≥ t, ·) = 1 in some strata/time points). 
+
+A6 (Positivity among concurrent units) . For all ( e, w ) such that P(E = e, W = w, V ˜a =1) > 0, 
+
+P(A = ˜ a | E = e, W = w, V ˜a = 1) > 0.
+
+Within the concurrent population {V˜a = 1 }, every ( E, W ) stratum that occurs has nonzero probability of assignment to ˜ a, ensuring overlap for the ˜ a versus control comparison; this is primarily a design/implementation condition (checkable from the randomization scheme), though finite-sample data can still exhibit practical violations (e.g., zero counts in some strata). 
+
+A7 (Pooling concurrent and nonconcurrent controls for the hazard) . For each m ∈ { 1, . . . , K }
+
+and all ( e, w ) such that V˜a = 1 and P(Im = 1 , A = 0 , E = e, W = w) > 0, 
+
+h(m, 0, ˜a, e, w ) = h(m, 0, e, w ),
+
+where 
+
+h(m, 0, e, w ) = P(T = m | T ≥ m, C ≥ m, A = 0 , E = e, W = w)= P(Lm = 1 | Im = 1 , A = 0 , E = e, W = w).
+
+Assumption A7 states that, after conditioning on ( E, W ) (and being at risk at m), the control-arm event hazard is the same in the concurrent subset and in the pooled (concurrent plus nonconcurrent) controls, so pooled control data can be used to learn the concurrent control hazard. Section 10 in the Supplementary Material provides additional details on 12 Assumption A7, including its role in identification, conditions under which it is plausible, and how it interacts with parametric model specification. Finally, the identification of the causal parameter given in Definition 4.1 requires the following preliminary results, 
+
+Proposition 1 (Product representation) . Under assumptions A1 - A4 the distribution functions for survival and censoring admit the following product representation: 
+
+S(t | A = a, V ˜a = 1 , E = e, W = w) = 
+
+> t
+
+Y
+
+> m=1
+
+{1 − h(m, a, ˜a, e, w )},G(t | A = a, V ˜a = 1 , E = e, W = w) = 
+
+> t−1
+
+Y
+
+> m=1
+
+{1 − g(m, a, ˜a, e, w )}
+
+Using these propositions it is possible to link the concurrent treatment-specific coun-terfactual survival curve to the observed data distribution, 
+
+Theorem 1 (Nonparametric identification of θ(a, t )) . Fix ˜a ∈ { 1, . . . , A} and let a ∈ { 0, ˜a}.Assume Model 1, Assumptions A1, A2, A3, A4, A5, A6, and Proposition 1. Then for each 
+
+t ∈ { 0, . . . , τ },
+
+θ(a, t ) := P{T (a) > t | V˜a = 1 } = E
+
+" tY
+
+> m=1
+
+{1 − h(m, a, ˜a, E, W )} V˜a = 1 
+
+#
+
+.
+
+The proof of Proposition 1 and Theorem 1 can be found in Supplementary Material. 
+
+Remark 1 (Pooling controls for the hazard) . The representation in Theorem 1 identifies 
+
+θ(0 , t ) using the control hazard h(m, 0, ˜a, E, W ) evaluated in the concurrent population. If, in addition, Assumption A7 holds, then h(m, 0, ˜a, E, W ) = h(m, 0, E, W ) for V˜a = 1 , and 
+
+13 one may equivalently write 
+
+θ(0 , t ) = E
+
+" tY
+
+> m=1
+
+{1 − h(m, 0, E, W )} V˜a = 1 
+
+#
+
+which motivates estimating the control hazard using pooled (concurrent and nonconcurrent) control data. 
+
+## 4.1 Restricted mean survival time 
+
+The restricted mean survival time (RMST) is a novel alternative measure of time-to-event quantities in survival analysis. The RMST represents the area under the survival curve from time 0 to a given cut-off, in this work denoted τ . The interpretation is straight forward, the RMST is the average time-to-event during the time period between 0 and τ
+
+(Hasegawa et al. 2020). Contrasts such as the difference in restricted mean survival time thus represent the difference in the average time-to-event between two specified groups such as treatment vs. control or new treatment vs. standard of care. In addition to the easy interpretation, the RMST and related contrasts remain valid even when the proportional hazards assumption does not hold (Royston & Parmar 2013), a common but often tenuous assumption in medical studies. Given the advantages of the RMST (and its contrasts), the causal estimand of interest in this work will be the difference in restricted mean survival time among the population of concurrent control subjects. The identification result in Theorem 1 allows functions of the treatment-specific survival curve, like the RMST to be similarly identified, 
+
+Definition 4.2 (Difference in restricted mean survival time ( dRMST )) . Using Theorem 1, 
+
+14 for each a ∈ { 0, . . . , A} and τ ∈ { 1, . . . , K }
+
+dRMST (a, τ ) = E[min( T (a), τ ) − min( T (0) , τ ) | V˜a = 1] = 
+
+> τ−1
+
+X
+
+> t=1
+
+S∗ 
+
+> a
+
+(t | V˜a = 1) − S∗ 
+
+> 0
+
+(t | V˜a = 1) = 
+
+> τ−1
+
+X
+
+> t=1
+
+θ(1 , t ) − θ(0 , t )= 
+
+> τ−1
+
+X
+
+> t=1
+
+n
+
+E
+
+h tY
+
+> m=1
+
+1 − h(m, 1, 1, e, w ) | V˜a = 1 
+
+i
+
+− E
+
+h tY
+
+> m=1
+
+1 − h(m, 0, 1, e, w ) | V˜a = 1 
+
+io 
+
+.
+
+In the following section we will discuss different estimators for dRMST based on outcome regression and influence functions. 
+
+## 4.2 Other survival contrasts 
+
+In this paper we focus on difference in restricted mean survival time, which as shown in Definition 4.2, is a linear function of θ(a, t ), however other contrasts may be constructed (Westling et al. 2024). For example, following the analysis conducted in the ACTT study, one may consider the recovery ratio θ(0 , t )/θ (1 , t ). Additionally, other end points common in survival analysis such as: the survival ratio θ(1 , t )/θ (0 , t ), risk difference {1 − θ(1 , t )} − {1 − θ(0 , t )} or risk-ratio {1 − θ(1 , t )}/{1 − θ(0 , t )} may be calculated depending on the scientific question of interest. 
+
+# 5 Estimation 
+
+We will begin our discussion of estimation by introducing outcome regression (OR) estima-tors to help build intuition. However, outcome regression estimators are subject to model 15 misspecification, i.e. if the functional form of the models are incorrect bias will be intro-duced. To address this limitation we then introduce doubly robust (DR) estimators. We assume V˜a = 1(E > t ) for some discrete time t such that the treatment was only available for subjects who entered the trial after time t.
+
+## 5.1 Estimators based on parametric outcome regression 
+
+Using Theorem 1 an outcome regression based estimator using only concurrent control subjects can be defined as, 
+
+\dRMST oc OR =
+
+Pni=1 
+
+Pτ −1 
+
+> t=1
+
+bS1(i, t ) × 1(V˜a,i = 1) 
+
+Pni=1 1(V˜a,i = 1) −
+
+Pni=1 
+
+Pτ −1 
+
+> t=1
+
+bS0(i, t ) × 1(V˜a,i = 1) 
+
+Pni=1 1(V˜a,i = 1) .
+
+Alternatively, employing Theorem 1 and Remark 1 a different outcome regression esti-mator using both concurrent and non-concurrent controls could be defined as follows, 
+
+\dRMST ac OR =
+
+Pni=1 
+
+Pτ −1 
+
+> t=1
+
+bS1(i, t ) × 1(V˜a,i = 1) 
+
+Pni=1 1(V˜a,i = 1) −
+
+Pni=1 
+
+Pτ −1 
+
+> t=1
+
+bS0(i, t ) × 1(V˜a,i = 1) 
+
+Pni=1 1(V˜a,i = 1) .
+
+Where bSa is the cumulative product matrix such that each row corresponds to subject 
+
+i and each column j is equal to Qjm=1 1 − ˆh(m, A = a, V ˜a = 1 , E = e, W = w). The crucial difference between \dRMST oc OR and \dRMST ac OR lies in the construction of bS0. In the first case, only the concurrent control subjects are utilized to learn ˆh, while in the latter, the function ˆh
+
+no longer depends on V˜a, so the entirety of the shared control arm is used. Under regularity conditions both \dRMST oc OR and \dRMST ac OR are consistent and asymptotically normal (Boos & Stefanski 2013). Standard error estimates were computed using a modified bootstrap 16 designed to sample from the longitudinal transformation of the survival data. Details for how to construct both OR estimators can be found in the Supplementary Material(Section 14). 
+
+## 5.2 Doubly robust estimators 
+
+So called doubly robust (DR) estimators provided consistent treatment effect estimates by combining outcome regression and inverse probability weights. DR estimators are prefer-able to outcome regression as the functional form of the estimator will guarantee consistency even when a subset of the regression models used to generate the estimates are misspecified. In this work we construct DR estimators, following Bickel et al. (1993), Hines et al. (2021), and Kennedy et al. (2021) by deriving the efficient influence function (EIF). Influence functions are fundamental object in mathematical statistics and allow one to construct estimators with many favorable properties. In addition to the doubly robust feature described previously, estimators constructed using influence functions are asymp-totically normal, often achieve fast rates of convergence and allow researchers to integrate machine learning into estimation while still admitting traditional inference (point estima-tion, confidence interval construction and hypothesis testing). 
+
+Theorem 2 (Efficient influence function of dRMST ). Let X = ( E, W ) then under Model 1 and assumptions A1-A6 
+
+17 1. The candidate efficient influence function ϕoc (Z, dRMST ) for dRMST is given by: 
+
+α ×
+
+h
+
+S(t | A = 1 , V ˜a = 1 , X ) − S(t | A = 0 , V ˜a = 1 , X )
+
+i
+
+− α ×
+
+> t
+
+X
+
+> k=1
+
+Qoc  
+
+> 1
+
+(k, Z ) + α ×
+
+> t
+
+X
+
+> k=1
+
+Qoc  
+
+> 0
+
+(k, Z )
+
+− α ×
+
+h
+
+(θ(1 , τ ) − θ(0 , τ )) 
+
+i
+
+where α = 1(V˜a = 1) 
+
+P(V˜a = 1) and we define Qoc  
+
+> 1
+
+as: 
+
+A × 1( ˜T > k − 1) × S(t | A = 1 , V ˜a = 1 , X ) × { 1( ˜T = k, ∆ = 1) − h(k, A = 1 , V ˜a = 1 , X )}
+
+G(k − 1 | A = 1 , V ˜a = 1 , X )S(k | A = 1 , V ˜a = 1 , X )π(A = 1 | V˜a = 1 , X )
+
+similarly we define Qoc  
+
+> 0
+
+as: 
+
+(1 − A) × 1( ˜T > k − 1) × S(t | A = 0 , V ˜a = 1 , X ) × { 1( ˜T = k, ∆ = 1) − h(k, A = 0 , V ˜a = 1 , X )}
+
+G(k − 1 | A = 0 , V ˜a = 1 , X )S(k | A = 0 , V ˜a = 1 , X )π(A = 0 | V˜a = 1 , X )
+
+2. Under Model 1 and assumptions A1-A7 the candidate efficient influence function 
+
+ϕac (Z, dRMST ) for dRMST is equal to: 
+
+α ×
+
+h
+
+S(t | A = 1 , V ˜a = 1 , X ) − S(t | A = 0 , X )
+
+i
+
+− α ×
+
+> t
+
+X
+
+> k=1
+
+Qac  
+
+> 1
+
+(k, Z ) + β ×
+
+> t
+
+X
+
+> k=1
+
+Qac  
+
+> 0
+
+(k, Z )
+
+− α ×
+
+h
+
+(θ(1 , τ ) − θ(0 , τ )) 
+
+i
+
+18 where α = 1(V˜a = 1) 
+
+P(V˜a = 1) , β = P(V˜a = 1 | X)
+
+P(V˜a = 1) and we define Qac  
+
+> 1
+
+as: 
+
+A × 1( ˜T > k − 1) × S(t | A = 1 , V ˜a = 1 , X ) × { 1( ˜T = k, ∆ = 1) − h(k, A = 1 , V ˜a = 1 , X )}
+
+G(k − 1 | A = 1 , V ˜a = 1 , X )S(k | A = 1 , V ˜a = 1 , X )π(A = 1 | V˜a = 1 , X )
+
+and Qac  
+
+> 0
+
+as: 
+
+(1 − A) × 1( ˜T > k − 1) × S(t | A = 0 , X ) × { 1( ˜T = k, ∆ = 1) − h(k, A = 0 , X )}
+
+G(k − 1 | A = 0 , X )S(k | A = 0 , X )π(A = 0 | X)The proof of this result is located in the Supplementary Material. Note that in the deriva-tion of ϕac (Z, dRMST ), if V˜a is a deterministic function of E then P(V˜a = 1 | X) = 1(V˜a =1), thus β = α and both influence functions are the same. The EIFs derived in Theorem 2 suggest the following estimators, 
+
+\dRMST oc DR = ˆαn
+
+> n
+
+X
+
+> i=1
+
+"
+
+ˆS(t | Ai = 1 , V ˜a,i = 1 , X = xi) − ˆS(t | Ai = 0 , V ˜a,i = 1 , X = xi)
+
+−
+
+> t
+
+X
+
+> k=1
+
+ˆQoc  
+
+> 1
+
+(k, Z = zi) −
+
+> t
+
+X
+
+> k=1
+
+ˆQoc  
+
+> 0
+
+(k, Z = zi)
+
+!# 
+
+,
+
+\dRMST ac DR = ˆαn
+
+> n
+
+X
+
+> i=1
+
+h ˆS(t | Ai = 1 , V ˜a,i = 1 , X = xi) − ˆS(t | Ai = 0 , X = xi)
+
+i
+
+− 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+h tX
+
+> k=1
+
+ˆα ˆQac  
+
+> 1
+
+(k, Z = zi) −
+
+> t
+
+X
+
+> k=1
+
+ˆβi ˆQac  
+
+> 0
+
+(k, Z = zi)
+
+i
+
+.
+
+where ˆ α is the sample proportion of concurrent controls. To compute the desired esti-mate using \dRMST oc DR , one would first obtain ˆS by learning the hazard function for the event 19 denoted ˆh, with parametric or machine learning methods on the appropriate conditioning set and then employing the product formulation given in Proposition 1. The quantities denoted ˆQoc  
+
+> 1
+
+and ˆQoc  
+
+> 0
+
+are computed by learning the appropriate component functions: ˆh, ˆ g
+
+and ˆ π, using parametric or data adaptive methods (again invoking the appropriate product formulation to obtain ˆG and ˆS) and then plugging in the results according to part one of Theorem 2. The same process could be repeated to compute \dRMST ac DR , where ˆQac  
+
+> 1
+
+and ˆQac  
+
+> 0
+
+are calculated using part two of Theorem 2. 
+
+## 5.3 Large sample properties 
+
+The EIF in Theorem 2 is identical to that for the treatment specific survival curve in the concurrent population V˜a = 1 and so inherits the same asymptotic properties (West-ling et al. 2024). If the nuisance models required to estimate G, S, and π are correctly specified it can be shown that the resulting estimators \dRMST oc DR and \dRMST ac DR are root-n consistent, asymptotically normal and have valid 95% confidence intervals given by \dRMST oc DR ± pdvar {ϕoc (Z, dRMST )/n } and \dRMST ac DR ± pdvar {ϕac (Z, dRMST )/n }. In addition, both estimators admit a form of double robustness in that if either S or G and π
+
+are estimated consistently then the resulting estimator will be consistent. 
+
+## 5.4 On efficiency 
+
+When estimators are based on parametric hazard regression, pooling can improve precision for the concurrent control estimand only when Assumption A7 ensures that the pooled and concurrent control hazards coincide (so pooling does not change the target) and the fitted hazard models are correctly specified (or otherwise converge to the true concurrent hazards). In this regime, the pooled likelihood uses a superset of the control risk-set contributions 20 at each time point, increasing Fisher information for the hazard parameters and thereby reducing the hazard-estimation component of the plug-in estimator’s asymptotic variance through the delta-method mapping from the model parameters to the targeted causal parameter; see Q4 in Section 10 of the Supplement. Outside this regime, pooling should be viewed as a bias–variance tradeoff relative to the concurrent estimand rather than as an efficiency improvement. These patterns are reflected in the simulation results (Figure 1 and Figure 4 in Section 6). The bottom row of Figure 2 (Section 6) shows that the DR estimator using all controls can improve efficiency when V˜a is stochastic given E. We now give a heuristic intuition for why this can occur. Any efficiency gains from pooling in the DR setting arise through a different mechanism than in parametric plug-in regression. Under Assumption A7 and when the availability indicator V˜a is stochastic given X = ( E, W )(so that 0 < P(V˜a = 1 | X) < 1 on a set of positive probability), nonconcurrent controls overlap with concurrent units at the same covariate values. In this overlap regime, pooled controls contribute valid information about the concurrent control nuisance functions (e.g., the control hazard and censoring hazard given X), and the EIF for the pooled estimator effectively replaces the noisy indicator weight 1{V˜a = 1 } by its conditional mean P(V˜a =1 | X) (a Rao–Blackwellization of the selection weight). This reduces the variance of the influence-function correction term and can yield a strictly smaller asymptotic variance when nuisance functions are consistently estimated. By contrast, if V˜a is deterministic in 
+
+E, the V˜a = 0 controls are off-support for the concurrent covariate distribution and cannot improve efficiency in the nonparametric sense; any apparent gains then reflect additional modeling restrictions rather than information borrowed at the same X.21 6 Simulations 
+
+In this section we evaluate the performance of the proposed estimators using the following metrics: bias squared, variance (sampling variability), mean squared error and coverage of the 95% confidence interval. Specifically, we investigate estimator performance under varying percentages of concurrent controls (for fixed total trial size), with and without model misspecification. The aim of our simulations is to illustrate the large-sample theory developed earlier, not to evaluate the proposed methods under realistic complex conditions. 
+
+## 6.1 Data generating process 
+
+We simulate platform trial data with survival outcomes from Model 1 for a fixed sample of size n = 1500 and K = 12 discrete time points. The data is generated across a varying percentage of concurrent controls denoted ρ such that ρ ∈ { 0.1, . . . , 0.9}. For each value of ρ, 500 sets of platform trial data are generated. A complete description of the data generating process can be found in the Supplemental Materials (Section 15). Here, we provide a summary. The estimand of interest is the difference in restricted mean survival time between treated and control groups at time point 8, dRMST (a = 1 , τ = 8). For each of the 500 datasets generated across the grid of concurrent control percentages we evaluate the perfor-mance of the methods listed in Table 4 in Supplementary Material section 18.Performance metrics evaluated were bias squared, sampling variability, mean squared error (MSE) and coverage of the 95% confidence interval. We investigate varying the percentage of con-current controls between 90% and 10% by intervals of 10%. To study the effect of model misspecification, for both the outcome and censoring models, the entry time variable E
+
+was omitted and in place of the baseline covariate W , a new variable W ∗ ∼ exp( λ = 2) 22 0.000 0.025 0.050 0.075 0.100 0.125 
+
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> Bias^2
+> 0.000 0.025 0.050 0.075 0.100 0.125
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> MSE
+> 0.10 0.15 0.20 0.25 0.30 0.35
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> Sampling Variability
+> 0.93 0.95 0.97
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> 95% Coverage
+
+estimator DR_ac DR_oc naive OR_ac OR_oc Figure 1: Bias squared, mean squared error, variance and coverage of the 95% confidence interval of the estimators listed in Table 4 under correct model specification. The DR estimators have substantial overlap in variance and mean squared error. was used. Parametric regression models were used to estimate the nuisance functions. 
+
+# 7 Results 
+
+The simulation results for bias squared, variance, mean squared error, and 95% coverage are shown in Figures 1 and 4. With correctly specified models (Figure 1), all methods exhibit negligible bias in estimating dRMST (a = 1 , τ = 8). As the proportion of concurrent controls decreases, variance and MSE increase for all estimators, with the OR estimator 23 1.00 1.05 1.10 1.15 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> Ratio of SEs
+
+Correct Models V a~ Deterministic 
+
+1.0 1.1 1.2 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> Ratio of SEs
+
+Incorrect Models V a~ Deterministic 
+
+1.1 1.2 1.3 1.4 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> Ratio of SEs
+
+Correct Models V a~ Stochastic 
+
+1.1 1.2 1.3 1.4 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> Ratio of SEs
+
+Incorrect Models V a~ Stochastic 
+
+estimator DR−oc/DR−ac OR−oc/OR−ac Figure 2: Ratio of the estimated standard errors DR-oc/DR-ac and OR-oc/OR-ac across model misspecifications considering V˜a as a deterministic function of E (top row) and V˜a
+
+as a stochastic function of E (bottom row). A ratio greater than 1 indicates a gain in efficiency. 24 using all controls showing the lowest variance and MSE, indicating potential efficiency gains but relying on the assumptions for pooling concurrent and nonconcurrent controls (Section 10). Coverage remains near nominal for all methods. Under model misspecification (Figure 4), it exhibits increasing bias as the fraction of concurrent controls decreases, leading to inflated MSE despite similar variance across methods. Additional results are shown in the Supplementary Material (Figures 4-8). Consequently, its 95% confidence interval coverage falls below nominal. Other estimators, particularly the doubly robust approaches, maintain consistent estimation, correct coverage, and relatively stable variance. In summary, outcome regression with pooled controls can improve efficiency but is sensitive to model misspecification, whereas doubly robust estimators provide reliable performance across scenarios. 
+
+# 8 Application to the Adaptive COVID-19 Treatment Platform Trial 
+
+This manucript was motivated by the Adaptive COVID-19 Treatment Trial (ACTT) (Kalil et al. 2021), a platform trial studying possible treatments for adult patients hospitalized with COVID-19 pneumonia. The trial consisted of multiple stages which are shown in Fig-ure 10 in the Supplementary Material. The first phase, denoted ACTT-1, investigated the effectiveness of the pharmaceutical drug remdesivir compared to a placebo. In the second phase, denoted ACTT-2, the placebo arm was dropped and a new combined treatment, remdesivir with barictinib introduced. Patients enrolling during ACTT-2 were randomized to either the shared control arm (remdesivir alone) or the combined treatment. The data used in this section were accessed using NIAID Clinical Trials Data Repository with the appropriate data user agreement. 25 Study population and endpoints. Our study population is comprised of the partic-ipants from the combined ACTT-1 (N=541) and ACTT-2 (N=1033) datasets, using the inclusion and exclusion criteria from the original study for a combined study population of size N=1379. The endpoint of interest, following the original trial was time to recovery measured in days. Treatments under study and baseline covariates. We consider two possible randomized treatment assignments: remdesivir alone (control) and remdesivir plus barictinib (treatment). The following baseline covariates were considered in our anal-ysis: study entry time, age, sex, body mass index (BMI) and disease severity measured on an ordinal scale. Estimand and estimation. The causal estimand of interest was the re-covery rate ratio at 28 days, as describe in Section 4.2, estimated using the methods listed in Table 4. Parametric regression models were used to estimate the nuisance functions. For DR estimators, standard errors were EIF-based; for OR estimators, bootstrap-based. For the recovery rate ratio at 28 days, SEs were computed using the delta method, and 95% Wald confidence intervals and p-values were obtained from Wald tests. Confidence bands for the concurrent treatment-specific survival curves as shown in Figures 3 and 9 were computed using a point-wise method as in Westling et al. (2024). Results. Table 1 shows the results of the estimators discussed in this work applied to the combined ACTT-1 and ACTT-2 dataset including: point estimate for the rate recovery ratio, estimated SE, and Wald 95% CI, p-values and the ratio of the estimated SE compared with that of the naive estimator. Similarly, Table 3 contains the same summary data except now estimand of interest is the restricted mean survival time. In addition, Figure 3 and Fig-ure 9 display reconstructions, using our methods denoted DR-oc and DR-ac respectively, of the cumulative recovery curves stratified by baseline disease severity. Regarding preci-sion, OR and DR estimators using all controls achieved at least a 20% gain relative to the naive estimator (Table 1). The covariate-adjusted DR estimator using only concurrent data 26 Table 1: Estimated rate recovery ratio using the ACTT data. 
+
+Method dRR SE 95% CI p-value Ratio 
+
+OR oc 1.13 0.057 (1.01, 1.23) 0.02 1.06 
+
+OR ac 1.11 0.047 (1.01, 1.20) 0.02 1.27 
+
+DR oc 1.12 0.051 (1.02, 1.22) 0.01 1.19 
+
+DR ac 1.08 0.050 (0.99, 1.18) 0.08 1.21 
+
+naive 1.12 0.061 (1.00, 1.24) 0.04 1.00 achieved a nearly identical 19% gain. This suggests that most of the precision improve-ment comes from covariate adjustment, not from incorporating non-concurrent controls, since the DR estimators using all controls versus only concurrent controls have very similar precision relative to the naive estimator (1.21 vs. 1.19). Regarding bias, in contrast to the continuous-outcome analysis of the same ACTT data by Santacatterina et al. (2025), where the pooled-control OR estimator showed evidence of bias under model misspecification, we do not observe clear signs of such bias here. Still, when the RMST contrast is the target estimand, the OR estimator using all controls shows a slight shift in point estimate relative to the other estimators (Table 3 in the Supplementary Material). Taken together, these findings indicate that the most robust strategy for improving precision is to target concur-rent causal survival estimands and use covariate-adjusted DR estimation with concurrent controls only. 
+
+# 9 Conclusion 
+
+In this work, we identified the treatment-specific survival curve, θ(a, τ ), in platform tri-als with time-to-event outcomes and extend these results to functionals of θ(a, τ ), such as the dRMST . We stated the required assumptions, clarify the rationale and challenges of 27 0.00 0.25 0.50 0.75 1.00                                                                         
+
+> 0246810 12 14 16 18 20 22 24 26 28
+> Days
+> % Recovered  Estimated Recovery ACTT2 − Overall
+> 0.00 0.25 0.50 0.75 1.00
+> 0246810 12 14 16 18 20 22 24 26 28
+> Days
+> % Recovered  Estimated Recovery ACTT2 − Score of 4
+> 0.00 0.25 0.50 0.75 1.00
+> 0246810 12 14 16 18 20 22 24 26 28
+> Days
+> % Recovered  Estimated Recovery ACTT2 − Score of 5
+> 0.00 0.25 0.50 0.75 1.00
+> 0246810 12 14 16 18 20 22 24 26 28
+> Days
+> % Recovered  Estimated Recovery ACTT2 − Score of 6
+> 0.00 0.25 0.50 0.75 1.00
+> 0246810 12 14 16 18 20 22 24 26 28
+> Days
+> % Recovered  Estimated Recovery ACTT2 − Score of 7
+> group Remdesivir Remdesivir + Baricitinib
+
+Figure 3: Estimated proportion of patients recovered in the combined treatment group, Remdesivir plus Baricitinib compared to the control group Remdesivir alone stratified by disease severity measured at baseline. The estimates were computed using an application of the delta method and DR oc .pooling concurrent and non-concurrent controls, and develop estimators for dRMST , whose properties we studied through simulations and a real-data application. We argue that the assumptions required to pool the full shared control arm for estimating causal survival effects based on θ(a, τ ), are subtle and often unrealistic. Simulations show that pooling concurrent and non-concurrent controls can induce substantial bias under model misspecifi-cation and invalidate inference. We therefore recommend covariate-adjusted doubly robust estimators targeting only concurrent controls, with efficiency gains sought through richer baseline prognostic adjustment rather than pooling all controls. Finally, based on the re-28 sults of this manuscript, we provide practical guidelines in Section 16 of the Supplementary Materials. 
+
+# References 
+
+Berry, S., Conner, J. & Lewis, R. (2015), ‘The platform trial: an efficient strategy for evaluating multiple treatments’, JAMA 313 , 1619–1629. Berry, S. & Saville, B. (2016), ‘Efficiencies of platform clinical trials: A vision of the future’, 
+
+Clinical Trials 13 (3), 797–908. Bickel, P. J., Klaassen, C. A., Bickel, P. J., Ritov, Y., Klaassen, J., Wellner, J. A. & Ritov, Y. (1993), Efficient and adaptive estimation for semiparametric models , Vol. 4, Springer. Boos, D. D. & Stefanski, L. A. (2013), Essential statistical inference: theory and methods ,Vol. 591, Springer. Chen, W. C., Wang, C., Li, H., Lu, N., Tiwari, R. & Xu, Y. (2020), ‘Propensity score-integrated composite likelihood approach for augmenting the control arm of a randomized controlled trial by incorporating real-world data’, J Biopharm Stat. 30 .
+
+URL: https://doi.org/10.1080/10543406.2020.1730877 
+
+Coalition, T. A. P. T. (2019), ‘Adaptive platform trials: definition, design, conduct and reporting considerations’, Nature Reviews Drug Discovery 18 , 797–908. Colantuoni, E. & Rosenblum, M. (2015), ‘everaging prognostic baseline variables to gain precision in randomized trials’, Statistics in Medicine 34 , 2602–2617. 29 Collignon, O., Schiel, A., Burman, C.-F., Rufibach, K., Posch, M. & Bretz, F. (2022), ‘Estimands and complex innovative designs’, Clinical Pharmacology & Therapeutics 
+
+112 (6), 1183–1190. Cox, D. (1972), ‘Regression models and life-tables (with discussion).’, Journal of the Royal Statistical Society: Series B 34 , 187–220. FDA (2021), ‘E9 (r1) statistical principles for clinical trials: addendum: estimands and sensitivity analysis in clinical trials’, Guidance for Industry .
+
+URL: https://shorturl.at/clJL5 
+
+Greenstreet, P., Jaki, T., Bedding, A. & Mozgunov, P. (2025), ‘Design of platform trials with a change in the control treatment arm’, Biometrics 81 .
+
+URL: https://doi.org/10.1093/biomtc/ujaf073 
+
+Hasegawa, T., Misawa, S., Nakagawa, S., Tanaka, S., Suganami, H., Tanase, T., Ugai, H., Wakana, A., Yodo, Y. & Tsuchiya, S. (2020), ‘Restricted mean survival time as a summary measure of time-to-event outcome’, Pharmaceutical Statistics 19 , 436–453. Hayward, G., Butler, C. C., Yu, L.-M., Saville, B. R., Berry, N. andDorward, J., Gbinigie, O., Van Hecke, O., Ogburn, E. & Swayze, H. (2021), ‘Platform randomised trial of interventions against covid-19 in older people (principle): protocol for a randomised, controlled, open-label, adaptive platform, trial of community treatment of covid-19 syn-dromic illness in people at higher risk’, BMJ 11 .HEALEY ALS Writing Committee (2025), ‘Verdiperstat in amyotrophic lateral sclerosis results from the randomized healey als platform trial’, JAMA Neurology 82 , 333–343. Hern´ an, M. A. (2010), ‘The hazards of hazard ratios’, Epidemiology 21 (1), 13–15. 30 Hines, O., Dukes, O., Diaz-Ordaz, K. & Vansteelandt, S. (2021), ‘Demystifying statistical learning based on efficient influence functions’, The American Statistician 26 (3), 292– 304. Huang, T. & Luedtke, A. (2023), ‘Improved efficiency for cross-arm comparisons via plat-form designs’, Biostatistics 24 (4), 1106–1124. ICH (2017), ‘Ich harmonised guideline e9 (r1): Esti- mands and sensitivity analysis in clinical trials’. 
+
+URL: https://shorturl.at/arQT6 
+
+Kaizer, A., Hobbs, B. & Koopmeiners, J. (2018), ‘A multi-source adaptive platform design for testing sequential combinatorial therapeutic strategies’, Biometrics 74 , 1082–1094. Kalil, A. C., Patterson, T. F., Mehta, A. K., Tomashek, K. M., Wolfe, C. R., Ghazaryan, V., Marconi, V. C., Ruiz-Palacios, G. M., Hsieh, L. & Kline, S. (2021), ‘Baricitinib plus remdesivir for hospitalized adults with covid-19’, NEJM 384 , 795–807. Kennedy, E. H., Balakrishnan, S. & Wasserman, L. (2021), ‘Semiparametric counterfactual density estimation’, arXiv preprint arXiv:2102.12034 .Kloecker, D., Davies, M., Khunti, K. & Zaccardi, F. (2020), ‘Uses and limitations of the restricted mean survival time: Illustrative examples from cardiovascular outcomes and mortality trials in type 2 diabetes’, Annals of Internal Medicine 172 , 541–552. Koenig, F., Spiertz, C., Millar, D., Rodr´ ıguez-Navarro, S., Mach´ ın, N., Van Dessel, A., Genesc` a, J., Peric` as, J. M., Posch, M., S´ anchez-Montalva, A. et al. (2024), ‘Current state-of-the-art and gaps in platform trials: 10 things you should know, insights from eu-pearl’, Eclinicalmedicine 67 .31 Massonnaud, C., Schonenberger, C., M., C., Ehrenzeller, S., Griessbach, A., Gillibert, A., Briel, M. & Laouenan, C. (2025), ‘Characteristics, design, and statistical methods in platform trials: a systematic review’, Journal of Clinical Epidemiology 184 .Mu, R., Zhan, X., Tang, R. & Yuan, Y. (2024), ‘A bayesian latent-subgroup platform design for dose optimization’, Biometrics 80 .
+
+URL: https://doi.org/10.1093/biomtc/ujae093 
+
+Pearl, J. (1995), ‘Causal diagrams for empirical research’, Biometrika 82 (4), 669–688. Pearl, J. (2010), ‘An introduction to causal inference’, The international journal of bio-statistics 6(2). REMAP-CAP Investigators (2021), ‘Interleukin-6 receptor an- tagonists in critically ill patients with covid-19.’, New England Journal of Medicine 384 , 1491–1502. Robins, J., Rotnitzky, A. & Zhao, L. (1994), ‘Estimation of regression coefficients when some regressors are not always observed’, Journal of the American Statistical Association 
+
+89 , 846–899. Roig, M., Burgwinkel, C., Garczarek, U., Koenig, F., Posch, M., Nguyen, Q. & Hees, K. (2023), ‘On the use of non-concurrent controls in platform trials: a scoping review’, Trials 
+
+24 .Roychoudhury, S. & Neuenschwander, B. (2020), ‘Bayesian leveraging of historical control data for a clinical trial with time-to-event endpoint’, Statistics in medicine 39 (7), 984– 995. Royston, P., Barthel, F. M., Parmar, M. K., Choodari-Oskooei, B. & Isham, V. (2011), 32 ‘Designs for clinical trials with time-to-event outcomes based on stopping guidelines for lack of benefit’, Trials 12 (1), 81. Royston, P. & Parmar, M. (2013), ‘Restricted mean survival time: an alternative to the hazard ratio for the design and analysis of randomized trials with a time-to-event out-come’, BMC Medical Research Methodology 13 , 1–15. Santacatterina, M., Macchiavlli-Giron, F., Zhang, X. & Diaz, I. (2025), ‘Identification and estimation of causal effects using non-concurrent controls in platform trials’, Statistics in Medicine 44 .Saville, B. R., Berry, D. A., Berry, N. S., Viele, K. & Berry, S. M. (2022), ‘The bayesian time machine: Accounting for temporal drift in multi-arm platform trials’, Clin Trials. 
+
+19 .
+
+URL: https://doi.org/10.1177/17407745221112013 
+
+Stensrud, M. J., Aalen, J. M., Aalen, O. O. & Valberg, M. (2019), ‘Limitations of hazard ratios in clinical trials’, European heart journal 40 (17), 1378–1383. Viele, K., Berry, S., Neuenschwander, B., Amzal, B., Chen, F., Enas, N., Hobbs, B., Ibrahim, J., Kinnersley, N. & Lindborg, S. (2014), ‘Use of historical control data for assess- ing treatment effects in clinical trials’, Pharmaceutical statistics 13 , 41–54. Wang, C., Lin, M., Rosner, G. & Soon, G. (2023), ‘A bayesian model with application for adaptive platform trials having temporal changes’, Biometrics 79 .Westling, T., Luedtke, A., Gilbert, P. & Carone, M. (2024), ‘Inference for treatment-specific survival curves using machine learning’, Journal of the American Statistical Association 
+
+119 , 1541–1553. 33 Yuan, Y., Guo, B., Munsell, M., Lu, K. & Jazaeri, A. (2016), ‘Midas: A practical bayesian design for platform trials with molecularly targeted agents’, Statistics in Medicine 
+
+35 , 3892–3906. 
+
+# Acknowledgements 
+
+This article is based upon work supported by the National Science Foundation under Grant No 2306556, and the National Institute of Health Grant No 1R01AI197146-01. 34 SUPPLEMENTARY MATERIAL 
+
+# 10 A more thorough discussion on the implication of assumption A7 for identification and estimation when interested in pooling. 
+
+Recall that in this paper we are targeting the concurrent treatment-specific counterfactual survival curve, 
+
+θ(a, t ) := P{T (a) > t | V˜a = 1 } = E
+
+" tY
+
+> m=1
+
+{1 − h(m, a, ˜a, E, W )} V˜a = 1 
+
+#
+
+,
+
+for each t ∈ { 0, . . . , τ }, and that we are interested in the use of non-concurrent controls (“pooling ”) meaning that we are interested in 
+
+θ(0 , t ) = E
+
+" tY
+
+> m=1
+
+{1 − h(m, 0, E, W )} V˜a = 1 
+
+#
+
+.
+
+Also, recall that treatment availability is known by design and can be deterministic in entry time, i.e. Va = 1(E > t ) for a ∈ { 1, . . . , A} and V0 = 1; or stochastic in entry time, i.e. Va = fVa (E, U Va ) for a ∈ { 0, . . . , A} . We now discuss several questions related to Assumption A7, specifically: 1. Q1: How does assumption A7 impact identification of the concurrent treatment-specific counterfactual survival curve? 2. Q2: When is Assumption A7 plausible? 35 3. Q3: How does assumption A7 relates to parametric model specification? 4. Q4: How does Assumption A7 relate to the efficiency of parametric plug-in esti-mators? In other words, how to formalize the intuition that pooling data increases precision. 
+
+## 10.1 Q1: How does assumption A7 impact identification of the concurrent treatment-specific counterfactual survival curve? 
+
+V˜a is stochastic given E We start by discussing the case when treatment availability is stochastic in entry time in the sense that there exist e such that 0 < P(V˜a = 1 | E = e) < 1.
+
+We nevertheless retain W in the conditioning sets below because the hazards are defined conditional on ( E, W ). In what follows, we consider values ( e, w ) for which the relevant conditional probabilities (e.g., P(Im = 1 , A = 0 , E = e, W = w) > 0 and P(Im = 1 , A =0, E = e, W = w, V ˜a = v) > 0 for v ∈ { 0, 1}) are well-defined. Recall the pooled control-arm hazard 
+
+h(m, 0, e, w ) := P(Lm = 1 | Im = 1 , A = 0 , E = e, W = w),
+
+and the concurrent control-arm hazard 
+
+h(m, 0, ˜a, e, w ) := P(Lm = 1 | Im = 1 , A = 0 , V ˜a = 1 , E = e, W = w).
+
+36 When V˜a is stochastic given E, it is convenient to introduce the control-arm hazards strat-ified by the availability indicator: 
+
+h(1) (m, 0, ˜a, e, w ) := P(Lm = 1 | Im = 1 , A = 0 , V ˜a = 1 , E = e, W = w),h(0) (m, 0, ˜a, e, w ) := P(Lm = 1 | Im = 1 , A = 0 , V ˜a = 0 , E = e, W = w).
+
+Note that h(1) (m, 0, ˜a, e, w ) = h(m, 0, ˜a, e, w ) by definition. Define the risk-set mixture weight 
+
+pm(e, w ) := P(V˜a = 1 | Im = 1 , A = 0 , E = e, W = w).
+
+Then, by the law of total probability with respect to the partition {V˜a = 1 } ∪ { V˜a = 0 },
+
+h(m, 0, e, w ) = P(Lm = 1 | Im = 1 , A = 0 , E = e, W = w)= h(1) (m, 0, ˜a, e, w ) pm(e, w ) + h(0) (m, 0, ˜a, e, w ) {1 − pm(e, w )}.
+
+Thus, unless h(1) (m, 0, ˜a, e, w ) = h(0) (m, 0, ˜a, e, w ), the pooled hazard h(m, 0, e, w ) is a mix-ture and generally differs from the concurrent hazard h(m, 0, ˜a, e, w ) = h(1) (m, 0, ˜a, e, w ). When the equality h(1) (m, 0, ˜a, e, w ) = h(0) (m, 0, ˜a, e, w ) holds, the mixture collapses and 
+
+h(m, 0, e, w ) = h(1) (m, 0, ˜a, e, w ),
+
+i.e., the hazard obtained by pooling all control observations at ( E = e, W = w) (ignoring 
+
+V˜a) coincides with the concurrent control hazard that conditions on V˜a = 1. In addition, Assumption A7 can be rewritten as 
+
+Lm ⊥ V˜a (Im = 1 , A = 0 , E, W ),
+
+37 which implies h(1) (m, 0, ˜a, e, w ) = h(0) (m, 0, ˜a, e, w ) and hence collapses the mixture to 
+
+h(m, 0, e, w ) = h(m, 0, ˜a, e, w ).V˜a is deterministic given E We now consider the setting where V˜a is deterministic given E, i.e., there exists a (known) function v˜a(·) such that V˜a = v˜a(E) a.s. Let E1 := {e :
+
+v˜a(e) = 1 }, E0 := {e : v˜a(e) = 0 }. Fix ( m, e, w ) with e ∈ E 1 and P(Im = 1 , A = 0 , E =
+
+e, W = w) > 0. Since V˜a = 1 almost surely whenever E = e ∈ E 1, we have 
+
+P(V˜a = 1 | Im = 1 , A = 0 , E = e, W = w) = 1 ,
+
+so the risk-set mixture weight is degenerate: 
+
+pm(e, w ) = 1 for all e ∈ E 1.
+
+Plugging this into the mixture decomposition 
+
+h(m, 0, e, w ) = h(1) (m, 0, ˜a, e, w ) pm(e, w ) + h(0) (m, 0, ˜a, e, w ) {1 − pm(e, w )}
+
+yields 
+
+h(m, 0, e, w ) = h(1) (m, 0, ˜a, e, w ) for all e ∈ E 1.
+
+Since h(1) (m, 0, ˜a, e, w ) = h(m, 0, ˜a, e, w ) by definition, it follows that 
+
+h(m, 0, e, w ) = h(m, 0, ˜a, e, w ) for all e ∈ E 1,
+
+38 i.e., Assumption A7 holds automatically on the concurrent domain and is therefore redun-dant when V˜a is deterministic given E.
+
+Summary about Assumption A7 and identification of the target parameter 
+
+Assumption A7 matters for identification only in the pooling sense: when V˜a is stochastic given E, the pooled control hazard h(m, 0, e, w ) is a mixture over V˜a, so identifying the concurrent hazard h(m, 0, ˜a, e, w ) from pooled controls requires A7 (equivalently Lm ⊥ V˜a |
+
+Im = 1 , A = 0 , E, W ) to collapse that mixture. When V˜a is deterministic given E,the mixture weight is degenerate on the concurrent domain ( pm(e, w ) = 1 for e ∈ E 1), so h(m, 0, e, w ) = h(m, 0, ˜a, e, w ) holds automatically and A7 is not needed to identify the concurrent control hazard from the observed data; in this case, “pooling” is purely an estimation move, as it justifies fitting/estimating h(m, 0, e, w ) using all control observations (including nonconcurrent ones) to gain precision. 
+
+## 10.2 Q2: When is Assumption A7 plausible? 
+
+Assumption A7 is a restriction on the true distribution P0 stating that, among control-arm participants who are event-free and uncensored through time m (i.e., Im = 1), the event hazard at time m does not depend on whether treatment ˜ a was available at entry, once we condition on ( E, W ): h(m, 0, e, w ) = h(m, 0, ˜a, e, w ) for all e ∈ E 1 and in its equivalent form Lm ⊥ V˜a (Im = 1 , A = 0 , E, W ). Thus, beyond the deterministic case V˜a = v˜a(E)where the assumption is redundant, A7 is plausible precisely when V˜a carries no residual information about the control event process after conditioning on the measured covariates 
+
+W and entry time E.An important setting in which Assumption A7 may be implausible is when there exist unmeasured calendar-time or site-level factors that jointly influence treatment availability 39 and control outcomes. Let U denote generic unmeasured calendar-time or site-level features (e.g., changes in standard of care, diagnostic intensity, background risk, or enrollment practices) that may affect the event process. If U is associated with V˜a within levels of (E, W ) and also prognostic for the event hazard within the control risk set, then A7 will generally fail: 
+
+U̸ ⊥ V˜a | (E, W ) and Lm̸ ⊥ U | (Im = 1 , A = 0 , E, W ) = ⇒ Lm̸ ⊥ V˜a | (Im = 1 , A = 0 , E, W ).
+
+Since Assumption A7 is equivalent to Lm ⊥ V˜a | (Im = 1 , A = 0 , E, W ), the above implication suggests that there exist ( m, e, w ) (with e ∈ E 1 and P(Im = 1 , A = 0 , E =
+
+e, W = w) > 0) such that 
+
+P(Lm = 1 | Im = 1 , A = 0 , V ˜a = 1 , E = e, W = w)̸ =
+
+P(Lm = 1 | Im = 1 , A = 0 , V ˜a = 0 , E = e, W = w),
+
+and consequently, in the original hazard notation, 
+
+h(m, 0, e, w )̸ = h(m, 0, ˜a, e, w ).
+
+Conversely, A7 becomes more plausible when the observed covariates W (possibly together with E) adequately adjust for the drivers of both availability and baseline prognosis, so that any remaining association between V˜a and the control event hazard is negligible. 40 10.3 Q3: How does assumption A7 relates to parametric model specification? 
+
+This subsection clarifies how Assumption A7 relates with parametric model specification / misspecification when estimating control-arm components of the concurrent treatment-specific survival curve in a platform trial. To start, recall the pooled pooled and concurrent control hazards for A = 0 (and with an abuse of notation to help clarify the idea later) under the true distribution P0,
+
+hP0 (m, 0, e, w ) := PP0 (Lm = 1 | Im = 1 , A = 0 , E = e, W = w),hP0 (m, 0, ˜a, e, w ) := PP0 (Lm = 1 | Im = 1 , A = 0 , V ˜a = 1 , E = e, W = w).
+
+The pooled hazard hP0 (m, 0, e, w ) is the hazard one can estimate using all controls at (E, W ), including nonconcurrent controls, while hP0 (m, 0, ˜a, e, w ) is the hazard among con-current controls (those with V˜a = 1). 
+
+Assumption A7 is a restriction on P0 linking pooled and concurrent control hazards Assumption A7 is a property of the true law P0 (not of an estimator), and on its relevant domain asserts that the pooled and concurrent control hazards agree: A7: hP0 (m, 0, e, w ) = hP0 (m, 0, ˜a, e, w ) for all relevant ( m, e, w ) with e ∈ E 1,
+
+equivalently, 
+
+Lm ⊥ V˜a (Im = 1 , A = 0 , E, W ) for all m. 
+
+41 As previously discussed, when V˜a is deterministic, A7 holds automatically on E1 := {e :
+
+v˜a(e) = 1 } and is redundant; when V˜a is stochastic given E (or ( E, W )), A7 is substantive and rules out residual calendar-time/site effects associated with availability after condi-tioning on ( E, W ) within the control risk set. 
+
+The pooled and concurrent control survival curves For any hazard function h(·, 0, ·, ·), define the induced survival functional for t ∈ { 0, . . . , τ },Θ0(h)( t) := EP0
+
+" tY
+
+> m=1
+
+{1 − h(m, 0, E, W )} V˜a = 1 
+
+#
+
+.
+
+The two control survival objects of interest are 
+
+θpool (0 , t ; P0) := Θ 0
+
+ hP0 (·, 0, ·, ·)(t), θconc (0 , t ; P0) := Θ 0
+
+ hP0 (·, 0, ˜a, ·, ·)(t).
+
+Assumption A7 is exactly the condition that aligns the pooled and concurrent control components: AA7 =⇒ θpool (0 , t ; P0) = θconc (0 , t ; P0) for all t. 
+
+Thus, A7 governs whether pooling changes the target : if A7 fails, then even correct model specification and perfect estimation of the pooled hazard targets θpool (0 , t ; P0) rather than 
+
+θconc (0 , t ; P0). 
+
+Parametric model specification and probability limits. Let M = {Pθ : θ ∈ Rq}
+
+be a parametric model for the observed data, and let ˆθn be the any regular estimator (e.g., MLE) obtained by fitting Pθ to the observed data. Under each Pθ, define the model-implied 42 pooled control hazard 
+
+hθ(m, 0, e, w ) := Pθ(Lm = 1 | Im = 1 , A = 0 , E = e, W = w).
+
+The plug-in pooled-hazard estimator is ˆhn(m, 0, e, w ) := hˆθn (m, 0, e, w ) and the correspond-ing plug-in survival estimator is bθpool (0 , t ) := Θ 0(ˆhn)( t). 
+
+Well-specified model. If P0 ∈ M , then there exists θ⋆ such that P0 = Pθ⋆ , hence ˆθn → θ⋆
+
+and ˆhn → hθ⋆ = hP0 , implying 
+
+bθpool (0 , t ) → θpool (0 , t ; P0).
+
+Misspecified model. If P0 /∈ M , then under standard regularity conditions for MLE under misspecification, ˆθn → θ†, where θ† is the pseudo-true parameter (the KL projection) 
+
+θ† := arg max  
+
+> θ∈Rq
+
+EP0
+
+ log pθ(Z),
+
+and therefore ˆhn → hθ† , implying 
+
+bθpool (0 , t ) → θpool (0 , t ; Pθ† ) := Θ 0
+
+ hθ† (·, 0, ·, ·)(t),
+
+which generally differs from θpool (0 , t ; P0). 
+
+Assumption A7 × model specification: four scenarios. The interaction between A7 and model specification is most transparent by separating (i) target alignment (A7 true/false) from (ii) estimation error (well-specified/misspecified M). Table 2 summarizes probability limits and practical platform-trial examples. 43 Table 2: Assumption A7 versus parametric model specification for the shared estimand 
+
+θconc (0 , t ; P0): probability limits, estimand targeted by pooling, error types, and schematic logistic-hazard examples. 
+
+P0 ∈ M (well-specified) P0 /∈ M (misspecified) A7 true Targeted by pooled estimator: θpool (0 , t ; P0), and under A7 θpool (0 , t ; P0) = θconc (0 , t ; P0). 
+
+Limit: bθpool (0 , t ) → θpool (0 , t ; P0) = θconc (0 , t ; P0). 
+
+Error vs estimand: none. 
+
+Example (true & fitted logistic hazard): 
+
+P(Lm=1 | Im=1 , A =0 , E, W, V ˜a=v) = expit {αm+β⊤
+
+> m
+
+ϕ(E, W )},
+
+(no v term; A7 holds), and the same form is fitted in the pooled controls. 
+
+Targeted by pooled estimator: θpool (0 , t ; Pθ† ), and under A7 θpool (0 , t ; P0) = θconc (0 , t ; P0). 
+
+Limit: bθpool (0 , t ) → θpool (0 , t ; Pθ† ). 
+
+Error vs estimand: modeling bias only. 
+
+Example (true logistic, misspecified working model): 
+
+P(Lm=1 | · ) = expit {αm+β1mE+β⊤
+
+> 2m
+
+W +β⊤
+
+> 3m
+
+(E·W )},
+
+(A7 holds: no v term), but expit {αm + β1mE + β⊤
+
+> 2m
+
+W }
+
+is fitted (omit E · W ). 
+
+A7 false Targeted by pooled estimator: θpool (0 , t ; P0). 
+
+Limit: bθpool (0 , t ) → θpool (0 , t ; P0). 
+
+Error vs estimand: target mismatch only. 
+
+Example (true logistic violates A7; pooled model correct for pooled hazard): 
+
+P(Lm=1 | · ) = expit {αm+β⊤
+
+> m
+
+ϕ(E, W )+ γmV˜a}, γ m̸ = 0 ,
+
+so h(m, 0, e, w )̸ = h(m, 0, ˜a, e, w ), but the pooled condi-tional mean P(Lm=1 | Im=1 , A =0 , E, W ) is correctly modeled by the working logistic class. 
+
+Targeted by pooled estimator: θpool (0 , t ; Pθ† ). 
+
+Limit: bθpool (0 , t ) → θpool (0 , t ; Pθ† ). 
+
+Error vs estimand: target mismatch + modeling bias. 
+
+Example (true violates A7 and working model too rigid): 
+
+P(Lm=1 | · ) = expit {αm +sm(E, W )+ γmV˜a}, γ m̸ = 0 ,
+
+with nonlinear sm, but you fit expit {αm + β1mE +
+
+β⊤
+
+> 2m
+
+W }.
+
+Note on A7 false: The term γmV˜a can be viewed as a reduced-form representation of unmeasured calendar-time/site factors 
+
+U that affect both availability and the control hazard. For instance, suppose P(Lm=1 | Im=1 , A =0 , E, W, U ) = expit {αm +
+
+β⊤
+
+> m
+
+ϕ(E, W ) + λmU }, P(V˜a=1 | E, U ) = expit {δ0 + δ1E + δ2U }, with λmδ2̸ = 0. Then U induces residual dependence of Lm
+
+on V˜a within ( Im=1 , A =0 , E, W ); we summarize that induced association by the reduced-form logit term γmV˜a, so A7 fails whenever γm̸ = 0. 
+
+Interpretation for pooling analyses. When the goal is to leverage nonconcurrent controls while targeting the concurrent causal estimand, Assumption A7 addresses whether pooling changes the target (identification-for-pooling), whereas P0 ∈ M addresses whether the chosen parametric estimation procedure consistently estimates the pooled hazard (esti-mation). In particular, even under a correctly specified parametric model, if A7 fails then pooling induces a bias relative to the concurrent estimand; conversely, even if A7 holds, 44 a misspecified parametric model can induce bias via imperfect estimation of the (correct) pooled target. 
+
+## 10.4 Q4: How does Assumption A7 relate to the efficiency of parametric plug-in estimators? Formalizing the intuition that pooling data increases precision. 
+
+This subsection formalizes a common intuition: when the goal is the concurrent control survival curve θconc (0 , t ; P0), borrowing nonconcurrent controls can improve precision be-cause it uses more information to estimate the same control-arm hazard, provided that pooling does not change the target. As shown in the preceding discussion, Assumption A7 is precisely the condition under which pooling controls is compatible with the concurrent hazard target. We focus here on parametric plug-in estimators based on fitted discrete-time hazards (e.g., logistic regression at each time point). 
+
+Setup Fix t ∈ { 1, . . . , τ } and consider the concurrent control survival functional 
+
+θconc (0 , t ; P0) = EP0
+
+" tY
+
+> m=1
+
+{1 − hconc (m, E, W )} V˜a = 1 
+
+#
+
+,hconc (m, e, w ) := P(Lm = 1 | Im = 1 , A = 0 , V ˜a = 1 , E = e, W = w).
+
+Assume a parametric hazard model {hβm (m, e, w ) : βm ∈ Rpm } for the control hazard at each m, with design vector ϕm(e, w ) (e.g., a logistic regression with logit hβm (m, e, w ) = 
+
+β⊤
+
+> m
+
+ϕm(e, w )). 45 When pooling can increase precision for the concurrent estimand Assume: (i) Assumption A7 holds so that hconc (m, e, w ) = hpool (m, e, w ) on the concurrent domain; (ii) the model is well-specified, i.e. for each m there exists β⋆m such that hβ⋆m (m, e, w ) = 
+
+hconc (m, e, w ) on the relevant support; (iii) standard regularity conditions for M-estimators hold. Consider two estimators of β⋆m: a concurrent-only estimator and a pooled-controls esti-mator, defined as solutions to weighted score equations 0 = 
+
+> n
+
+X
+
+> i=1
+
+ω(k) 
+
+> m,i
+
+φm(Zi; βm), k ∈ { conc , pool },
+
+where φm(Z; βm) is the per-observation score-like contribution for time m (for logistic regression, φm(Z; βm) = Im1{A = 0 } ϕm(E, W ){Lm − hβm (m, E, W )}), and the weights are 
+
+ωconc  
+
+> m
+
+:= 1{V˜a = 1 }, ωpool  
+
+> m
+
+:= 1 .
+
+(Equivalently, ωconc  
+
+> m
+
+restricts to concurrent controls while ωpool  
+
+> m
+
+uses all controls.) Let 
+
+A(k) 
+
+> m
+
+:= E
+
+h
+
+ω(k) 
+
+> m
+
+∇βm φm(Z; β⋆m)
+
+i
+
+, B(k) 
+
+> m
+
+:= Var 
+
+
+
+ω(k) 
+
+> m
+
+φm(Z; β⋆m)
+
+
+
+.
+
+Then the influence-function expansions of the two estimators are 
+
+√n  ˆβ(k) 
+
+> m
+
+− β⋆m
+
+ = 1
+
+√n
+
+> n
+
+X
+
+> i=1
+
+ψ(k) 
+
+> βm
+
+(Zi) + op(1) , ψ(k) 
+
+> βm
+
+(Z) := −(A(k) 
+
+> m
+
+)−1 ω(k) 
+
+> m
+
+φm(Z; β⋆m),
+
+and hence √n  ˆβ(k) 
+
+> m
+
+− β⋆m
+
+ d
+
+→ N
+
+
+
+0, (A(k) 
+
+> m
+
+)−1B(k) 
+
+> m
+
+(A(k) 
+
+> m
+
+)−T 
+
+.
+
+Under correct specification and canonical MLE-type scores, this reduces to the familiar 46 information form ( A(k) 
+
+> m
+
+)−1 (since B(k) 
+
+> m
+
+= A(k) 
+
+> m
+
+), and moreover 
+
+Apool  
+
+> m
+
+⪰ Aconc  
+
+> m
+
+=⇒ (Apool  
+
+> m
+
+)−1 ⪯ (Aconc  
+
+> m
+
+)−1,
+
+because ωpool  
+
+> m
+
+≥ ωconc  
+
+> m
+
+pointwise and the remaining terms in A(k) 
+
+> m
+
+are positive semidefinite. Thus, pooling yields a weak efficiency improvement for estimating each β⋆m.
+
+Propagation to the concurrent survival curve Define the plug-in estimator ˆθ(k)(0 , t ) := 
+
+Pni=1 1{V˜a,i = 1 } Pτ −1
+
+> t=1
+
+Qtm=1 {1 − hˆβ(k)
+
+> m
+
+(m, E i, W i)}
+
+Pni=1 1{V˜a,i = 1 } , k ∈ { conc , pool }.
+
+Because θconc (0 , t ; P0) is a smooth functional of ( β⋆ 
+
+> 1
+
+, . . . , β ⋆t ), a first-order expansion yields the influence function 
+
+ψ(k) 
+
+> t
+
+(Z) = ψmean  
+
+> t
+
+(Z) + 
+
+> t
+
+X
+
+> m=1
+
+∇βm θconc (0 , t ; P0) ⊤ ψ(k) 
+
+> βm
+
+(Z),
+
+where ψmean  
+
+> t
+
+(Z) is the empirical-mean component from averaging over {V˜a = 1 } (identi-cal for the two estimators), and the second term captures the additional variability from estimating the hazards. Consequently, Var  ψpool  
+
+> t
+
+(Z) = Var  ψmean  
+
+> t
+
+(Z)+Var 
+
+> t
+
+X
+
+> m=1
+
+g⊤
+
+> m,t
+
+ψpool  
+
+> βm
+
+(Z)
+
+!
+
++2 Cov ψmean  
+
+> t
+
+(Z),
+
+> t
+
+X
+
+> m=1
+
+g⊤
+
+> m,t
+
+ψpool  
+
+> βm
+
+(Z)
+
+!
+
+,
+
+with gm,t := ∇βm θconc (0 , t ; P0), and the analogous expression holds for Var( ψconc  
+
+> t
+
+(Z)). Since 
+
+ωpool  
+
+> m
+
+≥ ωconc  
+
+> m
+
+pointwise, the pooled estimating equation uses a superset of the control-arm risk-set observations at time m relative to the concurrent-only fit. Under the canonical likelihood case (so B(k) 
+
+> m
+
+= A(k) 
+
+> m
+
+), this yields Apool  
+
+> m
+
+⪰ Aconc  
+
+> m
+
+and hence ( Apool  
+
+> m
+
+)−1 ⪯ (Aconc  
+
+> m
+
+)−1.
+
+47 Because ψ(k) 
+
+> βm
+
+(Z) = −(A(k) 
+
+> m
+
+)−1ω(k) 
+
+> m
+
+φm(Z; β⋆m), the above implies that for any fixed vector g
+
+(in particular g = gm,t ), Var  g⊤ψpool  
+
+> βm
+
+(Z) ≤ Var  g⊤ψconc  
+
+> βm
+
+(Z),
+
+so pooling weakly reduces the variance contribution propagated through estimation of β⋆m.For the concurrent survival curve, the hazard-estimation component is Var 
+
+Ptm=1 g⊤
+
+> m,t
+
+ψ(k) 
+
+> βm
+
+(Z)
+
+
+
+,and pooling therefore weakly reduces this component (holding fixed the mean-term ψmean  
+
+> t
+
+,which is identical for k ∈ { conc , pool }). We do not claim a general PSD ordering for the full asymptotic variance Var  ψ(k) 
+
+> t
+
+(Z) because it also includes the cross-covariance term 2 Cov 
+
+
+
+ψmean  
+
+> t
+
+(Z), Ptm=1 g⊤
+
+> m,t
+
+ψ(k) 
+
+> βm
+
+(Z)
+
+
+
+, whose sign need not be preserved by pool-ing. Nonetheless, under (i)–(iii), pooling improves precision through the hazard-estimation pathway by making the ˆβm’s (and hence the propagated term) asymptotically more precise. 
+
+Effective sample size heuristic If the time-m risk-set contributions are comparable across concurrent and nonconcurrent controls after conditioning on ( E, W ), then A(k) 
+
+> m
+
+scales approximately with the expected number of control risk-set observations used at time m:
+
+Apool  
+
+> m
+
+≈ cpool  
+
+> m
+
+Σm, Aconc  
+
+> m
+
+≈ cconc  
+
+> m
+
+Σm,
+
+where cpool  
+
+> m
+
+= EP0 [Im1{A = 0 }] and cconc  
+
+> m
+
+= EP0 [Im1{A = 0 , V ˜a = 1 }]. Thus, at a back-of-the-envelope level, Var( ˆβpool  
+
+> m
+
+) is smaller than Var( ˆβconc  
+
+> m
+
+) by roughly the factor cpool  
+
+> m
+
+/c conc  
+
+> m
+
+,
+
+and this variance reduction propagates to ˆθ(0 , t ) through the gradients {∇ βm θ}m≤t.48 What can go wrong without A7 and/or correct specification If A7 fails, then 
+
+hpool (m, e, w )̸ = hconc (m, e, w ) for some ( m, e, w ), so a pooled plug-in estimator is generally consistent for a different survival curve than the concurrent estimand. In that case pooling trades bias for variance relative to θconc (0 , t ; P0) and should not be justified as an efficiency gain for the concurrent target. If the parametric hazard model is misspecified, then ˆβm
+
+converges to a pseudo-true limit β†
+
+> m
+
+; pooling may still reduce the asymptotic variance around that pseudo-true limit because it increases information, but it does not guarantee smaller mean squared error for the concurrent estimand. 
+
+Take-away Pooling can deliver genuine efficiency gains for the concurrent estimand when (i) A7 ensures that pooling does not change the target hazard, and (ii) the hazard model is correctly specified (or, more generally, the fitted hazards converge to the true concurrent hazards). Outside this regime, improvements in precision should be interpreted through a bias–variance lens rather than as a pure efficiency gain. 
+
+# 11 Proof of Proposition 1 
+
+Note that Assumption A5 is equivalent to the following statement: P(C ≥ m | A = a, V ˜a =1, X = x) > 0. The survival function may be decomposed as the product of conditional survival probabilities: 49 S(m | a, 1, w, e ) = P(T > m | A = a, V ˜a = 1 , W = w, E = e)=
+
+> m
+
+Y
+
+> j=1
+
+P(T > j | T > j − 1, A = a, V ˜a = 1 , W = w, E = e)=
+
+> m
+
+Y
+
+> j=1
+
+1 − P(T = j | T > j − 1, A = a, V ˜a = 1 , W = w, E = e)Recall we defined the the hazard function for the event as 
+
+h(m, a, ˜a, e, w ) = P(Lm = 1 | Im = 1 , A = a, V ˜a = 1 , E = e, W = w)= P(T = m | T ≥ m, C ≥ m, A = a, V ˜a = 1 , E = e, W = w).
+
+Let X = ( E, W ) and observe that P(T = m | T ≥ m, C ≥ m, A = a, V ˜a = 1 , X = x) may be re-written in the following way, = P(T = m, C ≥ m | T ≥ m, A = a, V ˜a = 1 , X = x)
+
+P(C ≥ m | T ≥ m, A = a, V ˜a = 1 , X = x) (1) = P(T = m | T ≥ m, A = a, V ˜a = 1 , X = x)P(C ≥ m | A = a, V ˜a = 1 , X = x)
+
+P(C ≥ m | T ≥ m, A = a, V ˜a = 1 , X = x) (2) = P(T = m | T ≥ m, A = a, V ˜a = 1 , X = x)P(C ≥ m | A = a, V ˜a = 1 , X = x)
+
+P(C ≥ m | A = a, V ˜a = 1 , X = x) (3) = P(T = m | T ≥ m, A = a, V ˜a = 1 , X = x) (4) 50 where the first line follows by the definition of conditional probability, line two follows by an application of assumptions A2 and A3 to the numerator, line three by applying A2 and A3 once again to the denominator and line 4 by cancellation of terms. Note here that lines two, three and the simplification in line four are well defined since we assume by the equivalent restatement of Assumption A5: P(C ≥ m | A = a, V ˜a = 1 , X = x) > 0. Using this application of the definition of conditional probability and identifying assumptions it follows that: 
+
+h(m, a, 1, e, w ) = P(T = m | T ≥ m, A = a, V ˜a = 1 , X = x)which can be substituted into the product representation of the survival function to yield, 
+
+S(m | a, 1, w, e ) = P(T > m | A = a, V ˜a = 1 , W = w, E = e)=
+
+> m
+
+Y
+
+> j=1
+
+P(T > j | T > j − 1, A = a, V ˜a = 1 , W = w, E = e)=
+
+> m
+
+Y
+
+> j=1
+
+1 − P(T = j | T > j − 1, A = a, V ˜a = 1 , W = w, E = e)=
+
+> m
+
+Y
+
+> j=1
+
+1 − h(m, a, 1, e, w )51 12 Proof of Theorem 1 
+
+Fix t ∈ { 0, . . . , τ } and a ∈ { 0, ˜a}. Then 
+
+P{T (a) > t | V˜a = 1 } = EP{T (a) > t | W, E, V ˜a = 1 } V˜a = 1 
+
+= EP{T (a) > t | A = a, W, E, V ˜a = 1 } V˜a = 1  by Assumption A1 = EP{T > t | A = a, W, E, V ˜a = 1 } V˜a = 1  by Assumption A2 = ES(t | A = a, V ˜a = 1 , W, E ) V˜a = 1  by Def. and A6 = E
+
+" tY
+
+> j=1
+
+{1 − h(j, a, ˜a, w, e )} V˜a = 1 
+
+#
+
+by Assumptions A2, A3, A5 .
+
+For a = 0, similar arguments yield 
+
+P{T (0) > t | V˜a = 1 } = EP{T (0) > t | W, E, V ˜a = 1 } V˜a = 1 
+
+= EP{T (0) > t | A = 0 , W, E, V ˜a = 1 } V˜a = 1  by Assumption A1 = EP{T > t | A = 0 , W, E, V ˜a = 1 } V˜a = 1  by Assumption A2 = ES(t | A = 0 , V ˜a = 1 , W, E ) V˜a = 1  by Def. and A4 = E
+
+" tY
+
+> j=1
+
+{1 − h(j, 0, ˜a, E, W )} V˜a = 1 
+
+#
+
+by Assumptions A2, A3, A5 = E
+
+" tY
+
+> j=1
+
+{1 − h(j, 0, E, W )} V˜a = 1 
+
+#
+
+by Proposition A7 .
+
+52 13 Proof of Theorem 2 
+
+We assume all data Z = ( X, A, V a, ∆, ˜T ) are discrete with a parametric submodel given by, 
+
+Pϵ(z) = (1 − ϵ)P0(z) + δz ϵ
+
+Where δz is the Dirac measure at Z = z and X = ( E, W ). Given all data are assumed to be discrete the probability mass function is given by: 
+
+Pϵ(z) = (1 − ϵ)P0(z) + 1(Z = z)ϵ
+
+= (1 − ϵ)P0(˜ t, δ, ˜a, 1, x ) + 1( ˜T = ˜ t, ∆ = δ, A = ˜ a, V ˜a = 1 , x )ϵ
+
+To find the candidate efficient influence function we will compute the pathwise derivative with respect to the given parametric submodel as follows: 53 ∂∂ϵ Ψ1
+
+> ϵ=0
+
+= ∂∂ϵ E
+
+h tY
+
+> m=1
+
+ 1 − hϵ(m, A = ˜ a, V ˜a = 1 , X = x) | V˜a = 1 
+
+i
+
+> ϵ=0
+
+(1) = ∂∂ϵ E
+
+h
+
+Sϵ(t | A = ˜ a, V ˜a = 1 , X = x) | V˜a = 1 
+
+i
+
+> ϵ=0
+
+(2) = ∂∂ϵ 
+
+h X 
+
+> x
+
+Sϵ(t | A = ˜ a, V ˜a = 1 , X = x)Pϵ(x | v˜a = 1) 
+
+i
+
+> ϵ=0
+
+(3) = X
+
+> x
+
+∂∂ϵ Sϵ(t | A = ˜ a, V ˜a = 1 , X = x) ϵ=0 
+
+P0(x | v˜a = 1) + X
+
+> x
+
+S0(t | A = ˜ a, V ˜a = 1 , X = x) ∂∂ϵ Pϵ(x | v˜a = 1) ϵ=0 
+
+. (4) Consider the sum in equation 4, we may find the required derivative of ∂∂ϵ Pϵ(x | v˜a = 1) ϵ=0 
+
+as 
+
+∂∂ϵ Pϵ(x | v˜a = 1) ϵ=0 
+
+= 1(V˜a = 1) 
+
+P0(V˜a = 1) {1(X = x) − P0(x | v˜a = 1) }.
+
+Substituting back in to the initial sum and distributing the function S0(t | A = 1 , V ˜a =1, X = x) obtain: 
+
+1(V˜a = 1) 
+
+P0(V˜a = 1) 
+
+X
+
+> x
+
+S0(t | A = ˜ a, V ˜a = 1 , X = x)1(X = x)
+
+− 1(V˜a = 1) 
+
+P0(V˜a = 1) 
+
+X
+
+> x
+
+S0(t | A = ˜ a, V ˜a = 1 , X = x)P0(x | v˜a = 1) 54 where resulting difference of terms simplifies such that, 
+
+X
+
+> x
+
+S0(t | A = ˜ a, V ˜a = 1 , x ) ∂∂ϵ Pϵ(x | v˜a = 1) ϵ=0 
+
+= 1(V˜a = 1) 
+
+P0(V˜a = 1) S(t | A = ˜ a, V ˜a = 1 , X ) − 1(V˜a = 1) 
+
+P0(V˜a = 1) Ψ1.
+
+To complete the derivation it remains to find the derivative in the first term of the sum in equation 4: 
+
+X
+
+> x
+
+∂∂ϵ Sϵ(t | A = ˜ a, V ˜a = 1 , X = x) ϵ=0 
+
+P0(x | v˜a = 1) .
+
+By definition the survival function may be reformulated using the product representation given by Proposition 1 such that, 
+
+X
+
+> x
+
+∂∂ϵ Sϵ(t | A = ˜ a, V ˜a = 1 , x ) ϵ=0 
+
+P0(x | v˜a = 1) = X
+
+> x
+
+∂∂ϵ 
+
+> t
+
+Y
+
+> m=1
+
+1 − hϵ(m, ˜a, 1, x )
+
+> ϵ=0
+
+P0(x | v˜a = 1) = X
+
+> x
+
+∂∂ϵ 
+
+> t
+
+Y
+
+> m=1
+
+1 − Pϵ(Lm | Im = 1 , A = ˜ a, V ˜a = 1 , X = x)
+
+> ϵ=0
+
+P0(x | v˜a = 1) = X
+
+> x
+
+∂∂ϵ 
+
+> t
+
+Y
+
+> m=1
+
+1 − Eϵ[Lm | Im = 1 , A = ˜ a, V ˜a = 1 , X = x]
+
+> ϵ=0
+
+P0(x | v˜a = 1) .
+
+Where the second line follows by definition of the discrete time hazard for the event and the third line by definition of Lm as a binary variable. Using an extension of the product rule from single variable calculus: 
+
+ddx 
+
+h kY
+
+> i=1
+
+fi(x)
+
+i
+
+=
+
+> k
+
+X
+
+> i=1
+
+h ddx fi(x)
+
+ kY 
+
+> j=1; j̸=i
+
+fj (x)
+
+i
+
+,
+
+55 we may re-express the sum in the third line, 
+
+X
+
+> x
+
+n tX
+
+> k=1
+
+ tY 
+
+> j̸=k
+
+1 − E[Lj | Ij = 1 , A = ˜ a, V ˜a = 1 , X = x]
+
+
+
+× ∂∂ϵ − Eϵ[Lk | Ik = 1 , A = ˜ a, V ˜a = 1 , X = x] ϵ=0 
+
+o
+
+P0(x | v˜a = 1) which admits further re-expression, = X
+
+> x
+
+n tX
+
+> k=1
+
+Qtj=1 1 − E[Lj | Ij = 1 , A = ˜ a, V ˜a = 1 , X = x]1 − h(k, A = a, V ˜a = 1 , X = x)
+
+× ∂∂ϵ − Eϵ[Lk | Ik = 1 , A = ˜ a, V ˜a = 1 , X = x] ϵ=0 
+
+o
+
+P0(x | v˜a = 1) .
+
+We may invoke the product representation of the survival function again to obtain further simplification given by, = X
+
+> x
+
+n tX
+
+> k=1
+
+S(t | A = ˜ a, V ˜a = 1 , X = x)1 − h(k, A = ˜ a, V ˜a = 1 , X = x)
+
+× ∂∂ϵ − Eϵ[Lk | Ik = 1 , A = ˜ a, V ˜a = 1 , X = x] ϵ=0 
+
+o
+
+P0(x | v˜a = 1) .
+
+56 To continue with the derivation observe, 
+
+− ∂∂ϵ Eϵ[Lk | Ik = 1 , A = ˜ a, V ˜a = 1 , X = x] ϵ=0 
+
+= − X
+
+> 0,1
+
+lk × ∂∂ϵ Pϵ(Lk = 1 | Ik = 1 , A = ˜ a, V ˜a = 1 , X = x) ϵ=0 
+
+= − X
+
+> 0,1
+
+lk× 1(Ik = 1 , A = ˜ a, V ˜a = 1 , X = x)
+
+P0(Ik = 1 | A = ˜ a, V ˜a = 1 , X = x)P0(A = ˜ a | V˜a = 1 , X = x)P0(x | V˜a = 1) P0(V˜a = 1) 
+
+×
+
+n
+
+1(Lk = 1) − P0(Lk = 1 | Ik = 1 , A = ˜ a, V ˜a = 1 , X = x
+
+o
+
+.
+
+After substitution of the above re-expression, = X
+
+> x
+
+n tX
+
+> k=1
+
+S(t | A = ˜ a, V ˜a = 1 , X = x)1 − h(k, A = ˜ a, V ˜a = 1 , X = x)
+
+×X
+
+> 0,1
+
+lk× 1(Lk = 1 , I k = 1 , A = ˜ a, V ˜a = 1 , X = x)
+
+P0(Ik = 1 | A = ˜ a, V ˜a = 1 , X = x)P0(A = ˜ a | V˜a = 1 .X = x)P0(x | V˜a = 1) P0(V˜a = 1) 
+
+−X
+
+> 0,1
+
+lk× 1(Ik = 1 , A = ˜ a, V ˜a = 1 , X = x)
+
+P0(Ik = 1 | A = ˜ a, V ˜a = 1 , X = x)P0(A = a | V˜a = 1 .X = x)P0(x | V˜a = 1) P0(V˜a = 1) 
+
+× P0(Lk = 1 | Ik = 1 , A = ˜ a, V ˜a = 1 , X = x)
+
+o
+
+P0(x | V˜a = 1) The term P0(x | V˜a = 1) cancels and after further re-arrangement we find, = X
+
+> xt
+
+X
+
+> k=1
+
+S(t | A = ˜ a, V ˜a = 1 , X = x)1 − h(k, A = ˜ a, V ˜a = 1 , X = x)
+
+× 1(Ik = 1 , A = ˜ a, V ˜a = 1 , X = x)
+
+P0(Ik = 1 | A = ˜ a, V ˜a = 1 , X = x)P0(A = ˜ a | V˜a = 1 .X = x)P0(V˜a = 1) 
+
+×
+
+ X 
+
+> 0,1
+
+lk1(Lk = 1) − X
+
+> 0,1
+
+lkP0(Lk = 1 | Ik = 1 , A = ˜ a, V ˜a = 1 , X = x)
+
+
+
+.
+
+57 and difference in the parentheses reduces to yield, = X
+
+> xt
+
+X
+
+> k=1
+
+S(t | A = ˜ a, V ˜a = 1 , X = x)1 − h(k, A = ˜ a, V ˜a = 1 , X = x)
+
+× 1(Ik = 1 , A = ˜ a, V ˜a = 1 , X = x)
+
+P0(Ik = 1 | A = ˜ a, V ˜a = 1 , X = x)P0(A = ˜ a | V˜a = 1 .X = x)P0(V˜a = 1) 
+
+×
+
+
+
+1(Lk = 1) − h(k, A = ˜ a, V ˜a = 1 , X = x)
+
+
+
+Notice taking the sum over all X = x with 1(X = x) reduces the equation further to find, = 1(V˜a = 1) 
+
+P0(V˜a = 1) 
+
+> t
+
+X
+
+> k=1
+
+S(t | A = ˜ a, V ˜a = 1 , X )1 − h(k, A = ˜ a, V ˜a = 1 , X )
+
+× 1(Ik = 1 , A = ˜ a)
+
+P0(Ik = 1 | A = ˜ a, V ˜a = 1 , X )P0(A = ˜ a | V˜a = 1 , X )
+
+×
+
+
+
+1(Lk = 1) − h(k, A = ˜ a, V ˜a = 1 , X )
+
+
+
+.
+
+Recalling the definition of the indicator variable Ik and the product representations for the distribution functions S and G one can re-write the probability in the denominator as 
+
+P0(Ik = 1 | A = ˜ a, V ˜a = 1 , X ) = G(k−1 | A = ˜ a, V ˜a = 1 , X )×S(k−1 | A = ˜ a, V ˜a = 1 , X )58 which after substitution, = 1(V˜a = 1) 
+
+P0(V˜a = 1) 
+
+> t
+
+X
+
+> k=1
+
+S(t | A = ˜ a, V ˜a = 1 , X )1 − h(k, A = ˜ a, V ˜a = 1 , X )
+
+× 1(Ik = 1 , A = ˜ a)
+
+G(k − 1 | A = ˜ a, V ˜a = 1 , X ) × S(k − 1 | A = ˜ a, V ˜a = 1 , X )P0(A = ˜ a | V˜a = 1 , X )
+
+×
+
+
+
+1(Lk = 1) − h(k, A = ˜ a, V ˜a = 1 , X )
+
+
+
+.
+
+Now observe that (1 − h(k, A = ˜ a, V ˜a = 1 , X )) × S(k − 1 | A = ˜ a, V ˜a = 1 , X ) = S(k | A =˜a, V ˜a = 1 , X ) and find, = 1(Va = 1) 
+
+P0(V˜a = 1) 
+
+> t
+
+X
+
+> k=1
+
+S(t | A = ˜ a, V ˜a = 1 , X )
+
+S(k | A = ˜ a, V ˜a = 1 , X )
+
+× 1(Ik = 1 , A = ˜ a)
+
+G(k − 1 | A = ˜ a, V ˜a = 1 , X ) × P0(A = ˜ a | V˜a = 1 , X )
+
+×
+
+
+
+1(Lk = 1) − h(k, A = ˜ a, V ˜a = 1 , X )
+
+
+
+.
+
+Finally, using the definitions of Ik, Lk, ˜T and ∆ obtain, = 1(V˜a = 1) 
+
+P0(V˜a = 1) 
+
+> t
+
+X
+
+> k=1
+
+S(t | A = ˜ a, V ˜a = 1 , X )
+
+S(k | A = ˜ a, V ˜a = 1 , X )
+
+× 1( ˜T > k − 1) 1(A = ˜ a)
+
+G(k − 1 | A = ˜ a, V ˜a = 1 , X ) × P0(A = ˜ a | V˜a = 1 , X )
+
+×
+
+
+
+1( ˜T = k, ∆ = 1) − h(k, A = ˜ a, V ˜a = 1 , X )
+
+
+
+.
+
+Combine this result with the simplification for P 
+
+> x
+
+S0(t | A = ˜ a, V ˜a = 1 , X = x) ∂∂ϵ Pϵ(x | v˜a = 1) ϵ=0 
+
+and the desired result follows. The same argument may be used to derive the prospective 59 efficient influence function given in part two of Theorem 2 when A = 0 by invoking As-sumption A7 to re-express the desired pathwise derivative as, 
+
+∂∂ϵ Ψ0
+
+> ϵ=0
+
+= ∂∂ϵ E
+
+h tY
+
+> m=1
+
+ 1 − hϵ(m, A = 0 , V ˜a = 1 , X = x) | V˜a = 1 
+
+i
+
+> ϵ=0
+
+= ∂∂ϵ E
+
+h tY
+
+> m=1
+
+ 1 − hϵ(m, A = 0 , X = x) | V˜a = 1 
+
+i
+
+> ϵ=0
+
+.
+
+and proceeding along the same lines. 
+
+# 14 Construction of outcome regression estimators 
+
+To construct \dRMST oc OR one may use the following procedure: 1. Learn ˆh1(m, A = 1 , V ˜a = 1 , E = e, W = w) with standard logistic regression for each discrete time point m.2. Using ˆh1 generate individual hazard predictions for each subject i at each time point 
+
+m.3. Construct cumulative product matrix bS1 such that each row corresponds to subject 
+
+i and each column j is equal to Qjm=1 1 − ˆh1(m, A = 1 , V ˜a = 1 , E = e, W = w). 4. Learn ˆh0(m, A = 0 , V ˜a = 1 , E = e, W = w) using standard logistic regression for each discrete time point m.5. Using ˆh0, repeat steps 2-3 to find bS0.To construct \dRMST ac OR proceed as follows: 60 1. Learn ˆh1(m, A = 1 , V ˜a = 1 , E = e, W = w) with standard logistic regression for each discrete time point m.2. Using ˆh1 generate individual hazard predictions for each subject i at each time point 
+
+m.3. Construct cumulative product matrix bS1 such that each row corresponds to subject 
+
+i and each column j is equal to Qjm=1 1 − ˆh1(m, A = 1 , V ˜a = 1 , E = e, W = w). 4. Learn ˆh0(m, A = 0 , E = e, W = w) using standard logistic regression for each discrete time point m.5. Using ˆh0, repeat steps 2-3 to find bS0.
+
+# 15 Data generating process 
+
+A complete description of the steps followed to create the data used in the simulation study can be found below: 1. For each subject draw entry time Ei from E ∼ N (0 , 1) and generate baseline covariate 
+
+Wi as Wi = −κ + 0 .8 × Ei + ϵi where κ = 1
+
+> n
+
+Pni (Ei × 0.8) and ϵ ∼ N (0 , 1). 2. Create indicator variable V˜a,i such that V˜a,i = 1(Ei < b ) where the constant b is found as the solution to an optimization problem such that 1
+
+> n
+
+Pni=1 V˜a,i = ρ.3. Generate random treatment assignment Ai such that A ∼ Bernoulli(1 /2) when V˜a =1, otherwise Ai = 0. 61 4. For each subject i and time point t, generate the true underlying hazard for the event as logit −1(ηi) where ηi = −3 + −1.05 × Ai + 0 .2 × Ei + 1 .5 × Wi + 0 .3 × t. Let βi be the vector of length 12 of event probabilities for subject i.5. For each subject i and time point t, generate the true underlying hazard for censoring as logit −1(ζi) where ζi = −2.7 + 0 .1 × Ei + 0 .15 × Wi + 0 .15 × t. Let σi be the vector of length 12 of censoring probabilities for subject i.6. For each subject i draw a binary sequence of length 12 from Binomial(12 , p = βi) and let Ti be the location of the first instance of a 1 in the sequence. 7. For each subject i draw a sequence of length 12 from Binomial(12 , p = σi) and let the censoring time Ci be the location of the first instance of a 1 in the sequence. 8. Construct the observed event time and censoring indicator as ˜Ti = min( Ti, C i) and ∆i = 1(Ti < C i) respectively. 
+
+# 16 Practical considerations 
+
+What estimands should we target? Recent regulatory guidance (FDA 2021, ICH 2017) advocates first determining the causal estimand of interest through scientific discussion with subject matter experts before positing a statistical model for the outcome of interest. Only after the estimand and its necessary components (target population, outcome variable, etc.) are established do researchers proceed with selecting an optimal estimation strategy. The organization of this work and the target causal estimand follow the recommendations of (FDA 2021). 62 Integrating the shared control arm. Following the discussion in Section 10 we ad-vise against pooling concurrent and nonconcurrent controls. Combining control subjects requires a sequence of related assumptions which are not testable (random censoring) and are likely to be untenable in real world applications (correct model specification and haz-ard/censoring function stability over time). Simple numerical studies like those described in Section 6 show how pooling controls when Assumption A7 does not hold can invalidate the statistical analysis. 
+
+Precision via stronger baseline predictors. Recent work suggests that incorporating stronger predictor variables can improve efficiency in estimating treatment effects (Colan-tuoni & Rosenblum 2015). In this article we propose this approach as a means to improve efficiency in place of integrating the complete study population of control subjects. Evi-dence for this alternative can be found in the real world data application Section 8, specifi-cally the improvement in efficiency obtained by OR oc and DR oc despite the fact that these estimators only incorporate concurrent control units. 
+
+What estimators should we use? Assuming Model 1, to estimate dRMST we suggest employing the doubly robust estimator using only the concurrent control population de-noted DR oc . Since the estimator DR oc integrates only concurrent controls the previously mentioned difficulties associated with utilizing the entire shared control arm are not a factor in estimation. Researchers do not need to be concerned with the many challenges asso-ciated with pooling controls discussed in Section 10, and any estimation bias which may come as a result. Additionally, the estimator maintains the desirable properties discussed in Section 5.2, i.e. valid statistical inference and additional safeguards against model mis-specification compared to outcome regression based techniques. 63 Sample size and power calculations. Theory and results from the numerical studies in this work suggest an efficiency gain when including non-concurrent control subjects into the data analysis with outcome regression estimators. Although these results appear promising, we advise conducting sample size and power calculations as if only the concurrent control units were available. During the analysis of trial data, if researchers desire efficiency gains, non-concurrent control data may be included as described earlier, but with the understanding that the outcome model must be correctly defined, otherwise treatment effect estimates may be biased and the estimated 95% confidence intervals invalid. 
+
+# 17 Additional comments regarding pooling 
+
+Remark 2 (Pooling concurrent and nonconcurrent controls for the censoring mechanism) .
+
+For each m ∈ { 1, . . . , K } and all (e, w ) such that V˜a = 1 and P(Im = 1 , A = 0 , E = e, W =
+
+w) > 0
+
+g(m, 0, ˜a, e, w ) = g(m, 0, e, w ),
+
+where 
+
+g(m, 0, e, w ) = P(C = m | T > m, C ≥ m, A = 0 , E = e, W = w)= P(Rm = 1 | Jm = 1 , A = 0 , E = e, W = w).
+
+This is the censoring-mechanism analogue of Assumption A7: it asserts that, within the control-arm risk set at time m, the censoring hazard does not depend on whether treatment ˜ a was available at entry once we condition on ( E, W ), so that nonconcurrent controls can be pooled to estimate g(m, 0, ˜a, e, w ) using the marginal control censoring 64 hazard g(m, 0, e, w ). In contrast to Assumption A7, Remark 2 is not required for iden-tification of the concurrent treatment-specific survival curve (in either the deterministic or stochastic availability regimes), because identification relies on the concurrent censor-ing mechanism g(m, 0, ˜a, e, w ) and does not require replacing it by its pooled counterpart. However, Remark 2 follows as a consequence of Assumption A7 and is needed for the dou-bly robust estimator that pools all controls, since its efficient influence function uses the pooled censoring survival G(· | A = 0 , X ) in the denominators of the control-arm augmen-tation terms; without Remark 2, those denominators correspond to a different censoring mechanism than the concurrent one, so pooling censoring can induce bias even when the concurrent estimand remains identified (more details in Section 5.2). 65 18 Additional tables and figures 024
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> Bias^2
+
+024
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> MSE
+
+0.15 0.20 0.25 0.30 0.35 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> Sampling Variability
+
+0.00 0.25 0.50 0.75 1.00 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> 95% Coverage
+
+estimator DR_ac DR_oc naive OR_ac OR_oc 
+
+Figure 4: Bias squared, mean squared error, variance and coverage of the 95% confidence interval of the estimators listed in Table 4 under incorrect model specification. The DR estimators have substantial overlap in variance. 66 0.000 0.025 0.050 0.075 0.100 0.125 
+
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> Bias^2
+> 0.000 0.025 0.050 0.075 0.100 0.125
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> MSE
+> 0.04 0.08 0.12 0.16
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> Sampling Variability
+> 0.88 0.90 0.92 0.94 0.96 0.98
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> 95% Coverage
+
+estimator DR_ac DR_oc naive OR_ac OR_oc Figure 5: Bias squared, mean squared error, variance and coverage of the 95% confidence interval of the estimators listed in Table 4 under correct model specification for a discrete time horizon of τ = 4. The DR estimators have substantial overlap in variance and mean squared error. Table 3: Estimated difference in restricted mean recovery time using the ACTT data. Note that following Definition 4.2, \dRMST is computed between the treatment and control groups, thus a negative estimate corresponds to a faster recovery time among the treated population, in this case an approximate improvement of one day. 
+
+Method \dRMST SE 95% CI p-value Ratio 
+
+OR oc -1.21 0.46 (-2.11, -0.30) 0.01 1.26 
+
+OR ac -1.03 0.45 (-1.91, -0.15) 0.02 1.30 
+
+DR oc -1.24 0.46 (-2.14, -0.33) 0.01 1.26 
+
+DR ac -1.24 0.46 (-2.14, -0.33) 0.01 1.26 
+
+naive -1.22 0.58 (-2.37, -0.08) 0.04 1.00 67 0.00 0.25 0.50 0.75 
+
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> Bias^2
+> 0.00 0.25 0.50 0.75
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> MSE
+> 0.08 0.12 0.16
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> Sampling Variability
+> 0.00 0.25 0.50 0.75 1.00
+> 10% 20% 30% 40% 50% 60% 70% 80% 90%
+> % of concurrent controls
+> 95% Coverage
+
+estimator DR_ac DR_oc naive OR_ac OR_oc Figure 6: Bias squared, mean squared error, variance and coverage of the 95% confidence interval of the estimators listed in Table 4 under incorrect model specification for a discrete time horizon of τ = 4. The DR estimators have substantial overlap in variance. Table 4: Methods used in the estimation of dRMST .
+
+Method Acronym 
+
+DR estimator pooled controls ( \dRMST ac DR , Section 5.2) DR ac 
+
+DR estimator only concurrent controls ( \dRMST oc DR , Section 5.2) DR oc 
+
+OR estimator pooled controls ( \dRMST ac OR , Section 5.1) OR ac 
+
+OR estimator only concurrent controls ( \dRMST oc OR , Section 5.1) OR oc 
+
+OR estimator (time index only) only concurrent controls ( \dRMST oc OR , Section 5.1) naive 
+
+68 0.00 0.06 0.12 0.18 0.24 0.30 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> Bias^2
+
+0.00 0.06 0.12 0.18 0.24 0.30 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> MSE
+
+0.2 0.3 0.4 0.5 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> Sampling Variability
+
+0.925 0.950 0.975 1.000 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> 95% Coverage
+
+estimator DR_ac DR_oc naive OR_ac OR_oc Figure 7: Bias squared, mean squared error, variance and coverage of the 95% confidence interval of the estimators listed in Table 4 under correct model specification, for a discrete time horizon of τ = 12. 69 0369
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> Bias^2
+
+0369
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> MSE
+
+0.3 0.4 0.5 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> Sampling Variability
+
+0.00 0.25 0.50 0.75 1.00 
+
+10% 20% 30% 40% 50% 60% 70% 80% 90% 
+
+% of concurrent controls 
+
+> 95% Coverage
+
+estimator DR_ac DR_oc naive OR_ac OR_oc Figure 8: Bias squared, mean squared error, variance and coverage of the 95% confidence interval of the estimators listed in Table 4 under incorrect model specification, for a discrete time horizon of τ = 12. The DR estimators have substantial overlap in variance. 70 0.00 0.25 0.50 0.75 1.00               
+
+> 0246810 12 14 16 18 20 22 24 26 28
+> Days
+> % Recovered
+
+Estimated Recovery ACTT2 − Overall               
+
+> 0.00 0.25 0.50 0.75 1.00
+> 0246810 12 14 16 18 20 22 24 26 28
+> Days
+> % Recovered
+
+Estimated Recovery ACTT2 − Score of 4               
+
+> 0.00 0.25 0.50 0.75 1.00
+> 0246810 12 14 16 18 20 22 24 26 28
+> Days
+> % Recovered
+
+Estimated Recovery ACTT2 − Score of 5               
+
+> 0.00 0.25 0.50 0.75 1.00
+> 0246810 12 14 16 18 20 22 24 26 28
+> Days
+> % Recovered
+
+Estimated Recovery ACTT2 − Score of 6               
+
+> 0.00 0.25 0.50 0.75 1.00
+> 0246810 12 14 16 18 20 22 24 26 28
+> Days
+> % Recovered
+
+Estimated Recovery ACTT2 − Score of 7 
+
+group Remdesivir Remdesivir + Baricitinib Figure 9: Estimated proportion of patients recovered in the combined treatment group, Remdesivir plus Baricitinib compared to the control group Remdesivir alone stratified by disease severity measured at baseline. The estimates were computed using an application of the delta method and DR ac .
+
+Figure 10: Adaptive COVID-19 Treatment Trial (ACTT) schema. Example of concurrent and non-concurrent arm 
+
+71 Table 5: Main Estimand for the Adaptive COVID-19 Treatment Trial 
+
+Objective To determine the superiority of Remdesivir plus Baric-itinib compared with Remdesivir alone in reducing the time to recovery in patients hospitalized adults with Covid-19. 
+
+Variable Time to recovery between baseline and 28 days where recovery is defined as the first day, during the 28 days after enrollment, on which a patient attained category 1, 2, or 3 on an eight-category ordinal scale. 
+
+Treatments Remdesivir plus Baricitinib vs Remdesivir. 
+
+Population Patients hospitalized with COVID-19. 
+
+Population-Level Summary Difference in the mean change in time to recovery be-tween treatments. 
+
+Intercurrent Events Post randomization events are not considered. 72

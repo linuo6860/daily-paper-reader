@@ -1,0 +1,596 @@
+Title: A Fast and Practical Column Generation Approach for Identifying Carcinogenic Multi-Hit Gene Combinations
+
+URL Source: https://arxiv.org/pdf/2602.22551v1
+
+Published Time: Fri, 27 Feb 2026 01:22:19 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# A Fast and Practical Column Generation Approach for Identifying Carcinogenic Multi-Hit Gene Combinations 
+
+## Rick S. H. Willemsen #
+
+Singapore University of Techonology and Design, Engineering Systems and Design, Singapore 
+
+## Tenindra Abeywickrama #
+
+RIKEN Center for Computational Science, Japan 
+
+## Ramu Anandakrishnan #
+
+Virginia Tech, Edward Via College of Osteopathic Medicine, USA 
+
+Abstract 
+
+Cancer is often driven by specific combinations of an estimated two to nine gene mutations, known as multi-hit combinations. Identifying these combinations is critical for understanding carcinogenesis and designing targeted therapies. We formalise this challenge as the Multi-Hit Cancer Driver Set Cover Problem (MHCDSCP), a binary classification problem that selects gene combinations to maximise coverage of tumor samples while minimising coverage of normal samples. Existing approaches typically rely on exhaustive search and supercomputing infrastructure. In this paper, we present constraint programming and mixed integer programming formulations of the MHCDSCP. Evaluated on real-world cancer genomics data, our methods achieve performance comparable to state-of-the-art methods while running on a single commodity CPU in under a minute. Furthermore, we introduce a column generation heuristic capable of solving small instances to optimality. These results suggest that solving the MHCDSCP is less computationally intensive than previously believed, thereby opening research directions for exploring modelling assumptions. 
+
+2012 ACM Subject Classification Applied computing → Operations research 
+
+Keywords and phrases mixed integer programming, constraint programming, column generation, gene mutations 
+
+## 1 Introduction 
+
+Cancer remains a leading cause of mortality worldwide, with an estimated 9.7 million cancer-related deaths in 2022 [ 7 ]. This number is projected to rise to over 18 million in 2050 [ 25 ]. Understanding the biological mechanisms that drive cancer development is therefore essential. According to the multi-hit theory of carcinogenesis, multiple mutated genes (called hits) are required to cause cancer in humans [ 4 , 26 , 31 ]. Mathematical models estimate that the number of mutated genes (hit size) typically ranges from two to nine depending on the type of cancer [ 24 , 39 , 34 , 5, 3]. Despite this understanding, identifying the specific combinations of gene mutations responsible for a particular cancer remains a challenge. Discovering these gene combinations leads to a better understanding of carcinogenesis and enables the development of more effective targeted therapies [ 2, 11 ]. Although other factors, such as the tumor environment [ 29 ] and epigenetic modifications [ 30 ], also influence cancer development, this work focuses on identifying carcinogenic combinations of mutated genes. While several approaches aim to identify individual driver mutations [ 33 , 32 , 13 , 21 ], such gene mutations alone are generally insufficient to explain cancer development, of which several examples are provided by [ 11 ]. Another theory is based on the assumption of mutual exclusivity, which states that mutations in certain genes rarely co-occur and that a mutation in any of them may be sufficient to drive cancer. The identification of mutual exclusivity is done via so-called driver pathway discovery [ 35 ]. Based on this assumption multiple methods 
+
+> arXiv:2602.22551v1 [math.OC] 26 Feb 2026
+
+2 Column Generation for Identifying Carcinogenic Multi-Hit Gene Combinations 
+
+have been introduced [ 22 , 23 , 28 , 19 , 9 , 37 ]. In particular, mixed integer programming has been successfully applied to this problem [ 40 ]. Other methods focus on identifying modules of co-occurring cancer driver genes using biological interaction networks [ 20 , 38 , 38 ]. All of the aforementioned approaches differ in the modelling assumptions from multi-hit models, which aim to identify multi-hit gene combinations. The problem of identifying carcinogenic multi-hit gene combinations was first modelled as a weighted set cover by [ 11 ]. In their model, they require all tumor samples to be covered while minimising a weight that penalises gene combinations that also appear in normal samples. However, when evaluating the resulting solution via binary classification, misclassified tumor samples are not overly penalised. In the existing literature, this formulation of the problem is primarily addressed using exhaustive search-based approaches. These methods often begin by enumerating all or a large subset of possible gene combinations. The resulting weighted set cover problem is then solved using an iterative greedy heuristic, where in each iteration a gene combination is selected based on its weight. Once a gene combination is selected, all samples covered by that combination are marked as tumor samples. This process continues until all tumor samples are covered. These approaches have been applied to enumerate all gene combinations for 2, 3 and 4 hits [ 11 , 1 , 10 ]. A graph-based heuristic capable of identifying gene combinations of up to 8 hits was developed by [ 27 ]. A key limitation of existing methods is their substantial computational cost. The enumeration of all possible gene combinations typically requires parallelised algorithms executed on supercomputing infrastructure. For instance, one approach employed 6,000 V100 high-performance data center GPUs (reported as 48 million GPU cores) [ 10 ], while the current state-of-the-art method used 280 nodes on the Summit supercomputer (estimated 11,760 CPU cores) [ 27 ]. In contrast, our proposed methods can be run on a single commodity CPU while achieving similar performance. Constraint programming and mixed integer programming tools are well-known for solving set cover-type problems [ 6, 18 , 17 ], and have been widely used in constraint-based classification and pattern mining tasks [ 15 , 12 ]. In particular, optimisation-based techniques have been successfully applied to bioinformatics problems [16]. Since the identification of multi-hit gene combinations can be formulated as a binary classification problem, we relax the assumption that all tumor samples must be covered, allowing more flexibility in the model. If needed, this restriction can be easily enforced again. A subset of gene combinations induces a binary classification of samples: a sample is classified as a tumor if at least one selected gene combination occurs in it, or as normal sample otherwise. We propose an objective function that balances two criteria, namely maximising the number of correctly classified tumor samples (true positives) and minimising the number of times normal samples are misclassified as tumor (false positives). We formalise this problem as the Multi-Hit Cancer Driver Set Cover Problem (MHCDSCP). Note that for both the weighted set cover problem and the MHCDSCP it is not necessary to enumerate all possible gene combinations. Instead, the main goal is to identify which subset of gene combinations lead to the best classification performance. Our contributions are as follows. To model the MHCDSCP, we propose both a constraint programming and a mixed integer programming formulation, which take as input a set of candidate gene combinations. We evaluate these methods on real-world cancer genomics data. The mixed integer programming formulation achieves performance comparable to existing approaches and can be solved on a single commodity CPU within a minute. To potentially obtain optimal solutions, we also introduce a column generation framework, in which a pricing problem dynamically generates gene combinations as needed during the optimisation. We are able to solve small instances to optimality and demonstrate that the mixed integer R. S. H. Willemsen and T. Abeywickrama, R. Anandakrishnan 3
+
+programming formulation provides near-optimal solutions. These findings indicate that the MHCDSCP, and its variations, are not as computationally demanding as previously believed. As a consequence, our models enable the evaluation of hypotheses in multi-hit cancer theory that were previously intractable. They make optimisation methods accessible to re-searchers working in cancer genomics. Our methods achieve similar classification performance to existing methods while identifying smaller sets of gene combinations. This has implications for the application of cancer detection, as it potentially strengthens the evidence for the multi-hit theory that a limited number of gene mutations drive the development of cancer. The remainder of this paper is organised as follows. In Section 2 we introduce the MH-CDSCP and provide its mathematical formulations. Section 3 details how these formulations can be solved within a column generation framework. The proposed methods are evaluated in Section 4 on real-world data. Finally, in Section 5 concludes and discusses directions for further research. 
+
+## 2 Problem description 
+
+In this section, we introduce the Multi-Hit Cancer Driver Set Cover Problem (MHCDSCP) as a binary classification problem. We discuss performance measures to evaluate the classification quality. Afterwards, we provide a constraint programming and mixed integer programming formulation for the MHCDSCP. 
+
+## 2.1 Notation 
+
+Let G be the set of genes and S the set of samples, partitioned into tumor samples T and normal samples N , with S = T ∪ N . The input data are represented by a binary matrix M
+
+of size |S| × | G|, where entry Msg = 1 indicates that gene g ∈ G is mutated in sample s ∈ S,and Msg = 0 otherwise (as in, e.g., [27]). This binary matrix is visualised in Figure 1. A gene combination is a subset of genes whose cardinalities lie within a predefined hit range. Let ¯
+
+k and ¯k denote the minimum and maximum hit sizes, respectively. We define C
+
+as the set of all possible gene combinations such that the cardinality lies within the given hit range. A gene combination c ∈ C covers a sample s ∈ S if all genes in combination c are mutated in s. Furthermore, we denote by Cs ⊆ C all the combinations that cover sample s
+
+and we denote by Sc ⊆ S all the samples that are covered by combination c.
+
+## 2.2 Multi-Hit Cancer Driver Set Cover Problem 
+
+In the MHCDSCP, we aim to select a subset of gene combinations C∗ ⊆ C that accurately classifies samples as tumor or normal. Selecting a set C∗ induces a binary classification of samples as follows. A sample s ∈ S is classified as tumor if at least one c ∈ C∗ covers s,and as a normal sample otherwise. The MHCDSCP seeks to identify a subset of gene combinations that balances two criteria, namely maximising the number of correctly classified tumor samples and minimising the number of times a normal sample is misclassified. Let T ∗ ⊆ T and N ∗ ⊆ N be the set of samples that are classified by the selected gene combinations C∗ as tumor samples. We define the number of true positives as |T ∗|, false negatives as |T \ T ∗|, false positives as |N ∗|, and true negatives as |N \ N ∗|. See Figure 1 for an example of a set of selected gene combinations that cover a number of samples, leading to a number of true positives and false positives. 4 Column Generation for Identifying Carcinogenic Multi-Hit Gene Combinations 11
+
+110
+
+0
+
+0
+
+0
+
+1 1 0 1 0 0 0
+
+1 0 0 0
+
+0 1 0 0 0 1
+
+0 0 0 0
+
+0 1 1 0 0 0
+
+tumor  samples 
+
+normal  samples 
+
+genes 
+
+combinations            
+
+> Figure 1 An example with seven genes and five samples represented as a binary matrix. Two gene combinations with a hit size of two are selected, namely c1in blue and c2in green. Together, they cover tumor samples t1and t2(true positives) and normal sample n1(false positive).
+
+## 2.3 Performance measures 
+
+To evaluate classification performance, we use several measures, namely specificity, sensitivity, F1 score, and the Matthews Correlation Coefficient (MCC) [ 8]. These measures are defined as sensitivity = TP TP + FN ,
+
+specificity = TN TN + FP ,
+
+precision = TP TP + FP ,
+
+F1 score = 2 · precision · sensitivity precision + sensitivity ,
+
+MCC = TP · TN − FP · FN 
+
+√(TP + FP )( TP + FN )( TN + FP )( TN + FN ) .
+
+Note that precision is not used as a performance measure, but is used to define the F1 score. 
+
+## 2.4 Constraint programming formulation 
+
+Let xt be a binary variable that takes the value 1 if tumor sample t ∈ T is classified as tumor. Let the integer variable yn represent the number of times a normal sample n ∈ N is misclassified as tumor. We define a binary variable zc that takes value 1 if gene combination 
+
+c ∈ C is selected. The maximum number of selected combinations is denoted by the parameter β.The selection of gene combinations can be modeled as a constraint programming problem. Since the performance measures introduced in the previous section are nonlinear, we instead R. S. H. Willemsen and T. Abeywickrama, R. Anandakrishnan 5
+
+define a linear objective that balances two criteria, namely maximising the number of correctly classified tumor samples (true positives) and minimising the number of times a normal sample is misclassified (approximation for false positives). A constraint programming formulation for the MHCDSCP is 
+
+max ∑
+
+> t∈T
+
+xt − ∑
+
+> n∈N
+
+yn, (1) s.t. xt = 1 ⇔ ∨
+
+> c∈Ct
+
+(zc = 1) , ∀t ∈ T, (2) 
+
+yn = ∑
+
+> c∈Cn
+
+zc, ∀n ∈ N, (3) 
+
+∑
+
+> c∈C
+
+zc ≤ β, (4) 
+
+xt ∈ { 0, 1}, ∀t ∈ T, (5) 
+
+yn ∈ N, ∀n ∈ N, (6) 
+
+zc ∈ { 0, 1}, ∀c ∈ C. (7) The objective (1) maximises the correctly classified tumor samples while minimising misclas-sification of normal samples. The disjunctive constraints (2) ensure that a tumor sample t is classified as tumor if it is covered by at least one selected gene combination. Constraints (3) count the number of times a normal sample n appears in a selected combination. The max-imum number of selected gene combinations is enforced by (4). The remaining constraints (5)-(7) model the integrality of the variables. 
+
+## 2.5 Mixed integer programming formulation 
+
+Using the same notation as the constraint programming formulation, we can define a mixed integer programming formulation. The two formulations are nearly identical, with the main difference being that the disjunctive constraints are linearised, which determine whether a tumor sample is correctly classified. This linearisation allows the problem to be solved using a standard mixed integer programming solver. The mixed integer program is formulated as follows 
+
+max ∑
+
+> t∈T
+
+xt − ∑
+
+> n∈N
+
+yn, (8) s.t. xt − ∑
+
+> c∈Ct
+
+zc ≤ 0, ∀t ∈ T, (9) 
+
+∑
+
+> c∈Cn
+
+zc − yn ≤ 0, ∀n ∈ N, (10) 
+
+∑
+
+> c∈C
+
+zc ≤ β, (11) 
+
+xt ∈ { 0, 1}, ∀t ∈ T, (12) 
+
+yn ∈ N, ∀n ∈ N, (13) 
+
+zc ∈ { 0, 1}, ∀c ∈ C. (14) The constraint programming formulation (1)-(7) and the mixed integer programming formulation (8)-(14) can only be solved when considering a limited set of gene combinations. In general, the set C contains all gene combinations of size up to the maximum hit size 6 Column Generation for Identifying Carcinogenic Multi-Hit Gene Combinations 
+
+¯k, and its cardinality increases exponentially with ¯k. As a result, both formulations may contain an intractably large number of variables. Preliminary computational results indicate that the mixed integer program is preferred over the constraint program. Column generation is a technique specifically designed to address problems with an exponential number of variables while still guaranteeing optimality. In the next section, we present a column generation framework to efficiently solve the mixed integer program. 
+
+## 3 Column generation framework 
+
+The large number of gene combinations C makes it impractical to solve the mixed integer programming formulation (8)-(14) directly. Column generation is a well-established technique for addressing such large-scale problems by working with a restricted subset of variables and iteratively introducing new variables as needed [ 14 ]. We first present a relaxed version of the mixed integer program. We then introduce a fast heuristic and a column generation heuristic to provide bounds on the objective value. 
+
+## 3.1 Restricted master problem 
+
+In column generation, we start from a limited set of gene combinations ˜C ⊆ C, which may initially be empty. Instead of solving the mixed integer program (8)-(14), we solve a so-called restricted master problem, which corresponds to the linear relaxation of the mixed integer program restricted to gene combinations in ˜C.Solving the restricted master problem provides information in the form of dual values that can be used to generate gene combinations not contained in ˜C that may improve the objective value. Such gene combinations correspond to new columns and are added to ˜C in an iterative procedure. Repeating this process yields an optimal (possibly fractional) solution of the linear relaxation of the mixed integer program (8)-(14). The resulting objective value provides a valid upper bound on the optimal objective value of the original problem. By relaxing the integrality constraints (12)-(14) and allowing the combination variables zc
+
+to take nonnegative values, we obtain the following restricted master problem 
+
+max ∑
+
+> t∈T
+
+xt − ∑
+
+> n∈N
+
+yn, (15) s.t. xt − ∑ 
+
+> c∈˜Ct
+
+zc ≤ 0, ∀t ∈ T, (16) 
+
+∑ 
+
+> c∈˜Cn
+
+zc − yn ≤ 0, ∀n ∈ N, (17) 
+
+∑ 
+
+> c∈˜C
+
+zc ≤ β, (18) 
+
+xt ∈ [0 , 1] , ∀t ∈ T, (19) 
+
+yn ∈ R+, ∀n ∈ N, (20) 
+
+zc ∈ R+, ∀c ∈ ˜C. (21) 
+
+## 3.2 MIP heuristic 
+
+We first present a MIP heuristic that makes use of the column generation interpretation to quickly obtain feasible solutions for the mixed integer program (8)-(14). Note that this R. S. H. Willemsen and T. Abeywickrama, R. Anandakrishnan 7
+
+heuristic can also solve the constraint programming formulation, in which case we refer to it as CP heuristic. The restricted master problem is initialised by adding a set of gene combinations ˜C
+
+generated by a greedy procedure. After adding these columns to the model and restricting the variables zc to be binary again, the resulting mixed integer program can be solved. Any feasible solution obtained provides a lower bound on the objective value. Note that due to the binary variables zc and the direction of the objective function, the variables xt and yn
+
+are forced to take integer values. The greedy procedure for generating gene combinations is described in Algorithm 1. First, we select γ1 candidate genes that are most frequently mutated in tumor samples. Second, a hit size k ∈ [¯
+
+k, ¯k] ∩ Z is chosen randomly. Third, a gene combination of size k is generated by randomly sampling from the selected candidate genes. This procedure is repeated until at most γ2 gene combinations (columns) have been generated.  
+
+> Algorithm 1 Greedy generation of gene combinations
+
+Input: Binary matrix M
+
+Output: Set of gene combinations  
+
+> 1:
+
+Rank genes by mutation frequency in tumor samples  
+
+> 2:
+
+Select the top γ1 genes as candidate set  
+
+> 3:
+
+repeat  
+
+> 4:
+
+Randomly select a hit size k ∈ [¯
+
+k, ¯k] ∩ Z 
+
+> 5:
+
+Randomly select k genes from the candidate set to form a gene combination  
+
+> 6:
+
+until γ2 gene combinations have been generated 
+
+## 3.3 Column generation heuristic 
+
+Instead of adding greedily generated columns, a column generation heuristic uses the dual values from the restricted master problem to generate promising columns. This allows us to efficiently explore the set of all gene combinations without the need for full enumeration. This method works as follows. First, the restricted master problem is solved and the dual values associated with the constraints are passed to the pricing problem. These dual values are used in the pricing problem to identify gene combinations (columns) with positive reduced costs. When these positive reduced cost columns are added to ˜C, these columns may improve the objective function. The processes of solving the restricted master problem and the pricing problem is repeated iteratively until no more gene combinations (columns) with positive reduced cost exist. At this point, an optimal solution to the linear relaxation of the mixed integer program is obtained, providing a valid upper bound on the objective value. In some cases, this solution is already integral, yielding a provably optimal solution to the original problem. When a fractional solution ( x∗, y ∗, z ∗) is obtained, we can apply a simple rounding heuristic to obtain a valid lower bound on the objective value, which is summarised in Algorithm 2. 8 Column Generation for Identifying Carcinogenic Multi-Hit Gene Combinations  
+
+> Algorithm 2 Rounding heuristic
+
+Input: Fractional solution x∗, y ∗, z ∗
+
+Output: Feasible integral solution and corresponding lower bound LB  
+
+> 1:
+
+k ← ⌈ ∑  
+
+> c∈˜C
+
+z∗ 
+
+> c
+
+⌉ 
+
+> 2:
+
+Select the k largest z∗ 
+
+> c
+
+to obtain a feasible integral solution  
+
+> 3:
+
+Set LB equal to the corresponding objective value 
+
+## 3.3.1 Pricing problem for the identification of gene combinations 
+
+The goal of the pricing problem is to construct a gene combination (column) of size between 
+
+¯
+
+k and ¯k with positive reduced cost that can be added to the restricted master problem or to prove that no such gene combination exists. Solving the pricing problem to optimality ensures that all gene combinations with positive reduced cost are identified. Let πt ≥ 0, μn ≥ 0 and λ ≥ 0 denote the dual variables corresponding to constraints (8), (9) and (10), respectively. The reduced cost of a gene combination c is 
+
+RC (c) = ∑
+
+> t∈Tc
+
+πt − ∑
+
+> n∈Nc
+
+μn − λ, 
+
+where Tc and Nc are tumor and normal samples covered by gene combination c.Let ug be a binary decision variable that takes the value 1 if gene g is selected. Furthermore, we introduce binary decision variables vt and vn to indicate whether tumor sample t or normal sample n is covered by the selected genes. Recall that Msg = 1 if sample s has a mutated gene g. The pricing problem can be formulated as the following mixed integer program 
+
+max ∑
+
+> t∈T
+
+πtvt − ∑
+
+> n∈N
+
+μnvn − λ, (22) s.t. ∑
+
+> g∈G
+
+ug ≥ ¯
+
+k, (23) 
+
+∑
+
+> g∈G
+
+ug ≤ ¯k, (24) 
+
+vt ≤ 1 + 1¯k ( ∑ 
+
+> g∈G:Mtg =1
+
+ug − ∑
+
+> g∈G
+
+ug ), ∀t ∈ T, (25) 
+
+vn ≤ 1 + 1¯k ( ∑ 
+
+> g∈G:Mng =1
+
+ug − ∑
+
+> g∈G
+
+ug ), ∀n ∈ N, (26) 
+
+vn ≥ 1 + ∑ 
+
+> g∈G:Mng =1
+
+ug − ∑
+
+> g∈G
+
+ug , ∀n ∈ N, (27) 
+
+vt ∈ { 0, 1}, ∀t ∈ T, (28) 
+
+vn ∈ { 0, 1}, ∀n ∈ N, (29) 
+
+ug ∈ { 0, 1}, ∀g ∈ G. (30) The objective (22) maximises the reduced cost of the constructed gene combination. Con-straints (23)-(24) ensure that the constructed gene combination contains between ¯
+
+k and 
+
+¯k genes. Constraints (25)-(26) ensure that a tumor or normal sample is only covered if it contains all genes in the constructed gene combination. For instance, if any gene is missing, the right-hand side becomes less than 1, forcing the binary variable to 0. Constraints (27) enforce that when a normal sample is covered by the constructed gene combination, the R. S. H. Willemsen and T. Abeywickrama, R. Anandakrishnan 9
+
+corresponding variable vn must take value 1, while it is lower bounded by 0 otherwise. A similar constraint is not required for tumor samples, due to the objective function. Finally, the domain of the variables is enforced by (28)-(30). In practice, we observe that certain genes are frequently selected across successive pricing problem solutions. To accelerate computation, we implement a speedup procedure. In subsequent iterations, we fix ug = 0 for genes that were never selected in previous solutions. If this restricted pricing problem fails to produce a gene combination with positive reduced cost, we remove the restriction and solve the full pricing problem, ensuring that optimality is preserved. 
+
+## 3.4 Summary of the column generation framework 
+
+Algorithm 3 summarises the proposed column generation framework and shows how the greedy procedure, rounding heuristic and pricing problem can be combined. The algorithm returns a set of selected gene combinations together with a valid lower bound ( LB ∗) and upper bound ( U B ∗) on the objective value. When only the initialisation and integer version of the restricted master problem are performed (lines 1, 2 and 9), the algorithm reduces to the MIP heuristic. Conversely, executing all steps except the greedy procedure (line 2), yields our column generation heuristic. This framework allows individual components to be enabled or added, providing flexibility in balancing computational costs and solution quality.  
+
+> Algorithm 3 Column generation framework
+
+Input: Binary matrix M
+
+Output: Selected gene combinations, and bounds LB ∗ and U B ∗ 
+
+> 1:
+
+Initialise the restricted master problem (15)-(21), with ˜C = ∅ 
+
+> 2:
+
+˜C ← GenerateGeneCombinations (see Algorithm 1)  
+
+> 3:
+
+repeat  
+
+> 4:
+
+U B ← solve the restricted master problem  
+
+> 5:
+
+LB ∗ ← max {LB ∗, RoundingHeuristic } (see Algorithm 2)  
+
+> 6:
+
+˜C ← solve the pricing problem to obtain a new gene combination  
+
+> 7:
+
+until no gene combination has positive reduced cost  
+
+> 8:
+
+U B ∗ ← U B  
+
+> 9:
+
+LB ← solve the restricted master problem, with binary variables zc, ∀c ∈ ˜C 
+
+> 10:
+
+LB ∗ ← max {LB ∗, LB }
+
+## 4 Computational results 
+
+We evaluate our methods for the MHCDSCP on real-world cancer genomics data through two case studies. In the first case study, we evaluate our methods on a publicly available, but limited, dataset. In the second study, we consider a larger dataset containing various cancer types. 
+
+## 4.1 Experimental setup 
+
+All computational experiments are performed on a single Intel Core i7 CPU at 1.8 GHz with 4 physical cores and 16.0 GB RAM. The constraint programming formulation is solved using the open source solver OR-Tools 9.12, while all linear and mixed integer programming 10 Column Generation for Identifying Carcinogenic Multi-Hit Gene Combinations 
+
+formulations are solved using the commercial solver CPLEX 20.10. Both solvers use all available cores by default. The code will be made publicly available in the final version of the paper. Based on initial experiments, we fix the following parameters for all computational experiments. The number of selected gene combinations is limited to β = 10 . In both the CP heuristic and MIP heuristic, we select the γ1 = 100 genes that are most frequently mutated in tumor samples and generate at most γ2 = 100 , 000 gene combinations. The column generation heuristic is initialised with an empty set of columns, ˜C = ∅.The experiments are conducted on real-world data from The Cancer Genome Atlas [ 36 ]. To enable a direct comparison with the current state-of-the-art method, we use two publicly available instances from [ 27 ]1, referred to as dataset A. The data is summarised in Table 1 in terms of the numbers of genes, samples and mutations. Hit ranges are user-specified and are the same as those reported in [ 27 ]. For example, a hit range of 2-3 indicates that a selected gene combination contains between 2 and 3 genes. We evaluate our method on additional cancer types from The Cancer Genome Atlas. To ensure reproducibility, our processing steps required to construct the input matrix are described in Appendix A. The resulting instances are in dataset B and are distinguished by the “-B” suffix. While these instances share the same cancer type names as dataset A, they differ in characteristics due to a different processing procedure. Both dataset A and B contain 331 normal samples.                                                                                
+
+> Table 1 Summary of datasets A and B. For each instance, we report the number of genes, samples and mutations, as well as the required hit ranges. dataset cancer type #hits #genes #samples #mutations ABRCA 3, 2–3, 6–7 19,411 1242 837,207 PRAD 6–7, 7 17,274 752 476,115 BBLCA-B 4, 6–7, 7 19,408 705 503,615 BRCA-B 3, 2–3, 6–7 20,728 1260 969,254 CESC-B 5, 6–7 20,073 613 430,358 COAD-B 3, 4, 5, 6 20,940 730 737,797 GBM-B 2, 3 19,828 693 931,859 HNSC-B 4, 5 19,573 806 656,209 KIRP-B 819,409 559 373,052 LGG-B 3, 6 19,167 821 468,223 LIHC-B 819,600 644 387,015 LUAD-B 3, 6–7 19,723 759 658,650 LUSC-B 519,672 647 467,554 OV-B 2, 6–7 19,984 663 682,506 PRAD-B 6–7, 7 18,978 770 446,045 SARC-B 5, 8 19,581 550 316,986 THCA-B 5, 6 19,305 756 505,205 UCEC-B 2, 6–7 21,200 835 1,021,354
+
+When solving the proposed methods, we may obtain an optimal integral solution, corres- 
+
+> 1https://code.ornl.gov/vo0/bigpicc
+
+R. S. H. Willemsen and T. Abeywickrama, R. Anandakrishnan 11 
+
+ponding to an optimal binary classification with respect to the objective function. However, in practice, we are often interested in how well a solution generalises to unseen samples. To evaluate this, we partition the input data into a training and a test set. The mathematical models are trained on the training set and the performance measures described in Section 2.3 are computed on the test set. Even when an optimal solution is found for the training set, its performance may differ on the test set. When reporting the computational results in the tables, we abbreviate the performance measures as MCC, spec, sens, and F1. For the obtained solutions, we often report the number of selected gene combinations, objective value and solution time in seconds, which are denoted by #comb, obj and time. 
+
+## 4.2 Case study on dataset A: publicly available data 
+
+First, we compare the performance of the CP heuristic and the MIP heuristic on a set of small instances. Second, we compare the MIP heuristic with the current state-of-the-art method. Finally, we use the bounds obtained by our column generation heuristic to evaluate solution quality and scalability. 
+
+## 4.2.1 Comparison between CP and MIP heuristic 
+
+We impose a time limit of 30 seconds for solving both the CP and MIP models, excluding the time required to generate the initial columns, which takes less than 30 seconds for all instances. Computation times that reach the time limit are reported as TL in the tables. Table 2 reports the results of the CP heuristic applied to the BRCA instance with a hit range of 2-3. We evaluate different sample sizes, ranging from 1% to 5% of the full data. The CP heuristic appears to scale poorly, with the largest instance solved within the time limit containing 37 samples, corresponding to 3% of the data. When a solution is obtained, all training performance measures reach their maximum value of 1. This indicates that the obtained solution correctly classifies all training samples. However, applying the same solution to the test set yields lower performance, highlighting over-fitting. This is an expected outcome, given that at most 5% of the data was used to train the model. 
+
+Table 2 Performance of CP heuristic on BRCA with hit range of 2-3. training set solution training performance test performance % #samples #comb obj time (s) MCC spec sens F1 MCC spec sens F1 1 12 2 9 10.5 1.000 1.000 1.000 1.000 0.607 0.747 0.876 0.890 2 25 3 18 12.0 1.000 1.000 1.000 1.000 0.499 0.707 0.820 0.851 3 37 7 27 15.5 1.000 1.000 1.000 1.000 0.348 0.408 0.897 0.849 4 49 - - TL - - - - - - - -5 63 - - TL - - - - - - - -
+
+The results of the same experiment using our MIP heuristic are shown in Table 3. The MIP heuristic finds feasible solutions within 6 seconds for all instances, indicating that an MIP model is preferred over a CP model for this application. As with the CP heuristic, the training performance measures are equal to 1, while performance on the test set remains lower. 12 Column Generation for Identifying Carcinogenic Multi-Hit Gene Combinations 
+
+Table 3 Performance of MIP heuristic on BRCA with hit range of 2-3. training set solution training performance test performance % #samples #comb obj time (s) MCC spec sens F1 MCC spec sens F1 1 12 6 9 1.6 1.000 1.000 1.000 1.000 0.139 0.793 0.354 0.495 2 25 8 18 1.8 1.000 1.000 1.000 1.000 0.311 0.725 0.626 0.726 3 37 2 27 2.1 1.000 1.000 1.000 1.000 0.591 0.667 0.908 0.895 4 49 10 36 6.0 1.000 1.000 1.000 1.000 0.115 0.384 0.735 0.750 5 63 9 46 3.4 1.000 1.000 1.000 1.000 0.411 0.682 0.763 0.812 
+
+## 4.3 Comparison between state-of-the-art method and MIP heuristic 
+
+In this section, we evaluate our MIP heuristic on the full-sized cancer genomics instances BRCA and PRAD from dataset A. We also compare our method to BiGPICC [ 27 ], the current state-of-the-art graph-based search heuristic that was executed on 280 nodes (estimated 11,760 CPU cores) on the Summit supercomputer. In comparison, our MIP heuristic is run on a single commodity CPU while using a 30 second time limit. We use a training set of 75% of the data with the remaining 25% for the test set, similar to the setup for BiGPICC [ 27 ]. While the dataset is the same, our training-test split may differ from that used in [27]. In Table 4, we report the performance values of BiGPICC as reported in the original paper [ 27 ]. When comparing the number of selected gene combinations with our MIP heuristic, we observe that we reduce the average number of gene combinations from 31 to 10. Despite the reduction in the number of gene combinations, performance measures remain similar. For instance, the average MCC is 0.694 and 0.700, respectively. Minor variations can be attributed to the differences in training-test split. Although a direct comparison with BiGPICC is limited to these two cancer types, it is clear that our MIP heuristic is extremely fast, while maintaining a similar classification performance. 
+
+Table 4 Comparison of test set performance between BiGPICC (results reported from [ 27 ]) and our MIP heuristic on dataset A. cancer type hit range BiGPICC on dataset A (results reported from [27]) MIP heuristic on dataset A #comb MCC spec sens F1 #comb MCC spec sens F1 BRCA 2-3 5 0.900 0.892 0.987 0.974 10 0.878 0.928 0.961 0.967 3 9 0.900 0.892 0.987 0.974 10 0.864 0.928 0.952 0.962 6-7 34 0.749 0.916 0.882 0.922 10 0.551 0.880 0.737 0.828 PRAD 6-7 45 0.436 0.831 0.600 0.692 10 0.642 0.964 0.667 0.787 7 62 0.487 0.928 0.533 0.671 10 0.564 0.952 0.590 0.725 avg 31.0 0.694 0.892 0.798 0.847 10.0 0.700 0.930 0.781 0.854 
+
+## 4.4 Solution quality and scalability of the MIP and column generation heuristic 
+
+When solving the linear relaxation to optimality using our column generation heuristic, we obtain an upper bound on the optimal objective value of the original problem. This means R. S. H. Willemsen and T. Abeywickrama, R. Anandakrishnan 13 
+
+that we can compute an optimality gap for our methods, which can be calculated as gap = upper bound − objective value 
+
+|objective value | × 100 .
+
+We give the MIP heuristic and column generation heuristic a time limit of 5 minutes. The computational results are shown in Table 5, where bold indicates which method identified the best feasible solution in terms of objective value. For the first three instances, our column generation heuristic identified an integral solution when solving the linear programming relaxation to optimality. This means that these three instances are provably solved to optimality, where the largest instance contains 370 samples. The column generation heuristic manages to solve the linear programming relaxation to optimality for instances up to 990 samples, thereby providing a valid upper bound on the objective value. The largest instance, containing more than 1110 samples reached the time limit, so no valid upper bound could be derived. The valid upper bounds can be used to compute optimality gaps. When comparing the MIP heuristic and the column generation heuristic, we notice that both methods obtain near-optimal solutions with a gap close to 1%. The MIP heuristic provides a better solution in more cases, while also being faster on average. The results indicate that it is possible to solve instances of the MHCDSCP to optimality for some instances. Furthermore, our MIP heuristic is able to find near-optimal solutions for realistic sized instances within minutes.                                                                                        
+
+> Table 5 Comparison of test set performance between MIP heuristic and column generation heuristic on BRCA with hit range of 2-3. training set MIP heuristic column generation heuristic %#samples obj gap time (s) obj bound gap time (s) 10 124 91 0.00 3.1 91 91 0.00 1.7 20 248 182 0.00 12.7 182 182 0.00 9.0 30 372 273 0.00 14.9 273 273 0.00 14.8 40 496 363 0.27 34.3 362 364 0.55 25.2 50 620 454 0.22 31.4 451 455 0.88 35.1 60 746 544 0.55 66.5 541 547 1.10 51.7 70 870 632 0.94 81.5 633 638 0.78 74.6 80 994 722 0.96 173.2 721 729 1.10 118.1 90 1118 811 -110.8 811 --TL avg 0.45 58.7 0.61 70.0
+
+## 4.5 Case study on dataset B: various cancer types 
+
+We investigate the performance of our MIP heuristic on additional cancer types. We focus on dataset B, containing 16 cancer types from The Cancer Genome Atlas. In these experiments, we impose a time limit of 30 seconds for solving the MIP model. We use a training set of 75% of the data. The results are presented in Table 6. Our MIP heuristic achieves high values of MCC for all instances, typically within a minute. On average we achieve an MCC of 0.896. This performance is better compared to the MCC values reported for BiGPICC (see Table 2 in [ 27 ]), 14 Column Generation for Identifying Carcinogenic Multi-Hit Gene Combinations 
+
+which achieved an average MCC value of 0.687 when run on supercomputing infrastructure. However, a direct comparison is limited since our dataset A has been processed differently. 
+
+## 5 Conclusion 
+
+Existing approaches to identify carcinogenic multi-hit gene combinations often rely on exhaustive search-based methods and require supercomputing infrastructure. In contrast, we introduce fast and practical methods that can be solved on a single commodity CPU within a minute. Specifically, we introduce a constraint programming and mixed integer programming formulation for the problem. In addition, we propose a column generation method, which allows us to solve instances to optimality and demonstrate that our mixed integer program provides near-optimal solutions. These results suggest that identifying these gene combinations is not as computationally intensive as previously believed. Since the problem turns out to be computationally tractable to solve, this opens up the possibility for other research directions. It becomes possible to test hypothesis in multi-hit theory that were previously intractable to solve. Since our proposed methods are flexible they can easily accommodate a range of practical assumptions, such as changing the weight of tumor and normal samples, requiring all tumor samples to be covered, varying the number of selected gene combinations, or fixing the size of each gene combination (hit range). These optimisation models become accessible to researchers in cancer genomics. For further research, it would be interesting to design an exact method guaranteed to solve the problem to optimality. A key bottleneck is the resolution of the pricing problem, which is currently formulated and solved as a mixed integer program. 
+
+References 
+
+1 Qais Al Hajri, Sajal Dash, Wu-chun Feng, Harold R Garner, and Ramu Anandakrishnan. Identifying multi-hit carcinogenic gene combinations: Scaling up a weighted set cover algorithm using compressed binary matrix representation on a gpu. Scientific reports , 10(1):2022, 2020. 
+
+2 Bissan Al-Lazikani, Udai Banerji, and Paul Workman. Combinatorial drug therapy for cancer in the post-genomic era. Nature biotechnology , 30(7):679–692, 2012. 
+
+3 Ramu Anandakrishnan, Robin T Varghese, Nicholas A Kinney, and Harold R Garner. Es-timating the number of genetic mutations (hits) required for carcinogenesis based on the distribution of somatic mutations. PLoS computational biology , 15(3):e1006881, 2019. 
+
+4 P Armitage and R Doll. The age distribution of cancer and a multi-stage theory of carcino-genesis. British Journal of Cancer , 8(1):1–12, 1954. 
+
+5 DJ Ashley. The two "hit" and multiple "hit" theories of carcinogenesis. British journal of cancer , 23(2):313, 1969. 
+
+6 Egon Balas and Manfred W Padberg. On the set-covering problem. Operations Research ,20(6):1152–1161, 1972. 
+
+7 Freddie Bray, Mathieu Laversanne, Hyuna Sung, Jacques Ferlay, Rebecca L Siegel, Isabelle Soerjomataram, and Ahmedin Jemal. Global cancer statistics 2022: Globocan estimates of incidence and mortality worldwide for 36 cancers in 185 countries. CA: a cancer journal for clinicians , 74(3):229–263, 2024. 
+
+8 Davide Chicco and Giuseppe Jurman. The advantages of the matthews correlation coefficient (mcc) over f1 score and accuracy in binary classification evaluation. BMC genomics , 21(1):6, 2020. 
+
+9 Phuong Dao, Yoo-Ah Kim, Damian Wojtowicz, Sanna Madan, Roded Sharan, and Teresa M Przytycka. Bewith: A between-within method to discover relationships between cancer modules via integrated analysis of mutual exclusivity, co-occurrence and functional interactions. PLoS computational biology , 13(10):e1005695, 2017. R. S. H. Willemsen and T. Abeywickrama, R. Anandakrishnan 15 
+
+10 Sajal Dash, Qais Al-Hajri, Wu-chun Feng, Harold R Garner, and Ramu Anandakrishnan. Scaling out a combinatorial algorithm for discovering carcinogenic gene combinations to thousands of gpus. In 2021 IEEE International Parallel and Distributed Processing Symposium (IPDPS) , pages 837–846. IEEE, 2021. 
+
+11 Sajal Dash, Nicholas A Kinney, Robin T Varghese, Harold R Garner, Wu-chun Feng, and Ramu Anandakrishnan. Differentiating between cancer and normal tissue samples using multi-hit combinations of genetic mutations. Scientific reports , 9(1):1005, 2019. 
+
+12 Luc De Raedt, Tias Guns, and Siegfried Nijssen. Constraint programming for data mining and machine learning. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 24, pages 1671–1675, 2010. 
+
+13 Nathan D Dees, Qunyuan Zhang, Cyriac Kandoth, Michael C Wendl, William Schierding, Daniel C Koboldt, Thomas B Mooney, Matthew B Callaway, David Dooling, Elaine R Mardis, et al. Music: identifying mutational significance in cancer genomes. Genome research ,22(8):1589–1598, 2012. 
+
+14 Guy Desaulniers, Jacques Desrosiers, and Marius M Solomon. Column generation , volume 5. Springer Science & Business Media, 2006. 
+
+15 Tias Guns, Siegfried Nijssen, and Luc De Raedt. Itemset mining: A constraint programming perspective. Artificial Intelligence , 175(12-13):1951–1983, 2011. 
+
+16 Jiawei Han, Hong Cheng, Dong Xin, and Xifeng Yan. Frequent pattern mining: current status and future directions. Data mining and knowledge discovery , 15(1):55–86, 2007. 
+
+17 Brahim Hnich, Steven D Prestwich, Evgeny Selensky, and Barbara M Smith. Constraint models for the covering test problem. Constraints , 11(2):199–219, 2006. 
+
+18 Dorit S Hochbaum. Approximating covering and packing problems: set cover, vertex cover, independent set, and related problems. Approximation algorithms for NP-hard problems , pages 94–143, 1997. 
+
+19 Yoo-Ah Kim, Sanna Madan, and Teresa M Przytycka. Wesme: uncovering mutual exclusivity of cancer drivers and beyond. Bioinformatics , 33(6):814–821, 2017. 
+
+20 Michael I Klein, Vincent L Cannataro, Jeffrey P Townsend, Scott Newman, David F Stern, and Hongyu Zhao. Identifying modules of cooperating cancer drivers. Molecular systems biology , 17(3):e9810, 2021. 
+
+21 Runjun D Kumar, S Joshua Swamidass, and Ron Bose. Unsupervised detection of cancer driver mutations with parsimony-guided learning. Nature genetics , 48(10):1288–1294, 2016. 
+
+22 Mark DM Leiserson, Dima Blokh, Roded Sharan, and Benjamin J Raphael. Simultaneous identification of multiple driver pathways in cancer. PLoS computational biology , 9(5):e1003054, 2013. 
+
+23 Mark DM Leiserson, Hsin-Ta Wu, Fabio Vandin, and Benjamin J Raphael. Comet: a statistical approach to identify combinations of mutually exclusive alterations in cancer. Genome biology ,16(1):160, 2015. 
+
+24 MP Little and EG Wright. A stochastic carcinogenesis model incorporating genomic instability fitted to colon cancer data. Mathematical biosciences , 183(2):111–134, 2003. 
+
+25 Qingwei Luo and David P Smith. Global cancer burden: progress, projections, and challenges. 
+
+The Lancet , 406(10512):1536–1537, 2025. 
+
+26 CO2007872 Nordling. A new theory on the cancer-inducing mechanism. British journal of cancer , 7(1):68, 1953. 
+
+27 Vladyslav Oles, Sajal Dash, and Ramu Anandakrishnan. Bigpicc: a graph-based approach to identifying carcinogenic gene combinations from mutation data. BMC bioinformatics ,26(1):155, 2025. 
+
+28 Tae Yoon Park, Mark DM Leiserson, Gunnar W Klau, and Benjamin J Raphael. Superdendrix algorithm integrates genetic dependencies and genomic alterations across pathways and cancer types. Cell genomics , 2(2), 2022. 
+
+29 Günter Schneider, Marc Schmidt-Supprian, Roland Rad, and Dieter Saur. Tissue-specific tumorigenesis: context matters. Nature Reviews Cancer , 17(4):239–253, 2017. 16 Column Generation for Identifying Carcinogenic Multi-Hit Gene Combinations 
+
+30 Maximilian Stahl, Nathan Kohrman, Steven D Gore, Tae Kon Kim, Amer M Zeidan, and Thomas Prebet. Epigenetics in cancer: a hematological perspective. PLoS genetics ,12(10):e1006193, 2016. 
+
+31 Jeffrey V Sutherl and John C III Bailar. The multihit model of carcinogenesis: etiologic implications for colon cancer. Journal of chronic diseases , 37(6):465–480, 1984. 
+
+32 David Tamborero, Abel Gonzalez-Perez, and Nuria Lopez-Bigas. Oncodriveclust: exploiting the positional clustering of somatic mutations to identify cancer genes. Bioinformatics ,29(18):2238–2244, 2013. 
+
+33 Rui Tian, Malay K Basu, and Emidio Capriotti. Contrastrank: a new method for ranking putative cancer driver genes and classification of tumor samples. Bioinformatics , 30(17):i572– i578, 2014. 
+
+34 Cristian Tomasetti, Luigi Marchionni, Martin A Nowak, Giovanni Parmigiani, and Bert Vogelstein. Only three driver gene mutations are required for the development of lung and colorectal cancers. Proceedings of the National Academy of Sciences , 112(1):118–123, 2015. 
+
+35 Fabio Vandin, Eli Upfal, and Benjamin J Raphael. De novo discovery of mutated driver pathways in cancer. Genome research , 22(2):375–385, 2012. 
+
+36 John N Weinstein, Eric A Collisson, Gordon B Mills, Kenna R Shaw, Brad A Ozenberger, Kyle Ellrott, Ilya Shmulevich, Chris Sander, and Joshua M Stuart. The cancer genome atlas pan-cancer analysis project. Nature genetics , 45(10):1113–1120, 2013. 
+
+37 Junhua Zhang and Shihua Zhang. Discovery of cancer common and specific driver gene sets. 
+
+Nucleic acids research , 45(10):e86–e86, 2017. 
+
+38 Tong Zhang, Shao-Wu Zhang, Ming-Yu Xie, and Yan Li. Identifying cooperating cancer driver genes in individual patients through hypergraph random walk. Journal of Biomedical Informatics , 157:104710, 2024. 
+
+39 Xinan Zhang and Richard Simon. Estimating the number of rate limiting genomic changes for human breast cancer. Breast cancer research and treatment , 91(2):121–124, 2005. 
+
+40 Junfei Zhao, Shihua Zhang, Ling-Yun Wu, and Xiang-Sun Zhang. Efficient methods for identifying mutated driver pathways in cancer. Bioinformatics , 28(22):2940–2947, 2012. 
+
+## A Construction of dataset B 
+
+The data used to construct dataset B originates from The Cancer Genome Atlas and has been partially processed by [ 11 ]. The Cancer Genome Atlas contains tumor tissue samples with matched blood-derived samples. Somatic mutations were identified using the Mutect2 software, for more details we refer to [ 11 ]. To obtain the tumor and normal data for dataset B, we perform the following steps on the partially processed data. The partially processed normal data are provided as a list of ( g, s)-tuples, indicating that gene g is mutated in sample s. This can be converted into a binary matrix and requires no further processing. The partially processed tumor data is also provided as a list of ( g, s, i)-tuples, where i
+
+denotes the number of experiments in which gene g was observed to be mutated in sample s.We consider a gene to be mutated if at least one experiment reports a mutation, i.e. i ≥ 1
+
+and set the corresponding entry in the binary matrix to Msg = 1 . Any gene g that is never mutated in the tumor data and does not appear in the normal data is removed, as it does not contribute to the problem. R. S. H. Willemsen and T. Abeywickrama, R. Anandakrishnan 17 
+
+Table 6 Test set performance of our MIP heuristic on dataset B (25% of samples). cancer type hit range MIP heuristic on dataset B #comb MCC spec sens F1 BLCA-B 4 10 0.932 0.952 0.979 0.968 6-7 10 0.831 0.988 0.840 0.908 7 10 0.863 1.000 0.862 0.926 BRCA-B 2-3 9 0.984 0.988 0.996 0.996 3 7 0.967 0.964 0.996 0.991 6-7 10 0.728 0.988 0.819 0.898 CESC-B 5 10 0.974 1.000 0.972 0.986 6-7 10 0.840 1.000 0.817 0.899 COAD-B 3 10 0.934 0.964 0.970 0.970 4 10 0.935 0.988 0.950 0.969 5 10 0.848 1.000 0.850 0.919 6 10 0.886 1.000 0.890 0.942 GBM-B 2 5 0.989 1.000 0.989 0.994 3 9 0.955 0.952 1.000 0.978 HNSC-B 4 10 0.928 0.940 0.983 0.971 5 10 0.920 0.976 0.950 0.966 KIRP-B 8 10 0.763 1.000 0.702 0.825 LGG 3 10 0.929 0.940 0.984 0.972 6 10 0.893 0.976 0.927 0.954 LIHC-B 8 10 0.774 1.000 0.744 0.853 LUAD-B 3 10 0.936 0.940 0.991 0.972 6-7 10 0.907 0.988 0.925 0.957 LUSC-B 5 10 0.988 0.988 1.000 0.994 OV-B 2 9 0.904 0.952 0.952 0.952 6-7 10 0.964 1.000 0.964 0.982 PRAD-B 6-7 10 0.822 0.976 0.855 0.913 7 10 0.804 1.000 0.809 0.894 SARC-B 5 10 0.926 1.000 0.909 0.952 8 10 0.785 1.000 0.727 0.842 THCA-B 5 10 0.909 1.000 0.915 0.956 6 10 0.897 0.988 0.915 0.951 UCEC-B 2 10 0.970 0.988 0.984 0.988 6-7 10 0.887 0.988 0.913 0.950 avg 9.7 0.896 0.982 0.911 0.945

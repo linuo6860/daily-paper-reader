@@ -1,0 +1,971 @@
+Title: Efficient endometrial carcinoma screening via cross-modal synthesis and gradient distillation
+
+URL Source: https://arxiv.org/pdf/2602.19822v1
+
+Published Time: Tue, 24 Feb 2026 03:12:42 GMT
+
+Number of Pages: 21
+
+Markdown Content:
+# Efficient endometrial carcinoma screening via cross-modal synthesis and gradient distillation 
+
+Dongjing Shan a,b , Yamei Luo a, Jiqing Xuan c, Lu Huang a, Jin Li a, Mengchu Yang d, Zeyu Chen e, Fajin Lv f, Yong Tang b,h,i, ∗, Chunxiang Zhang e,g,j,k, ∗ 
+
+> a
+
+School of Medical Information and Engineering, Southwest Medical University, Luzhou 646000, Sichuan, China  
+
+> b
+
+School of Computer Science and Engineering, University of Electronic Science and Technology of China, Chengdu 611731, China  
+
+> c
+
+Department of Ultrasound, Affiliated Hospital of Southwest Medical University, Luzhou 646000, Sichuan, China  
+
+> d
+
+Department of Functional Examination Unit, Zibo Hospital of Traditional Chinese Medicine, Zibo 255000, China  
+
+> e
+
+Key Laboratory of Medical Electrophysiology, Ministry of Education& Medical Electrophysiological Key Laboratory of Sichuan Province, Institute of Cardiovascular Research, Southwest Medical University  
+
+> f
+
+Department of Radiology, the First Affiliated Hospital of Chongqing Medical University, Chongqing 400016, China  
+
+> g
+
+Department of Cardiology, Affiliated Hospital of Southwest Medical University, Luzhou 646000, Sichuan, China  
+
+> h
+
+International Research Center for Complexity Sciences, Hangzhou International Innovation Institute, Beihang University, Hangzhou 311115, China  
+
+> i
+
+Institute of Intelligent Chinese Medicine, Chongqing University of Chinese Medicine, Chongqing 402760, China  
+
+> j
+
+Basic Medicine Research Innovation Center for Cardiometabolic Diseases, Ministry of Education, Southwest Medical University  
+
+> k
+
+Nucleic Acid Medicine of Luzhou Key Laboratory, Southwest Medical University, Luzhou 646000, Sichuan, China 
+
+## Abstract 
+
+Early detection of myometrial invasion is critical for the staging and life-saving management of endometrial carcinoma (EC), a prevalent global malignancy. Transvaginal ultrasound serves as the primary, accessible screening modality in resource-constrained primary care settings; however, its diagnostic reliability is severely hindered by low tissue contrast, high operator dependence, and a pronounced scarcity of positive pathological samples. Existing artificial intelligence solutions struggle to overcome this severe class imbalance and the subtle imaging features of invasion, particularly under the strict computational limits of primary care clinics. Here we present an automated, highly effi-cient two-stage deep learning framework that resolves both data and computational bottlenecks in EC screening. To mitigate pathological data scarcity, we develop a structure-guided cross-modal generation network that synthesizes diverse, high-fidelity ultrasound images from unpaired magnetic resonance imaging (MRI) data, strictly preserving clinically essential anatomical junctions. Furthermore, we introduce a lightweight screening network utilizing gradi-ent distillation, which transfers discriminative knowledge from a high-capacity teacher model to dynamically guide sparse attention towards task-critical regions. Evaluated on a large, multicenter cohort of 7,951 participants, our model achieves a sensitivity of 99.5%, a specificity of 97.2%, and an area under the curve of 0.987 at a minimal computa-tional cost (0.289 GFLOPs), substantially outperforming the average diagnostic accuracy of expert sonographers. Our approach demonstrates that combining cross-modal synthetic augmentation with knowledge-driven efficient modeling can democratize expert-level, real-time cancer screening for resource-constrained primary care settings. Endometrial carcinoma (EC) ranks as the sixth most common malignancy among women globally, with a steadily increasing incidence. 1, 2 Characterized by its po-tential for cure in early stages, early screening is critical for improving patient outcomes. Clinical data indicate a 91%-95% five-year survival rate for stage I (FIGO) EC patients after standard treatment, often preserving fertility or enabling minimally invasive procedures. In contrast, advanced-stage (FIGO III-IV) patients experience a sharp decline in survival (20%-50%) and require radical surgery combined with radiotherapy/chemotherapy, significantly compromising quality of life. 2, 3 Thus, timely detection and accurate assessment of disease progression through early screening are paramount for reducing EC mortal-ity and optimizing therapeutic strategies. 4 Current clini-cal assessment of invasion depth primarily relies on ultra-sound. However, the operator-dependent nature and tech-nical constraints of ultrasound, such as low image con-trast, textural heterogeneity, artifacts, insufficient image resolution, and difficulty in visualizing micro-infiltrates, 
+
+> ∗
+
+Corresponding authors 
+
+Email addresses: tangyong@uestc.edu.cn (Yong Tang), zhangchx999@163.com (Chunxiang Zhang) 
+
+> arXiv:2602.19822v1 [cs.CV] 23 Feb 2026
+
+limit its capability to reliably distinguish between invasive and non-invasive lesions, 5 and thus create a pressing need for high-precision, automated image classification models to aid clinical decision-making. Nevertheless, the development of such assisted diag-nostic tools is hindered by two major challenges: severe class imbalance and the inherent difficulty of the clas-sification task . Regarding the first challenge, clinical data exhibits a pronounced long-tail distribution: 6, 7 over 90% of ultrasound samples are from normal endometrium or benign hyperplasia, while cases related to endometrial carcinoma are scarce. Among the carcinoma samples, 50 
+
+those with superficial myometrial invasion constitute only 3%-5% of the total screening dataset, and samples with deep invasion are even rarer, accounting for less than 1%. This is because deep invasion often corresponds to mid-advanced stage disease, which has a lower detection rate in early screening. Consequently, models are easily domi-nated by the overwhelming number of “normal/superficial invasion” samples, leading to insufficient learning for the critical minority class of “deep invasion”. This results in a model with high recall but low precision, failing to ef-fectively identify true severe cases and ultimately contra-dicting the fundamental goal of screening. The second challenge, detecting myometrial inva-sion, is compounded by intrinsic limitations of ultra-sound imaging. The low resolution typical of primary care devices, along with artifacts from bowel gas or ir-regular endometrial thickening, often obscures the en-dometriumšCmyometrium interface. 8 The lack of defini-tive, quantifiable sonographic markers further compli-cates delineation, forcing diagnosis to rely on subtle, sub-jective features such as textural, echogenic, or morpho-logical changes at the tumor boundary. While an intact junction appears as a continuous hypoechoic band, inva-sion is suggested by disruption or fusion. Discriminating these nuanced patterns demands high-capacity feature ex-traction, an obstacle for lightweight models with limited representational power, increasing the risk of misclassifi-cation. Addressing the core clinical needs for primary care EC ultrasound screening, this paper establishes a Lightweight Screening Network based on ultrasound modality for the precise binary classification of my-ometrial invasion (presence vs. absence). Our ap-proach specifically targets the aforementioned challenges: To tackle class imbalance, we propose a Structure-Guided Cycle-Consistent Adversarial Network (SG-CycleGAN) to synthesize high-quality, diverse MRI-to-ultrasound images. This approach is clinically grounded, as patients with suspected ultrasound findings often un-dergo further MRI examination, making MRI-derived synthetic ultrasound a viable strategy to compensate for the scarcity of pathological ultrasound samples. To over-come the inherent challenges in distinguishing subtle in-vasion patterns, we introduce Gradient Distillation as a core technical solution that systematically enhances the lightweight network’s discriminative capacity through dual mechanisms of knowledge transfer and attention sparsification, thereby achieving both improved diagnos-tic accuracy and computational efficiency. 
+
+## Results 100 
+
+Data 
+
+This multicenter retrospective study, conducted across The First Affiliated Hospital of Chongqing Medical University, The Affiliated Hospital of Southwest Med-ical University, Zibo Hospital of Traditional Chinese Medicine, Zibo Maternal and Child Health Hospital, and Jincheng People’s Hospital between March 2018 and September 2025, analyzed transvaginal sonography (TVS) data comprising 3,354 images from 651 patients with histologically confirmed Endometrial Carcinoma (EC), alongside 33,189 images from 7,300 women with normal uteri. The overall cohort consisted of 7,951 par-ticipants (651 EC patients and 7,300 controls). All TVS images from EC patients were obtained within 7 days be-fore surgery. Inclusion criteria for EC patients comprised: 1) postoperative pathological confirmation of endometrial carcinoma and 2) completion of a preoperative TVS ex-amination within one week prior to surgery. Exclusion criteria were: 1) coexistence of other malignancies, 2) ob-struction of lesions by Doppler flow signals, and 3) in-complete image series. To ensure data distribution balance across centers and avoid overfitting to specific institutional character-istics, the ultrasound dataset was randomly partitioned at the patient level into training, validation, and test sets following an 8:1:1 ratio (no center-specific partition-ing was adopted). All participating centers followed a unified TVS examination protocol (in accordance with the International Society of Ultrasound in Obstetrics and Gynecology [ISUOG] practice guidelines) and imple-mented a standardized image cropping method to remove institutional logos, text, and other irrelevant informa-tion, thereby minimizing inter-institutional heterogene-ity caused by non-diagnostic institutional-specific mark-ers. This partitioning strategy ensured that each dataset (training, validation, test) contained representative sam-ples from all five centers, reflecting the diverse clinical scenarios of EC diagnosis in routine practice. This re-sulted in a training set containing 2,698 EC images and 23,219 normal images. To ensure balanced evaluation, the validation and test sets were constructed to contain 320 and 336 EC images, respectively, with an equal num-ber of randomly selected normal images (320 and 336, respectively) included in each dataset. 2Table 1: Comparison of Image Quality Metrics. 
+
+Metric Method CycleGAN 9 UNIT 10 MUNIT 11 DCLGAN 12 SG-CycleGAN Params (M) 220 217 196 227 213 FID ↓ 133.2858 219.1379 165.5644 122.9870 73.2540 
+
+KID ↓ 0.1128 0.2588 0.1771 0.0947 0.0636 
+
+±0.0026 ±0.0031 ±0.0042 ±0.0020 ±0.0015 
+
+> Note: SD (Standard Deviation).
+
+In parallel, this study retrospectively collected MRI data from 498 surgically confirmed endometrial carci-noma patients. All participants underwent multi-sequence MRI scanning, which included axial T2-weighted imag-ing, axial T1-weighted imaging (both non-contrast and fat-suppressed post-contrast sequences), axial diffusion-150 
+
+weighted imaging (DWI) with corresponding apparent diffusion coefficient (ADC) maps, and axial LAVA dy-namic contrast-enhanced sequences. The institutional re-view board approved this study, and informed consent was waived due to its retrospective design. After image pre-processing, a total of 34,214 images were extracted from different scanning sequences and slices. To ensure rigor-ous model evaluation, all data were randomly partitioned at the patient level. Specifically, the 498 patients were ran-domly allocated into training and test sets in a 2:1 ratio. A key principle of this partitioning was to ensure the com-plete independence of patient IDs in the test set, meaning that all images corresponding to these patients were ex-cluded from any stage of model training. 
+
+Superiority of SG-CycleGAN over Baseline Cy-cleGANs 
+
+Building upon the dataset described in the previous section, we designed a comparative experiment to rig-orously evaluate the performance of our proposed SG-CycleGAN. While generative adversarial networks 13, 14 
+
+are inherently bidirectional, our specific application sce-nario required only unidirectional translation from MRI to ultrasound. Therefore, for the adversarial training of all compared models, we utilized the entire set of 2,634 ultrasound images from histologically confirmed endometrial carcinoma cases and 22,809 MRI images, corresponding to two-thirds of the total MRI dataset. The remaining one-third of the MRI images were re-served for the test set to generate synthetic ultrasound images for evaluation. The primary baseline models for comparison included UNIT 10 (Unsupervised Image-to-Image Translation), MUNIT 11 (Multimodal UNsuper-vised Image-to-Image Translation) , and DCLGAN 12 
+
+(Dual Contrastive Learning for Unpaired Image-to-Image Translation). However, other more recent models, such as those for unpaired CT ↔MR image synthesis (CycleS-GAN, 15 DC-CycleGAN 16 ) or multi-domain style transla-tion (StarGAN v2 17 ), along with the recently proposed Onto-CGAN 18 (a model that generates synthetic EHR data for unseen diseases by integrating domain knowl-edge), were not suitable for ultrasound-to-MRI image translation. To comprehensively assess the quality of the synthesized images and their utility for the downstream task, we employed a multifaceted evaluation protocol fo-cusing on two key aspects: 1) Image Quality Metrics : We used the Fréchet In-ception Distance 19 (FID) and the Kernel Inception Dis-tance 20 (KID) to quantitatively measure the similarity be-tween the distribution of synthetic ultrasound images and the distribution of real ultrasound images. Lower FID and 200 
+
+KID scores indicate that the generated images are more photorealistic and statistically closer to real ultrasound scans, which is crucial for ensuring the perceptual validity of the augmented data. To ensure a fair performance comparison, the gener-ators of all compared models were balanced in architec-tural design to maintain a comparable parameter scale, as shown in Table 1. Our proposed SG-CycleGAN, which incorporates a shared modality-agnostic feature extractor (MAFE), contains 213M parameters in its unidirectional generator. The parameter count of SG-CycleGAN was kept close to those of the other models by using shallower private branches with a reduced number of residual blocks (set to 7), whereas the standard CycleGAN was expanded to 9 residual blocks to increase its capacity. This deliber-ate balancing ensures that the models are compared under a similar parameter budget, so that the performance dif-ferences reported in Table 1 primarily stem from the pro-posed structure guidance and gradient distillation mecha-nisms, rather than from disparities in model capacity. As presented in Table 1, the quantitative results demonstrate the superior performance of our SG-CycleGAN in generating realistic and structurally faith-ful synthetic ultrasound images. SG-CycleGAN achieves the lowest Fréchet Inception Distance (FID) of 73.25 3(a) MRI (b) CycleGAN (c) UNIT (d) MUNIT (e) DCLGAN (f) SG-CycleGAN 
+
+> Figure 1: Visual comparison of MRI-to-ultrasound image synthesis results from different models. (a) Original axial MR images of the uterus. (b-f) Corresponding synthetic ultrasound images generated by five comparative models, respectively.
+
+and the lowest Kernel Inception Distance (KID) of 0.0636 ±0.0015, indicating that its synthetic image dis-tribution is statistically closest to that of real ultrasound scans. In comparison, the baseline CycleGAN yields an FID of 133.29 and a KID of 0.1128, while other contem-porary models (UNIT, MUNIT, and DCLGAN) exhibit higher or moderately competitive scores. Notably, DCL-GAN, which employs dual contrastive learning, attains an FID of 122.99 and a KID of 0.0947, yet remains outper-formed by our method. These improvements can be attributed to the structure-preserving mechanisms embedded in SG-CycleGAN, namely the modality-agnostic feature extractor (MAFE) and the feature consistency loss, which explicitly maintain anatomical integrity during cross-modal translation. Un-der a comparable parameter budget, the consistent gains in both FID and KID metrics confirm that the enhanced synthesis quality stems from the proposed architectural innovations rather than increased model capacity, thereby validating the effectiveness of our approach for gener-ating diagnostically relevant ultrasound data. Examples of cross-modal image translation are presented in Fig-ure 1, where panel (a) shows the original MRI, and the five columns on the right display the corresponding ul-trasound images generated by the five compared mod-250 
+
+els respectively. While other methods (CycleGAN, MU-NIT, DCLGAN) often produce smoothed or artifact-prone ultrasound-like outputs, and UNIT notably fails to gener-ate plausible ultrasound appearance, the SG-CycleGAN synthesizes images with superior structural fidelity and more realistic textural details. This visual assessment is consistent with the quantitative superiority reported in Ta-ble 1. To visually demonstrate the structural-preserving ca-pability of our SG-CycleGAN, Figure 2 presents the modality-agnostic feature maps extracted by the MAFE module. By discarding modality-specific textures and re-taining only shared structural information, the MAFE en-sures that the synthesized ultrasound images preserve the critical anatomical layout necessary for reliable invasion assessment, thereby underpinning the improved synthesis quality shown in Figure 1 and the downstream classifica-tion performance reported in Table 2. 2) Downstream Task Performance : To assess the clinical utility of the synthetic ultrasound data beyond per-ceptual quality, we conducted a downstream binary clas-sification task for myometrial invasion. A lightweight MobileNet-V2 21 classifier (comprising 730.5K parame-ters) was trained from scratch using a hybrid dataset: pos-itive samples were comprised of 10,000 real ultrasound images randomly selected from the constructed training set, while negative samples consisted of synthetic ultra-sound images generated from MRI data. This design evaluates the model’s ability to identify disease samples after being trained on a hybrid dataset comprising both real and synthetic ultrasound data. For model evaluation, we utilized the constructed validation and test sets, both consisting exclusively of held-out real ultrasound images that were not used during training. The model parame-ters yielding the highest sensitivity on the validation set were selected and saved. These optimized parameters were then applied to the independent test set for the fi-nal performance assessment. To ensure reproducibility, all experiments were independently repeated three times using distinct random seeds (42, 142, 242), following es-tablished practices in machine learning research. 22, 23 The mean and standard deviation of each metric from these three runs are presented in Table 2. A comparative analysis of Table 2 delineates dis-tinct performance profiles among the benchmark mod-els. MUNIT and DCLGAN exhibit notably high speci-ficity (0.7708 ±0.0696, and 0.8056 ±0.0650, respectively) 4Figure 2: Visualization of selected feature maps from the modality-agnostic feature extractor (MAFE). Table 2: Comparison of Downstream Classification Task Performance (MobileNet-V2 on Synthetic Data). 
+
+Metric CycleGAN 9 UNIT 10 MUNIT 11 DCLGAN 12 SG-CycleGAN Accuracy 0.7431 ± 0.0322 0.7465 ± 0.0049 0.5833 ± 0.0279 0.7240 ± 0.0533 0.7691 ± 0.0302 Sensitivity 0.7188 ± 0.0450 0.7882 ± 0.0547 0.3958 ± 0.1179 0.6424 ± 0.1702 0.8160 ± 0.0214 Specificity 0.7674 ± 0.0260 0.7049 ± 0.0491 0.7708 ± 0.0696 0.8056 ± 0.0650 0.7222 ± 0.0772 Precision 0.7551 ± 0.0300 0.7293 ± 0.0184 0.6340 ± 0.0272 0.7707 ± 0.0131 0.7500 ± 0.0464 F1-score 0.7362 ± 0.0364 0.7560 ± 0.0149 0.4777 ± 0.0843 0.6870 ± 0.0985 0.7802 ± 0.0192 ROC AUC 0.8177 ± 0.0178 0.8205 ± 0.0360 0.6848 ± 0.0337 0.8252 ± 0.0558 0.8416 ± 0.0188 but substantially low sensitivity (0.3958 ±0.1179, and 0.6424 ±0.1702). This pattern suggests a pronounced bias toward negative predictions, indicative of synthetic 300 
+
+images that lack discriminative features for myome-trial invasion, thereby leading the classifier to adopt an overly conservative diagnostic strategy. Cycle-GAN and UNIT demonstrate relatively higher sensitiv-ity (0.7188 ±0.0450, and 0.7882 ±0.0547) compared to the aforementioned models, while maintaining moderate specificity (0.7674 ±0.0260, and 0.7049 ±0.0491), reflect-ing an alternative trade-off that reduces false negatives at the expense of increased false positives. Notably, the proposed SG-CycleGAN achieves the most balanced and clinically favorable performance, at-taining the highest sensitivity (0.8299 ±0.0214) along with a competitive specificity (0.7083 ±0.0390). It also yields the best accuracy (0.7691 ±0.0098) and F1-score (0.7824 ±0.0045) among all compared methods. These re-sults underscore that the structure-preserving synthesis fa-cilitated by SG-CycleGAN enriches the pathological rel-evance of generated features, enabling more reliable dis-crimination of invasion without substantial compromise in either sensitivity or specificity. Consequently, the pro-posed framework validates its efficacy as a robust strategy for augmenting scarce and imbalanced ultrasound datasets in endometrial carcinoma screening. Figure 3 displays the mean receiver operating char-acteristic (ROC) curves, each accompanied by a shaded region representing the ±1 standard deviation interval, for the downstream MobileNet-V2 classifier trained on synthetic data from different generative models. These curves and their variability estimates are derived from three completely independent runs of the full training-validation-testing pipeline, ensuring a robust evaluation of each model’s discriminative capability. The proposed SG-CycleGAN consistently yields the superior mean ROC curve, attaining the highest mean area under the curve (AUC) of 0.8402. This result, coupled with its narrow standard deviation band, indicates that our method gen-erates the most stable and pathologically discriminative synthetic features, enabling the classifier to achieve reli-able and reproducible performance in distinguishing my-ometrial invasion. 
+
+Performance Evaluation of the Lightweight Screening Network 
+
+To comprehensively evaluate the effectiveness of the proposed Lightweight Screening Network (LSNet), we conducted a comparative analysis against several estab-lished lightweight architectures, namely MobileNet-V2, 21 
+
+EfficientNet, 24 and MobileViT. 25 All models were trained using a two-phase strategy: pre-training on a mixed dataset followed by fine-tuning on real ultrasound data. In the performance comparison of lightweight models, 350 
+
+we kept FLOPs 26 (floating-point operations) consistent across all architectures. This setting is more reasonable and equitable than maintaining roughly the same number of parameters, since FLOPs more directly reflect actual computational cost and exhibit a higher correlation with inference speed. A large-scale hybrid pre-training dataset was con-structed by augmenting the available real ultrasound data 5(a) CycleGAN (b) UNIT (c) MUNIT (d) DCLGAN (e) SG-CycleGAN   
+
+> Figure 3: Receiver operating characteristic (ROC) curves of the downstream invasion classifier trained on synthetic data. The lightweight MobileNet-V2 classifier was trained using synthetic ultrasound images generated by (a) CycleGAN, (b) UNIT, (c) MUNIT, (d) DCLGAN, and (e) the proposed SG-CycleGAN.
+
+with synthetic images generated by the proposed SG-CycleGAN. This mixed dataset comprised approximately 13,000 pathological samples (including both real and syn-thetic images of EC cases) and 23,219 normal ultrasound samples. The training protocol followed a two-phase strategy: first, all models were pre-trained on this hybrid dataset; subsequently, they were fine-tuned using only the held-out real ultrasound data to adapt them to the authen-tic imaging distribution. All image samples were resized to 320 ×320 pixels as part of the preprocessing pipeline. It is important to note that the student model of our proposed LSNet, which includes the integrated gradi-ent simulator, contains 391.8K parameters. In contrast, its corresponding teacher model employs a significantly larger architecture with 6.40M parameters, facilitating ef-fective gradient distillation during the training process. The model selection strategy was optimized for screen-ing performance: model parameters achieving the high-est sensitivity on the validation set were saved when sen-sitivity was below 0.95; when sensitivity exceeded 0.95, parameters yielding the highest specificity were retained instead. This dual-threshold approach ensures both high disease detection (when sensitivity is inadequate) and minimization of false positives (when sensitivity is suf-ficiently high), thereby optimizing overall screening effi-cacy and resource utilization in clinical practice. Based on the comparative results presented in Table 3, the proposed Lightweight Screening Net-work (LSNet) demonstrates superior diagnostic per-formance while maintaining the lowest computational footprint. LSNet achieves the highest accuracy (0.9836 ±0.0024), specificity (0.9722 ±0.0051), precision (0.9729 ±0.0048), F1-score (0.9790 ±0.0018), and ROC-AUC (0.9920 ±0.0005), coupled with a leading sensitiv-ity (0.9950 ±0.0014). Notably, this performance is at-tained with only 0.289 GFLOPs and 391.8K parameters, which are lower or comparable to the benchmark mod-els (MobileNet-V2, EfficientNet, and MobileViT). This indicates that LSNet successfully balances high accuracy with operational efficiency. The performance gain can be attributed to its integrated gradient distillation and sparse attention mechanism, which effectively transfer discrim-400 
+
+inative knowledge from a larger teacher model and fo-cus computational resources on pathologically relevant re-gions. Furthermore, an average inference time of 0.157 seconds per image on an Intel Core i9 CPU (3.5GHz base frequency), compared to 0.262 seconds for MobileViT, underscores the practical viability of LSNet for real-time screening in resource-constrained primary care settings. Figure 4 visually compares the ROC curves of four lightweight models for classifying myometrial invasion. The proposed LSNet demonstrates the highest overall dis-criminative ability, achieving the largest area under the curve (AUC), which corresponds to its superior quan-titative performance reported in Table 3. Compared to MobileNet-V2, EfficientNet, and MobileViT, LSNet maintains a consistently higher true positive rate across all false positive rates, indicating its enhanced capability to distinguish between invasive and non-invasive cases with greater reliability. 
+
+Ablation Analysis of LSNet’s Core Components 
+
+To quantitatively assess the individual contributions of the two pivotal components in our Lightweight Screen-ing Network (LSNet), namely synthetic data pre-training and gradient-guided sparse attention distillation, we con-ducted a systematic ablation study. All models in this sec-tion were evaluated on the same independent test set used in the main experiment, comprising 336 positive (inva-sive) and 336 negative (non-invasive) real ultrasound im-ages. The reported results are the mean and standard de-viation from three independent runs. The full LSNet (re-ferred to as Full Model) is compared against two ablated versions: LSNet w/o Syn. Pre-train (No Synthetic Pre-training): This variant is trained from scratch using only the avail-able real ultrasound data, without the initial large-scale pre-training on the hybrid dataset (real + SG-CycleGAN synthetic images). This setup isolates the contribution of the synthetic data augmentation strategy. LSNet w/o Grad. Distill. (No Gradient Distillation) (Dense Attn.): This version replaces the gradient-guided sparse attention with a standard dense self-attention block, 6Table 3: Performance Comparison of the Proposed Lightweight Screening Network (LSNet) versus Benchmark Models on Synthetic and Real Ultrasound Data. 
+
+Metric MobileNet-V2 21 EfficientNet 24 MobileViT 25 LSNet (Ours) FLOPs 0.338G 0.513G 0.562G 0.289 GParams 1.013M 204.5K 294.5K 391.8K Accuracy 0.9499 ± 0.0092 0.9345 ± 0.0263 0.9688 ± 0.0080 0.9836 ± 0.0024 Sensitivity 0.9573 ± 0.0148 0.9028 ± 0.0552 0.9762 ± 0.0106 0.9950 ± 0.0014 Specificity 0.9425 ± 0.0140 0.9663 ± 0.0028 0.9613 ± 0.0084 0.9722 ± 0.0051 Precision 0.9435 ± 0.0127 0.9640 ± 0.0012 0.9619 ± 0.0081 0.9729 ± 0.0048 F1-score 0.9503 ± 0.0092 0.9315 ± 0.0295 0.9690 ± 0.0079 0.9838 ± 0.0024 ROC AUC 0.9812 ± 0.0057 0.9790 ± 0.0008 0.9811 ± 0.0023 0.9873 ± 0.0012    
+
+> (a) CycleGAN (b) UNIT (c) MUNIT (d) DCLGAN
+> Figure 4: Comparison of receiver operating characteristic (ROC) curves among lightweight models for myometrial invasion classification.
+
+while retaining synthetic pre-training. It specifically eval-uates the contribution of the gradient distillation frame-work to sparsification and knowledge transfer. The ablation results in Table 4 clearly quantify the contribution of each core component. The performance decline of LSNet w/o Syn. Pre-train (accuracy: 0.9550, sensitivity: 0.9467) underscores the critical role of syn-thetic data. A model trained solely on limited real data tends toward conservative predictions, resulting in insuf-ficient learning for critical minority classes such as deep 450 
+
+myometrial invasion. The diverse, structure-preserving synthetic images provided by SG-CycleGAN effectively mitigate class imbalance and enhance the model’s gener-alization and discriminative capabilities. Although LSNet w/o Grad. Distill. retains synthetic data pre-training, its dense attention mechanism lags behind the full model across all performance metrics. This indicates that our approach surpasses mere knowledge transfer. The guided sparsification achieved through gradient distillation en-ables the student network to focus its computation on regions most critical for the classification decision (e.g., the invasion interface), based on importance signals de-rived from the teacher model’s gradients. Consequently, it yields a more discriminative feature representation while reducing computational cost, ultimately leading to supe-rior sensitivity (0.9950) and overall performance. Notably, in Table 5, even under a more aggressive sparsity setting (LSNet, k= ⌊N/ 50 ⌋, and in our experi-ments, each query token is paired with only the top-8 key-value token pairs as determined by gradient-based im-portance ranking), the performance degradation remains minimal (Sensitivity: 0.9970, Specificity: 0.9692). This robustness can be attributed to the inherent selectivity of the gradient distillation mechanism. Rather than applying uniform compression, it strategically preserves the inter-token connections with the highest gradient magnitudes, which correspond to those most critical for the classifica-tion outcome. Consequently, even with a sparser attention map, the retained features remain highly task-relevant, en-suring reliable diagnostic performance under stringent re-source constraints. 
+
+Bootstrap Validation Results 
+
+To further evaluate the robustness and statistical re-liability of our proposed LSNet, we conducted Boot-strap validation 27 on the independent test set. For each of the three independent experiments, we performed 10,000 bootstrap resamples on the testing data. This 7Table 4: Ablation Study of the Proposed Lightweight Screening Network (LSNet). 
+
+Model Variant Accuracy Sensitivity Specificity Precision F1-score ROC AUC LSNet w/o Syn. Pre-train 0.9550 
+
+± 0.0106 0.9467 
+
+± 0.0246 0.9633 
+
+± 0.0143 0.9631 
+
+± 0.0137 0.9545 
+
+± 0.0111 
+
+0.9914 
+
+± 0.0017 LSNet w/o Grad. Distill. 0.9617 
+
+± 0.0042 0.9700 
+
+± 0.0071 0.9533 
+
+± 0.0062 0.9541 
+
+± 0.0058 0.9620 
+
+± 0.0043 0.9909 
+
+± 0.0008 LSNet (Full Model) 0.9836 
+
+± 0.0024 
+
+0.9950 
+
+± 0.0014 
+
+0.9722 
+
+± 0.0051 
+
+0.9729 
+
+± 0.0048 
+
+0.9838 
+
+± 0.0024 0.9873 
+
+± 0.0012 
+
+> Table 5: Ablation Study on Gradient-Guided Sparse Attention with Progressive Sparsity Levels.
+
+Model Variant LSNet w/ Full Attention ( k = N )LSNet w/ Sparse Attention (k = ⌊N/ 10 ⌋)LSNet w/ Sparse Attention (k = ⌊N/ 25 ⌋)LSNet w/ Sparse Attention (k = ⌊N/ 50 ⌋)FLOPs 0.305G 0.290G 0.289G 0.288G CPU Inference Speed (seconds/sample) 0.438 s 0.172 s 0.157 s 0.154 s GPU Memory Usage (batch size=4) 10.1G 7.9G 7.8G 7.8G Accuracy 0.9821 ± 0.0024 0.9812 ± 0.0031 0.9836 ± 0.0024 0.9831 ± 0.0014 Sensitivity 0.9963 ± 0.0030 0.9940 ± 0.0049 0.9950 ± 0.0014 0.9970 ± 0.0024 Specificity 0.9643 ± 0.0049 0.9683 ± 0.0014 0.9722 ± 0.0051 0.9692 ± 0.0014 Precision 0.9691 ± 0.0017 0.9690 ± 0.0015 0.9729 ± 0.0048 0.9701 ± 0.0013 F1-score 0.9825 ± 0.0023 0.9814 ± 0.0031 0.9838 ± 0.0024 0.9834 ± 0.0014 ROC AUC 0.9905 ± 0.0013 0.9911 ± 0.0003 0.9873 ± 0.0012 0.9908 ± 0.0009 non-parametric resampling approach allows us to esti-mate the sampling distribution of our performance met-rics and compute 95% confidence intervals, providing a more comprehensive assessment of model stability be-yond point estimates. The Bootstrap validation results across three indepen-dent experiments are summarized in Table 6. For each performance metric, we report the mean value with stan-dard deviation from bootstrap resampling, along with the 95% confidence interval (CI). The Bootstrap validation demonstrates excellent and consistent performance across multiple resampled test sets. The narrow confidence intervals for all key met-500 
+
+rics across three independent experiments indicate excep-tional discriminative ability and stability of our LSNet. For example, the ROC AUC intervals (Experiment 1: 0.9751-0.9969; Experiment 2: 0.9741-0.9956; Experi-ment 3: 0.9789-0.9969) remain consistently high and tight. The overall mean accuracy across experiments was 0.9836 ±0.0024, accompanied by consistently high sensi-tivity (0.9950 ±0.0014) and specificity (0.9722 ±0.0051). These results confirm that the model maintains a bal-anced performance profile without substantial trade-offs between the detection of invasive cases and the avoidance of false positives. Boxplots (Figure 5) and histograms (Appendix Fig-ures .8-.10) also confirm that LSNet maintains tight per-formance distributions with minimal skewness across all bootstrap resamples. 
+
+Theoretical screening performance 
+
+To assess the potential clinical utility and population-level impact of the proposed Lightweight Screening Net-work (LSNet), we performed a theoretical screening per-formance analysis under varying disease prevalence sce-narios. This analysis estimates key public health met-rics: Positive Predictive Value (PPV), Negative Predic-tive Value (NPV), Positive Likelihood Ratio (LR+), ex-pected screen-positive rate, and the number needed to screen (NNS) to detect one true positive case, based on the model’s validated performance (sensitivity=0.975, speci-ficity=0.955) obtained from the independent test set. The 8Table 6: Bootstrap Validation Results for LSNet Across Three Independent Experiments (n=10,000 resamples per experiment) 
+
+Experiment Accuracy Sensitivity Specificity Precision F1-score ROC AUC Exp #1 0.9866 
+
+± 0.0044 
+
+> (0.9777-0.9940)
+
+0.9940 
+
+± 0.0042 
+
+> (0.9847-1.0000)
+
+0.9792 
+
+± 0.0078 
+
+> (0.9625-0.9938)
+
+0.9795 
+
+± 0.0077 
+
+> (0.9632-0.9939)
+
+0.9867 
+
+± 0.0044 
+
+> (0.9772-0.9943)
+
+0.9872 
+
+± 0.0056 
+
+> (0.9751-0.9969)
+
+Exp #2 0.9806 
+
+± 0.0053 
+
+> (0.9702-0.9896)
+
+0.9941 
+
+± 0.0042 
+
+> (0.9848-1.0000)
+
+0.9671 
+
+± 0.0096 
+
+> (0.9474-0.9848)
+
+0.9680 
+
+± 0.0094 
+
+> (0.9484-0.9853)
+
+0.9808 
+
+± 0.0052 
+
+> (0.9699-0.9902)
+
+0.9859 
+
+± 0.0056 
+
+> (0.9741-0.9956)
+
+Exp #3 0.9836 
+
+± 0.0049 
+
+> (0.9732-0.9926)
+
+0.9970 
+
+± 0.0030 
+
+> (0.9906-1.0000)
+
+0.9702 
+
+± 0.0093 
+
+> (0.9504-0.9874)
+
+0.9710 
+
+± 0.0090 
+
+> (0.9518-0.9878)
+
+0.9838 
+
+± 0.0049 
+
+> (0.9736-0.9926)
+
+0.9888 
+
+± 0.0047 
+
+> (0.9789-0.9969)
+
+Overall Mean ± SD 0.9836 
+
+± 0.0024 0.9950 
+
+± 0.0014 0.9722 
+
+± 0.0051 0.9729 
+
+± 0.0048 0.9838 
+
+± 0.0024 0.9873 
+
+± 0.0012   
+
+> Note: Values are presented as mean ±standard deviation with 95% confidence intervals in parentheses.
+> Table 7: Theoretical screening indicators of the LSNet model (Sensitivity=0.9950, Specificity=0.9722) across populations with different disease prevalences (P).
+
+Target Population & Prevalence (P) PPV NPV LR+ Expected Screen-Positive Rate NNS to Detect One True Positive 
+
+General Screening (P = 0.02%) 28 0.71% ≈ 99.99% 35.79 2.80% ≈ 5025 Abnormal Postmenopausal Bleeding (P = 9%) 29 78.00% 99.95% 35.79 11.48% ≈11 Atypical Hyperplasia (P = 30.8%) 30 94.10% 99.77% 35.79 32.57% ≈3Lynch Syndrome (P = 40%) 31, 32 96.00% 99.66% 35.79 41.47% ≈3calculation formulas are presented in Appendix B, and the results are summarized in Table 7. As shown in Table 7, the model’s high sensitiv-ity (0.9950) and specificity (0.9722) yield a consistently strong Positive Likelihood Ratio (LR+) of 35.79 across all prevalence settings. This indicates that a positive result from LSNet is approximately 36 times more likely to be observed in a patient with myometrial invasion than in one without, providing substantial diagnostic evidence. The NPV remains excellent ( ≥99%) even at high prevalence, ensuring high confidence in ruling out invasion when the model predicts a negative result. The PPV, however, exhibits significant variation with disease prevalence. In a general screening context with very low prevalence ( P = 0 .02% ), the PPV remains mod-est (0.36%), reflecting the challenge of identifying rare events and the consequent higher proportion of false pos-itives relative to true positives. In this setting, approx-imately 5,025 individuals would need to be screened to detect one true case of invasion. In populations with ab-normal postmenopausal bleeding ( P = 9% ), the PPV in-creases to 78.00% and the NNS drops to about 11. Con-550 
+
+versely, in high-prevalence cohorts such as patients with endometrial atypical hyperplasia ( P = 30 .8% ) or Lynch syndrome ( P = 40% ), the PPV rises sharply to 94.10% and 96.00%, respectively, and the NNS drops dramati-cally to only 2-3 individuals. This highlights the model’s high efficiency and clinical reliability when applied to tar-geted, high-risk populations. These theoretical projections underscore the impor-tance of implementing the LSNet within a risk-stratified screening framework. For primary care settings serving a general population, the model can serve as a highly sensi-tive initial triage tool, identifying a small subset of screen-positive cases for further specialist evaluation or MRI con-firmation, thereby optimizing resource allocation. When deployed for surveillance of known high-risk individuals, the model demonstrates robust diagnostic performance, potentially enabling more efficient and accurate moni-toring. This analysis confirms that the proposed LSNet is not only computationally efficient but also possesses the predictive characteristics necessary for effective inte-gration into real-world endometrial carcinoma screening pathways. 9Figure 5: Boxplots comparing Bootstrap distributions of performance metrics across three independent experiments. Each box shows the median (center line), interquartile range (box bounds), and range (whiskers) for Accuracy, Sensitivity, Specificity, Precision, F1-score, and ROC AUC. 
+
+Comparision with Sonographer Performance 
+
+We selected the testing set for model performance comparison, and the ultrasound images were indepen-dently evaluated by 10 sonographers who were unaware of the clinical and pathological results. These sonog-raphers included 5 sonographers with 1-5 years of ex-perience and 5 sonographers with 5-10 years of expe-rience from 4 different medical centres. The subjec-tive assessment of myometrial invasion was performed as follows: Sonographers evaluated the endometrial-myometrial junction on either transverse or longitudinal uterine images. An intact, continuous junction presenting as a distinct hypoechoic band was interpreted as absence of myometrial invasion. In contrast, signs suggestive of tumor breakthrough, such as junctional disruption, irreg-ularity, blurring, or fusion with the myometrial echotex-ture, were interpreted as presence of myometrial invasion. All judgments were based on the sonographers’ subjective evaluation of morphological features in the images. As summarized in Table 8, the overall diagnostic per-formance across 10 sonographers yielded a sensitivity of 0.758 ± 0.095, specificity of 0.781 ( ± 0.076, and ROC AUC of 0.769 ± 0.055. The senior group demon-strated moderately higher performance (sensitivity: 0.804 
+
+± 0.068; specificity: 0.802 ± 0.058; ROC AUC: 0.802 
+
+± 0.028) compared to the junior group. In stark contrast, the proposed LSNet achieved substantially superior and more consistent performance, with a sensitivity of 0.9950 600 
+
+± 0.0014, specificity of 0.9722 ± 0.0051, and ROC AUC of 0.9873 ± 0.0012, highlighting its potential to provide more reliable and uniform diagnostic support in primary care settings. 
+
+## Discussion 
+
+The timely and accurate detection of myometrial in-vasion in endometrial carcinoma is crucial for guiding clinical management and improving patient outcomes. Ultrasound remains the primary screening modality in primary care due to its accessibility and low cost, yet its diagnostic accuracy is limited by inter-observer vari-ability, subtle imaging features, and severe class imbal-ance in training data. To address these challenges, we developed an integrated deep learning framework com-prising a Structure-Guided Cycle-Consistent Adversarial Network (SG-CycleGAN) for cross-modal image synthe-sis and a Lightweight Screening Network (LSNet) with Gradient Distillation for efficient invasion classification. Our study demonstrates that this approach generates syn-thetic ultrasound images that effectively preserve the diag-nostically critical anatomical structures from MRI, while also achieving superior classification performance with low computational overhead. This dual capability high-lights its potential for practical deployment in resource-constrained settings. When compared with human sonographers, LSNet exhibited substantially higher and more consistent diag-nostic performance (sensitivity 0.9950 vs. 0.758, speci-ficity 0.9722 vs. 0.781, ROC-AUC 0.9873 vs. 0.769). This gap was especially pronounced for junior sonogra-10 Table 8: Sonographer Performance in Myometrial Invasion Classification. 
+
+Sonographer # Sensitivity (95% CI) Specificity (95% CI) ROC AUC (95% CI) Junior group 
+
+#1 0.69 (0.65-0.73) 0.83 (0.82-0.84) 0.759 (0.749-0.770) #2 0.79 (0.76-0.83) 0.60 (0.59-0.61) 0.698 (0.687-0.709) #3 0.84 (0.80-0.87) 0.81 (0.80-0.82) 0.822 (0.812-0.831) #4 0.65 (0.60-0.69) 0.80 (0.79-0.81) 0.725 (0.714-0.736) #5 0.59 (0.55-0.64) 0.76 (0.75-0.77) 0.673 (0.662-0.685) 
+
+Senior group 
+
+#1 0.73 (0.69-0.77) 0.89 (0.89-0.90) 0.811 (0.802-0.821) #2 0.89 (0.85-0.91) 0.79 (0.78-0.80) 0.837 (0.828-0.846) #3 0.74 (0.69-0.78) 0.81 (0.80-0.82) 0.772 (0.762-0.782) #4 0.84 (0.80-0.87) 0.79 (0.78-0.80) 0.814 (0.805-0.824) #5 0.82 (0.78-0.85) 0.73 (0.72-0.74) 0.776 (0.765-0.786) Junior, Mean ± SD 0.712 ± 0.102 0.760 ± 0.093 0.735 ± 0.058 Senior, Mean ± SD 0.804 ± 0.068 0.802 ± 0.058 0.802 ± 0.028 Overall, Mean ± SD 0.758 ± 0.095 0.781 ± 0.076 0.769 ± 0.055 
+
+> Note: AUC, area under the curve; CI, confidence interval.
+
+phers, whose performance varied widely. The model’s ability to provide objective, reproducible assessments could help reduce diagnostic variability and support less-experienced clinicians in primary care settings. Further-more, the theoretical screening analysis (Table 7) indi-cated that the model maintains high positive predictive value in high-risk populations (e.g., patients with abnor-mal postmenopausal bleeding or Lynch syndrome), sug-gesting its utility in targeted screening programs. Our work also aligns with the growing emphasis on ethical and practical AI deployment in medicine. To en-sure data privacy and security, we recommend operating the LSNet offline in clinical environments, minimizing exposure to external networks. The use of a large, mul-ticentre dataset for training and validation helps mitigate bias and improve generalizability. Continuous monitoring and model updates, overseen by a multidisciplinary ethics committee, will be essential to maintain performance eq-uity and adapt to evolving clinical needs. 
+
+## Methods 650 
+
+Unpaired Image-to-Image Translation via Structure-Guided Cycle-Consistent Adversarial Network 
+
+This section presents our Structure-Guided Cycle-Consistent Adversarial Network (SG-CycleGAN) de-signed to tackle the data imbalance in endometrial car-cinoma screening by generating ultrasound images from MRI images. Unlike conventional augmentation tech-niques, 33, 34 our framework performs unpaired translation from MRI to ultrasound, a clinically relevant strategy, as patients with ambiguous ultrasound findings frequently undergo MRI for further evaluation. This approach di-rectly mitigates the severe class imbalance and sample scarcity by synthesizing diverse and pathologically mean-ingful ultrasound images. 
+
+> Problem Definition and Preliminaries
+
+Building upon this clinical context, we formalize the image translation task as follows. Let X and Y rep-resent the MRI and ultrasound image domains, respec-tively. We assume access to unpaired datasets: UX =
+
+{x1, x 2, ..., x n} where x ∈ X , and UY = {y1, y 2, ..., y m}
+
+where y ∈ Y . Our objective is to learn two mapping func-tions: 
+
+G : X → Y : Translates images from domain X to Y
+
+F : Y → X : Translates images from domain Y to X .
+
+(1) CycleGAN 9, 35 addresses unpaired image-to-image translation by learning mappings between two domains. The framework employs two generative adversarial net-works (GANs) in a cyclic structure (Figure 6 (a)): one generator G maps images from X to Y, while another generator F maps from Y back to X . Two discriminators, 
+
+DX and DY , are tasked with distinguishing between real and translated images in their respective domains. The 11 adversarial losses encourage the generated images to be perceptually realistic. Critically, to prevent the genera-tors from producing arbitrary outputs that merely fool the discriminators, CycleGAN introduces a cycle consistency constraint. This constraint mandates that translating an image from one domain to the other and then back again should reconstruct the original image, i.e., F (G(x)) ≈ x
+
+and G(F (y)) ≈ y. This cycle-consistency loss acts as a powerful regularizer, enforcing semantic preservation during translation and enabling the model to learn mean-ingful mappings without supervised paired data. However, when applied to MRI-to-ultrasound transla-tion, the standard CycleGAN framework faces two core challenges. First, it suffers from insufficient preserva-tion of high-frequency anatomical details . The adver-sarial and cycle-consistency losses ensure global struc-tural coherence but are insensitive to fine textures and sharp boundaries, especially those critical for identifying subtle invasion patterns. This leads to overly smoothed 700 
+
+images lacking diagnostic granularity. Second, there is a risk of inconsistent anatomical content preservation .While cycle consistency provides a reconstruction con-straint, it lacks direct feature-level or content-level align-ment constraints, which cannot enforce that the under-lying shared anatomical content (organ shape, position, size, relative relationships) remains unchanged during the modality translation process, as generators may find short-cuts that distort critical regions. Other existing transla-tion models (e.g., UNIT, 10 MUNIT, 11 StarGAN v2 17 ) pri-oritize representational uniformity or style diversity over precise anatomical alignment, rendering them unsuitable for preserving the fine structural details required for EC screening. Therefore, although these models have achieved suc-cess in natural image translation, 36 their core designs are not optimized for the specific requirement of preserving crucial anatomical structural consistency in cross-modal medical image translation. To address this limitation, we introduce a Modality-Agnostic Feature Extractor (MAFE) as a core intermediary in SG-CycleGAN. MAFE utilizes a gradient reversal layer to actively discard modality-specific appearances, ensuring that the learned feature space encodes only the shared underlying anatomy. 
+
+> Model Architecture
+
+The SG-CycleGAN framework includes five core components (Figure 6(b)): 
+
+Generator G: This generator takes an input image from domain X (MRI) and produces a translated image in domain Y (ultrasound). Its architecture is decomposed into two sub-modules: a modality-agnostic feature extrac-tor (MAFE) and a subsequent mapping function g. The MAFE is responsible for encoding high-level anatomi-cal structures that are common across different imaging modalities. 
+
+Generator F : This generator performs the reverse translation, taking an image from domain Y (ultrasound) and mapping it to domain X (MRI). It shares the identical MAFE sub-module with Generator G, ensuring that both generators build upon a common structural representation. Following the shared MAFE, it uses a dedicated mapping function f to reconstruct the target modality-specific ap-pearance. 
+
+Discriminator DX : This component distinguishes between real images from domain X and the translated images generated by F (Y), thereby enforcing the visual authenticity of the synthesized MRI images. 
+
+Discriminator DY : Similarly, this discriminator dif-ferentiates between real images from domain Y and the generated outputs from G(X ), ensuring that the synthetic 750 
+
+ultrasound images are perceptually realistic. 
+
+Domain Classifier C: The domain classifier C is tasked with predicting whether an input image originates from domain X or Y. It is applied specifically to the fea-tures extracted by the shared MAFE. A gradient reversal layer is employed during training to encourage the MAFE to learn features that are invariant to the image modality, thereby preventing it from encoding domain-specific in-formation and reinforcing its role as a structure-focused feature extractor. 
+
+> Loss Functions and Training Process
+
+The model is trained with three types of loss: adver-sarial loss, cycle consistency loss, and optional identity loss. 
+
+Adversarial Loss : The adversarial loss enforces translated images to be indistinguishable from real images in the target domain. For generator G and discriminator 
+
+DY , the loss is defined as: 
+
+LGAN (G, D Y ,X , Y) = Ey∼U Y [log DY (y)] + Ex∼U X [log (1 − DY (G(x)))] . (2) Similarly, for generator F and discriminator DX :
+
+LGAN (F, D X , Y, X ) = Ex∼U X [log DX (x)] + Ey∼U Y [log (1 − DX (F (y)))] . (3) 
+
+Cycle and Modality-agnostic Feature Consistency Loss : To ensure the mappings are reversible, we intro-duce the cycle consistency loss. To ensure the map-pings are reversible and semantically meaningful, we em-ploy the cycle consistency loss, a cornerstone of the Cy-cleGAN framework. This loss mandates that an image translated from one domain to the other and then back to the original domain should be reconstructed faithfully. Formally, for forward cycle x → G(x) → F (G(x)) ,the loss requires F (G(x)) ≈ x,and for backward cycle 12 X G(X) Xˆ
+
+DY
+
+> MAFE
+> Image
+
+# Y F(Y) Yˆ
+
+DXMAFE  
+
+> Mapping
+> Domain
+> Classifier C Loss L d
+> Feature alignment
+
+G
+
+F
+
+g
+
+f 
+
+> MAFE
+
+f
+
+F 
+
+> MAFE
+
+g
+
+> Mapping
+> Mapping
+
+G
+
+# X Y
+
+DX DY
+
+G
+
+F
+
+# X Y
+
+DX DY
+
+G
+
+F(a) (b) 
+
+> Figure 6: (a) CycleGAN Structure; (b) Structure-Guided Cycle-Consistent Adversarial Network (SG-CycleGAN) with Modality-Agnostic Feature Extraction and Gradient reversal
+
+y → F (y) → G(F (y)) , it requires G(F (y)) ≈ y. The cycle loss is: 
+
+Lcyc (G, F ) = Ex∼U X [∥F (G(x)) − x∥1]+ Ey∼U Y [∥G(F (y)) − y∥1] . (4) While cycle consistency loss effectively ensures trans-lation reversibility, its pixel-level operation lacks explicit constraints for cross-modal anatomical alignment. To ad-dress this, we propose a Modality-agnostic Feature Con-sistency Loss. By requiring the Modality-Agnostic Fea-ture Extractor (MAFE) to encode the shared anatomi-cal content of both MRI and synthesized ultrasound into identical representations, this loss directly preserves fine-grained structural fidelity during translation. Formally, given an input MRI image xi ∈ U X and its synthetic ultrasound counterpart ˆu = G(xi), both are processed by the shared MAFE to extract their respective feature maps, E(xi) and E(ˆ u). To enforce the aforemen-tioned structural alignment, the Modality-agnostic Fea-ture Consistency Loss minimizes the L1 distance between these representations: 
+
+Lmaf (G,F ) = Ex∼U X [∥E(F (G(x))) − E(x)∥1]+ Eˆu∼pdata (ˆ u) [∥E(G(F (ˆ u))) − E(ˆ u)∥1] .
+
+(5) By applying this constraint directly in the high-level feature space, the model is explicitly guided to overcome the two key limitations of standard CycleGAN. First, to 800 
+
+mitigate the loss of high-frequency details, the feature consistency loss compels the generator to preserve fine-grained structural information, such as the precise bound-aries of the endometrium-myometrium junction, through-out the translation process. Second, to ensure consis-tent anatomical content preservation, this loss explicitly enforces alignment in a modality-agnostic feature space, guaranteeing that the underlying shared anatomical struc-tures remain invariant during the modality translation. 
+
+Domain Discrimination Loss : To enforce modality-invariant feature learning in the MAFE, we incorporate a domain discrimination loss coupled with a gradient rever-sal layer (GRL). The domain classifier C, parameterized by (W, z ), takes features extracted by the MAFE and pro-duces a domain prediction through a sigmoid activation: 
+
+C(E(x); W, z ) = σ(W T E(x) + z), (6) where σ denotes the sigmoid function, E(x) represents the feature maps extracted by the MAFE, and di ∈ { 0, 1}
+
+is the binary domain label indicating whether sample xi
+
+originates from the source (MRI) or target (ultrasound) domain. The domain discrimination loss is defined as the bi-nary cross-entropy between the predicted domain proba-bilities and the true domain labels: 
+
+Ld(C, E ) = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+Lid(C(E(xi)) , d i)+ 1
+
+m
+
+> N
+
+X
+
+> i=n+1
+
+Lid(C(E(xi)) , d i),
+
+Lid(C(E(xi)) ,d i) = − [di log( C(E(xi))) +(1 − di) log(1 − C(E(xi)))] ,
+
+(7) where n denotes the number of samples in the MRI do-main X , and m denotes the number of samples in the ul-trasound domain Y.13 During training, the domain classifier parameters 
+
+(W, z ) are optimized to minimize this discrimination loss, thereby improving its ability to distinguish between the two modalities. Simultaneously, the gradient reversal layer reverses the gradient sign during back-propagation through the MAFE, encouraging the feature extractor to learn modality-agnostic representations that confuse the domain classifier. 
+
+Identity Loss : To enhance the realism and anatomi-cal fidelity of synthesized ultrasound images, we incorpo-rate an identity loss. This loss constrains the generators to behave as identity mappings when processing images from the target domain. For instance, a real ultrasound im-age fed into the ultrasound generator should be output un-changed. By preventing the generators from introducing unrealistic artifacts or altering fundamental image proper-ties, the identity loss ensures that the synthesized images not only possess realistic structural outlines but also main-tain the authentic appearance of the ultrasound modality, thereby improving their diagnostic relevance: 
+
+Lid (G, F ) = Ey∼D Y [∥G(y) − y∥1]+ Ex∼D X [∥F (x) − x∥1] . (8) 
+
+Total Loss : The total loss for training the model is a weighted combination of the above losses: 
+
+L(G,F, C, D X , D Y ) = LGAN (G, D Y , X , Y)+ 
+
+LGAN (F, D X , Y, X ) + λ(Lcyc (G, F )+ 
+
+Lmaf (G, F )) + μ(Ld(C, E ) + Lid (G, F )) ,
+
+(9) where λ (set to 10) controls the strength of the Consis-tency constraint, and μ (set to 5) balances the domain dis-850 
+
+crimination and identity loss. During training, we mini-mize the total loss with respect to G,F and C, and maxi-mize it with respect to DX and DY .The training process follows a minimax optimization scheme with alternating updates: 1) Update discriminators DX and DY to maximize the adversarial loss, improving their ability to distinguish real images from translated images in their respective do-mains. 2) Update generators G and F to minimize the total loss Ltotal , focusing on generating realistic images that can fool the discriminators while satisfying cycle consistency, feature consistency, and identity constraints. 3) Update domain classifier C to minimize the domain discrimination loss Ld, enhancing its capability to distin-guish between MRI and ultrasound domains based on the features extracted by the modality-agnostic feature extrac-tor (MAFE). Update MAFE using the reversed gradients from the domain discrimination loss ( − ∂Ld 
+
+> ∂θ E
+
+), encourag-ing it to learn modality-invariant features that confuse the domain classifier, thereby enforcing structural consistency across modalities. 4) Repeat until convergence, using Adam optimizer 37 
+
+with a learning rate of 2e-4 and batch size of 32 .To ensure training stability, the gradient reversal layer weight λGRL follows a progressive scheduling strategy: 
+
+λGRL = 21+exp( −γ·p) − 1, where γ = 5 controls the scheduling rate and p = current epoch total epochs represents the train-ing progress. This allows the model to initially focus on learning the primary translation task before gradually in-troducing stronger domain adversarial constraints. The complete training procedure is outlined in Algorithm 1 of the Appendix. 
+
+Lightweight Screening Network via Gradient Dis-tillation 
+
+> Motivation
+
+Building upon the synthetic data generated by the SG-CycleGAN, this section presents the architectural design of a lightweight screening network. The model is op-timized for deployment in resource-constrained primary care environments. Central to this design is a Gradient Distillation framework that serves dual purposes: it fa-cilitates the transfer of discriminative knowledge from a computationally intensive teacher model to a compact stu-dent network, while guiding strategic sparsification of the student’s attention mechanism. 
+
+> Architecture: Student and Teacher Backbones
+
+Both the student and teacher networks are constructed based on the MobileViT 25 architecture, ensuring architec-tural homogeneity for effective knowledge and gradient 900 
+
+distillation. The core of MobileViT lies in its ability to model both local and global dependencies through a hy-brid design. A standard MobileViT block transforms an input tensor x ∈ RH×W ×C by first applying a local fea-ture extractor (a convolutional block) to produce xL. Sub-sequently, xL is unfolded into N non-overlapping patches of size P × P , which are then processed by a transformer block to capture global contexts, yielding xG. Finally, xG
+
+is folded back to the original spatial dimensions. The key distinctions between the teacher and student models are twofold: 1) Model Scale: the teacher network employs a larger hidden dimension dteacher across all lay-ers, endowing it with superior representational capacity compared to the student network, which uses a compact hidden dimension dstudent (where dstudent ≪ dteacher ); 2) Core Building Block: the teacher network utilizes the standard MobileViT block to fully leverage its perfor-mance potential. In contrast, the student network in-corporates a Sparse MobileViT Block, where the self-attention mechanism is sparsified under the guidance of gradient distillation. This strategic sparsification directs 14 Local                       
+
+> representations
+> Conv -n x n
+> Conv -1x1
+> Conv -n x n
+> Conv -1x1
+> Local
+> representations
+> Conv -n x n
+> Conv -1x1
+> Conv -1x1
+> WW
+> N
+> H
+> C
+> HW
+> W
+> H
+> H
+> WP
+> Fusion Unfold
+> SpaMoViT block (Sparse -MobileViT) in Student Model
+> N
+> P
+> N
+> PYConv -n x n
+> X
+> W
+> HX
+> W
+> H
+> Sparse Self -
+> Attention
+> Fold Fold L=2
+> Sparse Self -
+> Attention
+> Local
+> representations
+> Conv -n x n
+> Conv -1x1
+> Conv -n x n
+> Conv -1x1
+> Local
+> representations
+> Conv -n x n
+> Conv -1x1
+> Conv -1x1
+> WW
+> N
+> H
+> C
+> HW
+> W
+> H
+> H
+> WP
+> Fusion Unfold
+> MobileViT block in T eacher Model
+> N
+> P
+> N
+> PYConv -n x n
+> X
+> W
+> HX
+> W
+> H
+> Self -
+> Attention
+> Fold Fold L=2
+> Self -
+> Attention
+> Grad Grad
+> Gradient
+> distilling
+> Gradient
+> distilling
+> Local
+> representations
+> Conv -n x n
+> Conv -1x1
+> Conv -1x1
+> WW
+> N
+> H
+> C
+> HW
+> W
+> H
+> H
+> WP
+> Fusion Unfold
+> SpaMoViT block (Sparse -MobileViT) in Student Model
+> N
+> PYConv -n x n
+> X
+> W
+> H
+> Sparse Self -
+> Attention
+> Fold L=2
+> Sparse Self -
+> Attention
+> Local
+> representations
+> Conv -n x n
+> Conv -1x1
+> Conv -1x1
+> WW
+> N
+> H
+> C
+> HW
+> W
+> H
+> H
+> WP
+> Fusion Unfold
+> MobileViT block in T eacher Model
+> N
+> PYConv -n x n
+> X
+> W
+> H
+> Self -
+> Attention
+> Fold L=2
+> Self -
+> Attention
+> Grad Grad
+> Gradient
+> distilling
+> Gradient
+> distilling
+
+Figure 7: Gradient distillation with simulated gradient learning, guiding the student network’s sparse attention mechanism. 
+
+the student’s computational focus towards task-critical re-gions while suppressing irrelevant background and arti-facts, thereby enhancing both computational efficiency and feature discriminability. 
+
+Gradient-Guided Sparse Attention Distillation 
+
+This approach leverages gradient-based importance signals from a teacher model to guide the sparsification of attention in the student network, thereby focusing com-putational resources on the most diagnostically relevant regions (Figure 7). In the context of myometrial inva-sion classification, where subtle structural alterations at the endometrium-myometrium junction are often deci-sive, directing the model’s focus to these critical areas is paramount. While conventional knowledge distillation 38, 39 often transfers soft labels 40 or intermediate feature maps 41 
+
+from teacher to student, such methods do not explicitly guide the student’s attention mechanism to prioritize task-critical regions. To address this limitation, we utilize the gradient of attention scores in the teacher model as a principled and robust indicator of token-wise importance. The underlying rationale is that the magnitude of an at-tention score’s gradient reflects its sensitivity to the fi-nal classification decision: tokens interconnected by at-tention weights with larger gradients exert a more signif-icant influence on the model’s output. By distilling these gradient-based importance maps, we can direct the stu-dent’s sparse attention mechanism to prioritize the most influential tokens, thereby simultaneously improving clas-950 
+
+sification accuracy and computational efficiency. 
+
+Gradient-Based Importance Estimation : Let At ∈
+
+RN ×N denote the self-attention score matrix 42 from the first attention layer of the MobileViT block in the teacher model, where N is the number of tokens. The gradient of the classification loss Lcls with respect to At is computed as: 
+
+∇At = ∂Lcls 
+
+∂A t
+
+. (10) Each element ∇At (i, j ) reflects the sensitivity of the clas-sification outcome to the attention score between token i
+
+and token j. A large absolute value of ∇At (i, j ) indicates that the attention from token i to token j is critical for the teacher’s decision. 
+
+Gradient-Guided Sparse Attention with Simulated Gradient Learning : The student network incorporates a gradient-guided sparse attention mechanism that dynam-ically focuses computational resources on the most diag-nostically relevant regions. This approach employs both explicit gradient guidance during training and learned gra-dient simulation for efficient standalone inference, creat-ing a unified framework that maintains performance while ensuring computational efficiency. During training, the student network benefits from a dual-source gradient guidance. The teacher model pro-vides explicit supervision through its computed gradient of attention scores, ∇At = ∂Lcls  
+
+> ∂A t
+
+, which serves as ground-truth importance signals. Simultaneously, an embedded gradient simulator learns to approximate this gradient dis-tribution directly from the student’s input features through a gradient simulation loss: 
+
+Lgrad-sim = ∥Φ( ∇sim ) − Φ( ∇At )∥22, (11) where the gradient simulator generates ∇sim . The sim-ulator employs a lightweight attention-based architecture 15 where the input feature tensor X ∈ RB×N ×D undergoes head-wise decomposition into H parallel subspaces, fol-lowed by depthwise separable convolution 43 for efficient spatial feature enhancement. The core gradient simulation is achieved through self-correlation computation: 
+
+Z = BN (PointwiseConv (DepthwiseConv (Xconv ))) 
+
+∇sim = SELU (ZZ ⊤) ∈ RB×H×N ×N ,
+
+(12) where, Xconv denotes the 2D convolution-compatible feature map obtained by reshaping X, Z represents the convolved feature tensor, and SELU 44 denotes the Scaled Exponential Linear Unit activation function, which pro-vides self-normalizing properties to stabilize training. Rather than direct gradient matching, we employ feature-level distillation that focuses on statistical charac-teristics rather than raw gradient patterns. The feature ex-traction network Φ( ·) transforms gradients into compact 128-dimensional representations through spatial compres-sion and convolutional processing, enhancing robustness by filtering noise and irrelevant details, improves stability through natural gradient smoothing, and promotes gener-alization by learning fundamental gradient characteristics 1000 
+
+rather than memorizing specific values. These simulated gradients are then processed to deter-mine sparse attention patterns. First, bidirectional proba-bility distributions are computed using temperature-scaled softmax: 
+
+Ppos = Softmax (∇sim /τ ),Pneg = Softmax (−∇ sim /τ ), (13) with τ = 0 .5 controlling distribution sharpness. These distributions are then adaptively fused: 
+
+∇norm = α · Ppos + (1 − α) · (1 − Pneg ), (14) where α = 0 .7 emphasizes positive attention while main-taining sensitivity to suppression cues. For each query token i, the top-k key tokens with the highest importance weights are selected, where k = ⌊N/ 25 ⌋ and N = 400 in our experimental settings, forming the sparse attention set 
+
+Ti.The sparse attention matrix As is subsequently com-puted as: 
+
+As(i, j ) = 
+
+    
+
+> exp( Qi·K⊤
+> j)
+> P
+> l∈T iexp( Qi·K⊤
+> l)
+
+, if j ∈ T i
+
+0, otherwise ,
+
+(15) where Q and K are the query and key vectors of the stu-dent model, respectively. 
+
+> Overall Optimization Objective
+
+In contrast to conventional distillation approaches that employ a fixed pre-trained teacher, our framework initial-izes both teacher and student models randomly and trains them concurrently. This design allows the teacher to con-tinuously refine its feature representations while the stu-dent progressively learns from the evolving knowledge through gradient distillation. We implement a progressive decoupling mechanism that dynamically transitions the student’s learning depen-dency from explicit teacher supervision to internal simu-lation capability. The overall objective function integrates multiple loss components with time-varying weights: 
+
+Ltotal = Lcls + Ldistill + λ(t) · L grad-sim , (16) where Lcls denotes the standard classification loss, Ldistill 
+
+represents the distillation loss, and Lgrad-sim indicates the gradient feature simulation loss between student-simulated gradients and teacher-provided gradients. λ(t)
+
+represents training progress. This formulation orches-trates three distinct learning phases: during initial training (λ ≈ 1), strong dependence on teacher gradients ensures stable initialization; the transitional phase ( 0 < λ < 1)enables smooth handover as the gradient simulator pro-gressively assumes control; and final deployment ( λ → 0)achieves complete student autonomy while maintaining distilled knowledge. To address training instability from evolving teacher gradients, we incorporate gradient smoothing through ex-ponential smoothing techniques. The smoothed gradient target is computed using an exponential moving average approach: 
+
+∇(t) 
+
+> smooth
+
+= α · ∇ (t−1)  
+
+> smooth
+
++ (1 − α) · ∇ (t) 
+
+> At
+
+, (17) where α controls the smoothing factor, placing greater emphasis on recent gradient patterns while maintaining historical context. This method effectively reduces high-1050 
+
+frequency fluctuations while preserving essential learning directions, with the smoothing intensity adaptively tuned throughout training. The Equation (12) then evolves to: 
+
+Lgrad-sim = ∥Φ( ∇sim ) − Φ( ∇smooth )∥22. (18) 
+
+## Data availability 
+
+Access to the data can be granted upon reasonable re-quest and with appropriate approvals from the relevant ethics committee and the affiliated hospitals. 
+
+## Code availability 
+
+The source code used in this study can be accessed at: SG-CycleGAN&LSNet. 16 References References 
+
+1 Crosbie EJ, Kitson SJ, McAlpine JN, Mukhopadhyay A, Powell ME, Singh N. Endometrial cancer. The Lancet. 2022;399(10333):1412-28. 2 Bray F, Laversanne M, Sung H, Ferlay J, Siegel RL, Soerjomataram I, et al. Global cancer statistics 2022: GLOBOCAN estimates of incidence and mortality worldwide for 36 cancers in 185 countries. CA: a can-cer journal for clinicians. 2024;74(3):229-63. 3 Berek JS, Matias-Guiu X, Creutzberg C, Fotopoulou C, Gaffney D, Kehoe S, et al. FIGO staging of en-dometrial cancer: 2023. International Journal of Gy-necology & Obstetrics. 2023;162(2):383-94. 4 Koskas M, Crosbie EJ, Fokdal L, McCluggage WG, Mileshkin L, Mutch DG, et al. Cancer of the corpus uteri: A 2025 update. International Journal of Gyne-cology & Obstetrics. 2025;171:60-77. 5 Green RW, Valentin L, Alcazar JL, Chiappa V, Er-dodi B, Franchi D, et al. Endometrial cancer off-line staging using two-dimensional transvaginal ultra-sound and three-dimensional volume contrast imag-ing: Intermethod agreement, interrater reliability and diagnostic accuracy. Gynecologic oncology. 2018;150(3):438-45. 6 Balch JA, Ruppert MM, Guan Z, Buchanan TR, Ab-bott KL, Shickel B, et al. Risk-specific training co-horts to address class imbalance in surgical risk pre-diction. JAMA surgery. 2024;159(12):1424-31. 7 Ktena I, Wiles O, Albuquerque I, Rebuffi SA, Tanno R, Roy AG, et al. Generative models improve fairness of medical classifiers under distribution shifts. Nature Medicine. 2024;30(4):1166-73. 8 Yang M, Xia Y, Zhong L, Hou C, Yin L, Du H, et al. Saliency-aware multi-resolution graph fusion via self-supervised contrastive learning for robust ultrasound endometrial cancer diagnosis. Information Fusion. 2025:103841. 9 Zhu JY, Park T, Isola P, Efros AA. Unpaired image-to-image translation using cycle-consistent adversar-1100 
+
+ial networks. In: Proceedings of the IEEE interna-tional conference on computer vision; 2017. p. 2223-32. 10 Liu MY, Breuel T, Kautz J. Unsupervised image-to-image translation networks. Advances in neural infor-mation processing systems. 2017;30. 11 Huang X, Liu MY, Belongie S, Kautz J. Multimodal unsupervised image-to-image translation. In: Pro-ceedings of the European conference on computer vi-sion (ECCV); 2018. p. 172-89. 12 Han J, Shoeiby M, Petersson L, Armin MA. Dual contrastive learning for unsupervised image-to-image translation. In: Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition; 2021. p. 746-55. 13 Waikel RL, Othman AA, Patel T, Hanchard SL, Hu P, Tekendo-Ngongang C, et al. Recognition of ge-netic conditions after learning with images created us-ing generative artificial intelligence. JAMA Network Open. 2024;7(3):e242609-9. 14 Ali M, Ali M, Hussain M, Koundal D. Generative adversarial networks (GANs) for medical image pro-cessing: recent advancements. Archives of Computa-tional Methods in Engineering. 2025;32(2):1185-98. 15 Wang R, Heimann AF, Tannast M, Zheng G. CycleS-GAN: A cycle-consistent and semantics-preserving generative adversarial network for unpaired MR-to-CT image synthesis. Computerized Medical Imaging and Graphics. 2024;117:102431. 16 Wang J, Wu QJ, Pourpanah F. Dc-cyclegan: Bidi-rectional ct-to-mr synthesis from unpaired data. Computerized Medical Imaging and Graphics. 2023;108:102249. 17 Choi Y, Uh Y, Yoo J, Ha JW. Stargan v2: Diverse im-age synthesis for multiple domains. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition; 2020. p. 8188-97. 18 Sun C, Dumontier M. Generating unseen diseases pa-tient data using ontology enhanced generative adver-sarial networks. npj Digital Medicine. 2025;8(1):4. 19 Chong MJ, Forsyth D. Effectively unbiased fid and in-ception score and where to find them. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition; 2020. p. 6070-9. 20 Jiménez-Gaona Y, Carrión-Figueroa D, Lakshmi-narayanan V, Rodríguez-Álvarez MJ. Gan-based data augmentation to improve breast ultrasound and mam-mography mass classification. Biomedical Signal Pro-cessing and Control. 2024;94:106255. 21 Sandler M, Howard A, Zhu M, Zhmoginov A, Chen 1150 
+
+LC. Mobilenetv2: Inverted residuals and linear bot-tlenecks. In: Proceedings of the IEEE conference on computer vision and pattern recognition; 2018. p. 4510-20. 17 22 Henderson P, Islam R, Bachman P, Pineau J, Precup D, Meger D. Deep reinforcement learning that matters. In: Proceedings of the AAAI conference on artificial intelligence. vol. 32; 2018. . 23 Recht B, Roelofs R, Schmidt L, Shankar V. Do ima-genet classifiers generalize to imagenet? In: Interna-tional conference on machine learning. PMLR; 2019. p. 5389-400. 24 Tan M, Le Q. Efficientnet: Rethinking model scal-ing for convolutional neural networks. In: Interna-tional conference on machine learning. PMLR; 2019. p. 6105-14. 25 Mehta S, Rastegari M. MobileViT: Light-weight, General-purpose, and Mobile-friendly Vision Trans-former. In: International Conference on Learning Representations; 2022. Available from: https:// openreview.net/forum?id=vh-0sUt8HlG .26 Chen J, Kao Sh, He H, Zhuo W, Wen S, Lee CH, et al. Run, don’t walk: chasing higher FLOPS for faster neural networks. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recogni-tion; 2023. p. 12021-31. 27 Liu X, Faes L, Kale AU, Wagner SK, Fu DJ, Bruynseels A, et al. A comparison of deep learning performance against health-care professionals in de-tecting diseases from medical imaging: a systematic review and meta-analysis. The lancet digital health. 2019;1(6):e271-97. 28 Höckel M, Dornhöfer N. Treatment of early en-dometrial carcinoma: is less more? The Lancet. 2009;373(9658):97-9. 29 Clarke MA, Long BJ, Morillo ADM, Arbyn M, Bakkum-Gamez JN, Wentzensen N. Association of endometrial cancer risk with postmenopausal bleed-ing in women: a systematic review and meta-analysis. JAMA internal medicine. 2018;178(9):1210-22. 30 Sanni OB, Coleman H, Cardwell C, McCluggage W, Quinn D, Wylie J, et al. 348 Concurrent and fu-ture risk of endometrial cancer in women with en-dometrial hyperplasia: a systematic review and meta-analysis. International Journal of Gynecological Can-cer. 2019;29:A144-5. 31 Bonadona V, Bonaïti B, Olschwang S, Grandjouan S, Huiart L, Longy M, et al. Cancer risks associated with germline mutations in MLH1, MSH2, and MSH6 genes in Lynch syndrome. Jama. 2011;305(22):2304-1200 
+
+10. 32 Ryan N, Glaire M, Blake D, Cabrera-Dandy M, Evans DG, Crosbie E. The proportion of endometrial can-cers associated with Lynch syndrome: a systematic review of the literature and meta-analysis. Genetics in Medicine. 2019;21(10):2167-80. 33 Goceri E. Medical image data augmentation: tech-niques, comparisons and interpretations. Artificial in-telligence review. 2023;56(11):12561-605. 34 Garcea F, Serra A, Lamberti F, Morra L. Data aug-mentation for medical imaging: A systematic liter-ature review. Computers in biology and medicine. 2023;152:106391. 35 Zhao Y, Wu R, Dong H. Unpaired image-to-image translation using adversarial consistency loss. In: European conference on computer vision. Springer; 2020. p. 800-15. 36 Nam W, Jang B. A survey on multimodal bidirectional machine learning translation of image and natural lan-guage processing. Expert Systems with Applications. 2024;235:121168. 37 Adam KDBJ, et al. A method for stochastic optimiza-tion. arXiv preprint arXiv:14126980. 2014;1412(6). 38 Gou J, Yu B, Maybank SJ, Tao D. Knowledge dis-tillation: A survey. International journal of computer vision. 2021;129(6):1789-819. 39 Fang L, Yu X, Cai J, Chen Y, Wu S, Liu Z, et al. Knowledge distillation and dataset distillation of large language models: Emerging trends, challenges, and future directions. Artificial Intelligence Review. 2026;59(1):17. 40 Yang Z, Zeng A, Li Z, Zhang T, Yuan C, Li Y. From knowledge distillation to self-knowledge distillation: A unified approach with normalized loss and cus-tomized soft labels. In: Proceedings of the IEEE/CVF International Conference on Computer Vision; 2023. p. 17185-94. 41 Xie L, Cen X, Lu H, Yin G, Yin M. A hierarchical feature-logit-based knowledge distillation scheme for internal defect detection of magnetic tiles. Advanced Engineering Informatics. 2024;61:102526. 42 Sharma AK, Verma NK. A novel vision trans-former with selective residual in multihead self-attention for pattern recognition. Pattern Recognition. 2025:112497. 43 Vidhyalakshmi M, Priya MS, Kumaran K, Ki-rankumar M. Efficient disaster detection using 18 drone imagery: A depthwise separable convolu-tional transformer with majority bounding box vot-ing. Engineering Applications of Artificial Intelli-1250 
+
+gence. 2026;165:113490. 44 Wang Y, Yu Y, Zhang T, Song K, Wang Y, Gao S. Im-proved dendritic learning: Activation function analy-sis. Information Sciences. 2024;679:121034. 
+
+Acknowledgments 
+
+This work was supported by Noncommunicable Chronic Diseases-National Science and Technology Ma-jor Project (Grant No. 2024ZD0537707), National Natural Science Foundation of China (Grant Nos. U23A20398, 82272077), Sichuan Science and Technol-ogy Program (Grant No. 2026YFHZ0129), Luzhou Sci-ence and Technology Program (Grant No. 2025TXD008) and Research Start-up Foundation of Southwest Medical University (Grant Nos. 00040155). 
+
+Contributors 
+
+Chunxiang Zhang conceptualised the study. Yamei Luo, Jiqing Xuan, Lu Huang, Jin Li, Mengchu Yang and Zeyu Chen handled data acquisition and quality con-trol. Lu Huang and Jin Li conducted the literature search. Dongjing Shan, Yong Tang and Chunxiang Zhang drafted the manuscript. Jiqing Xuan, Mengchu Yang and Fajin Lv performed data analysis and interpreted the data. Dongjing Shan and Chunxiang Zhang contributed to model development and validation. All authors had ac-cess to the raw datasets. The corresponding authors (Yong Tang and Chunxiang Zhang) verified the data and made the final decision to submit the manuscript for publication. All authors reviewed and approved the final manuscript. 
+
+Declaration of interests 
+
+We declare no competing interests. 
+
+Appendix A: Algorithm 
+
+Algorithm 1 Training Procedure for SG-CycleGAN 
+
+Require: Unpaired MRI dataset X = {xi}Ni=1 ; ultra-sound dataset Y = {yj }Mj=1 
+
+Require: Loss weights: λcyc = 10 , λid = 5 , λd = 5 
+
+Require: Optimizer: Adam with learning rate 2 × 10 −4,batch size 32 
+
+Ensure: Trained generators G, F ; discriminators DX ,
+
+DY ; domain classifier C 
+
+> 1:
+
+Initialize parameters for G, F , DX , DY , C 
+
+> 2:
+
+Initialize gradient reversal layer weight λGRL with progressive scheduling: λGRL = 21+exp( −γ·p) − 1 
+
+> 3:
+
+while not converged do  
+
+> 4:
+
+Step 1: Update discriminators  
+
+> 5:
+
+for k steps (typically k = 1 ) do  
+
+> 6:
+
+Sample minibatch {xi} ⊂ X , {yj } ⊂ Y  
+
+> 7:
+
+Compute adversarial loss LGAN for DY and DX 
+
+> 8:
+
+Update DY to maximize LGAN (G, D Y , X , Y) 
+
+> 9:
+
+Update DX to maximize LGAN (F, D X , Y, X ) 
+
+> 10:
+
+end for  
+
+> 11:
+
+Step 2: Update generators  
+
+> 12:
+
+Sample minibatch {xi} ⊂ X , {yj } ⊂ Y  
+
+> 13:
+
+Compute total generator loss:  
+
+> 14:
+
+Ltotal = LGAN (G, D Y , X , Y) +
+
+LGAN (F, D X , Y, X ) 
+
+> 15:
+
++λcyc · L cyc (G, F ) + λid · L id (G, F ) 
+
+> 16:
+
++Lfeat (G, F, MAFE ) 
+
+> 17:
+
+Update G and F to minimize Ltotal  
+
+> 18:
+
+Step 3: Update domain classifier and MAFE  
+
+> 19:
+
+Sample minibatch {xi} ⊂ X , {yj } ⊂ Y  
+
+> 20:
+
+Extract features using MAFE: fx = MAFE (x),
+
+fy = MAFE (y) 
+
+> 21:
+
+Compute domain discrimination loss Ld(C, f x, f y ) 
+
+> 22:
+
+Update C to minimize Ld 
+
+> 23:
+
+Update MAFE using reversed gradients: −λGRL · 
+
+> ∂Ld
+> ∂θ MAFE
+> 24:
+
+Update training progress p and adjust λGRL  
+
+> 25:
+
+end while 
+
+Appendix B: Visualization of Bootstrap Distribu-tions 
+
+To provide detailed visual evidence of the statis-tical distribution of model performance, the appendix presents histograms of the Bootstrap validation results from three independent experiments (Appendix Figures B1-B3). Each figure displays the frequency distributions of six key performance metrics across 10,000 resampling iterations, offering further validation of the robustness and reproducibility of the proposed Lightweight Screen-19 Figure .8: Histograms of bootstrap distributions for Experiment 1. The figure displays the frequency distributions of six performance metrics (Accuracy, Sensitivity, Specificity, Precision, F1-score, and ROC AUC) across 10,000 bootstrap resamples. The approximately normal shapes and minimal skewness of the distributions confirm the statistical reliability of the model’s performance in the first independent experiment. 
+
+ing Network (LSNet) in terms of distribution shape and stability. 
+
+Appendix C: Formulas for Theoretical Screening Performance Metrics 
+
+This appendix outlines the general formulas used to derive the theoretical screening performance metrics pre-sented in Table 7 (Section 3.1.5). The calculations are based on established epidemiological principles linking test performance to population disease prevalence. 1300 
+
+Parameter Definitions 
+
+Let: P = Disease prevalence in the target population; Se = Sensitivity of the screening model; Sp = Specificity of the screening model; 
+
+Key Metric Formulas 
+
+Positive Likelihood Ratio (LR+): 
+
+LR + = Se 
+
+1 − Sp 
+
+Expected Screen-Positive Rate: Rate = [ P × Se ] + [(1 − P ) × (1 − Sp )] 
+
+Positive Predictive Value (PPV): 
+
+P P V = P × Se P × Se + (1 − P ) × (1 − Sp )
+
+Negative Predictive Value (NPV): 
+
+N P V = (1 − P ) × Sp 
+
+[(1 − P ) × Sp ] + [ P × (1 − Se )] 
+
+Number Needed to Screen (NNS) to Detect One True Positive Case: 
+
+N N S = 1
+
+P × Se 
+
+20 Figure .9: Histograms of bootstrap distributions for Experiment 2. The symmetrical, near-normal shapes of the histograms further validate the stability and reproducibility of the model’s results in the second independent trial. 
+
+Figure .10: Histograms of bootstrap distributions for Experiment 3. The consistent, well-formed distributions with negligible skew provide addi-tional evidence for the robustness of the proposed method. 
+
+21

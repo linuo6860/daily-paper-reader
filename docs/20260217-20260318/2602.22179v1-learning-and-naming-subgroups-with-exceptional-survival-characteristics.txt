@@ -1,0 +1,1648 @@
+Title: Learning and Naming Subgroups with Exceptional Survival Characteristics
+
+URL Source: https://arxiv.org/pdf/2602.22179v1
+
+Published Time: Thu, 26 Feb 2026 02:24:28 GMT
+
+Number of Pages: 20
+
+Markdown Content:
+# Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+Mhd Jawad Al Rahwanji 1 Sascha Xu 1 Nils Philipp Walter 1 Jilles Vreeken 1
+
+## Abstract 
+
+In many applications, it is important to iden-tify subpopulations that survive longer or shorter than the rest of the population. In medicine, for example, it allows determining which patients benefit from treatment, and in predictive main-tenance, which components are more likely to fail. Existing methods for discovering subgroups with exceptional survival characteristics require restrictive assumptions about the survival model (e.g. proportional hazards), pre-discretized fea-tures, and, as they compare average statistics, tend to overlook individual deviations. In this paper, we propose S YSURV , a fully differentiable, non-parametric method that leverages random survival forests to learn individual survival curves, auto-matically learns conditions and how to combine these into inherently interpretable rules, so as to select subgroups with exceptional survival char-acteristics. Empirical evaluation on a wide range of datasets and settings, including a case study on cancer data, shows that S YSURV reveals insightful and actionable survival subgroups. 
+
+## 1. Introduction 
+
+Survival analysis traditionally focuses on estimating whether a given group of individuals has different survival characteristics than a reference population. This has ap-plications in many fields, but most obviously in precision medicine, as it allows characterizing patients who bene-fit from a treatment. What if the subgroups are not yet known? Can we learn easily interpretable rules that select subgroups with exceptional survival characteristics? Can we learn these in a flexible, differentiable manner, without restrictive assumptions or pre-discretizing features, allowing even heavy censoring, while keeping individual deviations in mind? That is exactly the topic of this paper. We consider time-to-event data, in which for each sam-
+
+> 1
+
+CISPA Helmholtz Center for Information Security, Saarbr ¨ucken, Germany. Correspondence to: Jawad Al Rahwanji 
+
+<jawad.alrahwanji@cispa.de >.
+
+Preprint. February 26, 2026. 
+
+0 20 40 60 80 100 
+
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1
+
+Population 
+
+Found subgroup 
+
+Follow up time (mo) 
+
+> Survival probability
+
+0 5 10 15 20 25 
+
+Subgroup 1 
+
+Subgroup 2 
+
+Population 
+
+Unemployment time (w) 
+
+Figure 1. Survival subgroups . S YSURV finds and characterizes survival subgroups, i.e. subpopulations with exceptional survival characteristics compared to the overall population. (Left) SYSURV 
+
+finds patients suffering from a therapy-resistant tumor. (Right) 
+
+SYSURV finds people with exceptionally long (1) resp. short (2) durations until re-employment. 
+
+ple we have a vector x of descriptive features (covariates), a time t since we started observing the subject, and an indicator δ of whether the event of interest (e.g. death) has occurred since then. We are interested in learning conjunctive rules that define conditions on the covariates (e.g. x1 ∈ [0 .2, 1.0] and x2 ∈ [0 .8, 0.9] ) and so select a subgroup for which the corresponding survival curves are exceptional with regard to the overall population. For an example, consider Fig. 1. On the left-hand side, we show the result of our method, S YSURV , on neck can-cer treatment data. It learns that “patients whose tumors have mutations related to DNA repair” tend to respond very poorly to treatment, which is in line with medical under-standing (Barker et al., 2015), as well as actionable, as we can now identify and treat these patients differently. On the right-hand side, we consider unemployment data. S YSURV 
+
+finds that “people older than 58 with unemployment in-surance” tend to have exceptionally long durations until re-employment (group 1), whereas “people who previously earned a low wage and without unemployment insurance” tend to find new jobs much more quickly (group 2). To find these subgroups, we use a non-parametric mea-sure of exceptionality which is based on individual survival curves. That is, unlike the state of the art, we do not assume the Cox proportional hazards model, as it would restrict us to subgroups that roughly follow the population trend, and neither do we rely on group averages, as this obscures 1
+
+> arXiv:2602.22179v1 [cs.LG] 25 Feb 2026 Learning and Naming Subgroups with Exceptional Survival Characteristics
+
+individual deviations. We show how to learn rules that sin-gle out subgroups with exceptional survival characteristics in a differentiable manner, automatically finding relevant features and intervals in a way that allows easy optimization, yet crisp logical interpretation after learning. Through an extensive set of experiments on synthetic and real-world data, we show that our method works well in practice. It outperforms state-of-the-art methods by a wide margin, both in terms of recovering the ground truth, and in terms of exceptionality of the found subgroups. Through a case study on treatment of locally advanced head and neck squamous cell carcinoma, we confirm that S YSURV finds biomarkers that are known to be associated with good resp. poor response to treatment, while also identifying novel subgroups that warrant further investigation. In a nutshell, our main contributions are as follows • We propose a differentiable, non-parametric measure of survival subgroup exceptionality based on individual survival estimates, and discuss how it relates to the well-known logrank model. • We show how to differentiably learn rules that select subgroups with exceptional survival characteristics, and how to post hoc evaluate statistical significance. • We empirically evaluate our method on a wide range of synthetic and real-world datasets, comparing to three state-of-the-art methods. We make all our code available online. 1
+
+## 2. Preliminaries 
+
+We consider time-to-event (survival) data, where we have a dataset D = {(x(i), t (i), δ (i))}ni=1 consisting of n i.i.d. realizations, called subjects , from a joint distribution 
+
+P(X, T, ∆) . Here, x ∈ Rp is a vector of p covariates that describes the subject, t ∈ R≥0 measures time since the start of its observation, and δ indicates whether the event of interest (e.g. relapse) has occurred yet. If the event did occur ( δ = 1 ), t is the time at which it was observed. If it did not occur, t is the latest time we observed the subject to still be fine, and so the outcome is said to be censored .A survival function S(t) gives the probability of a subject surviving beyond time t, i.e. it is defined as the cumulative distribution function P(T > t ). To ease notation, we denote the domains of x and t by X and T , respectively. A subgroup Q is a set of subjects selected from D using a rule σQ : X → { 0, 1} that indicates whether a subject belongs to Q or not, i.e. Q = {x ∈ D | σQ(x) = 1 }. The survival function of subgroup Q is denoted by ˆSQ(t).
+
+> 1https://eda.group/sysurv
+
+## 3. Learning Survival Subgroups 
+
+We are interested in learning rules that select subgroups with survival trends that are exceptional compared to those of the general population. First, we introduce our population model, then define a measure for subgroup exceptionality, and then present S YSURV for learning exceptional survival subgroups using gradient-based optimization. 
+
+3.1. Population Model 
+
+Precision medicine overcomes the traditional “one-size-fits-all” model by incorporating individual characteristics into treatment outcome predictions (Feuerriegel et al., 2024). This is particularly important in survival analysis where subject heterogeneity can significantly impact outcomes. For us, this translates to estimating individual survival. Individual survival functions ˆS(t | X = x), or ˆS(t | x) for short, can leverage the covariates x of a subject and so pro-vide more accurate and more robust survival estimates (Cox, 1972) than those estimated marginally (Kaplan & Meier, 1958). Specifically important here is that individual survival functions provide fine-grained signal that we can use during optimization, i.e. to determine which subjects should (not) be part of the subgroup. Given individual estimates, the survival function for a subgroup Q selected by rule σQ is defined as ˆSQ(t) := Ex∼X[ ˆS(t | x) | σQ(x) = 1] .To obtain individual estimates, we fit a conditional estimator, or population model, M over the entire dataset. We do so us-ing the random survival forest (RSF) (Ishwaran et al., 2014). This is a fully-non-parametric continuous-time model that extends the random forest (Breiman, 2001) to time-to-event data. In contrast to well-known parametric models, it does not restrict us to specific survival distributions (e.g. Weibull) or structures (e.g. Cox) and allows us to find subgroups with                            
+
+> 0246810
+> 0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 11
+> 2
+> 3
+> 4
+> Survival time
+> Survival probability  ˆS(t|x)ˆS(t)Pop.
+> 0246810
+> Survival time
+> ˆS1(t)ˆS2(t)ˆS3(t)Pop.
+> Figure 2. Desired level of sensitivity .(Left) Individual survival functions ˆS(t|x)are more informative for discovery than their group-level estimate ˆS(t).(Right) Approaches that do not apply the absolute value can capture the difference between group and reference population survival (Pop.) when the two do not cross (ˆS1and ˆS2) but completely underestimate it when they do ( ˆS3).
+
+2Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+exceptional survival characteristics in general. 
+
+3.2. Exceptionality Measure 
+
+In traditional survival analysis, the subgroup of interest is assumed to be given and exceptionality versus the reference population is measured on average, at the group level. As we will detail below, this has drawbacks in terms of sensitivity to per-subject deviations when we aim to learn the subgroup. First, we illustrate in Fig. 2 (left) how individual estimates can reveal differences from the reference survival that group-level estimates obscure . The dark green line shows the group-level average over four individuals (light green lines). The average curve obscures that the curves of subjects 1 and 2 are very different, i.e. delayed, compared to those of subjects 3 and 4, effectively underestimating the true exceptionality. In general, individual-level exceptionality measures offer increased sensitivity to deviations of individ-ual survival functions, such as those crossing the reference, making them particularly suited for optimization of sub-group membership rules. Independent of whether we measure exceptionality at the group or individual level, it is important to consider the absolute difference to the reference. We give an example in Fig. 2 (right). Whereas it is trivial to identify groups 1 and 2 as exceptional even when we measure relative to the reference, the large exceptionality of group 3 only becomes clear when we measure the difference in absolute terms. Next, we formalize these intuitions, and show that consid-ering absolute differences of individual estimates to the reference gives us more signal than group averages. 
+
+Proposition 3.1. Given two groups A and B, selectable by rule σA and σB , resp., for which the expected group-level survival at any time t are ˆSA(t) and ˆSB (t), and for which individual-level survival is denoted by ˆS(t | x). The expected absolute difference in survival of the subjects se-lectable by σA is as, or more, sensitive than the absolute difference of ˆSA(t) from ˆSB (t),
+
+Ex∼X[ℓ1 
+
+> t
+
+(s(x), s B ) | σA(x) = 1] ≥ ℓ1 
+
+> t
+
+(sA, s B ) ,
+
+where ℓ1 
+
+> t
+
+(·, ·) is an absolute difference measure, and for brevity we write s◦ for ˆS◦(t), and s(x) for ˆS(t | x).
+
+We provide the proof in Appx. A. For our purposes, sA
+
+would typically belong to a group of interest, e.g. a subgroup, and sB to a reference group, e.g. the entire dataset. To measure the exceptionality between two survival estimates 
+
+sA, s B ≥ 0 at some time t, we consider the L1 distance 
+
+ℓ1 
+
+> t
+
+(sA, s B ) := |sA − sB |.
+
+Corollary 3.2. Under the assumptions of Prop. 3.1, if there exist x(1) , x(2) ∈ X such that 
+
+s(x(1) ) > s B ∧ s(x(2) ) < s B ,
+
+then the inequality in Prop. 3.1 is strict, i.e. 
+
+Ex∼X[ℓ1 
+
+> t
+
+(s(x), s B ) | σA(x) = 1] > ℓ 1 
+
+> t
+
+(sA, s B ) .
+
+Proof. Proposition 3.1 follows from the triangle inequality property of the absolute value function. Equality holds iff all arguments are aligned, i.e. either s(x) ≥ sB or s(x) ≤ sB
+
+for all x selectable by σA. The existence of x(1) and x(2) 
+
+contradicts this, hence the inequality is strict. To capture the survival interplay between groups, we leverage individual estimates over the entire time domain 
+
+T by extending the absolute difference measure ℓ1 
+
+> t
+
+(·, ·)
+
+for two survival functions SA, S B as ℓ1 
+
+> T
+
+(SA, S B ) := R 
+
+> t∈T
+
+|SA(t) − SB (t)| dt . Finally, we define our exception-ality measure as the expected difference in survival of the subjects of a subgroup selectable by σ from the estimated survival in the population ˆSD (t) throughout T as 
+
+ϕ(σ, σ D ) := Ex∼X[ℓ1 
+
+> T
+
+( ˆS(t|x), ˆSD (t)) | σ(x) = 1] . (1) Next, we contrast our measure to the logrank statistic. 
+
+Relation to Logrank The logrank statistic (Mantel, 1966) is widely used in survival analysis. It essentially compares the observed number of events d to the expected number of events e at the group level across all event times 
+
+Logrank ∝ X
+
+> evt. times
+
+dgrp  
+
+> t
+
+− egrp  
+
+> t
+
+∝ X
+
+> evt. times
+
+dgrp 
+
+> t
+
+rgrp 
+
+> t
+
+− dref 
+
+> t
+
+rref 
+
+> t
+
+,
+
+where egrp  
+
+> t
+
+= dref  
+
+> t
+
+· rgrp  
+
+> t
+
+/r ref  
+
+> t
+
+, r refers to the number of individuals at risk, “ grp ” and “ ref ” refer to the group and reference populations, respectively. Further, it assumes the Cox proportional hazards condition, which states that the rates at which subgroup and reference survival decay (i.e. hazards) are constantly proportional over time. By relying on group-level differences, the logrank obscures individual variability. Perhaps more importantly, the pro-portional hazards assumption is often violated in practice, which means that the survival functions for groups of in-terest often cross one another. Since the logrank does not apply the absolute value before aggregating over time, this causes the effects to cancel out. In contrast, our measure does not have these drawbacks, and in our experiments, we will compare to methods that rely on the logrank. 
+
+3.3. Rule Induction 
+
+Armed with our exceptionality measure, we now present SYSURV for learning subgroups with exceptional survival characteristics using gradient-based optimization. 3Learning and Naming Subgroups with Exceptional Survival Characteristics                 
+
+> 00.30.71
+> 0
+> 0.3
+> 0.7
+> 1
+> x
+> ˆπ(x; τ )
+> 0.10.05 0.025
+> (a) Soft condition
+> 00.51
+> 0
+> 0.5
+> 1
+> x1
+> x2
+> 01
+> (b) Soft rule
+> Figure 3. Soft conditions and rules. The soft condition approaches a hard interval with decreasing temperature τ→0(a) . Multiple soft conditions combine to form a soft rule depicted as a hyper box in the covariate space (b) . Adapted from Xu et al. (2024).
+
+Learnable Rules Recall that subgroups are selected via rules, so we first formalize the language of these rules. Tra-ditionally, a subgroup is defined by a hard rule σ : x 7 →Vpj=1 π(xj ; αj , β j ), where each π is a Boolean condition evaluating to true (1) if a covariate x falls within the interval defined by lower and upper bounds α, β ∈ R,e.g. “18 < age < 32 ”. To integrate rule induction into a gradient-based optimization pipeline, we employ a contin-uous relaxation of these logical expressions. To facilitate differentiable subgroup discovery, we use soft rules ˆσ : X → [0 , 1] consisting of soft conditions 
+
+ˆπ : R → [0 , 1] . These soft conditions model the proba-bility of a covariate being inside the specified interval via a composition of two opposing sigmoids located at the learn-able bounds α and β. A temperature hyperparameter τ > 0
+
+controls the strictness of the bounds; as τ → 0, the soft condition ˆπ converges to a Boolean interval (Fig. 3a). Following Xu et al. (2024), we define the soft condition as 
+
+ˆπ(xj ; αj , β j , τ ) := e 1   
+
+> t(2 xj−αj)
+
+e 1  
+
+> txj
+
++ e 1    
+
+> t(2 xj−αj)
+
++ e 1     
+
+> t(3 xj−αj−βj)
+
+,
+
+and the differentiable rule learner using a weighted harmonic mean of soft conditions as 
+
+ˆσ(x; α, β, a, τ ) = 
+
+Ppj=1 aj
+
+Ppj=1 aj ˆπ(xj ; αj , β j , τ )−1 ,
+
+where a ∈ Rp represents a vector of learnable weights. These weights allow the model to perform feature selection, i.e. a covariate x is actively included in the conjunction when 
+
+a > 0 and effectively ignored as a → 0. The harmonic mean structure is chosen because it serves as a smooth approximation of the logical-and operator; if any single active condition ˆπ approaches zero, the entire rule output 
+
+ˆσ tends toward zero. Henceforth, the output ˆσ(x) can be interpreted as the probability P(ˆ σ(X) = 1 | X = x) that a subject belongs to the subgroup (yellow box in Fig. 3b). 
+
+Objective Armed with differentiable rules, the goal is to update those rules to select the subgroups that maximize our objective. For rule updates, we need to take the gradient of our objective w.r.t the parameters of the soft rule ˆσ. Hence, we rewrite the expectation in Eq. (1) to derive our objective where ˆσ explicitly appears as ϕ(ˆ σ, ˆσD ) = 
+
+Z
+
+> x∈X
+
+ℓ1 
+
+> T
+
+( ˆS(t|x), ˆSD (t)) P(X = x)
+
+P(ˆ σ(X) = 1) ˆσ(x) dx , (2) by using the expected value definition, marginalization rule and Bayes’ theorem. We estimate the integral over X and T
+
+in Eq. (2) using the standard Monte Carlo and trapezoidal methods, respectively. Our objective is defined as 
+
+ˆϕ(ˆ σ, ˆσD ) := 1
+
+|ˆσ|
+
+> n
+
+X
+
+> i=1
+
+ℓ1 
+
+> T
+
+( ˆS(t | x(i)), ˆSD (t)) ˆ σ(x(i); θ) ,
+
+where the subgroup size |ˆσ| is estimated as 1
+
+> n
+
+Pni=1 ˆσ(x; θ),and θ stands for α, β, and a, collectively. 
+
+Rule Generality and Diversity We introduce a size penalty |ˆσ|γ to our objective to avoid learning overly spe-cific subgroups. We achieve this by controlling the trade-off between exceptionality and subgroup size via a hyperparam-eter γ ∈ [0 , 1] . To learn non-redundant subgroups, we add a regularizing term to our objective that ensures that we get a diverse set of subgroups by contrasting each subgroup with the set of q predecessors. We define the full objective as 
+
+arg max 
+
+> θ
+
+"
+
+|ˆσ|γ ˆϕ(ˆ σ, ˆσD ) + 
+
+> q
+
+X
+
+> g=1
+
+|ˆσ| γg ˆϕ(ˆ σ, ˆσg )
+
+#
+
+,
+
+where we can optionally anneal the value of γ to discover progressively smaller subgroups. 
+
+Optimization Gradient-based optimization allows us to efficiently learn the parameters of our rules, and therewith scale S YSURV to large datasets. For every subject, each feature is subjected to its corresponding soft condition ac-cording to the learned bounds, which are then weighted and combined into a soft rule that predicts a membership prob-ability. We iteratively learn the weights and bounds using standard first-order gradient-based optimization techniques (Kingma & Ba, 2017) for a number of epochs, while anneal-ing the temperature to arrive at crisp discretizations. For the pseudocode and the annealing schedule see Appx. B. 
+
+Rule Sparsity In high-dimensional correlated data, e.g. gene expressions, there often exist different ways (i.e. different conditions over different features) to select the same subgroup, possibly leading to rules with redun-dant terms. Rather than naively regularizing for rule length, adding a hyperparameter and complicating optimization, we 4Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+propose to achieve rule sparsity in such cases by post hoc pruning. The idea is simple: we iteratively remove that con-dition from the rule that minimally changes which subjects are selected, and stop when a minimal Jaccard similarity is reached. We present the pseudocode in Appx. C. 
+
+3.4. Statistical Validation 
+
+In critical applications, e.g. healthcare, it is often important that results come with statistical guarantees. While it is challenging to make formal statements about the results of continuous optimization, we can determine p-values through a permutation test. In particular, following Duivesteijn & Knobbe (2011), we create independent copies of the input dataset D in which we break the dependency between the covariates, x, and the outcomes, ( t, δ ), by random permuta-tion. We run S YSURV on each of these copies, as to obtain a distribution of exceptionalities of false discoveries. Then, by applying the central limit theorem, we can determine the p-value of the exceptionality of the subgroup(s) we found on the actual data. When discovering multiple subgroups, we use Bonferroni correction (Dunn, 1961) to correct for multiple hypothesis testing. For details, see Appx. D. 
+
+## 4. Related Work 
+
+In this section, we discuss the most relevant related work from survival analysis, survival clustering, subgroup discov-ery, and survival subgroup discovery. 
+
+Survival Analysis The majority of machine learning re-search for time-to-event data gravitates towards predicting the outcome of individual subjects. Some of the most potent methods for survival outcome prediction are ensemble meth-ods (Barnwal et al., 2022), which includes Random Survival Forests (Ishwaran et al., 2014). Alternatively, survival func-tions can be computed using neural networks, such as the multitask logistic regression framework (Yu et al., 2011; Fotso, 2018), or transformer-based approaches (Li et al., 2025), some of which can, in addition to subject covari-ates, also incorporate unstructured data, such as images or sequences (Cheerla & Gevaert, 2019; Vale-Silva & Rohr, 2021; Meng et al., 2022; Saeed et al., 2024; Meng et al., 2023; Saeed et al., 2024; Farooq et al., 2025). S YSURV does not compete with these methods, but rather needs one to obtain individual survival estimates. 
+
+Survival Clustering has the goal of assigning subjects to groups of high inter-group but low intra-group survival similarity and is therewith a related problem, but it does not provide descriptions or means to identify them. Many modern techniques leverage generative models to parame-terize latent mixtures of Weibull distributions, such as those using variational autoencoders (Manduchi et al., 2022) or multilayer perceptrons (Hou et al., 2024). Other methods assume proportional hazards (Nagpal et al., 2021), use a multitask framework (Cui et al., 2024), or leverage the latent vector quantization framework (de Boer et al., 2024), but unlike S YSURV , these typically make specific assumptions about the underlying distributions or structure, which are then interpreted as data-driven subgroups, a process yielding uninterpretable results compared to rule induction. 
+
+Subgroup Discovery, first introduced by Kl ¨osgen (1996), is the task of finding and describing subpopulations that are exceptional in terms of a target property. Typically, sub-group discovery approaches leverage different exceptional-ity measures to accommodate the data type of a single target variable (Song et al., 2016; Kalofolias & Vreeken, 2022). Furthermore, some works opt to assume strong assumptions on the distribution of the target variable (Friedman & Fisher, 1999; Lavra ˇc et al., 2004; Grosskreutz & R ¨uping, 2009). The exceptional model mining framework (Leman et al., 2008; Duivesteijn et al., 2016) generalizes subgroup dis-covery to arbitrary numbers of target variables by instead measuring the exceptionality between a model trained on the subgroup and one trained on the population. Whereas most methods for subgroup discovery rely on combinatorial search, Xu et al. (2024) recently showed that gradient-based optimization can efficiently learn subgroups in large datasets and removes the need for pre-discretization. 
+
+Survival Subgroup Discovery, i.e. subgroup discovery applied to survival data. Existing approaches to survival subgroup discovery alter the exceptionality measure, and are typically based on the logrank statistic. R ULE KIT (Gudy ´set al., 2020) relies on heuristic search, while F IBERS (Ur-banowicz et al., 2023) is evolutionary algorithm-based, and, more recently, E SMAM DS (Vimieiro et al., 2025) was based on Ant Colony Optimization. Relator et al. (2018) explore significant survival subgroup discovery by correcting for multiple testing, albeit at great computational cost. In con-trast, we propose a gradient-descent-optimizable objective that uses flexible survival functions without making assump-tions about how subgroup and population survival relate. We also provide statistical guarantees for our subgroups. 
+
+## 5. Experiments 
+
+Next, we empirically evaluate S YSURV on synthetic and real-world data. We compare it to state-of-the-art methods RULE KIT (Gudy ´s et al., 2020), F IBERS (Urbanowicz et al., 2023), and E SMAM DS (Vimieiro et al., 2025). All optimize the logrank for exceptionality, but do so employing different search strategies. We use the implementations of the respec-tive authors. We allow each method, including S YSURV , up to 48 hours per experiment. We tune hyperparameters for all methods using grid search (see Appx. E). We make all 5Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+10 1 10 2 10 3
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+00
+
+1
+
+0
+
+Number of features p
+
+> F1-score
+
+0 0.3 0.6 0.9
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+00
+
+1
+
+0
+
+Percentage of censored subjects 
+
+> F1-score
+
+SYSURV RULE KIT ESMAM DS FIBERS 
+
+0.1 0.2 0.3 0.4
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+00
+
+1
+
+0
+
+Percentage of subjects in subgroup 
+
+> F1-score
+
+Figure 4. Synthetic setting. Comparison of S YSURV and each of R ULE KIT , E SMAM DS, and F IBERS in terms of F1-scores recovering planted subgroups with increasingly large datasets (Left) , increasingly censored subjects (Center) , and increasingly large planted subgroups (Right) . E SMAM DS is the closest competitor to S YSURV closely followed by R ULE KIT . Higher is better. The shaded areas show ±1 standard error over 10 runs. 
+
+Table 1. Real-world setting. Exceptionality of subgroups discovered by S YSURV (Ours ), R ULE KIT (RK), E SMAM DS (ED), and F IBERS 
+
+(F IB ), measured using three different metrics (our objective, logrank, and mean-shift). Greater is better. Highest values marked in bold. Our objective Logrank Mean-shift 
+
+Ours RK ED FIB Ours RK ED FIB Ours RK ED FIB 
+
+UnempDur 6.4 3.8 3.8 3.8 19.3 226.5 125.0 125.0 2.0 2.1 2.1 2.1 
+
+Nwtco 1011.6 681.0 681.0 208.6 374.2 281.3 31.4 0.0 1162.0 688.2 688.2 0.6 Rott2 559.2 326.2 487.6 487.6 267.0 93.0 71.7 169.3 31.5 10.0 25.2 25.2 Rdata 259.2 213.8 213.8 158.5 113.4 107.8 14.6 43.3 1116.6 933.5 933.5 705.5 Aids2 66.6 60.5 54.0 34.7 0.2 1.7 4.3 0.0 22.7 61.2 61.4 0.7 Dialysis 4.5 4.7 4.7 4.6 6.4 68.4 70.9 305.9 0.6 5.7 3.1 4.5 TRACE 261.8 272.5 332.1 261.6 0.0 94.6 93.2 0.0 0.0 0.6 1.7 0.0 Support2 132.8 81.4 104.9 54.8 251.0 59.9 46.8 11.9 405.7 227.6 405.5 71.0 DataDIVAT2 286.3 141.3 172.5 141.3 33.6 31.6 10.9 31.6 3.2 1.6 2.1 1.6 ProstateSurv. 20.1 7.5 14.1 5.4 425.7 64.7 82.5 82.5 6.1 3.7 3.4 1.0 Actg 34.6 24.2 18.8 11.3 60.0 1.1 12.3 0.0 54.1 27.3 6.0 0.4 Scania 172.5 147.4 147.4 84.7 4.7 14.7 13.7 9.9 6.5 2.4 2.4 0.1 Grace 38.6 16.5 21.0 13.1 59.3 33.3 28.7 13.8 64.0 16.0 21.8 11.1 Avg. rank 1.38 2.65 2.27 3.69 2.04 2.19 2.69 3.08 1.81 2.46 2.23 3.5 
+
+our code available online, 1 and give the pseudocode for our data generator and additional results in Appx. G and H. 
+
+5.1. Synthetic Data 
+
+We start by evaluating on data with known ground truth. To this end, we generate data as follows. We sample p = 10 
+
+feature variables Xj from a uniform distribution U(0 , 1) ,and the survival time T from a Weibull distribution for its configurability, Weibull (1 .5, 5) . Subject to 10% uniform censoring, we create a dataset of n = 10 000 subjects. We randomly choose k ≤ p features (here, k = 2 ) and sample corresponding bounds, creating a rule that covers 20% of the feature space. We randomly split the subjects into those to be included in the subgroup (20%) and those not (80%). We ensure the feature values for the samples designated not to belong to the subgroup to be outside the rule bounds across conditional features. We then do the same to the subjects designated to belong to the subgroup so they fulfill the rule but also resample their outcomes from a Weibull distribution having the same shape of 1.5 as the overall population, but a different scale of 1. In other words, subgroup subjects experience their event 5× earlier on expectation. Now that we have our benchmark, we can vary the data or the subgroup generation parameters. 
+
+Scalability First, we assess the performance of S YSURV 
+
+and its competitors on data where we vary the number of fea-tures. We report the average F1-scores over 10 runs in Fig. 4 (left). We see that all methods are stable in terms of F1-scores as the dimensionality increases, and that R ULE KIT 
+
+does not finish in time for more than 500 features. We provide the runtimes in Fig. 7 (left) in Appx. H. 
+
+Censoring Next, we assess robustness to censoring when increasing the percentage of censored subjects. We give the results in Fig. 4 (center); we see that the performance of SYSURV drops when the percentage of censored subjects be-6Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+comes extreme; this also depends on how uninformative the censoring is since the censored time is sampled uniformly up to the true survival time. We check whether having the subgroup outsurvive the population, and vice versa, affects performance by varying the subgroup and fixing the popula-tion hazards, and give the results in Fig. 7 (center). 
+
+Subgroup Size Lastly, we assess retrieval quality as the percentage of subjects that belong to the planted subgroup increases. We see in Fig. 4 (right) that all methods improve as the planted subgroup size increases, particularly, E S-
+
+> MAM
+
+DS. We attribute the improvement in the baselines to them generally preferring larger subgroups, according to our observations (Appx. H). In Fig. 7 (right), we also provide results on sample sufficiency by varying dataset sizes. SYSURV is very stable with average F1-scores of approx. 0.8, up to very high rates of censoring ( > 80% ). F IBERS is highly unstable, with very large standard errors. E SMAM DS
+
+is the closest competitor, hovering around 0.55, closely fol-lowed by R ULE KIT consistently at 0.45, while F IBERS lags behind in all experiments by a wide margin, with average F1-scores of approximately 0.35. 
+
+5.2. Real-World Data 
+
+Next, we evaluate how well S YSURV performs on real-world data. To this end, we consider 13 time-to-event datasets from the SurvSet repository (Drysdale, 2022) that span different domains and have at least 1000 subjects and 7 covariates. As for these datasets the ground truth is unknown, we mea-sure the quality of the found subgroups using 3 metrics: logrank, mean-shift, and our own objective. As before, we compare S YSURV to R ULE KIT , E SMAM DS, and F IBERS .For S YSURV , we consider the first subgroup it returns. We give the competitors an advantage by considering the best-scoring subgroup out of the top-5 subgroups they return. We report the results in Table 1. For mean-shift, we are only interested in the magnitude of the shift, and hence report absolute values. We provide the average subgroup sizes found by each method in Table 2 in Appx. H. We see that, despite them having an advantage, S YSURV 
+
+outperforms its competitors by a wide margin. For most datasets it achieves (much) higher scores, and overall the best average ranks, for each metric. For the Nwtco , Rott2 ,
+
+ProstateSurvival , Actg , and Grace datasets, it even scores between 14.7% to 1091.7% better on each metric. For some datasets, e.g. Unemployment Duration , we find that methods excel at their own metrics. To investigate this irrespective of these metrics, we consider the Kaplan-Meier survival curves (Kaplan & Meier, 1958) of the survival sub-groups found by S YSURV and R ULE KIT on Unemployment Duration in Fig. 5a. We see that both found subgroups with substantially longer time until re-employment than                  
+
+> 0510 15 20 25
+> 0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1
+> Unemployment time (w)
+> Survival probability  SYSURV RULE KIT ESMAM DSPopulation
+> (a) Unemployment dataset
+> 02468
+> Survival time (y)
+> (b) Heart attack dataset
+> Figure 5. Real-world setting. Survival subgroups discovered in the unemployment ( a) and heart attack ( b) datasets using S YSURV
+> and R ULE KIT resp. E SMAM DS. S YSURV learns more exceptional subsets of the subgroups discovered by baselines. The shaded areas show 95% confidence intervals.
+
+the overall population. The rule R ULE KIT found, “un-employment insured” , is very succinct. The rule found by SYSURV , “ age > 47 .43 ∧replacement rate ∈ [0 .11 , 1.95] ∧
+
+disregard rate < 0.96 ∧ tenure > 6.14 ∧ log(wage) ∈
+
+[4 .20 , 7.36] ”, is more detailed as it describes that subjects who are relatively old and earned a high wage tend to take longer until re-employment. Both are informative. For the heart attack dataset, TRACE , S YSURV finds a very large subgroup that does not differ much from the popu-lation. By adjusting the hyperparameter γ, we can steer it towards smaller subgroups. When we change its value to 0.025, it finds a subgroup that at 470 subjects cov-ers more than half the subgroup of 896 subjects found by E SMAM DS. When we inspect the Kaplan-Meier es-timates of the subgroups in Fig. 5b, we see that S YSURV 
+
+in fact outperforms E SMAM DS by a margin. Inspecting the found rules themselves, “¬clinical heart failure ” for ESMAM DS, and “ wall motion index > 1.37 ∧ female ∧¬clinical heart failure ” for S YSURV , we again see that SYSURV finds more detailed descriptions. Overall, these experiments show that S YSURV performs well on a wide range of settings, and remarkably well compared on the same metrics that the competitors optimize for. It finds sensible and precisely described subgroups that are generally more exceptional than those found by the closest competitors, while allowing user-adjustable subgroup sizes. 
+
+5.3. Case Study: Neck Cancer 
+
+Last, we qualitatively evaluate S YSURV on a case study. We consider a high-dimensional dataset of patients with locally advanced head and neck squamous cell carcinoma (HNSCC) undergoing radiochemotherapy (Schmidt et al., 2020). The data consists of two cohorts. The first, or primary, cohort are patients who only received radiochemotherapy ( n = 136 ). 7Learning and Naming Subgroups with Exceptional Survival Characteristics                    
+
+> 020 40 60 80
+> 0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1
+> Follow up time (mo)
+> Survival probability
+> S1(t)S2(t)Pop.
+> S3(t)S4(t)
+> (a) Primary cohort
+> 020 40 60 80 100
+> Follow up time (mo)
+> S5(t)S6(t)Pop.
+> S7(t)S8(t)
+> (b) Postoperative cohort
+> Figure 6. Case study. SYSURV discovers, overall, sets of diverse subgroups in the primary cohort ( a), and two subgroups of poor responders in the postoperative cohort ( b) of HNSCC data. The shaded areas show 95% confidence intervals.
+
+The second, or postoperative, cohort are patients who re-ceived radiochemotherapy after a tumor removal operation (n = 190 ). The covariates are tumor gene expressions (p = 158 ) and the outcome is the time until tumor recur-rence. Censoring is 60% for the first and 85% for the second cohort. From a clinical perspective, we are both interested in subgroups of subjects that respond better, as well as those that respond worse to treatment, as this allows more targeted (personalized) treatment. We run S YSURV on both datasets and discover four sub-groups each. We show the survival curves in Fig. 6 and give the rules in Appx. H. For both cohorts, S YSURV finds two subgroups that respond better, and two that respond worse, to the respective treatments than the overall populations. First, consider the primary cohort. We see in Fig. 6a that approximately half of the population are still alive after 80 months. Subgroups S1 (yellow, n=6) and S3 (orange, n=28) identify subjects that respond better, while subgroups S2
+
+(red, n=12) and S4 (blue, n=25) respond worse. Although the effect sizes are not significant under our test, it is highly encouraging that the rules select on meaningful biomarkers. Schmidt et al. (2020) recently reported on the survival pro-file when stratifying primary radiochemotherapy patients based on hypoxia 15- and 26-gene expressions. Subgroup 
+
+S4 not only shows a similar profile, but like subgroup S3
+
+also selects subjects based on hypoxia-related genes. Next, we investigate the results on the postoperative co-hort. Here, almost 80% of the patients survive for more than 80 months (Fig. 6b). We are specifically interested in subgroups S5 (green, n=12) and S7 (purple, n=12) as these identify subjects that respond very poorly. Both are significant under our statistical model. Like before, the cor-responding rules make biological sense: they both select on genes that relate to cellular communication, metabolism, and DNA repair, which are related to highly aggressive tu-mor subtypes (Toustrup et al., 2011; Lendahl et al., 2009) for which conventional treatment not only fails to improve pa-tient condition but even promotes recurrence (Barker et al., 2015). The learned rules allow clinicians to pre-screen these subjects and offer them alternate treatment instead. 
+
+## 6. Conclusion 
+
+We propose S YSURV , an efficient method for survival sub-group discovery. S YSURV leverages non-parametric survival regression via Random Survival Forests to learn individual survival functions. In particular, we overcome the common drawbacks of ex-isting approaches that make parametric assumptions on the underlying survival structure while also obscuring inter-subgroup variability by operating at the level of aggregate statistics. S YSURV exploits individual-level deviations in survival with respect to the population in the way it quanti-fies subgroup exceptionality, achieving a provably more sen-sitive measure compared to prior work. S YSURV employs a neural layer whose parameters can be learned to auto-matically select features and cutoffs along their domains to select members of a subgroup. By doing so, S YSURV effec-tively results in human-interpretable rules that describe sub-groups with exceptional survival behavior as it maximizes subgroup exceptionality using our differentiable objective via gradient-based optimization. Extensive experiments on real-world datasets demonstrate that S YSURV consistently outperforms existing baselines in terms of subgroup exceptionality while also being more efficient. In a case study on neck cancer patients, S YSURV 
+
+discovers biomarkers that are known to be associated with good resp. poor response to treatment while also identifying novel subgroups that may warrant further investigation. 
+
+Limitations 
+
+In S YSURV , we consider tabular data; however, many ap-plications involve other data modalities such as images or sequences. We intend to extend S YSURV to incorporate such structured data alongside tabular covariates in a mean-ingful way to discover survival subgroups characterized by both types of data. This may involve anchoring the discov-ered subgroups in interpretable tabular features as well as emergent visual features, or sequential patterns. SYSURV provides a novel method to uncover, possibly novel, subgroups with exceptional survival characteristics. SYSURV is strictly associational, and while its results may indicate (unknown) causal mechanisms, it does not provide any guarantees in this regard. Before putting any of its re-sults into (clinical) practice, randomized controlled trials, or other ways to verify causality should be employed. 8Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+## Acknowledgements 
+
+Jawad Al Rahwanji is supported by DFG GRK 2853/1 “Neu-roexplicit Models of Language, Vision, and Action”. 
+
+## References 
+
+Barker, H. E., Paget, J. T., Khan, A. A., and Harrington, K. J. The tumour microenvironment after radiotherapy: mechanisms of resistance and recurrence. Nature Reviews Cancer , 15(7):409–425, 2015. Barnwal, A., Cho, H., and Hocking, T. Survival Regres-sion with Accelerated Failure Time Model in XGBoost. 
+
+Journal of Computational and Graphical Statistics , 31 (4):1292–1302, 2022. Breiman, L. Random Forests. Machine learning , 45(1): 5–32, 2001. Cheerla, A. and Gevaert, O. Deep learning with multimodal representation for pancancer prognosis prediction. Bioin-formatics , 35(14):i446–i454, 2019. Cox, D. R. Regression Models and Life-Tables. Jour-nal of the Royal Statistical Society: Series B (Statistical Methodology) , 34(2):187–202, 1972. Cui, C., Tang, Y., and Zhang, W. Deep Survival Analysis With Latent Clustering and Contrastive Learning. IEEE Journal of Biomedical and Health Informatics , 28(5): 3090–3101, 2024. de Boer, J., Dedja, K., and Vens, C. SurvivalLVQ: Inter-pretable supervised clustering and prediction in survival analysis via Learning Vector Quantization. Pattern Recog-nition , 153:110497, 2024. Drysdale, E. SurvSet: An open-source time-to-event dataset repository, 2022. URL https://arxiv.org/abs/ 2203.03094 .Duivesteijn, W. and Knobbe, A. Exploiting False Discoveries–Statistical Validation of Patterns and Quality Measures in Subgroup Discovery. In 2011 IEEE 11th International Conference on Data Mining , pp. 151–160. IEEE, 2011. Duivesteijn, W., Feelders, A. J., and Knobbe, A. Excep-tional Model Mining: Supervised descriptive local pattern mining with complex target concepts. Data Mining and Knowledge Discovery , 30(1):47–98, 2016. Dunn, O. J. Multiple Comparisons among Means. Journal of the American Statistical Association , 56(293):52–64, 1961. Farooq, A., Mishra, D., and Chaudhury, S. Survival Predic-tion in Lung Cancer through Multi-Modal Representation Learning. In 2025 IEEE/CVF Winter Conference on Ap-plications of Computer Vision (WACV) , pp. 3907–3915. IEEE, 2025. Feuerriegel, S., Frauen, D., Melnychuk, V., Schweisthal, J., Hess, K., Curth, A., Bauer, S., Kilbertus, N., Kohane, I. S., and van der Schaar, M. Causal machine learning for predicting treatment outcomes. Nature Medicine , 30(4): 958–968, 2024. Fotso, S. Deep Neural Networks for Survival Analysis Based on a Multi-Task Framework, 2018. URL https: //arxiv.org/abs/1801.05512 .Friedman, J. H. and Fisher, N. I. Bump hunting in high-dimensional data. Statistics and Computing , 9(2):123– 143, 1999. Grosskreutz, H. and R ¨uping, S. On subgroup discovery in numerical domains. Data Mining and Knowledge Discovery , 19:210–226, 2009. Gudy ´s, A., Sikora, M., and Wr ´obel, Ł. RuleKit: A compre-hensive suite for rule-based learning. Knowledge-Based Systems , 194:105480, 2020. Hou, B., Wen, Z., Bao, J., Zhang, R., Tong, B., Yang, S., Wen, J., Cui, Y., Moore, J. H., Saykin, A. J., Huang, H., Thompson, P. M., Ritchie, M. D., Davatzikos, C., and Shen, L. Interpretable deep clustering survival machines for Alzheimer’s disease subtype discovery. Medical Im-age Analysis , 97:103231, 2024. Ishwaran, H., Gerds, T. A., Kogalur, U. B., Moore, R. D., Gange, S. J., and Lau, B. M. Random survival forests for competing risks. Biostatistics , 15(4):757–773, 2014. Kalofolias, J. and Vreeken, J. Naming the Most Anomalous Cluster in Hilbert Space for Structures with Attribute Information. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 36, pp. 4057–4064, 2022. Kaplan, E. L. and Meier, P. Nonparametric Estimation from Incomplete Observations. Journal of the American Statistical Association , 53(282):457–481, 1958. Kingma, D. P. and Ba, J. Adam: A Method for Stochas-tic Optimization, 2017. URL https://arxiv.org/ abs/1412.6980 .Kl ¨osgen, W. Explora: a multipattern and multistrategy discovery assistant , pp. 249–271. American Association for Artificial Intelligence, 1996. ISBN 0262560976. Lavra ˇc, N., Kav ˇsek, B., Flach, P., and Todorovski, L. Sub-group Discovery with CN2-SD. Journal of Machine Learning Research , 5(Feb):153–188, 2004. 9Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+Leman, D., Feelders, A., and Knobbe, A. Exceptional Model Mining. In Machine Learning and Knowledge Discovery in Databases , pp. 1–16. Springer, 2008. Lendahl, U., Lee, K. L., Yang, H., and Poellinger, L. Gen-erating specificity and diversity in the transcriptional re-sponse to hypoxia. Nature Reviews Genetics , 10(12): 821–832, 2009. Li, Y., Zhang, X., Hu, J., Xia, W., Liu, Z., Qin, X., Fei, B., and Zhou, J. SurvFormer: A Transformer Based Frame-work for Survival Analysis in Insurance Underwriting. In 
+
+Companion Proceedings of the ACM on Web Conference 2025 , pp. 325–333, 2025. Manduchi, L., Marcinkevi ˇcs, R., Massi, M. C., Weikert, T., Sauter, A., Gotta, V., M ¨uller, T., Vasella, F., Neidert, M. C., Pfister, M., Stieltjes, B., and Vogt, J. E. A Deep Variational Approach to Clustering Survival Data. In 
+
+International Conference on Learning Representations ,2022. Mantel, N. Evaluation of survival data and two new rank order statistics arising in its consideration. Can-cer Chemotherapy Reports , 50(3):163–170, 1966. Meng, M., Gu, B., Bi, L., Song, S., Feng, D. D., and Kim, J. DeepMTS: Deep Multi-Task Learning for Survival Prediction in Patients With Advanced Nasopharyngeal Carcinoma Using Pretreatment PET/CT. IEEE Journal of Biomedical and Health Informatics , 26(9):4497–4507, 2022. Meng, M., Bi, L., Fulham, M., Feng, D., and Kim, J. Merging-Diverging Hybrid Transformer Networks for Survival Prediction in Head and Neck Cancer. In Medical Image Computing and Computer Assisted Intervention – MICCAI 2023 , pp. 400–410. Springer, 2023. Nagpal, C., Yadlowsky, S., Rostamzadeh, N., and Heller, K. Deep Cox Mixtures for Survival Regression. In Machine Learning for Healthcare Conference , volume 149, pp. 674–708. PMLR, 2021. Relator, R. T., Terada, A., and Sese, J. Identifying sta-tistically significant combinatorial markers for survival analysis. BMC Medical Genomics , 11(Suppl 2):31, 2018. Saeed, N., Ridzuan, M., Maani, F. A., Alasmawi, H., Nandakumar, K., and Yaqub, M. SurvRNC: Learning Ordered Representations for Survival Prediction Using Rank-N-Contrast. In Medical Image Computing and Com-puter Assisted Intervention – MICCAI 2024 , pp. 659–669. Springer, 2024. Schmidt, S., Linge, A., Grosser, M., Lohaus, F., Gudziol, V., Nowak, A., Tinhofer, I., Budach, V., Sak, A., Stuschke, M., Balermpas, P., R ¨odel, C., Sch ¨afer, H., Grosu, A.-L., Abdollahi, A., Debus, J., Ganswindt, U., Belka, C., Pigorsch, S., Combs, S. E., M ¨onnich, D., Zips, D., Baret-ton, G. B., Buchholz, F., Baumann, M., Krause, M., and L ¨ock, S. Comparison of GeneChip, nCounter, and Real-Time PCR–Based Gene Expressions Predicting Locore-gional Tumor Control after Primary and Postoperative Radiochemotherapy in Head and Neck Squamous Cell Carcinoma. The Journal of Molecular Diagnostics , 22 (6):801–810, 2020. Song, H., Kull, M., Flach, P., and Kalogridis, G. Subgroup Discovery with Proper Scoring Rules. In Machine Learn-ing and Knowledge Discovery in Databases , pp. 492–510. Springer, 2016. Toustrup, K., Sørensen, B. S., Nordsmark, M., Busk, M., Wiuf, C., Alsner, J., and Overgaard, J. Development of a Hypoxia Gene Expression Classifier with Predictive Im-pact for Hypoxic Modification of Radiotherapy in Head and Neck Cancer. Cancer Research , 71(17):5923–5931, 2011. Urbanowicz, R., Bandhey, H., Kamoun, M., Fogarty, N., and Hsieh, Y.-A. Scikit-FIBERS: An’OR’-Rule Dis-covery Evolutionary Algorithm for Risk Stratification in Right-Censored Survival Analyses. In Proceedings of the Companion Conference on Genetic and Evolutionary Computation , pp. 1846–1854, 2023. Vale-Silva, L. A. and Rohr, K. Long-term cancer survival prediction using multimodal deep learning. Scientific Reports , 11(1):13505, 2021. Vimieiro, R., Mattos, J. B., and de Mattos Neto, P. S. Es-mamDS: A more diverse exceptional survival model min-ing approach. Information Sciences , 690:121549, 2025. Xu, S., Walter, N. P., Kalofolias, J., and Vreeken, J. Learn-ing Exceptional Subgroups by End-to-End Maximizing KL-Divergence. In International Conference on Machine Learning , volume 235, pp. 55267–55285. PMLR, 2024. Yu, C.-N., Greiner, R., Lin, H.-C., and Baracos, V. Learn-ing Patient-Specific Cancer Survival Distributions as a Sequence of Dependent Regressors. Advances in Neural Information Processing Systems , 24, 2011. 10 Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+## A. Proof of Proposition 3.1 
+
+Proposition 3.1. Given two groups A and B, selectable by rule σA and σB , resp., for which the expected group-level survival at any time t are ˆSA(t) and ˆSB (t), and for which individual-level survival is denoted by ˆS(t | x). The expected absolute difference in survival of the subjects selectable by σA is as, or more, sensitive than the absolute difference of ˆSA(t)
+
+from ˆSB (t),
+
+Ex∼X[ℓ1 
+
+> t
+
+(s(x), s B ) | σA(x) = 1] ≥ ℓ1 
+
+> t
+
+(sA, s B ) ,
+
+where ℓ1 
+
+> t
+
+(·, ·) is an absolute difference measure, and for brevity we write s◦ for ˆS◦(t), and s(x) for ˆS(t | x).Proof. Let Z = s(X) − sB be a random variable. The triangle inequality property of the absolute value function states that 
+
+E[ |Z| ] ≥ | E[Z] | .
+
+It also holds to condition the expectations using the indicator σA(x) = 1 to get 
+
+Ex∼X[ |Z| | σA(x) = 1 ] ≥ | Ex∼X[Z | σA(x) = 1] | .
+
+We substitute the definition of Z into the inequality to get 
+
+Ex∼X[ |s(x) − sB | | σA(x) = 1] ≥ | Ex∼X[s(x) − sB | σA(x) = 1] | .
+
+We use the linearity of the expectation, E[Z + W ] = E[Z] + E[W ], and note that the expectation of the positive constant 
+
+sB is the constant itself to get 
+
+Ex∼X[ |s(x) − sB | | σA(x) = 1 ] ≥ | Ex∼X[s(x) | σA(x) = 1] − sB | .
+
+Lastly, we substitute the definitions of ℓ1 
+
+> t
+
+(·, ·) and sA to arrive at 
+
+Ex∼X[ ℓ1 
+
+> t
+
+(s(x), s B ) | σA(x) = 1 ] ≥ ℓ1 
+
+> t
+
+(sA, s B ) .
+
+11 Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+## B. The S YSURV Algorithm 
+
+In this section, we provide the pseudocode for S YSURV in Alg. 1. Prior to executing S YSURV , we fit a global non-parametric population model to the entire dataset RSF (X, T, ∆) . This gives per-subject survival functions over the discrete domain of unique event times ˆSD (t∗ | X = x(i)) as the matrix M . The rule set R is initialized as ∅ and is populated with subsequently discovered subgroups, up to a user-defined limit. On the subject level x(i), the following steps are applied. First, each feature x(i) 
+
+> j
+
+is binned with learned cut points αj and βj using the soft condition to obtain ˆπ(x(i); α, β, τ ). Next, by means of the weights aj , we combine per-feature conditions ˆπ(x(i) 
+
+> j
+
+) into a conjunction ˆσ(x(i); α, β, a, τ ). Then, we estimate the expected per-subject deviation in survival within the subgroup w.r.t. the overall population according to our objective. In a backwards pass, the soft rule parameters are updated to select a more exceptional subgroup for the remainder of the epochs. We anneal the temperature τ once halfway through the epochs and once three quarters of the way. Note that #events 
+
+denotes the number of unique event times t∗ in D, where t∗ ∈ uniq ({ti ∼ T | δi = 1 }). The M EASURE EXCEPTIONALITY 
+
+algorithm, used in Alg. 1, computes exceptionality using the trapezoidal rule over the absolute differences in survival between each subject and the reference population survival. 
+
+Algorithm 1 LEARN SUBGROUP 
+
+1: Input: design matrix X, population model M , rules R, size penalty γ, initial temperature τ
+
+2: Output: a rule ˆσ that selects an exceptional subgroup 
+
+3: αj ← min Xj
+
+4: βj ← max Xj
+
+5: aj ← 1
+
+6: Initialize soft rule ˆσ(·; α, β, a, τ )
+
+7: SD (t∗) ← 1
+
+> n
+
+Pni=1 S(t∗ | x(i))
+
+8: Exceptionality D (x) ← MEASURE EXCEPTIONALITY (x, M, S D (t∗)) 
+
+9: for e ← 1 to #epochs do 
+
+10: Membership (x) ← ˆσ(x; α, β, a, τ )
+
+11: Size ← 1
+
+> n
+
+Pni=1 Membership (x(i))
+
+12: ˆϕ ← Pni=1 Membership (x(i)) · Exceptionality D (x(i))
+
+13: Weighted ˆϕ ← ˆϕ · Size γ−1
+
+14: Regularizer ← 0
+
+15: for all ˆσg ∈ R do 
+
+16: Size g ← 1
+
+> n
+
+Pni=1 ˆσg (x(i))
+
+17: Sg (t∗) ← 1
+
+> Size g
+
+Pni=1 S(t∗ | x(i)) · ˆσg (x(i))
+
+18: Exceptionality g (x) ← MEASURE EXCEPTIONALITY (x, M, S g (t∗)) 
+
+19: ˆϕg ← Pni=1 Membership (x(i)) · Exceptionality g (x(i))
+
+20: Regularizer ← Regularizer + ˆϕg
+
+21: end for 
+
+22: Regularizer ← Regularizer · Size γg −1
+
+23: loss ← − Weighted ˆϕ − Regularizer 
+
+24: Update the parameters of rule ˆσ to minimize the loss 
+
+25: if (e = # epochs /2) ∨ (e = # epochs · 3/4) then 
+
+26: τ ← τ / 2
+
+27: end if 
+
+28: end for 
+
+29: return ˆσ
+
+Algorithm 2 MEASURE EXCEPTIONALITY 
+
+1: Input: subject covariates x, population model M , reference survival at the event times Sref (t∗)
+
+2: Output: subject survival exceptionality value w.r.t reference 
+
+3: abs diff ← | S(t∗ | x) − Sref (t∗) |
+
+4: return P#events −1 
+
+> u=0
+
+(t∗ 
+
+> u+1
+
+− t∗
+
+> u
+
+)/2 · (abs diff [u] + abs diff [u + 1]) 
+
+12 Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+## C. Rule Pruning 
+
+We provide the pseudocode for our post hoc pruning algorithm that simplifies rules in the presence of collinearity in Alg. 3. The P RUNE RULE algorithm is a greedy procedure for reducing the complexity of learned rules without significantly altering its subject memberships. It begins with a full rule and iteratively identifies the least influential condition and attempts to remove it by setting its weight to zero. The algorithm then evaluates each candidate rule by computing the Jaccard similarity between its membership indicators and those of the full rule. This process continues as long as the similarity remains above a specified threshold, ensuring it still describes, more or less, the same subset of the population. It is to (optionally) be executed after learning a rule using Alg. 1. 
+
+Algorithm 3 PRUNE RULE  
+
+> 1:
+
+Input: design matrix X, learned rule ˆσ, Jaccard similarity threshold (default: 0.95)  
+
+> 2:
+
+Output: pruned rule ˆσprun  
+
+> 3:
+
+ˆσprun ← ˆσ 
+
+> 4:
+
+mask ← ˆσ(X) = 1  
+
+> 5:
+
+while Jaccard (mask , ˆσprun (X) = 1) ≥ threshold do  
+
+> 6:
+
+indices ← { j | ReLU (aˆσprun  
+
+> j
+
+) > 0.1 } 
+
+> 7:
+
+score ⋆ ← 0 
+
+> 8:
+
+idx ⋆ ← null  
+
+> 9:
+
+for each j ∈ indices do  
+
+> 10:
+
+ˆσ′ ← ˆσprun  
+
+> 11:
+
+aˆσ′ 
+
+> j
+
+← 0 
+
+> 12:
+
+score ← Jaccard (mask , ˆσ′(X) = 1)  
+
+> 13:
+
+if score > score ⋆ then  
+
+> 14:
+
+score ⋆ ← score  
+
+> 15:
+
+idx ⋆ ← j 
+
+> 16:
+
+end if  
+
+> 17:
+
+end for  
+
+> 18:
+
+if score ⋆ < threshold then  
+
+> 19:
+
+break  
+
+> 20:
+
+end if  
+
+> 21:
+
+aˆσprun   
+
+> idx ⋆
+
+← 0 
+
+> 22:
+
+end while  
+
+> 23:
+
+return ˆσprun 
+
+13 Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+## D. Statistical Validation 
+
+We provide the pseudocode for building the model of false discoveries (DFD) in Alg. 4. The B UILD DFD algorithm is a statistical validation procedure that quantifies the exceptionality that can be expected by chance. By repeatedly shuffling the survival outcomes relative to the design matrix, the algorithm creates a series of null datasets where no true relationship exists. In each iteration, it runs S YSURV while recording the exceptionality scores obtained from these null datasets. It returns the mean and standard deviation that parametrize a normal distribution of false exceptionalities. This distribution serves as a baseline for judging the significance of discovered subgroups in terms of their exceptionalities, subject to multiple hypothesis testing. For that, we use the Z-test to obtain one-tailed p-values with a nominal alpha cutoff of 0.05. It is to be executed before running Alg. 1. #runs should be no less than 1000. 
+
+Algorithm 4 BUILD DFD  
+
+> 1:
+
+Input: design matrix X, time-to-event T , event indicator ∆, size penality γ, initial temperature τ , number of independent samples #runs (default: 1000), number of desired subgroups m (default: 1)  
+
+> 2:
+
+Output: parameters of the Guassian representing the distribution of false discoveries, mean μ, and standard deviation η 
+
+> 3:
+
+scores ← ∅  
+
+> 4:
+
+indices ← { 1, . . . , n } 
+
+> 5:
+
+permutations ← { Pr | Pr is a random permutation of indices , r = 1 . . . #runs } 
+
+> 6:
+
+for each Pr ∈ P do  
+
+> 7:
+
+T ′ ← T [Pr ] 
+
+> 8:
+
+∆′ ← ∆[ Pr ] 
+
+> 9:
+
+M ← RSF (X, T ′, ∆′) 
+
+> 10:
+
+R ← ∅  
+
+> 11:
+
+for {1, . . . , m } do  
+
+> 12:
+
+R ← { R ∪ LEARN SUBGROUP (X, M, R, γ, τ )} 
+
+> 13:
+
+end for  
+
+> 14:
+
+scores ← { scores ∪ max( { ˆϕ | ˆϕ is the exceptionality of each rule ˆσ ∈ R})} 
+
+> 15:
+
+end for  
+
+> 16:
+
+μ ← mean (scores ) 
+
+> 17:
+
+η ← std (scores ) 
+
+> 18:
+
+return μ, η 
+
+14 Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+## E. Hyperparameters of S YSURV and Baselines 
+
+In this section, we discuss the hyperparameter choices for S YSURV and the baselines used in our experiments. 
+
+SYSURV 
+
+We have two core hyperparameters ( γ and τ ) in S YSURV , and some more dictated by the choice of the regression model. The most important parameter is γ. Tuning γ is crucial for steering the rules towards selecting subgroups of a desired size range. Values of γ range from 0.0 (very small subgroup) to 1.0 (a very large subgroup). For our experiments, we optimize γ and found that γ ∈ [0 , 0.2] was almost always selected. As for τ , we found that τ = 0 .2 worked well across settings and datasets. We have secondary parameters, namely, the number of epochs and the learning rate used for stochastic optimization. Generally, 1000 epochs paired with a learning rate of 0.01 ensured stable convergence. In this work, we instantiated S YSURV using Random Survival Forests, but in theory it can be done using any non-parametric continuous-time regression model. We do not sample features for each tree, despite the computational cost, to avoid missing important features. However, we do sample subjects, especially when n is very large. To train the RSF, we used 100 trees (300 for the case study, to account for its rather small dataset sizes), a maximum depth equal to double the number of features, and a maximum of 2000 subjects per tree. A rule of thumb for getting a reliable splitting is to have at least 10-20 events in a cohort. As such, we set the minimum number of subjects to split to 40 and, correspondingly, the minimum number of subjects in a leaf to 20. 
+
+Baselines 
+
+We use the implementations of the baselines as provided by their authors. We take the top-5 subgroups discovered by each baseline for evaluation. We preprocess the data in the same way for each of the baselines. This only involves the use of a 
+
+k-bin discretizer for continuous features using k = 5 and the quantile strategy. 
+
+## F. Computational Complexity of S YSURV 
+
+Modern implementations of RSFs are efficient. Nevertheless, fitting the population model requires the most time. During training, we have a computational complexity of O(# trees · N · V · d/ #cores ). #trees is fixed, N is the number of subjects assigned to a tree, V is the number of features considered for splitting, d is the tree depth, and #cores is also fixed. After training, the computational complexity of predicting on the entire dataset is O(# trees · N · d/ #cores ), which happens only once, and the results are saved. During learning, the computatonal complexity is O(# epochs · N · V ), where #epochs is fixed. We omit this in Alg. 1, but we save unchanging data structures for efficiency. All of the computations are done using highly optimized matrix operations through specialized libraries. 15 Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+## G. Survival Data Generation 
+
+In Alg. 5, we provide the pseudocode for, M AKE SURVIVAL DATA , the routine we use for generating synthetic survival data. MAKE SURVIVAL DATA embeds a hidden subgroup within a larger population. It selects k features to define a hyper-box, or 
+
+target , region in the feature space and partitions subjects based on whether their features fall within these bounds. It assigns subjects different Weibull-distributed event times based on their subgroup status, while also incorporating a linear covariate influence for variability. It also validates the resulting scales and adjusts them such that they are always positive and do not overlap between the subgroup and the population. Finally, it applies a censoring mechanism to a percentage of the subjects, where censored subjects have their event times drawn uniformly between 0 and their true event time. 
+
+Algorithm 5 MAKE SURVIVAL DATA  
+
+> 1:
+
+Input: number of samples n, number of covariates p, number of true conditions k, Weibull scale of non-subgroup subjects scale nsg , Weibull shape of non-subgroup subjects shape nsg , Weibull scale of subgroup subjects scale sg ,Weibull shape of subgroup subjects shape sg , percentage of subjects in the subgroup ratio target , percentage of censored subject outcomes ratio cens  
+
+> 2:
+
+Output: synthetic design matrix X, synthetic time-to-event T , synthetic event indicator ∆ 
+
+> 3:
+
+V ← Sample (p, k, without replacement ) 
+
+> 4:
+
+ϵ ← k
+
+√ratio target  
+
+> 5:
+
+for j ← 1 to k do  
+
+> 6:
+
+αj ∼ Uniform (0 , 1 − ϵ) 
+
+> 7:
+
+end for  
+
+> 8:
+
+X ∼ Uniform (0 , 1) n×p 
+
+> 9:
+
+for j ← 1 to k do  
+
+> 10:
+
+Xsg [: , j ] ∼ Uniform (αi, α i + ϵ)n 
+
+> 11:
+
+Xnsg [: , j ] ∼ Uniform (0 , 1) n 
+
+> 12:
+
+while ∃ xnsg [j] | αj ≤ xnsg [j] ≤ αj + ϵ do  
+
+> 13:
+
+Xnsg [: , j ] ∼ Uniform (0 , 1) n 
+
+> 14:
+
+end while  
+
+> 15:
+
+end for  
+
+> 16:
+
+σ ∼ Bernoulli (ratio target )n 
+
+> 17:
+
+for j ← 1 to k do  
+
+> 18:
+
+X[σ = 1 , v j ] ← Xsg [σ = 1 , j ] 
+
+> 19:
+
+X[σ = 0 , v j ] ← Xnsg [σ = 0 , j ] 
+
+> 20:
+
+end for  
+
+> 21:
+
+N0 ← Pkj=1 X[: , v j ] − k/ 2 
+
+> 22:
+
+ψ ← 1 
+
+> 23:
+
+scale sg ← scale sg + N0 · ψ 
+
+> 24:
+
+scale nsg ← scale nsg + N0 · ψ 
+
+> 25:
+
+while min (scale sg ) < 0 ∨ min (scale nsg ) < 0 ∨ | Supp (scale nsg ) ∩ Supp (scale sg )| > 0 do  
+
+> 26:
+
+ψ ← ψ · 0.9 
+
+> 27:
+
+end while  
+
+> 28:
+
+Ysg ← scale sg · Weibull (shape sg , 1)  
+
+> 29:
+
+Ynsg ← scale nsg · Weibull (shape nsg , 1)  
+
+> 30:
+
+Y [σ = 1] ← Ysg [σ = 1]  
+
+> 31:
+
+Y [σ = 0] ← Ynsg [σ = 0]  
+
+> 32:
+
+∆ ∼ Bernoulli (1 − ratio cens ) 
+
+> 33:
+
+T [∆ = 0] ∼ Uniform (0 , Y [∆ = 0])  
+
+> 34:
+
+T [∆ = 1] ← Y [∆ = 1]  
+
+> 35:
+
+return X, T , ∆
+
+16 Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+10 1 10 2 10 3
+
+1
+
+2
+
+3
+
+4
+
+0
+
+5
+
+Number of features p
+
+> Runtime (h)
+
+0.2 1.0 1.8 
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+00
+
+1
+
+0
+
+Population-Subgroup hazard ratio 
+
+> F1-score
+
+SYSURV RULE KIT ESMAM DS FIBERS 
+
+210 212 214 
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+00
+
+1
+
+0
+
+Number of subjects n
+
+> F1-score
+
+Figure 7. Synthetic setting. Comparison of S YSURV and each of R ULE KIT , E SMAM DS, and F IBERS in terms of runtime recovering planted subgroups with increasingly large datasets (Left) . Lower is better. Also, in terms of F1-score, comparisons between S YSURV and baselines under varying population-subgroup hazard ratios (Center) , where the hazard ratio indicates the rate by which the population outsurvives the subgroup, or vice versa, and increasingly large datasets (Right) . Higher is better. The shaded areas show ±1 standard error over 10 runs. E SMAM DS is the closest competitor to S YSURV closely followed by R ULE KIT .
+
+## H. Additional Results 
+
+In this section, we provide additional experimental results on our synthetic benchmark, where we vary different aspects of the data and subgroup generation processes. Also, we provide additional results from our real-world data regarding subgroup sizes found by each method. Lastly, we provide the full rules discovered in our case study along with their pruned versions. 
+
+Synthetic Data 
+
+We assess the runtimes of S YSURV and each of baselines from our scalability experiment in Fig. 4 (left). In Fig. 7 (left), we see that all of the methods have consistent runtimes with the exception of E SMAM DS, which varies quite a lot as the number of dimensions increases. Expectedly, E SMAM DS and R ULE KIT require increasingly more time unlike S YSURV and F IBERS .We attribute some of the increase in runtime of S YSURV to learning the population model, which varies with the choice of the regressor. Overall, S YSURV is the fastest method when factoring in retrieval performance. E SMAM DS is the closest competitor but needs around 4 times more time for 1000 features. Next, we assess the retrieval performance of each method under varying population-subgroup hazard ratios in Fig. 7 (center). The hazard ratio indicates the rate by which the population outsurvives the subgroup, or vice versa. We can see that S YSURV 
+
+consistently outperforms all baselines across all hazard ratios. As the hazard ratio approaches 1.0, the retrieval performance of all methods degrades since the survival distributions of the subgroup and population become increasingly similar. Lastly, we assess the retrieval performance of each method under increasingly large datasets in Fig. 7 (right). We see that SYSURV consistently outperforms all baselines across all dataset sizes. As the dataset size increases, the stability of S YSURV 
+
+improves, since more data is available to learn from. 17 Learning and Naming Subgroups with Exceptional Survival Characteristics                                                                                                         
+
+> Table 2. Average subgroup sizes per method across real-world datasets having nsubjects, pfeatures, and Cens.% censoring percentages.
+> nSYSURV RULE KIT ESMAM DSFIBERS pCens.% UnempDur 3241 112.0 1620.5 1620.5 1585.6 738.7% Nwtco 4028 168.0 2014.0 1490.0 4027.0 14 85.8% Rott2 2982 320.0 1825.7 1007.2 1210.6 18 57.3% Rdata 1040 140.0 520.0 268.8 503.2 847.4% Aids2 2839 306.0 1342.6 503.7 2834.0 15 37.9% Dialysis 6805 2665.0 4095.7 2636.8 2568.6 74 76.4% TRACE 1878 1878.0 1113.5 657.3 1877.0 10 48.9% Support2 9105 33.0 265.0 204.8 451.0 76 47.1% DataDIVAT2 1837 63.0 918.5 720.7 870.2 768.3% ProstateSurv. 14294 1840.0 7147.0 5666.5 11127.2 994.4% Actg 1151 38.0 445.0 334.6 1149.0 24 91.6% Scania 1931 122.0 729.6 431.2 1272.2 12 43.7% Grace 1000 33.0 500.0 321.0 760.2 767.5%
+
+Real-World Data 
+
+In Table 2, we present the average subgroup sizes discovered by each method across datasets in our real-world experiments. We can see that S YSURV consistently discovers much smaller subgroups than all baselines. This is expected since S YSURV 
+
+directly optimizes for subgroup size via the size penalty γ. In contrast, the baselines do not have a direct mechanism for controlling subgroup size, leading to larger subgroups. 
+
+Case Study 
+
+We present in Tables 3 and 4 examples of rules for the primary resp. postoperative RCT cohorts from our case study. We also present the corresponding pruned rules, which describe subgroups whose Jaccard similarities in terms of the membership indicators to the original subgroups are no less than the threshold of 0.95. We also provide the resulting changes in subgroup size and exceptionality. For this, we use the post hoc pruning algorithm P RUNE RULE , which we introduce in Alg. 3. We can see that the rules are reduced to a combination of a handful of conditions after pruning. In the very first rule, we see a drastic reduction in rule size. This goes to show how the problem of collinearity is amplified when n ≈ p, when in reality, rules having only a handful of conditions could suffice. Nevertheless, this post hoc pruning method cannot narrow down the predicates to those that, in the gene expression case, activate the rest of the genes in the same gene signature. 18 Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+Table 3. Rules learned on the primary RCT cohort before and after pruning using a Jaccard similarity threshold of 0.95 for membership indicators along with the respective changes in subgroup sizes and exceptionality. 
+
+Original rule Pruned rule Changes 
+
+“ACTN1 ∈ [−3.3, −0.9] ∧ AKT1 ∈ [−3.6, −1.9] ∧
+
+ALDH3A1 ∈ [−8.9, −1.4] ∧ ANLN ∈ [−4.3, −2.2] ∧
+
+BCL2L1 ∈ [−7.2, −5.3] ∧ BNIP3L ∈ [−3.0, −0.6] ∧
+
+CAV1 ∈ [−4.4, −1.1] ∧ CDKN3 ∈ [−4.5, −2.5] ∧
+
+CXCL12 ∈ [−8.2, −2.6] ∧DCBLD1 ∈ [−6.9, −4.7] ∧
+
+ERBB2 ∈ [−1.9, 0.7] ∧ ERBB3 ∈ [−7.0, −2.9] ∧
+
+GNAI1 ∈ [−5.2, −0.0] ∧ IGF1R ∈ [−3.5, −0.9] ∧
+
+LOX ∈ [−6.4, −3.3] ∧ MTOR ∈ [−3.2, −2.3] ∧
+
+NOTCH1 ∈ [−4.9, −2.6] ∧ PLAU ∈ [−4.5, −1.2] ∧
+
+RB1 ∈ [−3.8, −2.4] ∧ RELA ∈ [−3.2, −1.8] ∧
+
+RFC4 ∈ [−4.6, −1.6] ∧ RPA2 ∈ [−4.0, −2.1] ∧
+
+SNAI1 ∈ [−6.9, −3.3] ∧ TCF3 ∈ [−3.2, −1.3] ∧
+
+TGFB1 ∈ [−2.6, −1.0] ∧ TPI1 ∈ [−7.2, −5.3] ∧
+
+XPA ∈ [−4.7, −1.6] ∧ XRCC1 ∈ [−4.2, −2.6] ”“CDKN3 ∈ [−4.5, −2.5] ∧ ERBB2 ∈ [−1.9, 0.7] ∧
+
+LOX ∈ [−6.4, −3.3] ∧RB1 ∈ [−3.8, −2.4] ∧RPA2 ∈
+
+[−4.0, −2.1] ∧ TGFB1 ∈ [−2.6, −1.0] ”
+
+Subgroup size: 6 → 6
+
+Exceptionality: 
+
+19 .1051 → 19 .1037 
+
+“AKT1 ∈ [−3.2, −1.2] ∧ALDH1A1 ∈ [−8.1, −2.3] ∧
+
+ASS1 ∈ [−4.4, −0.4] ∧ CENPK ∈ [−6.1, −4.4] ∧
+
+CHEK2 ∈ [−5.5, −3.8] ∧ CXCR4 ∈ [−6.6, −2.8] ∧
+
+CYP1B1 ∈ [−11 .3, −4.5] ∧ ERBB3 ∈ [−5.5, −3.5] ∧
+
+ERBB4 ∈ [−10 .6, −7.6] ∧ FGFR3 ∈ [−7.1, −3.1] ∧
+
+FOSL1 ∈ [−5.3, −0.7] ∧ GNAI1 ∈ [−3.2, −0.4] ∧
+
+GPI ∈ [−2.0, 0.2] ∧ HIF1A ∈ [−6.8, −4.7] ∧
+
+KDR ∈ [−5.5, −3.5] ∧ LDHA ∈ [−6.9, −4.3] ∧
+
+LGALS1 ∈ [−2.6, 1.0] ∧ LIMD1 ∈ [−6.2, −4.7] ∧
+
+LOX ∈ [−4.1, −0.9] ∧ MCM6 ∈ [−5.9, −3.7] ∧
+
+MET ∈ [−5.3, −2.8] ∧ MMP7 ∈ [−9.2, −3.4] ∧
+
+MYC ∈ [−2.8, 0.3] ∧ NBN ∈ [−3.7, −2.7] ∧ PDK1 ∈
+
+[−4.9, −3.5] ∧ PFKFB3 ∈ [−3.9, −0.7] ∧ RASSF6 ∈
+
+[−7.6, −5.0] ∧ RB1 ∈ [−4.4, −2.5] ∧ SYK ∈
+
+[−6.0, −3.9] ∧ SYNGR3 ∈ [−8.9, −4.7] ∧ TPI1 ∈
+
+[−7.2, −4.8] ∧ XRCC1 ∈ [−5.4, −3.4] ∧ CD44 ∈
+
+[−0.1, 2.1] ”“ALDH1A1 ∈ [−8.1, −2.3] ∧ ASS1 ∈ [−4.4, −0.4] ∧
+
+CYP1B1 ∈ [−11 .3, −4.5] ∧ ERBB3 ∈ [−5.5, −3.5] ∧
+
+ERBB4 ∈ [−10 .6, −7.6] ∧ FOSL1 ∈ [−5.3, −0.7] ∧
+
+GNAI1 ∈ [−3.2, −0.4] ∧ GPI ∈ [−2.0, 0.2] ∧
+
+HIF1A ∈ [−6.8, −4.7] ∧ KDR ∈ [−5.5, −3.5] ∧
+
+LDHA ∈ [−6.9, −4.3] ∧ LGALS1 ∈ [−2.6, 1.0] ∧
+
+LIMD1 ∈ [−6.2, −4.7] ∧ LOX ∈ [−4.1, −0.9] ∧
+
+MCM6 ∈ [−5.9, −3.7] ∧ MET ∈ [−5.3, −2.8] ∧
+
+MMP7 ∈ [−9.2, −3.4] ∧MYC ∈ [−2.8, 0.3] ∧NBN ∈
+
+[−3.7, −2.7] ∧ PDK1 ∈ [−4.9, −3.5] ∧ PFKFB3 ∈
+
+[−3.9, −0.7] ∧ RASSF6 ∈ [−7.6, −5.0] ∧ RB1 ∈
+
+[−4.4, −2.5] ∧ SYK ∈ [−6.0, −3.9] ∧ SYNGR3 ∈
+
+[−8.9, −4.7] ∧ TPI1 ∈ [−7.2, −4.8] ∧ XRCC1 ∈
+
+[−5.4, −3.4] ∧ CD44 ∈ [−0.1, 2.1] ”
+
+Subgroup size: 12 → 12 
+
+Exceptionality: 
+
+16 .6102 → 16 .6079 
+
+“ADM ∈ [−5.3, −0.8] ∧ AKT1 ∈ [−3.6, −1.7] ∧
+
+ALDH3A1 ∈ [−8.9, −0.5] ∧ ANLN ∈ [−4.3, −2.8] ∧
+
+ASS1 ∈ [−4.9, −0.0] ∧ ATP5G3 ∈ [−1.3, 1.4] ∧
+
+ATR ∈ [−5.9, −3.8] ∧ BCL2L1 ∈ [−7.8, −4.9] ∧
+
+BIRC5 ∈ [−4.7, −1.0] ∧ CAV1 ∈ [−4.4, 0.3] ∧
+
+CDKN3 ∈ [−5.9, −2.5] ∧ CLDN4 ∈ [−5.0, −0.6] ∧
+
+CXCL12 ∈ [−8.2, −3.2] ∧ ERBB3 ∈ [−6.3, −3.2] ∧
+
+ERCC5 ∈ [−5.2, −3.6] ∧ FAM83B ∈ [−7.4, −1.7] ∧
+
+FLT1 ∈ [−5.7, −3.1] ∧ GNAI1 ∈ [−5.2, −0.2] ∧
+
+IGF1R ∈ [−3.5, −0.6] ∧ INHBA ∈ [−4.4, 1.9] ∧
+
+KDR ∈ [−5.5, −2.8] ∧ LDHA ∈ [−7.5, −5.7] ∧
+
+LGALS1 ∈ [−2.1, 1.0] ∧ LOX ∈ [−6.4, −1.4] ∧
+
+MDM2 ∈ [−4.6, −2.2] ∧ MMP13 ∈ [−9.3, 1.3] ∧
+
+MRE11A ∈ [−6.1, −3.6] ∧ MTOR ∈ [−3.7, −2.3] ∧
+
+NOTCH1 ∈ [−5.9, −2.6] ∧ P4HA2 ∈ [−4.7, −1.4] ∧
+
+PSMD9 ∈ [−4.2, −2.1] ∧ PTEN ∈ [−7.3, −5.6] ∧
+
+RAD23B ∈ [−0.9, 0.8] ∧ RB1 ∈ [−3.8, −2.3] ∧
+
+RPA2 ∈ [−4.9, −2.1] ∧ SERPINB2 ∈ [−6.6, −1.2] ∧
+
+TCF3 ∈ [−3.5, −1.0] ∧ TGFB1 ∈ [−2.6, −0.3] ∧
+
+TPI1 ∈ [−7.2, −5.0] ∧ XRCC1 ∈ [−5.3, −2.6] ∧
+
+XRCC5 ∈ [−2.5, −0.8] ∧ CD44 ∈ [−0.8, 2.5] ”“ANLN ∈ [−4.3, −2.8] ∧ ATR ∈ [−5.9, −3.8] ∧
+
+CLDN4 ∈ [−5.0, −0.6] ∧ CXCL12 ∈ [−8.2, −3.2] ∧
+
+ERBB3 ∈ [−6.3, −3.2] ∧ ERCC5 ∈ [−5.2, −3.6] ∧
+
+LDHA ∈ [−7.5, −5.7] ∧ LGALS1 ∈ [−2.1, 1.0] ∧
+
+MDM2 ∈ [−4.6, −2.2] ∧ MTOR ∈ [−3.7, −2.3] ∧
+
+PTEN ∈ [−7.3, −5.6] ∧ RAD23B ∈ [−0.9, 0.8] ∧
+
+RB1 ∈ [−3.8, −2.3] ∧ SERPINB2 ∈ [−6.6, −1.2] ∧
+
+TCF3 ∈ [−3.5, −1.0] ∧ TGFB1 ∈ [−2.6, −0.3] ∧
+
+TPI1 ∈ [−7.2, −5.0] ”
+
+Subgroup size: 28 → 29 
+
+Exceptionality: 
+
+16 .0098 → 15 .7934 
+
+“AKT1 ∈ [−3.6, −1.5] ∧ALDH3A1 ∈ [−8.9, −0.5] ∧
+
+ANLN ∈ [−4.5, −2.6] ∧ ASS1 ∈ [−4.9, −0.0] ∧
+
+ATP5G3 ∈ [−1.3, 1.7] ∧ ATR ∈ [−5.9, −3.7] ∧
+
+BCL2L1 ∈ [−7.7, −5.0] ∧ BIRC5 ∈ [−5.3, −1.3] ∧
+
+BNIP3L ∈ [−3.1, −0.6] ∧ CAV1 ∈ [−4.4, 0.4] ∧
+
+CDKN3 ∈ [−5.8, −2.5] ∧ CLDN4 ∈ [−5.0, −0.7] ∧
+
+CXCL12 ∈ [−8.2, −2.2] ∧ ERBB3 ∈ [−6.2, −3.2] ∧
+
+ERBB4 ∈ [−10 .6, −7.4] ∧ ERCC5 ∈ [−5.2, −3.6] ∧
+
+FAM83B ∈ [−6.8, −1.6] ∧ GNAI1 ∈ [−5.2, −0.2] ∧
+
+HIF1A ∈ [−7.7, −4.7] ∧ IGF1R ∈ [−3.5, −0.6] ∧
+
+INHBA ∈ [−4.8, 1.8] ∧ KDR ∈ [−5.5, −3.6] ∧
+
+LDHA ∈ [−7.5, −5.3] ∧ LGALS1 ∈ [−2.6, 1.0] ∧
+
+LOX ∈ [−6.4, −1.7] ∧ MCM6 ∈ [−5.9, −3.0] ∧
+
+MMP13 ∈ [−9.3, 1.3] ∧ MRGBP ∈ [−5.0, −2.8] ∧
+
+MTOR ∈ [−3.8, −2.3] ∧ P4HA2 ∈ [−4.7, −1.4] ∧
+
+PDK1 ∈ [−4.9, −2.3] ∧ PGAM1 ∈ [−2.6, −0.7] ∧
+
+PSMD9 ∈ [−4.2, −2.0] ∧ PTEN ∈ [−7.3, −5.5] ∧
+
+RAD23B ∈ [−0.8, 0.8] ∧ RB1 ∈ [−3.9, −2.3] ∧
+
+TCF3 ∈ [−3.4, −1.4] ∧ TGFB1 ∈ [−2.6, −0.0] ∧
+
+TP53 ∈ [−4.3, −1.0] ∧ TPI1 ∈ [−7.2, −4.9] ∧
+
+CD44 ∈ [−0.4, 2.1] ”“ALDH3A1 ∈ [−8.9, −0.5] ∧ CLDN4 ∈
+
+[−5.0, −0.7] ∧ ERBB3 ∈ [−6.2, −3.2] ∧ ERBB4 ∈
+
+[−10 .6, −7.4] ∧ HIF1A ∈ [−7.7, −4.7] ∧ LDHA ∈
+
+[−7.5, −5.3] ∧ MMP13 ∈ [−9.3, 1.3] ∧ MRGBP ∈
+
+[−5.0, −2.8] ∧ P4HA2 ∈ [−4.7, −1.4] ∧ PDK1 ∈
+
+[−4.9, −2.3] ∧ PGAM1 ∈ [−2.6, −0.7] ∧ PTEN ∈
+
+[−7.3, −5.5] ∧ RAD23B ∈ [−0.8, 0.8] ∧ TP53 ∈
+
+[−4.3, −1.0] ∧ TPI1 ∈ [−7.2, −4.9] ”
+
+Subgroup size: 25 → 26 
+
+Exceptionality: 
+
+15 .8073 → 15 .2069 
+
+19 Learning and Naming Subgroups with Exceptional Survival Characteristics 
+
+Table 4. Rules learned on the postoperative RCT cohort before and after pruning using a Jaccard similarity threshold of 0.95 for membership indicators along with the respective changes in subgroup sizes and exceptionality. 
+
+Original rule Pruned rule Changes 
+
+“ALDH1A1 ∈ [−7.0, −3.2] ∧ BCL2L1 ∈
+
+[−6.9, −5.5] ∧ BIRC5 ∈ [−4.6, −1.6] ∧ BNIP3L ∈
+
+[−2.5, −1.1] ∧ CA9 ∈ [−9.0, −4.4] ∧ CBX4 ∈
+
+[−5.3, −3.7] ∧ CLDN4 ∈ [−5.3, −1.3] ∧ CXCL12 ∈
+
+[−5.2, −1.1] ∧ EGLN3 ∈ [−4.4, −0.9] ∧ ENO1 ∈
+
+[−0.2, 1.2] ∧ ENO2 ∈ [−5.8, −2.4] ∧ EPHA1 ∈
+
+[−7.2, −4.6] ∧ GPI ∈ [−1.7, −0.2] ∧ HSPB1 ∈
+
+[−4.0, −2.0] ∧ ITGB2 ∈ [−4.7, −2.3] ∧
+
+KCTD11 ∈ [−2.3, 0.1] ∧ MAP2K2 ∈
+
+[−4.3, −3.3] ∧ MCM6 ∈ [−5.8, −4.0] ∧ MMP13 ∈
+
+[−1.9, 1.7] ∧ MMP9 ∈ [−2.7, 0.6] ∧ MPRS17 ∈
+
+[−5.0, −1.2] ∧ PFKFB3 ∈ [−2.7, −0.2] ∧ PTEN ∈
+
+[−6.6, −5.1] ∧ RAD23B ∈ [−1.0, 0.9] ∧ RB1 ∈
+
+[−5.0, −2.5] ∧ RELA ∈ [−2.9, −1.6] ∧ SERPINB2 ∈
+
+[−7.6, −2.6] ∧ SLC5A1 ∈ [−9.9, −3.6] ∧ TCF3 ∈
+
+[−3.8, −2.3] ∧ XRCC1 ∈ [−5.2, −3.2] ∧ XRCC4 ∈
+
+[−6.1, −4.2] ∧ XRCC5 ∈ [−2.1, −0.6] ”“EPHA1 ∈ [−7.2, −4.6] ∧ GPI ∈ [−1.7, −0.2] ∧
+
+KCTD11 ∈ [−2.3, 0.1] ∧ MAP2K2 ∈ [−4.3, −3.3] ∧
+
+MMP13 ∈ [−1.9, 1.7] ∧ MMP9 ∈ [−2.7, 0.6] ∧
+
+XRCC5 ∈ [−2.1, −0.6] ”
+
+Subgroup size: 12 → 12 
+
+Exceptionality: 
+
+27 .8189 → 27 .7435 
+
+“ANXA5 ∈ [−3.0, −0.9] ∧ ATM ∈ [−3.8, −1.6] ∧
+
+ATP5G3 ∈ [−1.1, 1.0] ∧ BNIP3 ∈ [−6.1, −2.6] ∧
+
+BSG ∈ [−9.4, −5.4] ∧ CD24 ∈ [−8.8, −4.5] ∧
+
+CXCL12 ∈ [−6.2, −1.3] ∧DCBLD1 ∈ [−7.5, −4.5] ∧
+
+DKK3 ∈ [−5.3, −1.4] ∧ FANCA ∈ [−6.7, −3.1] ∧
+
+FN1 ∈ [−4.6, 1.8] ∧ HIF1A ∈ [−7.1, −4.6] ∧ HK2 ∈
+
+[−6.7, −2.6] ∧ HSPA4 ∈ [−3.9, −2.2] ∧ INHBA ∈
+
+[−7.9, −1.3] ∧ ITGB1 ∈ [−2.5, −0.1] ∧ KRT17 ∈
+
+[−3.2, 2.8] ∧ LGALS1 ∈ [−3.4, −0.2] ∧ LOXL2 ∈
+
+[−6.4, −3.0] ∧ MCM6 ∈ [−5.3, −2.5] ∧ MDM2 ∈
+
+[−4.3, −0.7] ∧ MMP10 ∈ [−9.7, −1.8] ∧ MMP13 ∈
+
+[−10 .4, −2.8] ∧ MMP2 ∈ [−5.0, −0.5] ∧ MTOR ∈
+
+[−3.9, −2.3] ∧ MYC ∈ [−3.7, −0.6] ∧ MYNN ∈
+
+[−5.1, −3.0] ∧ NR1D2 ∈ [−4.9, −2.3] ∧ P4HA2 ∈
+
+[−5.1, −2.4] ∧ PSMD9 ∈ [−4.3, −2.2] ∧ RMI2 ∈
+
+[−5.1, −2.9] ∧ RPA2 ∈ [−4.5, −2.1] ∧ SFN ∈
+
+[−1.6, 3.1] ∧ SLC3A2 ∈ [−4.3, −2.3] ∧ SMDT1 ∈
+
+[−3.9, −2.2] ∧ SNAI1 ∈ [−7.6, −3.8] ∧ SPP1 ∈
+
+[−9.0, −3.9] ∧ TCF3 ∈ [−4.0, −2.1] ∧ TP53 ∈
+
+[−3.8, −1.0] ∧ XRCC4 ∈ [−5.2, −3.5] ∧ XRCC5 ∈
+
+[−2.8, −0.9] ∧ YAP1 ∈ [−3.6, −0.2] ”“ATM ∈ [−3.8, −1.6] ∧ HIF1A ∈ [−7.1, −4.6] ∧
+
+KRT17 ∈ [−3.2, 2.8] ∧ MMP13 ∈ [−10 .4, −2.8] ∧
+
+MMP2 ∈ [−5.0, −0.5] ∧ PSMD9 ∈ [−4.3, −2.2] ∧
+
+RMI2 ∈ [−5.1, −2.9] ∧ SNAI1 ∈ [−7.6, −3.8] ∧
+
+XRCC4 ∈ [−5.2, −3.5] ∧ YAP1 ∈ [−3.6, −0.2] ”
+
+Subgroup size: 47 → 45 
+
+Exceptionality: 
+
+12 .0529 → 11 .9264 
+
+“ALDH1A1 ∈ [−7.0, −3.4] ∧ BSG ∈ [−8.9, −3.9] ∧
+
+CA9 ∈ [−9.5, −4.5] ∧ CBX4 ∈ [−5.3, −3.7] ∧
+
+CLDN4 ∈ [−4.9, −0.4] ∧ CXCL12 ∈ [−4.3, −1.5] ∧
+
+ENO1 ∈ [−0.3, 1.2] ∧ ENO2 ∈ [−5.8, −2.4] ∧
+
+EPHA1 ∈ [−7.2, −4.6] ∧ EPOR ∈ [−10 .2, −6.6] ∧
+
+ERCC5 ∈ [−5.2, −3.0] ∧ HIF1A ∈ [−5.7, −3.7] ∧
+
+LOX ∈ [−2.9, −1.0] ∧ MMP9 ∈ [−2.8, 0.6] ∧
+
+MYNN ∈ [−5.2, −2.8] ∧ PGK1 ∈ [−2.0, −0.2] ∧
+
+PTEN ∈ [−6.5, −5.1] ∧ RAD23B ∈ [−1.0, 1.1] ∧
+
+RAD50 ∈ [−3.6, −1.6] ∧ RB1 ∈ [−5.0, −2.4] ∧
+
+SLC5A1 ∈ [−10 .0, −3.3] ∧ TCF3 ∈ [−4.0, −2.1] ∧
+
+XRCC1 ∈ [−5.2, −4.1] ∧ XRCC4 ∈ [−6.2, −4.1] ∧
+
+XRCC5 ∈ [−2.2, −1.0] ”“ALDH1A1 ∈ [−7.0, −3.4] ∧ CA9 ∈ [−9.5, −4.5] ∧
+
+CBX4 ∈ [−5.3, −3.7] ∧ ENO1 ∈ [−0.3, 1.2] ∧
+
+EPHA1 ∈ [−7.2, −4.6] ∧ LOX ∈ [−2.9, −1.0] ∧
+
+MMP9 ∈ [−2.8, 0.6] ∧ MYNN ∈ [−5.2, −2.8] ∧
+
+SLC5A1 ∈ [−10 .0, −3.3] ∧ TCF3 ∈ [−4.0, −2.1] ∧
+
+XRCC1 ∈ [−5.2, −4.1] ”
+
+Subgroup size: 12 → 12 
+
+Exceptionality: 
+
+27 .4009 → 26 .0718 
+
+“ATM ∈ [−4.7, −1.6] ∧ BIRC5 ∈ [−4.2, −1.0] ∧
+
+BNIP3L ∈ [−3.2, −1.2] ∧ BSG ∈ [−9.2, −3.9] ∧
+
+CA9 ∈ [−10 .7, −2.9] ∧ CBX4 ∈ [−5.3, −3.1] ∧
+
+CD24 ∈ [−8.3, −4.5] ∧ CDKN3 ∈ [−6.1, −2.7] ∧
+
+CXCL12 ∈ [−7.5, −2.0] ∧DCBLD1 ∈ [−7.5, −4.5] ∧
+
+ENO2 ∈ [−6.2, −2.4] ∧ ERCC5 ∈ [−5.7, −3.0] ∧
+
+HK2 ∈ [−6.7, −2.2] ∧ HSPA4 ∈ [−4.0, −2.2] ∧
+
+KDR ∈ [−6.0, −2.4] ∧ KRT17 ∈ [−3.0, 5.1] ∧
+
+LOX ∈ [−7.1, −1.5] ∧ LOXL2 ∈ [−6.4, −1.8] ∧
+
+MCM6 ∈ [−4.8, −2.5] ∧ MME ∈ [−9.6, −4.0] ∧
+
+MRE11A ∈ [−6.1, −4.0] ∧ MTOR ∈ [−4.2, −2.3] ∧
+
+MYC ∈ [−3.7, −0.5] ∧ MYNN ∈ [−5.0, −2.3] ∧
+
+NBN ∈ [−3.9, −1.6] ∧ NOTCH1 ∈ [−6.3, −1.9] ∧
+
+RAD23B ∈ [−1.4, 1.1] ∧ RAD50 ∈ [−4.0, −1.6] ∧
+
+RASSF6 ∈ [−8.1, −1.6] ∧ RB1 ∈ [−5.0, −2.3] ∧
+
+RELA ∈ [−3.5, −1.4] ∧ SDHA ∈ [−6.2, −2.9] ∧
+
+SERPINB2 ∈ [−8.0, −0.6] ∧ TCF3 ∈ [−3.9, −2.1] ∧
+
+TP53 ∈ [−5.0, −1.0] ∧ XPA ∈ [−5.3, −2.6] ∧ XPC ∈
+
+[−5.7, −3.7] ∧ XRCC1 ∈ [−5.2, −2.5] ∧ XRCC4 ∈
+
+[−5.8, −3.5] ∧ XRCC5 ∈ [−2.8, −0.8] ”“BIRC5 ∈ [−4.2, −1.0] ∧ BSG ∈ [−9.2, −3.9] ∧
+
+CA9 ∈ [−10 .7, −2.9] ∧ CD24 ∈ [−8.3, −4.5] ∧
+
+DCBLD1 ∈ [−7.5, −4.5] ∧ LOX ∈ [−7.1, −1.5] ∧
+
+LOXL2 ∈ [−6.4, −1.8] ∧ MCM6 ∈ [−4.8, −2.5] ∧
+
+MME ∈ [−9.6, −4.0] ∧ MTOR ∈ [−4.2, −2.3] ∧
+
+MYC ∈ [−3.7, −0.5] ∧ MYNN ∈ [−5.0, −2.3] ∧
+
+RB1 ∈ [−5.0, −2.3] ∧TCF3 ∈ [−3.9, −2.1] ∧XPC ∈
+
+[−5.7, −3.7] ∧ XRCC1 ∈ [−5.2, −2.5] ”
+
+Subgroup size: 85 → 87 
+
+Exceptionality: 
+
+11 .2782 → 11 .1260 
+
+20

@@ -1,0 +1,1442 @@
+Title: Dynamic likelihood hazard rate estimation
+
+URL Source: https://arxiv.org/pdf/2602.17161v1
+
+Published Time: Fri, 20 Feb 2026 01:35:56 GMT
+
+Number of Pages: 20
+
+Markdown Content:
+# Dynamic likelihood hazard rate estimation 
+
+Nils Lid Hjort 
+
+University of Oslo and University of Oxford 
+
+Abstract. The best known methods for estimating hazard rate functions in survival analysis models are either purely parametric or purely nonparametric. The parametric ones are sometimes too biased while the nonparametric ones are sometimes too vari-able. In the present paper a certain semiparametric approach to hazard rate estimation, proposed in Hjort (1991), is developed further, aiming to combine parametric and non-parametric features. It uses a dynamic local likelihood approach to fit the locally most suitable member in a given parametric class of hazard rates, and amounts to a version of nonparametric parameter smoothing within the parametric class. Thus the parametric hazard rate estimate at time s inserts a parameter estimate that also depends on s. We study bias and variance properties of the resulting estimator and methods for choosing the local smoothing parameter. It is shown that dynamic likelihood estimation often leads to better performance than the purely nonparametric methods, while also having capacity for not losing much to the parametric methods in cases where the model being smoothed is adequate. 
+
+Key words: dynamic likelihood, hazard rate, kernel smoothing, local goodness of fit, local modelling, semiparametric estimation 
+
+1. Introduction and summary. This paper concerns a class of semiparametric type methods of estimating hazard rate functions in models for life history data. The best known methods for estimating such hazard rates are those that are either purely parametric or purely nonparametric. The parametric methods are usually biased since parametric models are usually imperfect, and the nonparametric methods often have high estimation variance. There should accordingly be room for methods that somehow lie between the parametric and the nonparametric ones. One might hope that such methods are better than the nonparametric ones if the true hazard is in the vicinity of the parametric model, while not being much worse than the parametric ones if the parametric model is true. Although results can be obtained in a more general framework of counting process models we shall mainly be content to illustrate and investigate ideas for the ‘random censorship’ model, which is the simplest and perhaps most important special case of such models for censored life-time data. It postulates that life-times X01 , . . . , X 0 
+
+> n
+
+from a population are i.i.d. with density f (.), cumulative distribution F (.), and hazard rate function α(.) given by α(s) = f (s)/F [s, ∞); α(s) d s
+
+is the probability of failing in [ s, s + d s) given that an individual is still at risk at time s. The life-time X0 
+
+> i
+
+may not be directly observed, however, because of a possibly interfering censoring variable Ci; only Xi = min( X0 
+
+> i
+
+, C i) and the indicator variable δi = I{X0 
+
+> i
+
+≤ Ci} are observed. For simplicity and concreteness we stipulate that the Ci’s are independent of the life-times and i.i.d. according to a distribution with cumulative function G. In particular the n pairs ( Xi, δ i) are i.i.d. Finally we shall assume that data are obtained on a finite time horizon basis, say on [0 , T ]for a known and finite T . This is convenient for some of the martingale convergence theory and is not a practical limitation. The parametric approach is to postulate that α(s) = α(s, θ ) for a suitable family, indexed by some one- or multi-dimensional θ. Typical examples include the exponential, the Weibull, the simple frailty model with α(s) = θ1/(1 + θ2s), the piecewise constant hazard rate model, the Gompertz– Makeham distribution, the gamma, and the log-normal. Properties of the maximum likelihood  
+
+> Nils Lid Hjort
+
+1 April 1993 
+
+> arXiv:2602.17161v1 [stat.ME] 19 Feb 2026
+
+method for estimating θ with censored data have been studied by Borgan (1984) and others under the condition that the model is correct, i.e. that there really is some θ0 with α(s) = α(s, θ 0) on [0 , T ]. In practice the model is never perfect, however, and it is useful to study estimation methods outside model conditions, where the best parameter is to be thought of as being ‘least false’ or ‘most suitable’, as opposed to ‘true’. The large-sample behaviour of several estimation methods in this wider setting has been explored in Hjort (1992). Some results about this are reviewed in Section 2 and are used in later sections. In Section 3 a dynamic likelihood approach to parametric hazard rate estimation is presented. It takes as its basis any given parametric hazard function and consists of inserting a local parameter estimate ̂ θ(s) in α(s, θ ) at time s, producing ̂
+
+α(s) = α(s, ̂ θ(s)) ,
+
+where the parameter estimate is obtained using only information on those individuals that have survived up to s − 12 h and what happens to them on [ s − 12 h, s + 12 h]. This amounts to a kind of nonparametric parameter smoothing within a given parametric class. A more general estimator involving smoothing with a kernel function is also discussed. Bias and variance properties are studied in Section 3 for one-dimensional and in Section 4 for multi-dimensional families. It turns out that Êα(s) .
+
+= α(s) + 12 βK h2b(s) and Var ̂α(s) .
+
+= γK
+
+nh α(s)
+
+y(s) ,
+
+where βK and γK are characteristics of the kernel function used and y(s) is the limiting proportion of individuals still at risk at time s. The b(s) is a certain bias factor, the size of which depends on both α′′ (s) and characteristics of the underlying parametric model used. These results match closely those of the most usual nonparametric method, that of smoothing the empirical cumulative hazard function, for which E˜α(s) .
+
+= α(s) + 12 βK h2α′′ (s) and Var ˜α(s) .
+
+= γK
+
+nh α(s)
+
+y(s) .
+
+In Section 5 situations are characterised where the new method performs better than the traditional nonparametric method. Methods for choosing the local smoothing parameter h are discussed in Section 6, including the arduous one that for each s expands the s ± 12 h interval until a goodness of fit criterion rejects the model. Overall it transpires that a suitable dynamic likelihood estimator often can perform better than the purely nonparametric ones, while at the same time not losing much to parametric ones when the true hazard is close to the parametric hazard. Finally some supplementing results and remarks are offered in Section 7. This paper expands in several ways on the basic results that were already presented in Hjort (1991). That paper also proposed two further semiparametric estimation schemes, one using or-thogonal expansions to correct on an initial parametric guess, and one Bayesian procedure that employs a nonparametric prior around a given parametric hazard model. 
+
+2. Purely nonparametric and purely parametric estimation. This section introduces some basic notation and reviews properties of the Nelson–Aalen estimator for the cumulative haz-ard function in the nonparametric case and of the maximum likelihood and maximum weighted  
+
+> Dynamic Likelihood
+
+2 April 1993 likelihood estimators in the parametric case. These will be used in later sections. Since our ambi-tion is to go beyond ordinary parametric methods the behaviour of these must be considered also outside the conditions of the postulated parametric model. 
+
+2.1. Nonparametric estimation. Let N (t) = ∑ni=1 I{Xi ≤ t, δ i = 1 } be the counting process and Y (s) = ∑ni=1 I{Xi ≥ s} the at risk process, and form from these the Nelson–Aalen estimator ̂
+
+A(t) = 
+
+∫ t
+
+> 0
+
+dN (s)
+
+Y (s) =
+
+> n
+
+∑
+
+> i=1
+
+δi
+
+Y (Xi) I{Xi ≤ t} (2 .1) for the cumulative hazard rate A(t) = ∫ t 
+
+> 0
+
+α(s) d s. Its properties are best explained using the martingale B(t) = N (t) − ∫ t 
+
+> 0
+
+Y (s)α(s) d s. Let y(s) be the limit in probability of ̂y(s) = Y (s)/n ,i.e. the limiting proportion of individuals under risk at time s, and equal to F [s, ∞)G[s, ∞) under present circumstances, where G(.) is the censoring distribution. A basic large-sample property of 
+
+B is that B(t)/√n goes to a Gaußian martingale V (t) with independent increments and noise level Var d V (s) = y(s)α(s) d s, and, more generally, that ∫ t 
+
+> 0
+
+Hn(s) d B(s)/√n tends to ∫ t 
+
+> 0
+
+h(s) d V (s) in distribution, in cases where Hn(.) is previsible (its value at s is known at s−) and converges to the deterministic h(.). It follows from these facts that 
+
+√n{d̂ A(s) − dA(s)} = I{Y (s) ≥ 1}̂
+
+y(s)dB(s)
+
+√n − I{Y (s) = 0 } dA(s)
+
+.
+
+=d̂y(s) −1dB(s)/√n →d y(s)−1 dV (s)(2 .2) in the large-sample limit. In particular d ̂A(s) is very nearly unbiased for d A(s) and √n{̂ A(t)−A(t)}
+
+tends to the Gaußian martingale ∫ t 
+
+> 0
+
+y(s)−1 dV (s) with variance ∫ t 
+
+> 0
+
+y(s)−1α(s) d s. See for example the recent book Andersen, Borgan, Gill & Keiding (1993, Chapter II) for more details. The usual nonparametric way of estimating the hazard rate itself is to smooth the Nelson–Aalen and take the derivative, see (5.1). 
+
+2.2. Maximum likelihood estimation. A parametric model is of the form α(t) = α(t, θ ), where θ = ( θ1, . . . , θ p)′ is some p-dimensional parameter. The log-likelihood for the observed data can be written Ln(θ) = ∫ T 
+
+> 0
+
+{log α(t, θ ) d N (t)−Y (t)α(t, θ ) d t}, see for example Andersen et al. (1993, Chapter VI). This defines the maximum likelihood estimator ̂ θ.To explain the large-sample behaviour of this estimator, let Un(θ) = n−1 ∫ T 
+
+> 0
+
+ψ(t, θ ){dN (t) −
+
+Y (t)α(t, θ )} dt be the p-vector of first partial derivatives of n−1Ln(θ), where we write ψ(t, θ ) =  
+
+> ∂∂θ
+
+log α(t, θ ). Under natural regularity conditions Un(θ) tends in probability to u(θ) = ∫ T 
+
+> 0
+
+y(t)
+
+ψ(t, θ ){α(t) − α(t, θ )} dt, with y(t) as above. The maximum likelihood estimator, which solves 
+
+Un(̂θ) = 0, converges in probability to the particular parameter value θ0 that solves u(θ0) = 0. We think of this as the ‘least false’ or ‘agnostic’ parameter value, and it minimises the distance measure 
+
+d[α, α (., θ )] = 
+
+∫ T
+
+> 0
+
+y[α{log α − log α(., θ )} − { α − α(., θ )}] dt (2 .3) between true model and approximating model. This is proved in Hjort (1992). In later sections we shall also need the large-sample distribution, and quote the following result from Hjort (1992). Con-sider the p × p-matrix ψ∗(t, θ ) = ∂2 log α(t, θ )/∂θ∂θ ′ and the function E(t) = ∫ t 
+
+> 0
+
+y(s)ψ(s, θ 0){α(s) − 
+
+> Nils Lid Hjort
+
+3 April 1993 α(s, θ 0)} ds (in particular E(0) = E(T ) = 0). Define p × p-matrices 
+
+J =
+
+∫ T
+
+> 0
+
+[
+
+y(t)ψ(t, θ 0)ψ(t, θ 0)′α(t, θ 0) − y(t)ψ∗(t, θ 0){α(t) − α(t, θ 0)}
+
+]
+
+dt, M =
+
+∫ T
+
+> 0
+
+[
+
+y(t)ψ(t, θ 0)ψ(t, θ 0)′α(t) + {ψ(t, θ 0)E(t)′ + E(t)ψ(t, θ 0)′}α(t, θ 0)
+
+]
+
+dt. 
+
+Then √n(̂θ − θ0) →d Np{0, J −1M J −1}. Note that under model conditions α(t) is indeed equal to 
+
+α(t, θ 0), the expressions for J and M simplify and become equal, and we have the more familiar-looking limit distribution Np{0, J −1}, a result proved by Borgan (1984). 
+
+2.3. M-estimators. We shall also need some general results about weighted likelihood estimators, from Hjort (1992, Section 5). Consider ∫ T 
+
+> 0
+
+Gn(t){log α(t, θ ) d N (t) − Y (t)α(t, θ ) d t}
+
+instead of the ordinary log-likelihood (which uses Gn(t) = 1), and let ̂ θg maximise. This estimator also solves ∫ T 
+
+> 0
+
+Gn(t)ψ(t, θ ){dN (t) − Y (t)α(t, θ ) d t} = 0, and belongs to the class of M-estimators for this counting process model, see Hjort (1985) and Andersen et al. (1993, Chapter VI). Assume that the weight function Gn(t) is previsible and goes in probability to g(t). The first result is that this estimator is consistent for the particular least false parameter value θ0,g that minimises the distance function 
+
+dg [α, α (., θ )] = 
+
+∫ T
+
+> 0
+
+gy [α{log α − log α(., θ )} − { α − α(., θ )}] dt, (2 .4) a generalisation of (2.3). It also solves ∫ T 
+
+> 0
+
+g(t)y(t)ψ(t, θ ){α(t) − α(t, θ )} dt = 0. Secondly, 
+
+√n(̂ θg − θ0,g ) →d Np{0, J −1 
+
+> g
+
+Mg J−1 
+
+> g
+
+}, (2 .5) where Jg and Mg are appropriate generalisations of those appearing above. In fact 
+
+Jg =
+
+∫ T
+
+> 0
+
+gy [ψ0ψ′
+
+> 0
+
+α0 − ψ∗ 
+
+> 0
+
+(α − α0)] dt, Mg =
+
+∫ T
+
+> 0
+
+[g2yψ 0ψ′
+
+> 0
+
+α + g{ψ0E′ 
+
+> g
+
++ Eg ψ′
+
+> 0
+
+}α0
+
+] dt, 
+
+(2 .6) in which Eg (t) = ∫ t 
+
+> 0
+
+gyψ 0(α − α0) d s, and where α0 = α(s, θ 0,g ), ψ0 = ψ(s, θ 0,g ). Note that both 
+
+Eg (0) and Eg (T ) are equal to 0, and that the expressions for Jg and Mg simplify when the model happens to be correct. 
+
+3. Dynamic likelihood estimation. Of course the parametric estimation method of 2.2 works best if the postulated model is adequate, i.e. if there really is a single θ0 that secures α(s) .
+
+=
+
+α(s, θ 0) throughout [0 , T ]. Otherwise there is modelling bias present and it could for example be advantageous to use different θ0’s in different sub-intervals. We shall pursue a somewhat more extreme version of this idea, namely to fit a local estimate ̂ θ(s) for each s, and then use α(s, ̂ θ(s)) in the end. 
+
+3.1. Dynamic likelihood. The dynamic or local likelihood estimation proposal is to use the M-estimator apparatus with a ‘window function’ Gn(t) = g(t) = I{t ∈ W }, where W =[s − 12 h, s + 12 h] is a local interval around a given fixed s. So let ̂ θ(s) maximise 
+
+LW (θ) = 
+
+∫
+
+> W
+
+{log α(t, θ ) d N (t) − Y (t)α(t, θ ) d t}. (3 .1)  
+
+> Dynamic Likelihood
+
+4 April 1993 The resulting dynamic likelihood hazard rate estimator is ̂
+
+α(s) = α(s, ̂ θ(s)) . (3 .2) Note that LW (θ), the local log-likelihood at window W around s, is a bona fide log-likelihood, namely that based on those individuals that have survived up to s − 12 h and information about what happens to them in [ s − 12 h, s + 12 h]. Showing this is not difficult by first noting that this group of individuals have probability density = α(t, θ ) exp {− ∫ ts−h/ 2 α(u, θ ) d u} for t ∈ [s − 12 h, s + 12 h],
+
+and chance = exp {− ∫ s+h/ 2 
+
+> s−h/ 2
+
+α(u, θ ) d u} of further surviving s + 12 h. 
+
+Consciously disregarded, for example, is information about individuals failing in [0 , s − 12 h). In-cluding such a [1 − exp {− A(s − 12 h, θ )}]n0 term would have strengthened the likelihood and made our θ estimator more precise – but only if the parametric form of the hazard is correct also to the left of s − 12 h. The crucial idea here is to only trust the parametric form locally, and this leads to the (3.1) log-likelihood. Of course if h is large, which should correspond to trusting the model over the full range, then we get back the full log-likelihood and ordinary maximum likelihood. The ̂ θ(s) estimator aims at the locally most suitable parameter value θ0(W ) = θ0(s) that minimises (2.4) with g = IW , or, equivalently, solves ∫ 
+
+> W
+
+y(t)ψ(t, θ ){α(t) − α(t, θ )} dt = 0. Its large-sample behaviour is described by (2.5), which suggests Ê θ(s) .
+
+= θ0(s), VAR ̂ θ(s) .
+
+= J−1 
+
+> W
+
+MW J−1 
+
+> W
+
+/n, 
+
+where JW and MW are as in (2.6) with g(t) = I{t ∈ W }. This transforms into corresponding properties for ̂α(s) by Taylor expansions and delta-method arguments: Eα(s, ̂ θ(s)) .
+
+= α(s, θ 0(s)) ,
+
+Var α(s, ̂ θ(s)) .
+
+= α(s, θ 0(s)) 2ψ(s, θ 0(s)) ′J−1 
+
+> W
+
+MW J−1 
+
+> W
+
+ψ(s, θ 0(s)) /n. (3 .3) These approximations are valid if h is fixed and n is large. But we are also interested in becoming increasingly fine-tuned about the s ± 12 h interval as n grows. In order to study the bias and variance properties more closely, observe first that if z(t) is a twice differentiable function defined in a neighbourhood of s, then ∫ 
+
+> W
+
+z(t) d t .
+
+= z(s)h + 124 z′′ (s)h3 by a simple Taylor argument. From this and the defining equation for θ0(s) we see that 
+
+y(s)ψ(s, θ ){α(s) − α(s, θ )} + 124 
+
+(yψ (., θ )( α − α(s, θ )) )′′ (s)h2 .
+
+= 0 ,
+
+for the particular value θ = θ0(s), where ( f gh )′′ (s) means the second derivative of the f (s)g(s)h(s)function evaluated at s. This implies generally that α(s, θ 0(s)) = α(s) + O(h2). One can also show from this that Eα(s, ̂ θ(s)) = α(s, θ 0(s)) + O(1 /n ) = α(s) + O(h2 + 1 /n ).
+
+In order for the bias of the (3.2) estimator to go to zero it is therefore necessary that h → 0 as 
+
+n → ∞ . 
+
+> Nils Lid Hjort
+
+5 April 1993 At the moment we shall be content to give a bias formula for the case of a one-parameter family α(s, θ ), for which 
+
+α(s, θ 0(s)) .
+
+= α(s) + h2
+
+24 
+
+[
+
+α′′ (s) − α′′  
+
+> 0
+
+(s) + 2 {α′(s) − α′
+
+> 0
+
+(s)}
+
+{ y′(s)
+
+y(s) + ψ′
+
+> 0
+
+(s)
+
+ψ0(s)
+
+}] 
+
+. (3 .4) In this formula α′
+
+> 0
+
+(s) means the derivative of α(s, θ ) w.r.t. s, and then inserted θ = θ0(s), and similarly for α′′  
+
+> 0
+
+(s) and ψ′
+
+> 0
+
+(s). The case of multi-parametric classes of hazard rates is handled in Section 4. Turning next to the variance matrix, one finds after using the (2.6) expressions and the pre-viously established O(h2) result for the bias that JW = y(s)ψ0(s)ψ0(s)′α(s, θ 0(s)) h + O(h3) and 
+
+MW = y(s)ψ0(s)ψ0(s)′α(s) h + O(h3), under smoothness assumptions on α(.) and y(.), and writ-ing for simplicity ψ0(s) for ψ(s, θ 0(s)). We note here for the one-parameter case that Var ̂ θ(s) .
+
+=(nh )−1{y(s)α(s)ψ0(s)2}−1, which in its turn implies Var α(s, ̂ θ(s)) .
+
+= 1
+
+nh α(s)
+
+y(s) . (3 .5) Thus nh → ∞ is necessary for the variance to go to zero, and this together with h → 0 suffices for consistency of the (3.2) estimator. 
+
+3.2 Special case: estimating the local constant. The simplest model to try out is the one having α(s, θ ) = θ, a constant hazard. The local hazard estimate and its limit in probability are ̂
+
+α(s) = ̂ θ(s) = 
+
+∫ 
+
+> W
+
+dN (t)
+
+∫ 
+
+> W
+
+Y (t) d t →p
+
+∫ 
+
+> W
+
+y(t)α(t) d t
+
+∫ 
+
+> W
+
+y(t) d t = θ0(s), (3 .6) again with W = [ s − 12 h, s + 12 h]. The estimate is of the type total occurrence over total exposure, and the underlying local least false parameter is a local y-weighted average of the true hazard rate. By earlier efforts Êα(s) .
+
+= α(s) + h2
+
+24 
+
+{
+
+α′′ (s) + 2 α′(s) y′(s)
+
+y(s)
+
+}
+
+and Var ̂α(s) .
+
+= 1
+
+nh α(s)
+
+y(s) . (3 .7) This can also be verified directly. Further attention to these details is given in the next subsection. A general remark about the dynamic likelihood method is that the particular parametric model used should be allowed to be quite crude, since we only employ it as a local approximation to the true hazard rate. This example illustrates this. (3.7) shows that even when α(.) simplistically is modelled as being locally a constant the result is a reasonable nonparametric estimator. 
+
+3.3. Kernel smoothed dynamic likelihood. The dynamic likelihood method of Sections 3.1 and 3.2 can be generalised to kernel smoothed variants. Let K(u) be a symmetric kernel function with support [ − 12 , 12 ] and integral 1. Define the local kernel smoothed likelihood estimator ̂ θ(s) to maximise 
+
+˜LW (θ) = 
+
+∫
+
+> W
+
+K(h−1(t − s)){ log α(t, θ ) d N (t) − Y (t)α(t, θ ) d t}. (3 .8) The hazard rate estimator is as in (3.2) with this more general estimate of θ. The previously defined local likelihood estimate corresponds to the special case K(u) = 1 on [ − 12 , 12 ]. This uniform choice has perhaps some special appeal since the dynamic log-likelihood LW (θ) then can be interpreted  
+
+> Dynamic Likelihood
+
+6 April 1993 as a genuine log-likelihood for a subgroup of the individuals under study. The current smoothed likelihood is more of a mathematical construction, but turns out to produce estimators with slightly better properties, for good choices of K(u). We can draw on the general results of 2.3 to find approximate bias and variance for the maximiser of (3.8). Let βK = ∫ u2K(u) d u and γK = ∫ K(u)2 du. (2.6) with Taylor expansion quickly gives 
+
+JW = y(s)ψ0(s)ψ0(s)′α(s, θ 0(s)) h + O(h3),MW = γK y(s)ψ0(s)ψ0(s)′α(s) h + O(h3), (3 .9) The multi-parameter case requires more precise expansions, since the inverse of JW is needed and 
+
+ψ0(s)ψ0(s)′ has rank 1. Leaving the multi-parameter case for Section 4, consider an arbitrary one-parameter family α(s, θ ), where ̂ θ(s) solves ∫ 
+
+> W
+
+K(h−1(t − s)) ψ(t, θ ){dN (t) − Y (t)α(t, θ ) d t} = 0. It aims at the locally least false θ0 = θ0(W ) that solves ∫ 
+
+> W
+
+K(h−1(t−s)) ψ(t, θ )y(t){α(t)−α(t, θ )} dt =0, or ∫ K(u)ψ(s + hu, θ )y(s + hu ){α(s + hu ) − α(s + hu, θ )} du = 0. Taylor expansion shows that 
+
+∫ K(u)z(s+hu ) d u = z(s)+ 12 βK h2z′′ (s)+ O(h4) for smooth z(.) functions, and this, in conjunction with (3.3) and (3.9), leads to Eα(s, ̂ θ(s)) .
+
+= α(s) + 12 h2βK b(s) and Var α(s, ̂ θ(s)) .
+
+= γK
+
+nh α(s)
+
+y(s) , (3 .10) where the bias factor is 
+
+b(s) = α′′ (s) − α′′  
+
+> 0
+
+(s) + 2 {α′(s) − α′
+
+> 0
+
+(s)}
+
+{ y′(s)
+
+y(s) + ψ′
+
+> 0
+
+(s)
+
+ψ0(s)
+
+}
+
+. (3 .11) The fact that ∫ uK (u) d u = 0 is used here. When K(u) is uniform we get back (3.4) and (3.5). Observe that the approximate variance does not depend on the parametric family employed (to the order of approximation used). 
+
+3.4. Special case: local constant with a kernel. Let us illustrate this for the special case where α(s, θ ) = θ. Then ̂
+
+α(s) = ̂ θ(s) = 
+
+∫ 
+
+> W
+
+K(h−1(t − s)) d N (t)
+
+∫ 
+
+> W
+
+K(h−1(t − s)) Y (t) d t =
+
+∑ 
+
+> |xi−s|≤ h/ 2
+
+K(h−1(xi − s)) δi
+
+∑ni=1 
+
+∫  
+
+> W∩[0 ,x i]
+
+K(h−1(t − s)) d t , (3 .12) a locally weighted occurrence over locally weighted exposure estimate. Here and later on xi denotes the observed value of Xi = min( X0 
+
+> i
+
+, C i). Previous efforts give 
+
+Êα(s) = α(s) + 12 βK h2{α′′ (s) + 2 α′(s)y′(s)/y (s)} + O(h4),
+
+and variance γK (nh )−1α(s)/y (s) as before. This generalises (3.7). One theoretical advantage that (3.12) has over the (3.6) estimator is that it has smaller mean squared error, for several natural choices of kernel K, see 6.1. A more immediate practical advantage is that K can be chosen to make it smoother than the (3.6) version, which is discontinuous at time points s where s ± 12 h is equal to observed failure times. (3.12) is continuous when K(± 12 ) = 0, and has a continuous derivative if K is chosen such that K′(± 12 ) = 0. 
+
+4. Dynamic likelihood for multi-parameter families. The dynamic likelihood and kernel smoothed dynamic likelihood ideas of Section 3 can be applied for any smooth parametric  
+
+> Nils Lid Hjort
+
+7 April 1993 family of hazards, but the basic bias and variance properties have so far only been derived for one-parameter families. We saw in (3.9), for example, that the multi-parameter case requires more careful expansions. It is not clear at the outset that we gain in precision by smoothing e.g. a two-parameter hazard family. We should perhaps expect larger windows to be required to be able to estimate both parameters with reasonable precision. 
+
+4.1. A running Gompertz estimator. The hazard function model α(t) = a exp( βt ) is sometimes called the Gompertz model. Concentrating on a fixed s with fixed window W = s ± 12 h,we may reparametrise the hazard as 
+
+α(t, θ, β ) = a exp( βs ) exp( β(t − s)) = θ exp( β(t − s)) for t ∈ [s − 12 h, s + 12 h], (4 .1) and interpret θ as the ‘local level’ and β as the ‘local slope’. Define ̂ θ(s) and ̂ β(s) as those maximising the kernel smoothed dynamic likelihood 
+
+˜LW (θ, β ) = 
+
+∫
+
+> W
+
+K(h−1(t − s)) [{log θ + β(t − s)} dN (t) − Y (t)θ exp( β(t − s)) d t]. (4 .2) One has ̂
+
+θ(s, β ) = 
+
+∫ 
+
+> W
+
+K(h−1(t − s)) d N (t)
+
+∫ 
+
+> W
+
+K(h−1(t − s)) Y (t) exp( β(t − s)) d t , (4 .3) and the resulting profile dynamic likelihood can be shown to be concave in β, and accordingly not very difficult to maximise. The maximiser found is then inserted into (4.3) to give ̂ θ(s). Note that the general dynamic likelihood recipe gives ̂
+
+α(s) = α(s, ̂ θ(s),̂ β(s)) = ̂ θ(s), (4 .4) simply, so the β parameter estimate is only somewhat silently present. From the general theory of Section 2.3 we know that ̂ θ(s) and ̂ β(s) aim at certain appropriate least false parameter values 
+
+θ0 = θ0(s) and β0 = β0(s), depending on the window W , and that √n(̂θ(s) − θ0,̂ β(s) − β0) goes to a zero-mean normal with covariance matrix J−1 
+
+> W
+
+MW J−1 
+
+> W
+
+. Here JW and MW are as in (2.6) with 
+
+g = IW . We now set out to provide informative approximations for these and for the least false local parameters. The least false parameter values are such that they solve the two equations ∫ 
+
+> W
+
+K(h−1(t −
+
+s)) ψ(t, θ 0, β 0)y(t){α(t) − θ0 exp( β0(t − s)) } ds = 0, where ψ(t, θ, β ) = (1 /θ, t − s). The first equation gives 
+
+θ0 =
+
+∫ 
+
+> W
+
+K(h−1(t − s)) y(t)α(t) d t
+
+∫ 
+
+> W
+
+K(h−1(t − s)) y(t) exp( β0(t − s)) d t =
+
+∫ K(u)y(s + hu )α(s + hu ) d u
+
+∫ K(u)y(s + hu ) exp( β0hu ) d u ,
+
+where the latter integrals are over the support [ − 12 , 12 ] for the kernel function K(u). Upon using 
+
+∫ K(u)z(s + hu ) d u = z(s) + 12 βK h2z′′ (s) + O(h4) again, one finds after some calculations that 
+
+θ0
+
+.
+
+= α(s) + 12 βK h2[{y(t)α(t)}′′ (s) − α(s){y(t) exp( β0(t − s)) }′′ (s)] /y (s) = α(s) + 12 βK h2b(s, β 0),
+
+say, up to O(h4) terms, where in fact b(s, β 0) = α′′ (s) − α(s)β20 + 2 {y′(s)/y (s)}{ α′(s) − α(s)β0}.Similarly the second equation gives ∫ K(u)u y (s + hu ){α(s + hu ) − θ0 exp( β0hu )} du = 0, which  
+
+> Dynamic Likelihood
+
+8 April 1993 upon using ∫ K(u)u z (s + hu ) d u = βK z′(s)h + O(h3) delivers β0 = α′(s)/α (s) + O(h2). This can be plugged into b(s, β 0) above to give 
+
+α(s, θ 0(s), β 0(s)) = θ0 = α(s) + 12 βK h2{α′′ (s) − α′(s)2/α (s)} + O(h4). (4 .5) Note that the bias is only O(h4) at s if the true α(.) is locally like a Gompertz hazard. Next consider the matrices that determine the approximate variances for ̂ θ(s) and ̂ β(s). From (2.6), 
+
+JW =
+
+∫
+
+> W
+
+K(h−1(t − s)) y(t)
+
+[( 1/θ 20 (t − s)/θ 0
+
+(t − s)/θ 0 (t − s)2
+
+)
+
+θ0 exp( β0(t − s)) +
+
+( 1/θ 20 00 0
+
+)
+
+{α(t) − θ0 exp( β0(t − s)) }
+
+]
+
+dt. 
+
+We find 
+
+J11 = h
+
+∫
+
+K(u)y(s + hu )θ−20 α(s + hu ) d u = hy (s)α(s)/θ 20 + 12 βK h3(yα )′′ (s)/θ 20 + O(h5)for the (1,1) element. Similar calculations give 
+
+JW = h
+
+[( y(s)α(s)/θ 20 00 0
+
+)
+
++ βK h2
+
+( a11 a12 
+
+a12 a22 
+
+)]
+
++ O(h5),
+
+where in fact a11 = 12 (yα )′′ (s)/θ 20 , a12 = y′(s) + y(s)β0, and a22 = y(s)θ0. Next look at 
+
+MW =
+
+∫
+
+> W
+
+[
+
+K(h−1(t − s)) 2y(t)
+
+( 1/θ 20 (t − s)/θ 0
+
+(t − s)/θ 0 (t − s)2
+
+)
+
+α(t)+ K(h−1(t − s)) 
+
+( 2E1(t)/θ 0 E2(t)/θ 0 + E1(t)( t − s)
+
+E2(t)/θ 0 + E1(t)( t − s) 2( t − s)E2(t)
+
+)]
+
+dt, 
+
+where E1(t) and E2(t) are the components of the E(t) function defined after (2.6). It turns out that E1(t) = O(h3) while E2(t) = O(h4), so the second part of the MW matrix is of a smaller size than the first. We find after some expansion work that 
+
+MW = h
+
+[( γK y(s)α(s)/θ 20 00 0
+
+)
+
++ δK h2
+
+( b11 b12 
+
+b12 b22 
+
+)]
+
++
+
+( O(h4) O(h5)
+
+O(h5) O(h5)
+
+)
+
+,
+
+where γK = ∫ K(u)2 du and δK = ∫ u2K(u)2 du, and where b11 = 12 (yα )′′ (s)/θ 20 , b12 = ( yα )′(s)/θ 0,and b22 = y(s)α(s). To reach expressions for J−1 
+
+> W
+
+MW J−1 
+
+> W
+
+we need to work with a matrix of the form ( cE 11 +
+
+h2A)−1(dE 11 + h2B)( cE 11 + h2A)−1, where E11 is the matrix with 1 as (1,1) element and zeros elsewhere. The result, after lengthy but elementary calculations, is of the form 
+
+J−1 
+
+> W
+
+MW J−1 
+
+> W
+
+=
+
+( h−1γK α(s)/y (s) + c11 h + O(h2) h−1c12 + O(h)
+
+h−1c12 + O(h) h−3(δK /β 2 
+
+> K
+
+)/{y(s)α(s)} + h−1c22 + O(1) 
+
+)
+
+,
+
+for certain cij . We are primarily interested in the approximate variance for the local ̂ θ(s), in view of (4.4), and this is ( nh )−1γK α(s)/y (s) + O(h/n ), precisely as in the one-dimensional case (3.10). Hence bias and variance properties are of the same form as in the one-dimensional case, but with a different bias factor, inherited from the model one smooths.  
+
+> Nils Lid Hjort
+
+9 April 1993 4.2. Dynamic likelihood for a general multi-parameter model. Suppose the hazard rate model is of the type α(t) = aγ (t, β ), i.e. a constant parameter a times a function which depends on a possibly multi-dimensional parameter β but not on a. Reparametrise locally to 
+
+α(t) = aγ (s, β ){γ(t, β )/γ (s, β )} = θ exp {C(t, β ) − C(s, β )} for t ∈ [s − 12 h, s + 12 h]. (4 .6) The score type function of the model is ψ(t, θ, β ) = (1 /θ, C ∗(t, β ) − C∗(s, β )), where C∗(t, β ) =  
+
+> ∂∂β
+
+C(t, β ). Notice that the local estimate ̂ β(s) is only ‘silently present’, in that it is used only in conjunction with finding the local ̂ θ(s), as with (4.3) and (4.4). Now the calculations of the Gompertz model above can be repeated with the necessary modi-fications. As in that case one finds θ0 = α(s) + 12 βK h2b(s, β 0) with a similar b(s, β 0), and also that 
+
+θ0c(s, β 0) = α′(s) + O(h2), where c(t, β ) = ∂∂t C(t, β ). This leads to Êα(s) = α(s) + 12 βK h2[α′′ (s) − α(s){c(s, β 0)2 + c′(s, β 0)}
+
++ 2 {y′(s)/y (s)}{ α′(s) − α(s)c(s, β 0)}] + O(h4)= α(s) + 12 βK h2[α′′ (s) − θ0{c(s, β 0)2 + c′(s, β 0)} + 2 {y′(s)/y (s)}O(h2)] + O(h4)= α(s) + 12 βK h2{α′′ (s) − α′′  
+
+> 0
+
+(s)} + O(h4),
+
+where α′′  
+
+> 0
+
+(s) is the second derivative of the model’s hazard rate θ exp {C(t, β ) − C(s, β )} w.r.t. t,evaluated at s, and with the local least false parameters θ0 = θ0(W ) and β0 = β0(W ) inserted. We also have α′′  
+
+> 0
+
+(s) = θ0{c(s, β 0)2 + c′(s, β 0)} = α′(s)2/α (s) + α(s)c′(s, β 0) + O(h2). Note that (4.5) is a special case. One next finds that the (1,1) element of the appropriate J−1 
+
+> W
+
+MW J−1 
+
+> W
+
+matrix is yet again equal to h−1γK α(s)/y (s)+ O(h), albeit with a more involved expression for the constant in the secondary 
+
+O(h) term. The basic properties for the dynamic likelihood estimator are accordingly once more of the familiar type Êα(s) = α(s) + 12 βK h2{α′′ (s) − α′′  
+
+> 0
+
+(s)} + O(h4) and Var ̂α(s) .
+
+= γK
+
+nh α(s)
+
+y(s) , (4 .7) with a bias term 12 βK h2b(s) appropriate to the parametric model employed. As noted above there are also alternative useful expressions for the b(s) term, since we can move out O(h2) terms. 
+
+4.3. A running Weibull estimator. As an example of the previous general machin-ery, consider the Weibull model, which uses α(t) = abt b−1 for certain parameters a and b. We reparametrise to α(t) = θ(t/s )β , where θ = abs b−1 and β = b − 1. Let ̂ θ(s) and ̂ β(s) maximise the kernel smoothed dynamic log-likelihood 
+
+∫
+
+> W
+
+K(h−1(t − s)) [{log θ + β(log t − log s)} dN (t) − Y (t)θ(t/s )β dt].
+
+Then use ̂α(s) = ̂ θ(s) in the end. The results above imply θ0β0 = sα ′(s) + O(h2), and the bias is  
+
+> 12
+
+βK h2{α′′ (s) − θ0(β20 − β0)/s 2} + O(h4) = 12 βK h2{α′′ (s) − α′(s)2/α (s) + α′(s)/s } + O(h4). (4 .8) The approximate variance is yet again γK (nh )−1α(s)/y (s). Note that the bias is only O(h4) if the true hazard is locally a Weibull hazard.  
+
+> Dynamic Likelihood
+
+10 April 1993 4.4. A dynamic nonincreasing estimator. As a final example, consider the simple frailty model with hazard rate a/ (1+ βt ). This is the hazard rate in a population where each individual has a constant hazard rate but where these vary in the population according to a gamma distribution with mean a and variance β. The local parametrisation is θ(1 + βs )/(1 + βt ) for t ∈ [s − 12 h, s + 12 h]. Even though the model can tolerate a small negative value for β we shall in this example take it a priori as a nonnegative quantity. So let ̂ θ(s) and ̂ β(s) maximise 
+
+∫
+
+> W
+
+K(h−1(t − s)) [{log θ + log(1 + βs ) − log(1 + βt )} dN (t) − Y (t)(1 + βs ) d t/ (1 + βt )],
+
+and use ̂α(s) = ̂ θ(s) in the end. Then Êα(s) = α(s) + 12 βK h2{α′′ (s) − 2α′(s)2/α (s)} + O(h4) and Var ̂α(s) .
+
+= γK
+
+nh α(s)
+
+y(s) . (4 .9) 
+
+5. Comparison with the traditional kernel estimator. Estimators developed in Sections 3 and 4 can now be compared with the classical nonparametric estimator. 
+
+5.1. The smoothed Nelson–Aalen estimator. The traditional nonparametric estimator is a kernel smooth of the (2.1) estimator of the cumulative, 
+
+˜α(s) = 
+
+∫
+
+> W
+
+h−1K(h−1(t − s)) d ̂A(t) = ∑
+
+> |xi−s|≤ h/ 2
+
+h−1K(h−1(xi − s)) δi/Y (si). (5 .1) When K(u) is uniform this becomes {̂ A(s + 12 h) −̂ A(s − 12 h)}/h , for example. From the properties of ̂ A reviewed in Section 2 it is not difficult to derive E˜α(s) .
+
+= α(s) + 12 βK h2α′′ (s) and Var ˜α(s) .
+
+= γK
+
+nh α(s)
+
+y(s) . (5 .2) See also Ramlau-Hansen (1983), Yandell (1983), and Tanner and Wong (1983), who all studied estimators of this type, and Andersen et al. (1993, Chapter IV). It is remarkable that the new estimators α(s, ̂ θ(s)) and the traditional one have exactly the same approximate variance and the same type of approximate bias, when they use the same kernel and the same bandwidth; see (3.10), (4.4) and (4.7). 
+
+5.2. When is the dynamic method always better? The dynamic kernel smoothed likeli-hood estimator has approximate bias 12 βK h2b(s), with a b(s) function depending on the underlying parametric family used. In view of the comparison already made above it follows that the new method is always as good as or better than the Ramlau-Hansen–Yandell estimator, with the same kernel and the same window size, provided only |b(s)| ≤ | α′′ (s)|.For the one-parameter situation the question is whether 
+
+|α′′ (s) − α′′  
+
+> 0
+
+(s) + 2 {α′(s) − α′
+
+> 0
+
+(s)}{ y′(s)/y (s) + ψ′
+
+> 0
+
+(s)/ψ 0(s)}| ≤ | α′′ (s)|. (5 .3) This can easily happen if the parametric family is only moderately acceptable. For the special case (3.12), for which α′
+
+> 0
+
+(s), α′′  
+
+> 0
+
+(s) and ψ′
+
+> 0
+
+(s) are absent, the inequality might take place in regions where 
+
+α is convex and increasing, or concave and decreasing. When there is no censoring y = exp( −A) 
+
+> Nils Lid Hjort
+
+11 April 1993 and y′/y = −α, and then the criterion for when (3.12) is better than then the traditional (5.1) becomes 0 ≤ α(s)α′(s)/α ′′ (s) ≤ 1. For the multi-parametric families of Section 4 we have established b(s) = α′′ (s) − α′′  
+
+> 0
+
+(s), with 
+
+α′′  
+
+> 0
+
+(s) stemming from the model used, and with certain useful alternative expressions. The dynamic likelihood estimator is better than (5.1), when the same h is used, whenever |α′′ (s) − α′′  
+
+> 0
+
+(s)| ≤ |α′′ (s)|, which can be rewritten 0 ≤ α′′  
+
+> 0
+
+(s)
+
+α′′ (s) ≤ 2 (5 .4) when the second derivative of the true hazard is not zero. If the parametric model used is locally correct, then the ratio is 1 and the bias is O(h4) only. If we take ‘the parametric model is roughly adequate’ to mean (5.4), then indeed the dynamic likelihood estimator is always better than (5.1) under such circumstances, for each h and each K.For the two-parametric running Gompertz estimator (4.4) the criterion is 0 ≤ α′(s)2/{α(s)α′′ (s)} ≤ 2, (5 .5) and the ratio is 1 exactly for Gompertz hazards a exp( βs ). If for example α(s) = a + be cs is of Gompertz–Makeham form, then the ratio is be cs /(a +be cs ) and well inside (0 , 2), showing that (4.4) will be better than (5.1) for all such hazards. Similarly, for the two-parametric running Weibull estimator of 4.3, the new estimator is always better than (5.1) in regions where 0 ≤ α′(s)2/{α(s)α′′ (s)} − α′(s)/{sα ′′ (s)} ≤ 2, (5 .6) and the function appearing in the middle is equal to 1 exactly for Weibull hazards. And finally the criterion for when the estimator of 4.4 is always better than (5.1) is 0 ≤ α′(s)2/{α(s)α′′ (s)} ≤ 1. (5 .7) 
+
+5.3. Vicinity of parametric model. As explained above one can expect the methods developed to perform better than the traditional (5.1), and surely also better than other purely nonparametric estimators, if only the parametric model used is roughly adequate. So far this statement has been referring to a comparison when the two methods have used the same window width h. But in these cases we would really expect the new methods to perform not only better but much better, by carefully choosing a good window width. When the bias is smaller we can select a larger window and be rewarded with smaller variability, cf. the mean squared error calculations of 6.1. It should also be possible to improve on the convergence rate if the true hazard lies suitably close to the parametric family. A mathematical framework to make this notion more precise could be as follows. There is a sequence of experiments where at stage n there are data ( Xi, δ i) on n
+
+individuals coming from a distribution with true hazard α(.) = αn(.). Suppose this is such that the bias factor is b(s) = b0(s)n−, for some  ∈ [0 , 12 ). Then the best achievable mean squared error is of size proportional to n−(4 −2)/5, and this happens with h chosen as a suitable h0 = cY n(s)−(1 −2)/5.A cross validation or other clever h selection scheme will pick this up, cf. the following section. The best nonparametric convergence rate is n−4/5, for both point-wise and integrated mean squared error, and these calculations show that this can be improved upon for alternatives in the vicinity  
+
+> Dynamic Likelihood
+
+12 April 1993 of the parametric model. If α′′ (s) − α′′  
+
+> 0
+
+(s) = O(n−1/4), for example, then the mean squared error is O(n−9/10 ), and alternatives lying almost O(n−1/2) away, in the above sense, are estimated with almost full parametric O(n−1) precision. The point of comparison is that the traditional (5.1) estimator will still only accomplishes O(n−4/5) precision for these hazard rates. 
+
+6. Choosing the smoothing parameter. We have defined ̂α(s) = α(s, ̂ θ(s)) for given parametric family α(s, θ ) and kernel K. The most decisive influence on the estimator is due to the smoothing parameter h.
+
+6.1. Mean squared error calculations. By (3.10) and (4.7) the approximate mean squared error is of the form E{̂α(s) − α(s)} 2 .
+
+= 14 h4β2 
+
+> K
+
+b(s)2 + γK
+
+nh α(s)
+
+y(s) ,
+
+where b(s) is the appropriate bias factor stemming from the parametric recipe used. The mean squared error is minimised for 
+
+h0(s) = 
+
+{ γK
+
+β2
+
+> K
+
+α(s)
+
+b(s)2
+
+}1/5 1
+
+{ny (s)}1/5 . (6 .1) The resulting minimal mean squared error is 54 (βK γ2 
+
+> K
+
+)2/5α(s)4/5b(s)2/5/{ny (s)}4/5. Different choices of reasonable kernels give about the same result, but the best choice, managing to minimise 
+
+βK γ2 
+
+> K
+
+among kernels on [ − 12 , 12 ] with integral 1, is the Bartlett–Yepanechnikov kernel K0(u) =  
+
+> 32
+
+(1 − 4u2) on [ − 12 , 12 ]. The resulting α(s, ̂ θ(s)) estimator is continuous in s but its derivative will have discontinuities at points s where s ± 12 h hits an observed failure time. We have seen that the new methods can outperform the traditional ones by reducing the bias, say from btrad (s) = α′′ (s) of (5.1) to possibly smaller b(s) = α′′ (s) − α′′  
+
+> 0
+
+(s) for those of Section 4. It is therefore of interest to note that the squared bias makes up 20% and the variance 80% of the approximate mean squared error, so bias reduction can perhaps not be expected to give dramatic gains. If b(s) = 12 btrad (s), for example, then the best theoretical window width becomes 
+
+h0 = 1 .32 h0,trad , and the mean squared error is reduced with 24%. The h0 formula cannot be put to direct use since it depends on the hazard rate itself, but the rate of convergence to zero of mean squared error becomes the optimal n−4/5 when h is chosen proportional to n−1/5. The formula indicates that h should be chosen proportional to Y (s)−1/5
+
+in practice. One possibility is to use hn = cY (s)−1/5 and try to minimise a global criterion like E ∫ T 
+
+> 0
+
+w(s){̂α(s) − α(s)} 2 ds w.r.t. c. The result is a local variable kernel smoothed likelihood estimator with 
+
+hn =
+
+{ γK
+
+β2
+
+> K
+
+∫ T 
+
+> 0
+
+w(s)y(s)−4/5α(s) d s
+
+∫ T 
+
+> 0
+
+w(s)y(s)−4/5b(s)2 ds
+
+}1/5 1
+
+Y (s)1/5 . (6 .2) We might for example choose weight function w(s) = y(s)4/5 here, this being inversely proportional to the optimal mean squared error, and this simplifies (6.2). The nominator integral can be esti-mated with n1/2-precision. Some pilot estimate ̂α pil , like the (5.1) estimator with an overall twice differentiable kernel K2 and a somewhat large h2, can be used to estimate the denominator integral. A final adjustment is needed since ∫ T
+
+> 0
+
+̂ b(s)2 ds will be biased. Working out expressions for the bias of ∫ T
+
+> 0
+
+̂ b(s)2 ds as an estimator of ∫ T 
+
+> 0
+
+b(s)2 ds takes some efforts, for the most interesting estimators  
+
+> Nils Lid Hjort
+
+13 April 1993 of Sections 3 and 4, but is within comfortable reach of Ramlau-Hansen’s (1983) methods. In the end this produces a practical algorithm of ‘plug-in’ type. The discussion above is valid for one-parameter families and also for the class of multi-parameter families considered in Section 4, since the approximate variance of ̂α(s) also in these situations turned out to be of the form γK (nh )−1α(s)/y (s). In the models of Section 4 there is a ‘local position’ parameter θ and a ‘local slope’ parameter β. Note that the local slope estimate ̂ β(s)has quite larger variance than the local position estimate ̂ θ(s). In the running Gompertz case the slope estimate has variance proportional to n−1h−3/{y(s)α(s)}, for example. The best window size for β estimation is proportional to Y (s)−1/7, but the best size for θ estimation, which is our primary concern, is still proportional to Y (s)−1/5. These quantitative results are perhaps as expected, in view of similar results from density estimation and nonparametric regression. They also suggest that the ̂ β(s) that is inserted in ̂ θ(s, β ) of (4.3) to produce the final (4.4) can be quite variable if produced from Y (s)−1/5-windows, and it may be advantageous to use a separate estimation scheme for estimation of this parameter, with somewhat larger windows. See also Remarks 7B and 7G. The reasoning that led to (6.1) and (6.2) is also pertinent for the problem of choosing h in the Ramlau-Hansen–Yandell estimator (5.1), since the bias and variance structure are of the same type, only with b(s) = α′′ (s) instead. We also note that there are other ways of obtaining a data-driven 
+
+hn(s), like cross validation or bootstrapping, but these are not discussed further here. References to cross validation techniques for the (5.1) estimator are Nielsen (1990) and Gr´ egoire (1993), and these techniques should carry over at least to the (3.12) estimator. 
+
+6.2. Local goodness of fit testing. If the parametric model doesn’t fit well the dynamic likelihood hazard estimator is still reasonable, and resembles the nonparametric Nelson–Aalen smoother (5.1) in performance. At the same time our method is able to outperform (5.1) as well as other purely nonparametric methods in cases where the parametric family α(s, θ ) used is only roughly acceptable, as explained in Section 5. In such cases the size of the bias is small, which by (6.2) suggests using quite a large bandwidth h, which in its turn almost amounts to using an ordinary parametric method. A natural but somewhat elaborate strategy is to choose h =̂ h(s) to be the smallest h for which some convenient goodness of fit criterion rejects the parametric model on s ± 12 h. The ultimate case is of course no detectable departure from the model over the full range [0 , T ], which then leads to using h = ∞, i.e. ordinary parametric estimation α(s, ̂ θ[0 ,T ]), say. Hjort (1985, 1990) has developed classes of goodness of fit tests for general parametric counting process models, and these are indeed presented there as tests of validity over the full range [0 , T ]. Similar mathematical techniques can however be used to construct procedures that check model adequacy over a general [ a, b ] interval, and some such are presented next. This apparatus would then be used with [ a, b ] = [ s − 12 h, s + 12 h], mostly, but to get the running estimator started one would look for model adequacy over [0 , b ] intervals first, cf. Remark 7A. 
+
+6.3. One-parameter families. Consider dynamic smoothing of an arbitrary one-dimensio-nal parametric family α(u, θ ). Let ̂ θ[a,b ] be the local maximum likelihood estimator using only [ a, b ]information, i.e. it solves ∫ ba ψ(u, θ ){dN (u) − Y (u)α(u, θ ) d u} = 0. Let 
+
+Dn(t) = n−1/2
+
+∫ ta
+
+ψ(u, ̂ θ[a,b ]){dN (u) − Y (u)α(u, ̂ θ[a,b ]) d u} for t ∈ [a, b ]. 
+
+> Dynamic Likelihood
+
+14 April 1993 It uses the ‘basic martingale’ d N (u) − α(u, θ ) d u and is able to pick up departures from the para-metric model. Notice that Dn(.) starts and ends at zero. Methods of Hjort (1990) can be used to prove that Dn(.), if indeed the model holds on [ a, b ], converges to a zero-mean Gaußian process 
+
+D(.) with covariance function cov {D(t1), D (t2)} = τ 2(b){p(t1 ∧ t2) − p(t1)p(t2)}, in which τ 2(t) = 
+
+∫ ta y(u)ψ(u, θ )2α(u, θ ) d u and p(t) = τ 2(t)/τ 2(b). But this shows that D(.) is distributed as a scaled and time-transformed Brownian bridge, τ (b)W 0(p(.)). Consequently max a≤t≤b |Dn(t)|/̂τ (b)is asymptotically distributed as ‖W 0‖ = max 0≤s≤1 |W 0(s)|, where ̂τ 2(b) = ∫ ba n−1Y (u)ψ(u, ̂ θ[a,b ])2
+
+α(u, ̂ θ[a,b ]) d u estimates τ 2(b). A natural procedure is therefore to stretch the [ a, b ] = [ s− 12 h, s + 12 h]interval until 
+
+{∫ ba
+
+Y(u)ψ(u, ̂ θ[a,b ])2α(u, ̂ θ[a,b ]) d u
+
+}−1/2
+
+max 
+
+> a≤t≤b
+
+∣∣∣∫ ta
+
+ψ(u, ̂ θ[a,b ]){dN (u)−Y (u)α(u, ̂ θ[a,b ]) d u}
+
+∣∣∣ ≥ 1.225 ,
+
+(6 .3) say, 1.225 being the upper 10% point of the distribution of ‖W 0‖. One might opt for 1.359 instead, the upper 5% point. Observe that the maximum value must be attained at one of the points xi of 
+
+xi−, with a ≤ xi ≤ b, so the continuous maximum is really only a finite maximum, and is perfectly feasible to compute efficiently, for given s ± 12 h window. When choosing window sizes for the (3.12) estimator, for example, which uses local constants, the windows should be stretched until 
+
+N [a, b ]−1/2 max 
+
+> a≤t≤b
+
+∣∣∣N [a, t ] −
+
+∫ ta
+
+Y (u)̂ θ[a,b ] du
+
+∣∣∣ ≥ 1.225 , (6 .4) where in this case ̂ θ[a,b ] = N [a, b ]/ ∫ ba Y (u) d u.
+
+6.4. Local model adequacy for multi-parameter hazard rates. Next turn attention to dynamic likelihood smoothing of a multi-parametric class of hazards, with p ≥ 2 parameters. Let this time 
+
+Dn(t) = n−1/2{
+
+N [a, t ] −
+
+∫ ta
+
+Y (u)α(u, ̂ θ[a,b ]) d u
+
+}
+
+for t ∈ [a, b ],
+
+with a view towards using the maximal absolute value as a test for model adequacy. Here ̂ θ[a,b ]
+
+is the local maximum likelihood estimator using [ a, b ]-information, i.e. solving the p equations 
+
+∫ ba ψ(u, θ ){dN (u) − Y (u)α(u, θ ) d u} = 0. Techniques of Hjort (1990) can be used to demonstrate process convergence of Dn(.) towards 
+
+D(t) = V [a, t ] −
+
+(∫ ta
+
+y(u)ψ(u, θ )α(u, θ ) d u
+
+)′
+
+Σ−1
+
+∫ ba
+
+ψ(u, θ ) d V (s),
+
+where V (.) is a Gaußian martingale with noise level Var d V (u) = y(u)α(u, θ ) d u, and where Σ = 
+
+∫ ba y(u)ψ(u, θ )ψ(u, θ )′α(u, θ ) d u. The D0(t) = V [a, t ] = ∫ ta dV (u) process is quite simple, it has independent increments and hence is a scale- and time-transformed Brownian motion process. The point is now that if one considers the D0(.) process conditioned on the p events ∫ ba ψ(u, θ ) d V (u) = 0, then Gaußianeity and covariance calculations can be furnished to demonstrate that this is exactly distributed as the D(.) process; cf. Remark 7F in Hjort (1990). This makes it possible to bound the distribution of ‖D‖ = max a≤t≤b |D(t)|, even though the exact distribution might be too difficult to obtain.  
+
+> Nils Lid Hjort
+
+15 April 1993 We now specialise to a class of hazards of the form α(u, θ ) = θγ (u, β ), cf. (4.6), in which case the 
+
+ψ(.) function has first component 1 /θ and second component φ(u, β ), say. In this case the limit pro-cess D(.) is distributed as D0(.), tied down first with D0(b) = 0 and then with ∫ ba φ(u, β ) d V (u) = 0. Letting D∗(.) be the result of tying down D0(.) with only the first requirement, covariance calculations show that D∗(.) = d τ (b)W 0(p(.)), this time with τ 2(t) = ∫ ta y(u)θγ (u, β ) d u and 
+
+p(t) = τ 2(t)/τ 2(b). So the distribution of D(.) is that of tying down D∗(.) further, and it can be seen that the distribution of ‖D‖ is stochastically smaller than the distribution of ‖D∗‖, just as the distribution of a maximal absolute Brownian bridge is stochastically smaller than the dis-tribution of a maximal absolute Brownian motion. Here τ 2(b) is estimated consistently with 
+
+∫ ba n−1Y (u)̂ θ[a,b ]γ(u, ̂ β[a,b ]) d u, and we also have ̂ θ[a,b ] = N [a, b ]/ ∫ ba Y (u)γ(u, ̂ β[a,b ]) d u. The end result is to use 
+
+N [a, b ]−1/2 max 
+
+> a≤t≤b
+
+∣∣∣N [a, t ] −
+
+∫ ta
+
+Y (u)̂ θ[a,b ]γ(u, ̂ β[a,b ]) d u
+
+∣∣∣ ≥ 1.225 (6 .5) as a conservative 10% level test criterion for rejecting θγ (u, β ) as a model for the hazard on [ a, b ]. It is worth noting that the difference between the distributions of ‖D‖ and ‖D∗‖ is small when the [ a, b ] interval is not large, provided the model being tested has the local reparametrisation form (4.6). This can be shown after expanding the Σ −1 matrix here in a way similar to that for J−1 
+
+> W
+
+in Sections 4.1 and 4.2. Thus 1.225 above is meant to be a conservative value but actually also an approximation to the real 0.90 point of the null distribution. Of course this approximation cannot be expected to be overly precise, and some experimentation with the 1.225 rejection limit would be needed. On the computational side we point out that the maximum again must be attained for one of t = xi or xi− with a ≤ xi ≤ b. Furthermore, 
+
+∫ xi
+
+> a
+
+Y (u)̂ θ[a,b ]γ(u, ̂ β[a,b ]) d u = ∑ 
+
+> j:xj≥a
+
+̂
+
+θ[a,b ]{G(xi ∧ xj ,̂ β[a,b ]) − G(a, ̂ β[a,b ])}, (6 .6) where G(t, β ) = ∫ t 
+
+> 0
+
+γ(u, β ) d u.
+
+6.5. Other tests for model adequacy on intervals. There are naturally other possible goodness of fit tests for intervals, see Hjort (1990) for other Dn(.) type functions and for classes of chi squared type tests and Hjort and Lumley (1993) for normalised local hazard plots. Chi squared methods would be awkward to implement in a general way here, since the [ a, b ] intervals would often be short. We record a couple of potentially useful variations on the Dn(.) theme, however, with a view towards quick calculations and decisions, since tests are to be carried out on slowly expanding [ s − 12 h, s + 12 h] intervals for each s.(6.3)–(6.5) arose as maxima of the Dn(.) process, and utilised convergence to suitably scaled and time-transformed Brownian bridges, as with Kolmogorov–Smirnov type tests. Martingale techniques for the counting process N can be used to show 
+
+∫ ba
+
+|Dn(t)|q dN (t)/n →d
+
+∫ ba
+
+|D(t)|q y(t)θγ (t, β ) d t
+
+≤d
+
+∫ ba
+
+|τ (b)W 0(p(t)) |q τ 2(b) dp (t) = τ (b)2+ q
+
+∫ 10
+
+|W 0(s)|q ds,  
+
+> Dynamic Likelihood
+
+16 April 1993 where ‘ ≤d’ means ‘stochastically smaller than’. For q = 2 we have a Cram´ er–von Mises type test, with rejection criterion ̂
+
+τ (b) −4
+
+∫ ba
+
+Dn(t)2 dN (t)/n = n−1 ∑ 
+
+> a≤xi≤b
+
+Dn(xi)2δi
+
+(n−1N [a, b ]) 2
+
+=
+
+∑
+
+> a≤xi≤b
+
+{N [a, x i] − ∫ xi 
+
+> a
+
+Y (u)̂ θ[a,b ]γ(u, ̂ β[a,b ]) d u}2δi
+
+N [a, b ]2 ≥ 0.347 (6 .7) on the 10% significance level. With wished for 5% level we would use 0.461 instead, the 0.95 quantile of the ∫ 10 W 0(s)2 ds distribution. The second variation is for q = 1, where we use ̂
+
+τ (b) −3
+
+∫ ba
+
+|Dn(t)| dN (t)/n = n−1 ∑ 
+
+> a≤xi≤b
+
+|Dn(xi)|δi
+
+(n−1N [a, b ]) 3/2
+
+=
+
+∑
+
+> a≤xi≤b
+
+∣∣N [a, x i] − ∫ xi 
+
+> a
+
+Y (u)̂ θ[a,b ]γ(u, ̂ β[a,b ]) d u∣∣
+
+N [a, b ]3/2 ≥ 0.499 (6 .8) for intended 10% significance level, and 0.582 for intended 5% significance level. 0.499 and 0.582 are upper quantiles of the ∫ 10 |W 0(s)| ds distribution. There are simpler one-parameter analogues to (6.7) and (6.8), essentially as in these formulae but with γ(u, β ) = 1. Note that (6.6) can be used when computing any of these test statistics. Some experimentation with these ̂ h =̂ h(s) selectors is necessary. One should avoid using too small windows since this would lead to too irregular local estimates. We should therefore only search for acceptable windows s ± 12 h with h at least as large as some suitably determined h0(s). One possibility is to demand at least k observed xi’s in the window, say with k = 10. Hence the (6.3)–(6.5) and (6.7)–(6.8) stopping criteria are to be used with such a modification. Secondly the realised ̂ h(s) could be somewhat irregular as a function of s. A natural modification is to smooth this curve first, before finally computing the local likelihood estimate α(s, ̂ θ[s−̂h(s)/2,s +̂ h(s)/2] ). 
+
+7. Supplementing remarks. 
+
+7A. Starting the estimator. We have defined ̂α(s) = α(s, ̂ θ(s)) with parameter estimate obtained from s ± 12 h data, which also means that a separate definition is required for s ≤ 12 h. One natural strategy is to use the model adequacy on intervals methods of Sections 6.3–6.5 to find the smallest b for which the model is rejected on [0 , b ], and then use ̂α(s) = α(s, ̂ θ[0 ,b 0]) for s ∈ [0 , b 0], with a somewhat smaller b0 than b. Another possibility is to use α(s, ̂ θ( 12 h)) on [0 , 12 h]. 
+
+7B. Post-smoothing of parameter estimates. The basic estimator is ̂α(s) = α(s, ̂ θ(s)) where ̂ θ(s) uses only s ± 12 h information. It is useful in practical applications to display not only the final ̂α(s) but also the parameter estimate function or functions ̂ θ(s). Sometimes this function has discontinuities, cf. (3.12) and the requirements on K noted there to give smoothness. A general alternative is to post-smooth the parameter estimates, before plugging in to give ̂α(s). Comments in 5.1, for example, suggest using post-smoothing of ̂ β(s) in (4.3) and (4.4). 
+
+7C. Density estimation with dynamic likelihood. When α(.) is estimated one can of course also estimate other quantities depending on α(.). The local likelihood methods of Sections 3 and 4 therefore apply to nonparametric or semiparametric density estimation as well, via the 
+
+f (t) = α(t) exp {− A(t)} connection. Methods given there can be used to obtain a locally estimated  
+
+> Nils Lid Hjort
+
+17 April 1993 normal density of the type ̂ f (t) = N {̂μ(t),̂σ(t) 2}(t), for example. There are at least two general immediate possibilities, namely ̂
+
+f1(t) = α(t, ̂ θ(t)) exp {− A(t, ̂ θ(t)} and ̂
+
+f2(t) = 
+
+[∏ 
+
+> [0 ,t )
+
+{1 − α(s, ̂ θ(s)) d s}
+
+]
+
+α(t, ̂ θ(t)) = exp 
+
+{
+
+−
+
+∫ t
+
+> 0
+
+α(s, ̂ θ(s)) d s
+
+}
+
+α(t, ̂ θ(t)) .
+
+The simplest case would again be that of a locally constant hazard, for which ̂
+
+f1(t) = ̂ θ(t) exp {− ̂θ(t) t} and ̂ f2(t) = exp 
+
+{
+
+−
+
+∫ t
+
+> 0
+
+̂ θ(s) d s
+
+}̂ 
+
+θ(t).
+
+These are somewhat cumbersome density estimators. There are better schemes more directly geared towards the density estimation problem, but still with the same local likelihood characteristics, see Hjort and Jones (1993). 
+
+7D. Regression models. Methods of this paper can be made to work in situations with covariate information. Consider the Cox regression model where individual i has hazard rate of the form 
+
+αi(s) = α0(s) exp( β′zi) for s ∈ [0 , T ] and i = 1 , . . . , n. 
+
+The α0(.) function is the hazard rate for individuals with covariate vector z = 0, and is left unspecified. This baseline hazard function can now be estimated using dynamic likelihood. If we fit a local constant on window W = s ± 12 h the recipe is to maximise the kernel smoothed log-likelihood 
+
+> n
+
+∑
+
+> i=1
+
+∫
+
+> W
+
+K(h−1(t − s)) {(log θ + β′zi) d N i(t) − Yi(t)θ exp( β′zi) d t},
+
+where d N i(t) = I{xi ∈ [t, t + d t], δ i = 1 } and Yi(t) = I{xi ≥ t} are the 0–1 counting process and at risk process for individual i. This gives ̂
+
+α 0(s) = 
+
+∑ni=1 
+
+∫ 
+
+> W
+
+K(h−1(t − s)) d N i(t)
+
+∑ni=1 
+
+∫ 
+
+> W
+
+K(h−1(t − s)) Yi(t) exp( ̂β′zi) d t .
+
+Here ̂ β could be evaluated only locally, but if one trusts the Cox model then β remains constant over the [0 , T ] range, and we should accordingly use the same ̂ β regardless of s. But this is the same as smoothing the traditional Breslow estimator. One can similarly construct a nonparametric 
+
+α0(.) estimator by fitting a running Weibull θγs γ−1, for example. The result is of the form ̂
+
+α 0(s) = 
+
+∑ni=1 
+
+∫ 
+
+> W
+
+K(h−1(t − s)) d N i(t)
+
+∑ni=1 
+
+∫ 
+
+> W
+
+K(h−1(t − s)) Yi(t)̂γ(s)t̂γ(s)−1 exp( ̂ β′zi) d t .
+
+Dynamic likelihood methods can also be developed in Aalen’s linear hazard rate regression model, by local parametric modelling of the hazard factor functions. See Hjort (1993a). 
+
+7E. Moderately incorrect parametric models. A parametric model does not have to be fully perfect in order for the methods based on it to be better than more conservative ones. In  
+
+> Dynamic Likelihood
+
+18 April 1993 Hjort (1993b) a ‘tolerance distance’ is calculated from a moderately incorrect model to a wider and correct one; inside the tolerance radius estimators based on the incorrect model are better than those based on the correct model. For an example, suppose the true model is the gamma one, with hazard function inherited from the density f (s, θ, γ ) = {θγ /Γ( γ)} sγ−1 exp( −θs ). Then estimators based on the incorrect assumption of a constant rate (which corresponds to γ = 1) are better than the two-parameter methods if |γ − 1| ≤ 1.245 /√n (assuming no censoring). This can be seen as yet another argument for not giving up simple parametric methods, even though the underlying models might be wrong. 
+
+7F. Counting process models. Methods and results of this paper can be generalised in various directions. They could be developed for Aalen’s general multiplicative intensity model for counting processes, and hence be used to estimate hazard transition rates in time-inhomogeneous Markov chains, for example. There will then be a more complicated expression for the MW matrix of (2.6), but otherwise there will be few complications. In another direction our results could be extended to the full halfline [0 , ∞) with appropriate extra assumptions on the censoring mechanism. 
+
+7G. More theory. In our presentation we have concentrated on the perhaps most immediate aspects of the dynamic likelihood estimation method. There are further natural questions to ask and further natural results to prove. (i) One can prove uniform consistency of the (3.12) estimator without too much work, for example. One can more generally establish max a≤s≤b |α(s, ̂ θ(s)) −
+
+α(s)| → p 0 under natural conditions. (ii) And the approximate size and distribution of this maximal deviation quantity are also of interest. (iii) It is not difficult to establish that ( nh )1/2{̂α(s) −
+
+α(s) − 12 βK α′′ (s)} has a limiting zero-mean normal distribution, when h → 0 and nh → ∞ . This can also be used to construct point-wise approximate confidence band for the α(.) function, for example incorporating a bias correction − 12 βK̂α ′′ (s). (iv) One should work out a reliable cross validation method for minimising a nearly unbiased estimate of ∫ T 
+
+> 0
+
+w(s){̂α(s) − α(s)} 2 ds, say, as a function of the window width h, or as a function of c in h = cY n(s)−1/5. The crux is to estimate 
+
+∫ T 
+
+> 0
+
+w(s)̂α(s)α(s) d s. (v) Theory can also be worked out for estimation of derivatives of the hazard function, as touched on in 6.1. Taking the derivative of (3.12) to define ̂α ′(s), with a smooth kernel function K, one can show that the bias is proportional to a h2b1(s) and that the variance is proportional to n−1h−3α(s)/y (s), but with a b1(s) function different from that of the derivative of the Ramlau-Hansen–Yandell estimator. 
+
+7H. Questions. A simulation study comparing the various estimators would be welcome. Some of the questions to answer include: How much better are the new estimators than the purely nonparametric ones when the true hazard is in the vicinity of the parametric model used? How much do they lose to the parametric ones on the latter’s home turf? Are there significant advantages to using multi-parameter models for the dynamic likelihood methods of Sections 3 and 4? What are the most useful ways of choosing window width h = hn(s)? 
+
+References 
+
+Andersen, P.K., Borgan, Ø., Gill, R.D., and Keiding, N.L. (1993). Statistical Models Based on Counting Processes. Springer-Verlag, New York. Borgan, Ø. (1984). Maximum likelihood estimation in parametric counting process models,  
+
+> Nils Lid Hjort
+
+19 April 1993 with applications to censored failure time data. Scand. J. Statist. 11 , 1–16. Corrigendum, 
+
+ibid. p. 275. Gr´ egoire, C. (1993). Least squares cross validation for counting process intensities. Scand. J. Sta-tist. , to appear. Hjort, N.L. (1985). Contribution to the discussion of Andersen and Borgan’s ‘Counting process models for life history data: a review’. Scand. J. Statist. 12 , 141–150. Hjort, N.L. (1990). Goodness of fit tests in models for life history data based on cumulative hazard rates. Ann. Statist. 18 , 1221–1258. Hjort, N.L. (1991). Semiparametric estimation of parametric hazard rates. In Survival Analysis: State of the Art , Kluwer, Dordrecht, pp. 211–236. Proceedings of the NATO Advanced Study Workshop on Survival Analysis and Related Topics , Columbus, Ohio, eds. P.S. Goel and J.P. Klein. Hjort, N.L. (1992). On inference in parametric survival data models. Int. Statist. Review 60 ,355–387. Hjort, N.L. (1993a). Efficiency of three estimators in Aalen’s linear hazard rate regression model. Submitted for publication. Hjort, N.L. (1993b). Estimation in moderately misspecified models. Submitted for publication. Hjort, N.L. and Jones, M.C. (1993). Locally parametric nonparametric density estimation. Manus-cript in progress. Hjort, N.L. and Lumley, T. (1993). Normalised local hazard plots. Submitted for publication. Nielsen, J.P. (1990). Kernel estimation of densities and hazards: a counting process approach. PhD. dissertation, Department of Statistics, University of Berkeley, California. Ramlau-Hansen, H. (1983). Smoothing counting process intensities by means of kernel functions. 
+
+Ann. Statist. 11 , 453–466. Tanner, M.A. and Wong, W.H. (1983). The estimation of the hazard function from randomly censored data. Ann. Statist. 11 , 989–993. Yandell, B.S. (1983). Nonparametric inference for rates and densities with censored serial data. 
+
+Ann. Statist. 11 , 1119–1135.  
+
+> Dynamic Likelihood
+
+20 April 1993

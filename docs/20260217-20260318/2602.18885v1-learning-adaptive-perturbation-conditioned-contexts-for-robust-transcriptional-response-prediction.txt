@@ -1,0 +1,984 @@
+Title: Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction
+
+URL Source: https://arxiv.org/pdf/2602.18885v1
+
+Published Time: Tue, 24 Feb 2026 01:41:20 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+Yinhua Piao 1 Hyomin Kim 1 Seonghwan Kim 1 Yunhak Oh 1 Junhyeok Jeon 2 Sang-Yeon Hwang 2
+
+Jaechang Lim 2 Woo Youn Kim 1 2 Chanyoung Park 1 Sungsoo Ahn * 1 
+
+## Abstract 
+
+Predicting high-dimensional transcriptional re-sponses to genetic perturbations is challenging due to severe experimental noise and sparse gene-level effects. Existing methods often suf-fer from mean collapse , where high correlation is achieved by predicting global average expres-sion rather than perturbation-specific responses, leading to many false positives and limited bi-ological interpretability. Recent approaches in-corporate biological knowledge graphs into per-turbation models, but these graphs are typically treated as dense and static, which can propagate noise and obscure true perturbation signals. We propose A DA PERT , a perturbation-conditioned framework that addresses mean collapse by ex-plicitly modeling sparsity and biological struc-ture. A DA PERT learns perturbation-specific sub-graphs from biological knowledge graphs and ap-plies adaptive learning to separate true signals from noise. Across multiple genetic perturbation benchmarks, A DA PERT consistently outperforms existing baselines and achieves substantial im-provements on DEG-aware evaluation metrics, indicating more accurate recovery of perturbation-specific transcriptional changes. 
+
+## 1. Introduction 
+
+Predicting how cells respond to genetic perturbations is a key problem in functional genomics (Shalem et al., 2015; Przybyla & Gilbert, 2022). It supports many downstream tasks, such as understanding gene function, analyzing regu-latory effects, and identifying potential therapeutic targets. Recent progress in single-cell perturbation experiments, in-cluding Perturb-seq and CRISPR-based screens (Datlinger et al., 2017; Bock et al., 2022), now allows gene expression 
+
+> 1
+
+KAIST, Seoul, South Korea 2HITS, Seoul, South Korea. Cor-respondence to: Sungsoo Ahn <sungsoo.ahn@kaist.ac.kr >.
+
+Preprint. February 24, 2026. 𝒓 (𝑫𝑬𝑮 ) 11% Mean Collapse 
+
+Figure 1. Mean-collapse as a common failure mode in perturba-tion modeling. For the UQCRB perturbation ( n = 114 DEGs), a standard perturbation model shows mean-collapse, where pre-dicted expression changes shrink toward zero and large effects are underestimated (Left). Our method reduces this bias by using perturbation-specific context and better tracks gene-level expres-sion changes, especially for strongly expressed genes (Right). 
+
+to be measured across thousands of genes under many per-turbation conditions (Dixit et al., 2016; Norman et al., 2019; Replogle et al., 2022). As a result, there is growing interest in computational models that can predict transcriptional re-sponses to perturbations that have not been experimentally tested. A central challenge in this task is that single-cell mea-surements are inherently noisy, making it difficult to learn perturbation-specific effects from the samples (Brennecke et al., 2013). Recent efforts have addressed this challenge primarily through input-level improvements: scaling up training data or input shape (Cui et al., 2024), enriching fea-tures with biological annotations (Chen & Zou, 2024), and incorporating knowledge graphs to improve generalization to unseen perturbations (Roohani et al., 2024). While these directions have shown progress, we observe that a funda-mental failure mode persists across many existing methods. Instead of capturing perturbation-specific changes, models tend to predict expression shifts close to the global average: a behavior we call mean-collapse . As illustrated in Figure 1(a), baseline model (Wenkel et al., 2025) collapses predic-1
+
+> arXiv:2602.18885v1 [cs.CE] 21 Feb 2026 Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction
+
+tions toward the center of the distribution, where non-DEG genes dominate ( Gray dots). This can produce high overall correlation, but expression changes of biologically impor-tant genes ( Red and Blue dots) are strongly underestimated, which aligns with the recent findings (Mejia et al., 2025). As a result, these models yield many false positives and provide limited insight into the true effects of perturbations. We argue that mean-collapse arises not from insufficient data or features, but from a mismatch between model de-sign and the sparse nature of perturbation responses. For each perturbation, only a small subset of genes shows strong changes, and these genes are typically related to the per-turbed gene through biological pathways (Wu et al., 2009). A useful perturbation model should therefore meet two re-quirements: it should isolate the true signal from noise under high variability, and it should use biological struc-ture to guide this separation. Most existing methods treat knowledge graphs as dense and static (Wenkel et al., 2025; He et al., 2025), using them for global embedding rather than selecting perturbation-relevant genes. In noisy settings, this can spread the signal across many unrelated genes and increase false positives. Based on these observations, we propose A DA PERT , a perturbation-conditioned method that directly addresses mean-collapse by modeling sparsity and biological structure. Rather than treating knowledge graphs as fixed templates, ADA PERT learns a perturbation-conditioned context (sub-graph) for each perturbation. Starting from control cells, the method selects genes related to the perturbed gene and forms a compact subgraph from the full graph. An adaptive learn-ing scheme then limits variation in non-responsive genes and uses responsive genes to refine the subgraph representation. This design enables robust modeling of perturbation-specific transcriptional changes under noisy settings. We evaluate A DA PERT on multiple genetic perturbation benchmarks. Across datasets, A DA PERT consistently out-performs existing methods on multiple metrics, with the largest gains on DEG-aware metrics, indicating better mod-eling of perturbation-specific transcriptional changes. We further provide a comprehensive analysis across perturba-tions with different effect-size. These results show that learning adaptive perturbation-conditioned context on bio-logical knowledge graphs improves perturbation prediction in noisy settings. 
+
+## 2. Related Works 
+
+2.1. Data-Driven Genetic Perturbation Modeling 
+
+Genetic perturbation modeling has been extensively stud-ied through data-driven learning approaches, which aim to reconstruct gene expression responses under perturbation conditions (Lopez et al., 2018; Lotfollahi et al., 2019; Bunne et al., 2023; Lotfollahi et al., 2023; Cui et al., 2024; Hao et al., 2024; Adduri et al., 2025). Most existing methods formulate this task as an end-to-end prediction problem, optimizing objectives such as mean squared error or corre-lation between predicted and observed expression profiles. These approaches have demonstrated strong performance on standard quantitative metrics and are widely adopted as baselines for perturbation prediction tasks. However, by pri-marily focusing on overall reconstruction accuracy, they do not explicitly model which genes are causally or specifically affected by a given perturbation, motivating the exploration of additional sources of inductive bias (Wenteler et al., 2024; Wu et al., 2024; Li et al., 2024). 
+
+2.2. Knowledge-Driven Genetic Perturbation Modeling 
+
+To address the limitations of purely data-driven approaches, recent work has explored incorporating prior knowledge to provide structural (Wenkel et al., 2025; Roohani et al., 2024; He et al., 2025) or semantic constraints (Cui et al., 2024; Chen & Zou, 2024; Istrate et al., 2024). Such priors aim to guide models toward biologically plausible solutions, im-prove robustness under noisy single-cell measurements, and better capture perturbation-specific regulatory effects. Ex-isting approaches leverage structured biological resources, including curated networks and textual knowledge, but the integration of these priors is often static and global. Biological knowledge graphs, such as protein–protein inter-action networks and pathway databases, have been widely used to encode relationships among genes. In perturba-tion modeling, these graphs are typically incorporated to generate gene embeddings, constrain message passing, or regularize model parameters (Wenkel et al., 2025; Roohani et al., 2024; He et al., 2025). By propagating information along known biological interactions, graph-based methods introduce inductive biases that reflect prior biological knowl-edge. However, most existing approaches treat knowledge graphs as dense and static structures that are shared across all perturbations. As a result, the same global graph is applied regardless of the specific perturbation, without ex-plicitly identifying which substructures are relevant to a given perturbation condition. More recently, large language models (LLMs) have been ex-plored as a means of extracting biological knowledge from unstructured text, including scientific literature and curated databases (Chen & Zou, 2024; Istrate et al., 2024). In biolog-ical applications, LLMs are commonly used for tasks such as gene annotation, relationship scoring, and semantic re-trieval (Wu et al.; Istrate et al., 2025; He et al., 2025). These models provide a complementary source of prior knowledge that is difficult to encode in structured graphs alone. How-ever, most LLM-based approaches do not directly model perturbation-response data and instead rely on inferred asso-2Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction AdaPert Gene 𝑝 
+
+KG template 𝒢 
+
+> Control cell
+> 0
+> +
+> 0
+> 0
+> 0
+> 0
+> -
+> 0
+> 0
+> DEG
+
+X!
+
+> Differential Expressed Analysis
+> noise
+
+☹
+
+ℒ"#$%& 
+
+ℒ'()*& ℒ+,+ -./0 
+
+#x!('1 x2345 
+
+z) z!
+
+&x) Δ#x!('1 (𝒟 (𝑝 )
+
+Adaptive 
+
+Learning 𝒢 ./0 
+
+> Genes
+
+𝒢 6,+5375 
+
+> noise
+
+🔍   
+
+> (a) (b) (c)
+
+X6 &x) &x! 
+
+> 𝔼ℕ ℂ!𝔻𝔼 ℂ"
+
+Figure 2. Overview of AdaPert (a) The model takes a control cell expression profile ¯xc and a perturbation gene p as input. A perturbation-conditioned subgraph Gcontext is extracted from a biological knowledge graph template G, producing a context representation zp that is combined with the encoded control state zc to predict the perturbed expression profile ˆxpert via encoder ENC θ and decoder DEC ϕ. (b) The adaptive learning scheme separates signal from noise using three loss terms: a reconstruction loss Lrecon for overall expression fidelity, a non-DEG loss Lnon-DEG that suppresses spurious changes in non-responsive genes, and an alignment loss Lalign that guides the learned subgraph representation GDEG to encode perturbation-specific differential expression patterns. (c) Illustration of single-cell perturbation data structure showing control cells Xc, perturbed cells Xp, and their mean profiles ¯xc and ¯xp. Differentially expressed genes (DEGs) are identified through statistical testing, distinguishing true perturbation signals from experimental noise. 
+
+ciations or reasoning over textual knowledge. Consequently, LLMs are often better suited as auxiliary components that provide prior guidance, rather than as standalone models for predicting perturbation-induced transcriptional responses. 
+
+## 3. Methodology 
+
+3.1. Problem Definition and Preliminaries 
+
+We formalize the task of predicting transcriptional responses to genetic perturbations within a conditional generative framework. Let Xc ∈ RN denote the gene expression profile of a control cell c, where N is the number of ob-served genes. A perturbation targeting a specific gene p is selected from the set K. Our objective is to learn a predic-tive mapping F : ( Xc, p ) → ˆXp, where ˆXp ∈ RN is the predicted expression profile post-perturbation. Existing state-of-the-art methods typically implement F us-ing a conditional autoencoder backbone consisting of three functional components: a control encoder, a condition en-coder, and a perturbation decoder. An encoder ENC θ maps the control profile into a lower-dimensional latent represen-tation zc, capturing the baseline state: 
+
+zc = ENC θ (Xc), zc ∈ Rd (1) The perturbed gene p (condition) is represented by an em-bedding zp ∈ Rd. zp is a learnable vector initialized by one-hot encoding or from recent gene foundation models (Cui et al., 2024; Theodoris et al., 2023). In more recent knowledge-guided models (Wenkel et al., 2025), it is de-rived from a global biological knowledge graph G = ( V, E)
+
+via a graph neural network (Veliˇ ckovi´ c et al., 2018): 
+
+zp = GNN (G, p ) (2) where nodes V represent genes and edges E represent func-tional interactions. Finally, a decoder DEC ϕ reconstructs the perturbed transcriptional response by integrating the cell state zc and the perturbation signal zp:
+
+ˆXp = DEC ϕ(zc, zp) (3) The model is trained by minimizing a reconstruction loss 
+
+L(Xp, ˆXp), defined as the mean squared error between the predicted and observed gene expression profiles. However, this objective treats all genes equally. In genetic perturbation data, true responses are sparse, with only a small subset of genes showing strong changes while most genes remain near baseline. Let D(p) denote the set of responsive genes (DEGs) under perturbation p, and ¯D(p)
+
+its complement, with |D (p)| ≪ | ¯D(p)|. The reconstruction loss can be decomposed as 3Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+Lrec = X
+
+> i∈D (p)
+
+ ˆXpi − Xpi
+
+2
+
+| {z }
+
+> responsive genes
+
++ X 
+
+> i∈¯D(p)
+
+ ˆXpi − Xpi
+
+2
+
+| {z }
+
+> non-responsive genes
+
+. (4) Since the second term dominates, minimizing mean squared error is driven mainly by non-responsive genes, encouraging predictions to shrink toward zero. As a result, large pertur-bation effects are systematically underestimated, leading to a failure mode we refer to as mean-collapse .KG template 𝒢                                           
+
+> UQCRB (ubiquinol -cytochrome creductase binding
+> protein) encodes asubunit of the ubiquinol -
+> cytochrome coxidoreductase complex (Complex III)
+> in the mitochondrial electron transport chain .…
+> UQCRB also plays arole in hypoxia -induced
+> angiogenesis via mitochondrial reactive oxygen
+> species signaling .
+> Mutations in UQCRB are associated with
+> mitochondrial Complex III deficiency .
+> (Source :NCBI Gene)~ \cite{NCBI 7381 }
+
+𝐀 "𝐀 
+
+> Neighbor
+> Scoring
+> Descriptions
+
+# 🧬 UQCRB 
+
+𝒢 !"#$%&$ 
+
+s'
+
+h'
+
+h(
+
+𝜎 ([h'||(s'])  
+
+> Sampling
+> Target gene 𝒑
+> Perturb gene 𝒗
+
+Figure 3. Perturbation-Conditioned Subgraph Extraction. Given a perturbed gene p (e.g., UQCRB), the module extracts a perturbation-specific subgraph from the knowledge graph tem-plate G. First, a textual description of the perturbed gene is retrieved from NCBI and encoded using a language model to obtain a semantic embedding sp. Each node v in the graph is represented by a structural embedding hv computed via message passing. For neighbor scoring, the semantic embedding is concate-nated with each node’s structural embedding, and a perturbation-conditioned relevance score is computed via σ([ hv ∥˜sp]) . Differen-tiable Gumbel-Softmax sampling is then applied to select a sparse set of perturbation-relevant nodes, yielding a compact subgraph 
+
+Gcontext centered around genes related to the perturbed gene. 
+
+3.2. Overview of A DA PERT 
+
+To address the mean-collapse induced by dense recon-struction objectives, we propose A DA PERT , a perturbation-conditioned framework (Figure 2) that explicitly models sparsity of signals and biological structure related to the perturbation. The model consists of two components. First ,ADA PERT extracts a perturbation-conditioned subgraph 
+
+from a unified biological knowledge graph template. Rather than using the full graph as a static prior, this module se-lects a compact subgraph that captures genes biologically related to the perturbed gene, providing a structured hy-pothesis space for perturbation response modeling. Second ,ADA PERT employs an adaptive learning scheme to separate the true signal from noise. This module constrains spurious variations in non-differentially expressed genes while lever-aging differentially expressed genes to guide the alignment and refinement of subgraph representations. Together, these two components enable perturbation-specific modeling that reduces noise propagation and preserves sparse transcrip-tional responses with high fidelity. 
+
+3.3. Perturbation-Conditioned Subgraph Extraction 
+
+We extract a perturbation-specific subgraph from a unified biological knowledge graph G = ( V, E). Instead of propa-gating messages over the full graph, our approach selects a sparse set of perturbation-relevant nodes to construct a subgraph centered around the perturbed gene. This design integrates semantic information beyond graph structure and reduces overfitting by restricting message passing to a small, condition-dependent context. 
+
+Node Representations. Each gene node v ∈ V is repre-sented by a structural embedding that captures graph topol-ogy. We initialize each node with a one-hot vector xv and apply message passing: 
+
+h(0)  
+
+> v
+
+= xv , (5) 
+
+h(l+1)  
+
+> v
+
+= X 
+
+> u∈N (v)
+
+1
+
+|N (v)| W(l)h(l) 
+
+> u
+
+, (6) where N (v) denotes the neighbors of v and W(l) are learn-able weights. After L layers, we obtain the structural em-bedding hv = h(L) 
+
+> v
+
+∈ Rds .
+
+Perturbation Semantic Embedding. We use language model embeddings to provide a basic semantic understand-ing of each perturbation gene. By encoding textual descrip-tions of the perturbed gene, the language model captures information that is not explicitly represented in the knowl-edge graph, such as gene family membership, functional similarity, and naming-related associations. This seman-tic information complements graph structure and enables the model to identify relevant genes that may be weakly connected or disconnected in the graph. For each perturba-tion gene p, we retrieve its textual description from NCBI and encode it using a language model ( GPT-4o (OpenAI, 2024)): 
+
+sp = LM(desc( p)) , sp ∈ Rdt . (7) To align semantic and structural spaces, we project the per-turbation embedding into the graph embedding space: 
+
+˜sp = Wssp, (8) where Ws ∈ Rds×dt .4Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+Perturbation-Conditioned Node Scoring. To identify nodes relevant to a given perturbation, we condition node selection on the perturbation embedding. For each node 
+
+v, we construct a joint representation by concatenating its structural embedding with the perturbation embedding: 
+
+cv = [ hv ∥ ˜sp] . (9) A perturbation-conditioned node relevance score is com-puted via a multilayer perceptron: 
+
+av = w⊤σ(Wccv ) , (10) where σ(·) denotes a non-linear activation. Scores are nor-malized across all nodes: 
+
+αv = exp( av )
+
+P 
+
+> u∈V
+
+exp( au) . (11) 
+
+Differentiable Node Sampling. To enforce sparsity while preserving differentiability, we apply Gumbel-Softmax sam-pling (Jang et al., 2017) over node scores: 
+
+˜αv = exp ((log αv + gv )/τ )
+
+P 
+
+> u∈V
+
+exp ((log αu + gu)/τ ) , (12) where gv ∼ Gumbel(0 , 1) and τ is a temperature parameter. Nodes with ˜αv > T are selected, yielding a perturbation-specific node-induced subgraph Gp.
+
+Perturbation Context Representation. Finally, we sum-marize the selected subgraph by aggregating the embeddings of the selected nodes: 
+
+zcontext = X
+
+> v∈V (Gp)
+
+hv . (13) Because node selection is explicitly conditioned on the per-turbation, different perturbations induce distinct subgraphs, allowing the model to focus on causally relevant genes while filtering out unrelated graph structure. 
+
+3.4. Adaptive Learning for Signal–Noise Separation 
+
+We explicitly separate signal and noise during training by leveraging perturbation-specific differential expression in-formation. For each perturbation p, let Xc, Xp ∈ RN de-note the control and perturbed expression profiles, and de-fine the perturbation effect ∆Xp = Xp − Xc. Using the training data, we perform a statistical test for each gene and obtain a p-value q(p) 
+
+> i
+
+. We define the DEG and non-DEG sets as 
+
+D(p) = {i | q(p) 
+
+> i
+
+< 0.05 }, ¯D(p) = {i | q(p) 
+
+> i
+
+≥ 0.05 }.
+
+(14) Rather than treating all genes equally, we introduce three complementary loss terms with distinct roles: (i) a global reconstruction loss to preserve overall expression fidelity, (ii) a robust penalty that suppresses spurious changes on non-DEG genes, and (iii) a response-aware alignment loss that encourages the extracted subgraph representation to encode perturbation-specific DEG signals. Together, these objectives promote explicit separation between signal and noise during training. 
+
+Global reconstruction loss. We first match the full per-turbed expression profile using a mean squared error: 
+
+Lrecon = E
+
+h
+
+∥ ˆXp − Xp∥22
+
+i
+
+. (15) This term ensures global consistency and stabilizes optimiza-tion, but alone is insufficient to distinguish true perturbation effects from noisy fluctuations. 
+
+Non-DEG robust loss. For non-responsive genes ¯D(p),the expected perturbation change is close to zero, while experimental measurements can be noisy. To reduce spu-rious deviations without being overly sensitive to outliers, we penalize predicted perturbation changes on ¯D(p) using a Huber loss (Huber, 1992): 
+
+Lnon = Ep
+
+ X 
+
+> i∈¯D(p)
+
+ρδ
+
+
+
+∆ ˆXpi
+
+ , ∆ ˆXp = ˆXp − Xc.
+
+(16) The Huber penalty is defined as 
+
+ρδ (r) = 
+
+( 12 r2, |r| ≤ δ, δ |r| − 12 δ , |r| > δ. (17) The threshold δ controls the transition between quadratic and linear penalties, allowing small residuals to be strongly suppressed while preventing large but noisy deviations from dominating the loss. In practice, δ is set proportional to the empirical standard deviation of non-DEG effects, and is fixed across perturbations. 
+
+Adaptive subgraph representation alignment. Beyond expression-level supervision, we explicitly guide the learned subgraph representation to reflect perturbation-specific re-sponses. Let z(p)context denote the context representation pro-duced by the extracted subgraph for perturbation p (Sec-tion 3.3). We construct a response-driven target by summa-rizing DEG signals: 
+
+y(p) ∈ RN , y(p) 
+
+> i
+
+=
+
+(
+
+∆Xpi , i ∈ D (p),
+
+0, i ∈ ¯D(p), (18) which preserves signed effect sizes while masking non-DEG genes. This vector is mapped into the representation space via a projection head g(·):
+
+t(p) = g
+
+
+
+y(p)
+
+∈ Rd. (19) 5Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+We then align the subgraph context with the response-driven target using a cosine-distance loss: 
+
+Lalign = E
+
+ z(p)context 
+
+∥z(p)context ∥2
+
+− t(p)
+
+∥t(p)∥2
+
+> 22
+
+ . (20) This alignment encourages the extracted subgraph to encode perturbation-relevant DEG structure, rather than generic graph features. 
+
+Overall objective. The final training objective combines all three terms: 
+
+Ltotal = Lrecon + λnon Lnon + λalign Lalign . (21) 
+
+## 4. Experiments 
+
+4.1. Experiment Setup 
+
+We evaluate A DA PERT on a single-cell genetic perturbation prediction task. The goal is to predict the transcriptional response of cells after a target gene is perturbed. All experi-ments are conducted under the unseen perturbation setting, where perturbations in the test set are not observed dur-ing training. We use two single-cell CRISPR perturbation datasets from Replogle et al. (Replogle et al., 2022) The first dataset, K562.Replogle , consists of single-gene knockouts measured by single-cell RNA sequencing in the K562 cell line. The second dataset, RPE1.Replogle , is collected using the same experimental protocol in the RPE1 cell line. Both datasets include control cells and perturbed cells for each tar-get gene, enabling direct evaluation of perturbation-induced transcriptional changes. For each dataset, we follow stan-dard preprocessing and data splitting protocols used in prior work. Training, validation, and test sets are constructed such that perturbations in the test set are entirely unseen during training. More details about dataset are provided in the Appendix. 
+
+4.2. Baselines and Training Protocol 
+
+We compare A DA PERT against two categories of baseline methods: (1) models without a knowledge graph, including scVI (Lopez et al., 2018), CPA (Lotfollahi et al., 2023), and STATE (Adduri et al., 2025); and (2) models that in-corporate a knowledge graph, including GEARS (Roohani et al., 2024), TxPert (Wenkel et al., 2025), and MorPH (He et al., 2025). These baselines represent state-of-the-art ap-proaches for genetic perturbation prediction. All models are trained under the same experimental setup and computa-tional budget to ensure fair comparison. Unless otherwise specified, we use identical data splits, training procedures, and evaluation protocols across all methods. Additional implementation details are provided in Appendix. 
+
+4.3. Evaluation Metrics 
+
+To evaluate perturbation prediction performance, we use a set of complementary metrics that capture different aspects of model behavior. We report two global metrics, Pearson-
+
+∆ and the Perturbation Discrimination Score (PDS), which measure overall agreement between predicted and observed perturbation effects. In addition, we include DEG-aware metrics that focus on differential expression accuracy, in-cluding Differential Expression Score@K (DES@K) and Spearman correlation of log fold changes and their direc-tions. These metrics are sensitive to false positive predic-tions and better reflect the recovery of perturbation-specific gene responses. Together, this metric suite allows us to assess both global reconstruction accuracy and the abil-ity to capture biologically meaningful perturbation effects. All metrics are computed using the latest version of the 
+
+cell-eval (Adduri et al., 2025) evaluation framework. 
+
+## 5. Main Results 
+
+5.1. Global Performance of Perturbation Prediction 
+
+We conduct genetic perturbation prediction on two CRISPR perturbation datasets, K562.Replogle and RPE1.Replogle .We report Pearson correlation on differential expression relative to control (Pearson-∆) and the perturbation dis-criminative score (PDS). PDS measures how well a model distinguishes different perturbations. As shown in Table 1, methods without biological knowledge graphs show limited performance on both datasets. Their PDS values are close to chance level, indicating weak ability to separate differ-ent perturbations. Methods that use biological knowledge graphs perform better, showing that the use of biological prior knowledge is important. However, these methods rely on dense and mostly static graph structures, which can still spread noise across genes. ADA PERT achieves the best performance on both datasets. The gains are consistent for Pearson-∆ and PDS. Importantly, the improvement on PDS is larger than that on Pearson-∆. This shows that ADA PERT improves perturbation discrimination, rather than only increasing global correlation. The results suggest that ADA PERT reduces mean-collapsed predictions and focuses on perturbation-specific transcriptional changes. 
+
+5.2. DEG-aware Comparisons 
+
+As shown in Table 2, we report the Differential Expression Score (DES@K), which measures how well true DEGs are ranked among top predicted genes. Methods without knowl-edge graphs achieve very low DES, indicating poor separa-tion between signal and noise. KG-based methods improve DEG recovery. GEARS shows moderate gains, and TxPert further improves DES, but its scores remain limited, sug-gesting that noise still affects non-DEG genes. A DA PERT 
+
+6Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction      
+
+> Table 1. Performance comparison across perturbation datasets. Results are reported as mean ±std over all test perturbations. ∆denotes correlation on differential expression relative to control, PDS denotes perturbation discriminative score.
+
+Category Method K562.Replogle RPE1.Replogle Pearson-∆ PDS Pearson-∆ PDS w/o KG scVI (Lopez et al., 2018) 0.171 ± 0.195 0.502 ± 0.290 0.369 ± 0.175 0.501 ± 0.289 
+
+CPA (Lotfollahi et al., 2023) 0.288 ± 0.157 0.503 ± 0.290 0.486 ± 0.210 0.503 ± 0.290 
+
+STATE (Adduri et al., 2025) 0.247 ± 0.188 0.506 ± 0.289 0.583 ± 0.281 0.520 ± 0.292 
+
+w/ KG GEARS (Roohani et al., 2024) 0.298 ± 0.181 0.529 ± 0.287 0.396 ± 0.216 0.524 ± 0.298 
+
+TxPert (Wenkel et al., 2025) 0.580 ± 0.255 0.665 ± 0.310 0.655 ± 0.300 0.618 ± 0.290 
+
+MorPH (He et al., 2025) 0.442 ± 0.242 0.664 ± 0.299 0.541 ± 0.299 0.688 ± 0.268 
+
+ADA PERT 0.619 ± 0.262 0.711 ± 0.296 0.674 ± 0.291 0.663 ± 0.281       
+
+> Table 2. DEG-aware evaluation on K562.Replogle . Results are reported as mean ±std over multiple runs. DEG overlap@ kmeasures the fraction of ground-truth DEGs recovered in the top-kpredicted genes.
+
+Category Method Differential Expressed Score DE-metrics @50 @100 Spearman-sig Spearman-lfc-sig Direction-match w/o KG scVI 0.071 ± 0.072 0.064 ± 0.060 0.443 0.372 ± 0.355 0.577 ± 0.186 
+
+CPA 0.116 ± 0.098 0.104 ± 0.083 0.474 0.360 ± 0.104 0.645 ± 0.104 
+
+STATE 0.044 ± 0.041 0.050 ± 0.045 0.468 0.298 ± 0.198 0.643 ± 0.108 
+
+w/ KG GEARS 0.126 ± 0.107 0.124 ± 0.106 0.540 0.381 ± 0.341 0.603 ± 0.177 
+
+TxPert 0.220 ± 0.173 0.205 ± 0.165 0.536 0.640 ± 0.241 0.843 ± 0.133 
+
+MorPH 0.057 ± 0.083 0.090 ± 0.097 0.546 0.448 ± 0.239 0.757 ± 0.128 
+
+ADA PERT 0.263 ± 0.190 0.252 ± 0.182 0.622 0.688 ± 0.240 0.867 ± 0.141 
+
+achieves the highest DES at both k = 50 and k = 100 , with consistent improvements over TxPert. This indicates more accurate ranking of true DEGs. A DA PERT also performs better on DEG-specific metrics, including Spearman cor-relation, the agreement of log-fold changes, and direction consistency. These results show that A DA PERT produces sparse and reliable perturbation-specific gene responses. 
+
+5.3. Comparison on Mean-Collapse 
+
+We analyze model sensitivity to mean-collapse by group-ing perturbations into small-, medium-, and large-effect sets based on ground-truth effect size. Results are shown in Table 3. For small-effect perturbations, where mean-collapse is most severe, TxPert and A DA PERT achieve simi-lar Pearson-∆, but A DA PERT shows much higher DES. This shows better separation of true signal from noise, despite similar overall correlation. For medium- and large- effect perturbations, A DA PERT improves all metrics, including Pearson-∆, DES, and PDS. Overall, these results show that ADA PERT is more robust to mean-collapse, especially when true perturbation effects are weak.      
+
+> Table 3. Sensitivity analysis to mean bias under different perturba-tion effect sizes on K562.Replogle (mean ±std). Effect sizes are stratified by ground-truth differential expression. Improvements are reported relative to TxPert.
+
+Effect size Model P-∆ DES PDS 
+
+Small-effect TxPert 0.457 0.090 0.740 (< 5%) ADA PERT 0.462 0.115 0.737 
+
+Improvement ↑ 1.1% ↑ 28% ↓ 0.4% 
+
+Medium-effect TxPert 0.541 0.173 0.663 (5% –10%) ADA PERT 0.623 0.222 0.740 
+
+Improvement ↑ 15% ↑ 28% ↑ 12% 
+
+Large-effect TxPert 0.741 0.353 0.592 (> 10%) ADA PERT 0.771 0.420 0.657 
+
+Improvement ↑ 4.0% ↑ 19% ↑ 11% 
+
+5.4. Effect of Lnon and zcontext Across Perturbations 
+
+We conduct an ablation study on three perturbation groups categorized by effect size to evaluate the roles of perturbation-specific context zcontext and the non-DEG loss 
+
+Lnon (Figure 4). Overall, the full model performs well across all metrics and effect-size regimes, with the strongest per-7Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction Small   
+
+> (<5%)
+> Medium
+> (5-10%)
+> Large
+> (>10%)
+> 0.2
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Pearson Correlation (  )
+> Small
+> (<5%)
+> Medium
+> (5-10%)
+> Large
+> (>10%)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> PDS
+> Small
+> (<5%)
+> Medium
+> (5-10%)
+> Large
+> (>10%)
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> DE Genes Recall
+> Small
+> (<5%)
+> Medium
+> (5-10%)
+> Large
+> (>10%)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> DES@50
+> Ours (AdaPert) w/o non-DEG loss w/o context
+
+Figure 4. Comparison of model variants across small, medium, and large perturbations using global and DEG-based metrics. 
+
+formance observed for small and medium perturbations. Removing zcontext consistently degrades performance across all comparisons, showing that enriching perturbation con-text is critical. Removing the Lnon has a strong negative impact for small and medium perturbations, where signals are weak and noise is high, indicating that adaptive separa-tion of signal and noise is necessary in this regime. For large perturbations ( > 10% DE genes), the effect of the Lnon be-comes less pronounced, showing that the balance between signal and noise varies with perturbation effect size. 0 0.001 0.005 0.01 0.1       
+
+> non
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> Pearson Correlation (  )
+> 00.001 0.005 0.01 0.1
+> non
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> DES@50
+> Small (<5%) Medium (5-10%) Large (>10%)
+
+Figure 5. Effect-Size–Dependent Behavior of Lnon . Sensitivity of model performance to the weight λnon across small, medium, and large perturbations, evaluated using pearson ∆ and DES@50. −2.0 −1.5 −1.0 −0.5 0.0 0.5 1.0 1.5 2.0   
+
+> Normalized enrichment score
+> Myc Targets V1
+> E2F Targets
+> Myc Targets V2
+> Mitotic Spindle
+> G2-M Checkpoint
+> Kras Signaling Up
+> Dna Repair
+> Unfolded Protein Response
+> Il-2/Stat5 Signaling
+> Mtorc1 Signaling
+> Apoptosis
+> Complement
+> Coagulation
+> Estrogen Response Early
+> Adipogenesis
+> Cholesterol Homeostasis
+> Heme Metabolism
+> Estrogen Response Late
+> Xenobiotic Metabolism
+> Androgen Response
+> ***
+> **
+> *
+> *
+> *
+> *
+> *
+> *
+> *
+> *FDR < 0.05
+> Ground truth
+> Predicted
+
+Figure 6. Pathway enrichment analysis of predicted HIRA knock-down effects.The predicted and ground truth enrichment scores show significant correlation (Pearson r = 0.53, P < 0.001). 
+
+5.5. Effect-Size–Dependent Behavior of the Lnon 
+
+We analyze the interaction between Lnon and perturbation effect size by varying the weight λnon of the non-DEG loss across different perturbation groups (Figure 5). For small and medium perturbations, performance consistently im-proves as λnon increases from 0 → 0.01 across both global and DEG-based metrics. This trend indicates that assign-ing more weight to the non-DEG loss helps suppress noise and improves signal recovery when perturbation effects are weak. In contrast, for large perturbations, smaller values of λnon yield better performance, suggesting that strong signals require less regularization. Across all perturbation groups, setting λnon too large (e.g., λ = 0 .1) leads to clear performance degradation. This behavior suggests that ex-cessive smoothing over-suppresses perturbation signals and harms both gene-level recovery and global reconstruction. 
+
+5.6. Pathway-level Validation of Predicted Profiles 
+
+To validate our model at the pathway level, we performed Gene Set Enrichment Analysis (GSEA) on predicted differ-ential expression profiles for HIRA knockdown and com-pared them to experimental ground truth (Figure 6). The predicted pathway enrichment scores showed significant positive correlation with ground truth, demonstrating that our model captures coordinated pathway-level responses. Notably, the model accurately predicted the downregula-tion of cell cycle-related pathways including Myc Targets V1 and E2F Targets, consistent with HIRA’s known role in chromatin regulation. These results indicate that our pertur-bation prediction model preserves biologically meaningful pathway signatures beyond individual gene-level accuracy. 8Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+## 6. Conclusion 
+
+We identify mean-collapse as a key failure mode in per-turbation prediction and propose A DA PERT to address it through perturbation-specific context modeling and adaptive signal–noise separation. AdaPert consistently improves per-formance across benchmarks, especially for perturbations with small effects, and reveals the effect-size–dependent role of regularization. These results highlight the importance of adaptive modeling for robust perturbation prediction. 
+
+## References 
+
+Adduri, A. K., Gautam, D., Bevilacqua, B., Imran, A., Shah, R., Naghipourfar, M., Teyssier, N., Ilango, R., Nagaraj, S., Dong, M., et al. Predicting cellular responses to perturbation across diverse contexts with state. BioRxiv ,pp. 2025–06, 2025. Bock, C., Datlinger, P., Chardon, F., Coelho, M. A., Dong, M. B., Lawson, K. A., Lu, T., Maroc, L., Norman, T. M., Song, B., et al. High-content crispr screening. Nature Reviews Methods Primers , 2(1):8, 2022. Brennecke, P., Anders, S., Kim, J. K., Kołodziejczyk, A. A., Zhang, X., Proserpio, V., Baying, B., Benes, V., Teich-mann, S. A., Marioni, J. C., et al. Accounting for technical noise in single-cell rna-seq experiments. Nature methods ,10(11):1093–1095, 2013. Bunne, C., Stark, S. G., Gut, G., Del Castillo, J. S., Levesque, M., Lehmann, K.-V., Pelkmans, L., Krause, A., and R ¨atsch, G. Learning single-cell perturbation re-sponses using neural optimal transport. Nature methods ,20(11):1759–1768, 2023. Bunne, C., Roohani, Y., Rosen, Y., Gupta, A., Zhang, X., Roed, M., Alexandrov, T., AlQuraishi, M., Brennan, P., Burkhardt, D. B., et al. How to build the virtual cell with artificial intelligence: Priorities and opportunities. Cell ,187(25):7045–7063, 2024. Chen, Y. and Zou, J. Genept: a simple but effective founda-tion model for genes and cells built from chatgpt. bioRxiv ,pp. 2023–10, 2024. Chen, Y., Hu, Z., Chen, W., and Huang, H. Fast and scal-able wasserstein-1 neural optimal transport solver for single-cell perturbation prediction. Bioinformatics , 41 (Supplement 1):i513–i522, 2025. Chevalley, M., Roohani, Y., Mehrjou, A., Leskovec, J., and Schwab, P. Causalbench: A large-scale benchmark for network inference from single-cell perturbation data. arxiv, 2022. Cui, H., Wang, C., Maan, H., Pang, K., Luo, F., Duan, N., and Wang, B. scgpt: toward building a foundation model for single-cell multi-omics using generative ai. Nature methods , 21(8):1470–1480, 2024. Datlinger, P., Rendeiro, A. F., Schmidl, C., Krausgruber, T., Traxler, P., Klughammer, J., Schuster, L. C., Kuchler, A., Alpar, D., and Bock, C. Pooled crispr screening with single-cell transcriptome readout. Nature methods , 14(3): 297–301, 2017. Dixit, A., Parnas, O., Li, B., Chen, J., Fulco, C., and et al. Perturb-seq: dissecting molecular circuits with scalable single-cell rna profiling of pooled genetic screens. Cell ,167(7):1853–1866, 2016. Dong, M., Wang, B., Wei, J., de O. Fonseca, A. H., Perry, C. J., Frey, A., Ouerghi, F., Foxman, E. F., Ishizuka, J. J., Dhodapkar, R. M., et al. Causal identification of single-cell experimental perturbation effects with cinema-ot. Nature methods , 20(11):1769–1779, 2023. Dunefsky, J., Chlenski, P., and Nanda, N. Transcoders find interpretable llm feature circuits. Advances in Neural Information Processing Systems , 37:24375–24410, 2024. Feng, C., Peets, E. M., Zhou, Y., Crepaldi, L., Usluer, S., Dunham, A., Braunger, J. M., Su, J., Strauss, M. E., Muraro, D., et al. A genome-scale single cell crispri map of trans gene regulation across human pluripotent stem cell lines. bioRxiv , pp. 2024–11, 2024. Hao, M., Gong, J., Zeng, X., Liu, C., Guo, Y., Cheng, X., Wang, T., Ma, J., Zhang, X., and Song, L. Large-scale foundation model on single-cell transcriptomics. Nature methods , 21(8):1481–1491, 2024. He, C., Zhang, J., Dahleh, M., and Uhler, C. Morph predicts the single-cell outcome of genetic perturbations across conditions and data modalities. bioRxiv , 2025. Huber, P. J. Robust estimation of a location parameter. In 
+
+Breakthroughs in statistics: Methodology and distribu-tion , pp. 492–518. Springer, 1992. Istrate, A.-M., Li, D., and Karaletsos, T. scgenept: Is lan-guage all you need for modeling single-cell perturbations? 
+
+bioRxiv , pp. 2024–10, 2024. Istrate, A.-M., Milletari, F., Castrotorres, F., Tomczak, J. M., Torkar, M., Li, D., and Karaletsos, T. rbio1-training scientific reasoning llms with biological world models as soft verifiers. bioRxiv , pp. 2025–08, 2025. Jang, E., Gu, S., and Poole, B. Categorical repa-rameterization with Gumbel-Softmax. arXiv preprint arXiv:1611.01144 , 2017. Li, L., You, Y., Fu, Y., Liao, W., Fan, X., Lu, S., Cao, Y., Li, B., Ren, W., Kong, J., et al. A systematic comparison 9Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+of single-cell perturbation response prediction models. 
+
+bioRxiv , pp. 2024–12, 2024. Lopez, R., Regier, J., Cole, M. B., Jordan, M. I., and Yosef, N. Deep generative modeling for single-cell transcrip-tomics. Nature methods , 15(12):1053–1058, 2018. Lotfollahi, M., Wolf, F. A., and Theis, F. J. scgen predicts single-cell perturbation responses. Nature methods , 16 (8):715–721, 2019. Lotfollahi, M. et al. Predicting cellular responses to genetic perturbations using scrna-seq data. Nature Biotechnology ,41:1234–1245, 2023. Mejia, G. M., Miller, H. E., Leblanc, F. J., Wang, B., Swain, B., and Camillo, L. P. d. L. Diversity by design: Ad-dressing mode collapse improves scrna-seq perturbation modeling on well-calibrated metrics. arXiv preprint arXiv:2506.22641 , 2025. Norman, T. M., Horlbeck, M. A., Replogle, J. M., Ge, A. Y., Xu, A., Jost, M., Gilbert, L. A., and Weissman, J. S. Exploring genetic interaction manifolds constructed from rich single-cell phenotypes. Science , 365(6455):786–793, 2019. OpenAI. Gpt-4o system card. https://openai.com/ research/gpt-4o-system-card , 2024. Pearce, J. D., Simmonds, S. E., Mahmoudabadi, G., Krish-nan, L., Palla, G., Istrate, A.-M., Tarashansky, A., Nelson, B., Valenzuela, O., Li, D., et al. A cross-species genera-tive cell atlas across 1.5 billion years of evolution: The transcriptformer single-cell model. bioRxiv , pp. 2025–04, 2025. Przybyla, L. and Gilbert, L. A. A new era in functional genomics screens. Nature Reviews Genetics , 23(2):89– 103, 2022. Replogle, J. M., Norman, T. M., Xu, A., et al. Mapping information-rich genotype-phenotype landscapes with genome-scale perturb-seq. Cell , 185(15):2559–2575, 2022. Roohani, Y., Huang, K., and Leskovec, J. Predicting tran-scriptional outcomes of novel multigene perturbations with gears. Nature Biotechnology , 42(6):927–935, 2024. Rosen, Y., Roohani, Y., Agarwal, A., Samotor ˇcan, L., Con-sortium, T. S., Quake, S. R., and Leskovec, J. Universal cell embeddings: A foundation model for cell biology. 
+
+bioRxiv , pp. 2023–11, 2023. Shalem, O., Sanjana, N. E., and Zhang, F. High-throughput functional genomics using crispr–cas9. Nature Reviews Genetics , 16:299–311, 2015. Szklarczyk, D., Kirsch, R., Koutrouli, M., Nastou, K., Mehryary, F., Hachilif, R., Gable, A. L., Fang, T., Doncheva, N. T., Pyysalo, S., et al. The string database in 2023: protein–protein association networks and func-tional enrichment analyses for any sequenced genome of interest. Nucleic acids research , 51(D1):D638–D646, 2023. Szklarczyk, D., Nastou, K., Koutrouli, M., Kirsch, R., Mehryary, F., Hachilif, R., Hu, D., Peluso, M. E., Huang, Q., Fang, T., et al. The string database in 2025: protein networks with directionality of regulation. Nucleic Acids Research , 53(D1):D730–D737, 2025. Theodoris, C. V., Xiao, L., Chopra, A., Chaffin, M. D., Al Sayed, Z. R., Hill, M. C., Mantineo, H., Brydon, E. M., Zeng, Z., Liu, X. S., et al. Transfer learning enables predictions in network biology. Nature , 618(7965):616– 624, 2023. Veli ˇckovi ´c, P., Cucurull, G., Casanova, A., Romero, A., Li `o, P., and Bengio, Y. Graph attention networks. In 
+
+International Conference on Learning Representations (ICLR) , 2018. Wenkel, F., Tu, W., Masschelein, C., Shirzad, H., Eastwood, C., Whitfield, S. T., Bendidi, I., Russell, C., Hodgson, L., Mesbahi, Y. E., et al. Txpert: Leveraging biochemical relationships for out-of-distribution transcriptomic per-turbation prediction. arXiv preprint arXiv:2505.14919 ,2025. Wenteler, A., Occhetta, M., Branson, N., Huebner, M., Curean, V., Dee, W., Connell, W., Hawkins-Hooker, A., Chung, S. P., Ektefaie, Y., et al. Perteval-scfm: bench-marking single-cell foundation models for perturbation effect prediction. bioRxiv , pp. 2024–10, 2024. Wu, M., Littman, R., Levine, J., Qiu, L., Biancalani, T., Richmond, D., and Huetter, J.-C. Contextualizing biolog-ical perturbation experiments through language. In The Thirteenth International Conference on Learning Repre-sentations .Wu, M. C., Zhang, L., Wang, Z., Christiani, D. C., and Lin, X. Sparse linear discriminant analysis for simultaneous testing for the significance of a gene set/pathway and gene selection. Bioinformatics , 25(9):1145–1151, 2009. Wu, Y., Wershof, E., Schmon, S. M., Nassar, M., Osi ´nski, B., Eksi, R., Yan, Z., Stark, R., Zhang, K., and Grae-pel, T. Perturbench: Benchmarking machine learning models for cellular perturbation analysis. arXiv preprint arXiv:2408.10609 , 2024. 10 Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+## A. Data Statistics 
+
+A.1. Single-Cell Genetic Perturbation Data 
+
+Predicting how cells respond to genetic perturbations is a key problem in functional genomics (Shalem et al., 2015). It supports many downstream tasks, such as understanding gene function, analyzing regulatory effects, and identifying potential therapeutic targets. Recent progress in single-cell perturbation experiments, including Perturb-seq and CRISPR-based screens (Bock et al., 2022), now allows gene expression to be measured across thousands of genes under many perturbation conditions (Dixit et al., 2016; Replogle et al., 2022; Lotfollahi et al., 2023). As a result, there is growing interest in computational models that can predict transcriptional responses to perturbations that have not been experimentally tested (Bunne et al., 2024; Chevalley et al., 2022). We use publicly available single-cell CRISPR perturbation (Bock et al., 2022; Feng et al., 2024) datasets generated using Perturb-seq experiments (Dixit et al., 2016; Replogle et al., 2022; Lotfollahi et al., 2023). Gene expression profiles are measured under single-gene perturbations with matched control cells. Differential expression relative to controls is used as the prediction target. We evaluate on the K562.Replogle and RPE1.Replogle datasets (Replogle et al., 2022). Both datasets contain thousands of cells across hundreds of perturbations and span a wide range of perturbation effect sizes. Models are trained on highly variable genes (HVGs) only. Train, validation, and test splits are defined at the perturbation level, such that cells from held-out perturbations are excluded from training. Dataset statistics are summarized in Table 4, and effect-size–stratified statistics are reported in Table 5. Perturbations are grouped into small-, medium-, and large-effect categories based on the fraction of differentially expressed genes identified at a significance threshold of p < 0.05 . This stratification reflects substantial heterogeneity in perturbation responses and enables a more fine-grained evaluation under both sparse and strong transcriptional effect regimes.    
+
+> Table 4. Statistics of the single-cell perturbation datasets in K562 and RPE1 cell lines from Replogle et al. dataset (Replogle et al., 2022)) used in this work.
+
+Dataset Split # Cells # Perturbations # HVGs 
+
+K562.Replogle 
+
+Train 111,770 734 5,000 Val 10,918 82 Test 38,475 272 
+
+RPE1.Replogle 
+
+Train 74,474 771 3,352 Val 26,073 308 Test 50,593 464    
+
+> Table 5. Dataset statistics stratified by perturbation effect size. Effect size categories (Small, Medium, Large) are defined based on the percentage of differentially expressed genes: Small ( <5% ), Medium ( 5–10% ), and Large ( >10% ).
+
+Split Effect Size K562.Replogle RPE1.Replogle 
+
+# Perts # Cells # Perts # Cells 
+
+Train Small 232 34,402 252 41,264 Medium 251 31,008 259 17,859 Large 250 35,669 260 15,351 Val Small 29 4,206 105 14,033 Medium 27 3,595 104 7,014 Large 26 3,117 99 5,026 Test Small 98 16,003 152 31,405 Medium 91 11,206 162 10,960 Large 83 11,266 150 8,228 11 Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+Extended analysis. (1) Gene expression distributions in control and perturbed cells. We compare log1p-transformed expression distributions between all genes and differentially expressed genes (DEGs) in K562 and RPE1 cells (Figure 7). Overall expression exhibits the expected right-skewed distributions in both K562 (mean = 0.54) and RPE1 (mean = 0.59). DEGs are biased toward higher expression levels. In K562, DEGs (n = 3,015) show a modest shift in expression (mean = 0.64), whereas in RPE1, DEGs (n = 228) exhibit substantially higher expression (mean = 1.34) and a more symmetric distribution. Red and green dashed lines indicate the mean and median, respectively. (2) Perturbation effect size and DEG distributions. To describe variation in perturbation responses, we group perturbations into three categories: small, medium, and large. Effect size is defined as the fraction of differentially expressed genes with pvalue < 0.05 . Figure 8 shows how the number of DEGs changes with effect size in K562 and RPE1. In both cell lines, the number of DEGs increases with effect size. In K562, small-effect perturbations affect 65 genes on average (1.3% of 5,000 HVGs), and large-effect perturbations affect 482 genes (9.6%). In RPE1, DEG counts increase from 106 genes (3.1% of 3,352 HVGs) to 649 genes (19.4%). The histograms in Figure 8 (bottom) show clear separation between effect-size groups. Small- and large-effect perturbations show little overlap. Across all groups, RPE1 has higher DEG ratios than K562. This suggests that RPE1 cells are more sensitive to genetic perturbations. This difference matters for evaluation, where large-effect perturbations affect many genes, while small-effect perturbations affect few genes. These two cases require different prediction behavior.   
+
+> Figure 7. Expression distribution of overall genes and differentially expressed genes in K562 and RPE1 cells. Comparison of gene expression distributions between overall genes and differentially expressed genes (DEGs) in two cell lines. (A-B) K562 cells show right-skewed overall expression (mean=0.54, median=0.37) with 3,015 DEGs exhibiting slightly higher expression (mean=0.64, median=0.43). (C-D) RPE1 cells display similar overall expression patterns (mean=0.59, median=0.40), while 228 DEGs show markedly higher and more symmetric expression distribution (mean=1.34, median=1.08). Expression values are log1p-transformed. DEGs in RPE1 were computed from 50 perturbation conditions using top-20 genes ranked by absolute expression change.
+
+12 Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction Small Medium Large           
+
+> Effect Size Category
+> 0
+> 200
+> 400
+> 600
+> 800
+> 1000
+> 1200
+> 1400
+> 1600
+> Number of DEGs
+> K562: DEG Count Distribution
+> Small Medium Large
+> Effect Size Category
+> 3400
+> 3600
+> 3800
+> 4000
+> 4200
+> 4400
+> 4600
+> 4800
+> 5000
+> Number of non-DEGs
+> K562: non-DEG Count Distribution
+> Small Medium Large
+> Effect Size Category
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> DEG Ratio
+> K562: DEG Ratio Distribution
+> Small Medium Large
+> Effect Size Category
+> 0
+> 200
+> 400
+> 600
+> 800
+> 1000
+> 1200
+> Number of DEGs
+> RPE1: DEG Count Distribution
+> Small Medium Large
+> Effect Size Category
+> 2000
+> 2200
+> 2400
+> 2600
+> 2800
+> 3000
+> 3200
+> 3400
+> Number of non-DEGs
+> RPE1: non-DEG Count Distribution
+> Small Medium Large
+> Effect Size Category
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> DEG Ratio
+> RPE1: DEG Ratio Distribution
+
+Figure 8. Distribution of differentially expressed genes (DEGs) across perturbation effect size categories. (Top row) Stacked bar plots showing the mean number of DEGs (red) and non-DEGs (blue) for each effect size category in K562 (left) and RPE1 (right) datasets. Numbers indicate the mean gene count per category. (Bottom row) Histograms showing the distribution of DEG counts across individual perturbations, colored by effect size category (Small: blue, Medium: orange, Large: red). Effect size categories are defined by tertiles of mean absolute differential expression. DEGs are identified using an absolute expression change threshold of 0.1. 
+
+A.2. Knowledge Graph 
+
+We use a protein–protein interaction (PPI) knowledge graph constructed from STRING v11.5 (Szklarczyk et al., 2025; 2023). Nodes correspond to genes, and edges represent reported interactions between gene entities. The raw graph includes all interactions provided by STRING and is highly dense. To align the graph with the perturbation datasets, we restrict the graph to genes measured in the experiments. Specifically, we retain only highly variable genes (HVGs) used as model inputs. This step substantially reduces graph size while preserving genes relevant to perturbation modeling. After HVG filtering, the graph remains dense. To further control graph complexity, we apply top-k edge filtering, retaining only the k
+
+highest-confidence edges per gene. We consider k = 10 and k = 20 . Graph statistics for the raw graph, the HVG-filtered graph, and the top-k graphs are reported in Table 6. Top-k filtering substantially reduces node degree, yielding much sparser graph structures. This motivates learning perturbation-conditioned subgraphs from localized graph neighborhoods, rather than operating on the full dense graph. 
+
+Table 6. Statistics of the STRING knowledge graph. The raw graph contains all protein–protein interactions from STRING v11.5. HVG-filtered graphs are restricted to highly variable genes used in experiments. Top-k variants retain the k highest-confidence edges per gene. 
+
+Graph # Nodes # Edges Avg. Degree Med. Degree 
+
+Raw (Full STRING) 18,382 11,257,696 1,224.9 970 HVG 4,509 1,090,554 483.7 386 HVG + Top-20 4,509 89,793 39.8 36 HVG + Top-10 4,509 45,013 20.0 18 13 Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+DEG coverage in the knowledge graph. We assess whether the knowledge graph captures perturbation-relevant genes by measuring DEG coverage in graph proximity to the perturbed gene. For each perturbation in the test set, we compute the fraction of true DEGs reachable within a small number of hops (e.g., 1–3) from the perturbed gene node. As shown in Figure 9, a large fraction of DEGs lie close to the perturbed gene in the graph. This supports the use of local graph context for perturbation modeling.     
+
+> (a) Top-10 predicted genes (b) Top-20 predicted genes
+> Figure 9. DEG coverage as a function of graph hop distance for different prediction depths. (a) Top-10 predicted genes. (b) Top-20 predicted genes.
+
+A.3. Gene Descriptions 
+
+We use GenePT (Chen & Zou, 2024) embeddings derived from NCBI and UniProt gene descriptions encoded via OpenAI’s text embedding models (Dunefsky et al., 2024). The embeddings are available in two variants: Ada (1,536-dim) and Model 3 (3,072-dim), covering 93,800 and 133,736 genes respectively. Coverage for our datasets is high: 95.8% for K562 and 98.6% for RPE1 HVGs.  
+
+> Table 7. Statistics and HVG coverage of GenePT-based gene embeddings.
+
+Statistic Ada Embedding Model 3 Embedding 
+
+Total genes 93,800 133,736 Embedding dimension 1,536 3,072 K562 HVG coverage 4,790 / 5,000 (95.8%) 4,790 / 5,000 (95.8%) RPE1 HVG coverage 3,304 / 3,352 (98.6%) 3,304 / 3,352 (98.6%) 
+
+## B. Metric Definitions 
+
+Let Xc, Xp ∈ RN denote the control and perturbed expression profiles, and let ˆXp be the predicted perturbed profile. We define the true and predicted perturbation effects as 
+
+∆Xp = Xp − Xc, ∆ ˆXp = ˆXp − Xc. (22) 
+
+B.1. Global metrics. Pearson-∆. We compute the Pearson correlation between the predicted and true perturbation effects: 
+
+Pearson -∆ = corr 
+
+
+
+∆ ˆXp, ∆Xp
+
+. (23) 14 Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+This metric measures global agreement in perturbation-induced expression changes. 
+
+Perturbation Discrimination Score (PDS). To evaluate whether predicted perturbation effects are specific to the correct perturbation, we use the Perturbation Discrimination Score (PDS) following the Virtual Cell Challenge. For each perturbation 
+
+p, we compute the distance between its predicted effect ∆ ˆXp and the true effects of all perturbations in the test set: 
+
+dp,t = ∆ ˆXp − ∆Xt 
+
+> 1
+
+, ∀ t ∈ T , (24) where T denotes the set of test perturbations. We rank these distances in ascending order and define the rank of the correct perturbation as 
+
+rp = 1 + X
+
+> t̸=p
+
+I[dp,t < d p,p ] . (25) The discrimination score for perturbation p is then 
+
+PDS p = 1 − rp − 1
+
+|T | . (26) The final PDS is obtained by averaging PDS p over all perturbations in the test set. Higher values indicate better discrimination of perturbation-specific effects. Let D(p) denote the set of differentially expressed genes for perturbation p, defined using the ground-truth data. 
+
+B.2. DEG-aware metrics. Differential Expression Score (DES). Following the Virtual Cell Challenge evaluation, we assess whether a model recovers the correct set of differentially expressed genes after perturbation. For each perturbation p, let Gtrue (p) denote the ground-truth set of significant DEGs and Gpred (p) the predicted set of significant DEGs, both defined at a fixed false discovery rate threshold. The Differential Expression Score for perturbation p is defined as the fraction of true DEGs that are recovered in the predicted set: 
+
+DES( p) = |Gtrue (p) ∩ Gpred (p)||Gtrue (p)| . (27) The overall DES is obtained by averaging DES( p) over all perturbations in the test set. Higher values indicate better recovery of differentially expressed genes. 
+
+DE-Spearman (significant genes). We compute the Spearman rank correlation between predicted and true effects over DEGs: 
+
+DE -Spearman -sig = ρs(∆ˆ xp 
+
+> D
+
+, ∆xp 
+
+> D
+
+) . (28) 
+
+DE-Spearman (LFC-weighted). To emphasize genes with larger effect sizes, we compute a weighted Spearman correla-tion using absolute ground-truth effects as weights: 
+
+DE -Spearman -lfc -sig = ρ(w) 
+
+> s
+
+(∆ˆ xp 
+
+> D
+
+, ∆xp 
+
+> D
+
+, |∆xp 
+
+> D
+
+|) . (29) 
+
+DE Direction Match. We measure the fraction of DEGs for which the predicted and true effect directions agree: 
+
+DE -Dir = 1
+
+|D (p)|
+
+X
+
+> i∈D (p)
+
+I
+
+h
+
+sign(∆ ˆXpi ) = sign(∆ Xpi )
+
+i
+
+. (30) 15 Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+## C. Additional Related Works 
+
+C.1. Data-driven and general-purpose modeling approaches 
+
+A broad class of prior work models transcriptional responses to perturbations primarily through data-driven learning ,without explicitly encoding biological mechanisms. Early generative frameworks such as (Lopez et al., 2018; Lotfollahi et al., 2019) learn latent representations of gene expression and infer perturbation effects through shifts in latent space. Subsequent methods, including (Lotfollahi et al., 2023; Adduri et al., 2025), extend this paradigm by conditioning latent variables on perturbation identities and cellular contexts. Related to these approaches, several models formulate perturbation prediction as a distributional mapping problem . Optimal-transport–based methods such as (Bunne et al., 2023; Chen et al., 2025) and causal transport models like (Dong et al., 2023) aim to align control and perturbed cell populations at the distribution level. While effective at capturing global expression shifts, these methods are not explicitly designed to recover sparse gene-level effects. More recently, large-scale foundation models have been introduced for single-cell biology, including (Cui et al., 2024; Hao et al., 2024; Theodoris et al., 2023; Rosen et al., 2023; Pearce et al., 2025). These models learn transferable gene or cell representations from massive datasets and are often used as pretrained encoders for downstream tasks. However, they do not explicitly model perturbation-specific sparsity or directionality, and their predictions may still be dominated by averaged transcriptional responses. 
+
+C.2. Knowledge-driven perturbation models 
+
+To address the limitations of purely data-driven approaches, a growing line of work incorporates biological prior knowledge 
+
+into perturbation response modeling. Methods such as (Roohani et al., 2024; Wenkel et al., 2025) leverage gene–gene interaction networks or pathway graphs to propagate perturbation signals through known biological relationships, improving generalization to unseen perturbations. Recent studies further explore the integration of textual and semantic biological knowledge . Approaches including (Chen & Zou, 2024; Istrate et al., 2024; Wu et al.; Istrate et al., 2025) use pretrained language models to construct gene representations from literature, functional annotations, or structured biological descriptions. These methods demonstrate that external knowledge can complement expression data, particularly in low-data or out-of-distribution settings. 
+
+However, most existing knowledge-driven models treat biological knowledge as static and globally shared across perturba-tions. Dense graphs or fixed embeddings are typically reused for all perturbations, which can propagate irrelevant interactions and obscure perturbation-specific signals. This static usage of knowledge limits the ability of models to adaptively focus on the most relevant biological substructures for a given genetic intervention. 
+
+In addition, prior knowledge is often integrated uniformly, without explicit mechanisms to separate true perturbation-induced signals from background transcriptional variation. 
+
+C.3. Positioning of this work 
+
+Our work builds on the knowledge-driven paradigm by introducing perturbation-conditioned adaptation in the use of biological knowledge. Rather than relying on static graphs or fixed embeddings, we learn sparse, perturbation-specific subgraphs that dynamically emphasize relevant biological interactions. This design complements prior data-driven and knowledge-based approaches and enables more accurate recovery of perturbation-specific transcriptional signals. 
+
+## D. Baselines Details 
+
+We compare A DA PERT with a set of representative baselines for single-cell genetic perturbation modeling. These baselines differ in model design, conditioning strategy, and the use of biological prior knowledge. 
+
+D.1. Baselines without biological knowledge graphs. scVI (Lopez et al., 2018) is a variational autoencoder for single-cell RNA-seq data that learns a latent representation of gene expression without explicit conditioning on perturbations. It models the distribution of expression counts using a probabilistic decoder and serves as a purely data-driven baseline for comparing latent generative approaches. 16 Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+CPA (Lotfollahi et al., 2023) (Compositional Perturbation Autoencoder) learns disentangled latent representations of control and perturbed cells. It separates a cell’s basal state from perturbation effects in the latent space, enabling prediction of unseen perturbations and combinations. CPA can also learn interpretable embeddings for cells and perturbations and supports out-of-distribution predictions by recombining learned latent factors. 
+
+STATE (Adduri et al., 2025) is a deep generative model designed to predict perturbation effects on single-cell expression by transforming latent representations in a structured space. It accounts for cellular heterogeneity and aims to capture complex, nonlinear responses across conditions. 
+
+D.2. Baselines with biological knowledge graphs. GEARS (Roohani et al., 2024) integrates protein–protein interaction information into perturbation prediction by using graph-based message passing to propagate perturbation signals over network structure. This allows the model to leverage known gene interaction topology when predicting expression changes. 
+
+TxPert (Wenkel et al., 2025) uses graph representations of biological relationships to inform prediction of transcriptional responses under out-of-distribution settings. It conditions expression prediction on graph-based embeddings that capture biochemical relationships among genes, enabling generalization to unseen perturbations and cell contexts. 
+
+MORPH (He et al., 2025) combines a discrepancy-based variational autoencoder with an attention mechanism to predict cellular responses to unseen perturbations, including unseen single genes, perturbation combinations, and cell contexts. The attention mechanism enables the model to infer gene interactions and regulatory effects while learning latent perturbation representations. All baselines are evaluated using their recommended settings and official implementations when available. We apply the same data splits, preprocessing, and evaluation protocols across all methods to ensure fair comparison. 
+
+## E. Training Details 
+
+Baseline reproduction. All baseline models are reproduced using their official implementations when available. For each method, we follow the training procedures described in the original papers, including model architecture, optimization strategy, and data preprocessing. When minor implementation choices are not specified, we adopt standard defaults used in the corresponding codebases. To ensure a fair comparison, all models are trained and evaluated using the same train/validation/test splits, the same set of highly variable genes, and the same evaluation protocol. Results are reported on the held-out test set. 
+
+Hyperparameter tuning. For each baseline, we perform hyperparameter tuning over a predefined search space (Appendix Table 8). Hyperparameters are selected based on validation performance, using Pearson-∆ as the primary selection metric. The best-performing configuration on the validation set is then used for final evaluation on the test set. The same tuning protocol is applied consistently across all baselines. No test data are used during model selection. 
+
+## F. Additional Results on RPE1 dataset 
+
+As shown in Table 10, we report DEG-aware evaluation results on the RPE1 test set. We use the Differential Expression Score (DES@K) to measure how well true DEGs are ranked among top predicted genes. Data-driven methods such as scVI and CPA achieve low DES values, indicating limited ability to separate DEGs from non-DEGs. GEARS performs poorly on RPE1, suggesting that static graph propagation is insufficient for this dataset. TxPert improves DEG ranking and DEG-specific metrics, but its performance remains constrained, especially on DEG correlation and direction consistency. MORPH shows moderate gains, but its DEG recovery is weaker than TxPert. ADA PERT achieves the best performance across all reported metrics. It obtains the highest DES at both k = 50 and k = 100 ,indicating more accurate ranking of true DEGs. A DA PERT also shows consistent improvements in DEG-specific Spearman correlation, log-fold change agreement, and direction matching. These results show that A DA PERT produces sparse and reliable perturbation-specific responses on the RPE1 dataset. 17 Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction  
+
+> Table 8. Hyperparameter search space used for the TxPert baseline. For each dataset, the best configuration is selected based on validation Pearson-∆.
+
+Category Hyperparameter Search Space 
+
+Model Architecture Hidden dimension {64, 128, 256, 512 }
+
+Latent dimension {64, 128, 256, 512 }
+
+Dropout rate {0.1, 0.2 }
+
+Batch normalization {True, False }
+
+GNN (Perturbation Encoder) Layer type {GAT, GAT-v2 }
+
+Number of layers {2, 3, 4 }
+
+Hidden dimension {64, 128 }
+
+Attention heads {1, 2, 4 }
+
+Skip connection {None, Add, Concat }
+
+Self-loops {True, False }
+
+Training Batch size {32, 64, 128 }
+
+Learning rate {1×10 −4, 5×10 −4, 1×10 −3}
+
+Weight decay {0, 1×10 −5, 1×10 −4}
+
+Max epochs {100, 200 }
+
+Early stopping patience {20, 30 }
+
+LR scheduler {ReduceLROnPlateau, Cosine }
+
+LR Scheduler Reduction factor {0.3, 0.5 }
+
+Patience {5, 10 }
+
+Monitor metric val pearson delta Loss Function MSE weight {1.0 }
+
+DEG weight {0.0 }
+
+Non-DEG Huber weight {0.01, 0.02, 0.05 }
+
+Non-DEG Huber δ {0.5, 1.0 }
+
+Graph (STRING) Edge selection {Top-10, Top-20 }
+
+Normalize weights {True }
+
+Reduce to perturbations {True }
+
+18 Learning Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction 
+
+Table 10. DEG-aware evaluation on the RPE1 test set. 
+
+Method DES@50 ↑ DES@100 ↑ DE-Spearman (Sig) ↑ DE-Spearman (LFC) ↑ DE-Dir-Match ↑
+
+scVI 0.036 0.041 -0.016 0.472 0.647 CPA 0.208 0.337 -0.048 0.659 0.703 GEARS 0.010 0.016 0.070 -0.089 0.471 TxPert 0.242 0.314 0.210 0.714 0.860 MORPH 0.090 0.155 0.207 0.544 0.773 Ours 0.244 0.320 0.267 0.729 0.870 −2 −1 0 1 2
+
+> Ground truth NES
+> −2.0
+> −1.5
+> −1.0
+> −0.5
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> Predicted NES
+> Myc Targets V1
+> Myc Targets V2
+> Heme Metabolism
+> r = 0.53
+> P < 0.001
+
+a          
+
+> NS (n=24)
+> Ground truth only (n=11)
+> Predicted only (n=6)
+> Both (n=3)
+> −2.0 −1.5 −1.0 −0.5 0.0 0.5 1.0 1.5 2.0
+> Normalized enrichment score
+> Myc Targets V1
+> E2F Targets
+> Myc Targets V2
+> Mitotic Spindle
+> G2-M Checkpoint
+> Kras Signaling Up
+> Dna Repair
+> Unfolded Protein Response
+> Il-2/Stat5 Signaling
+> Mtorc1 Signaling
+> Apoptosis
+> Complement
+> Coagulation
+> Estrogen Response Early
+> Adipogenesis
+> Cholesterol Homeostasis
+> Heme Metabolism
+> Estrogen Response Late
+> Xenobiotic Metabolism
+> Androgen Response
+> ***
+> **
+> *
+> *
+> *
+> *
+> *
+> *
+> *
+> *FDR < 0.05
+
+b
+
+> Ground truth
+> Predicted
+
+Figure 10. Correlation of pathway enrichment between predicted and ground truth responses for HIRA knockdown. Each point represents one of 44 Hallmark pathways, with the x-axis showing ground truth NES and the y-axis showing predicted NES. Colors indicate significance status (FDR < 0.25): gray, non-significant in both; blue, significant in ground truth only; coral, significant in predictions only; red, significant in both. Pathways significant in both analyses (Myc Targets V1, Myc Targets V2, and Heme Metabolism) are labeled. Dashed lines indicate the diagonal ( y = x) and the linear regression fit. Pearson correlation r = 0 .53 , P < 0.001 .
+
+## G. Correlation of Pathway Enrichment Between Predicted and Ground Truth HIRA Knockdown 
+
+To assess agreement between predicted and experimental pathway enrichment, we compare normalized enrichment scores (NES) across all 44 Hallmark gene sets. As shown in Figure 10, predicted and ground truth NES values show a significant positive correlation ( r = 0 .53 , P < 0.001 ). Among the 14 pathways significantly enriched in the ground truth analysis (FDR < 0.25), the model identifies 9 as significant. Three pathways (Myc Targets V1, Myc Targets V2, and Heme Metabolism) are significant in both analyses. Agreement is strongest for pathways with large effect sizes. For example, Myc Targets V1 shows closely matched enrichment between prediction (NES = −2.01 ) and ground truth (NES = −2.10 ), indicating accurate recovery of both direction and magnitude of pathway-level effects. 19

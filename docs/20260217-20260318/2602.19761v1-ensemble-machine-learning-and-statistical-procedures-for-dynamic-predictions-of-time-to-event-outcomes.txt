@@ -1,0 +1,817 @@
+Title: Ensemble Machine Learning and Statistical Procedures for Dynamic Predictions of Time-to-Event Outcomes
+
+URL Source: https://arxiv.org/pdf/2602.19761v1
+
+Published Time: Tue, 24 Feb 2026 03:18:02 GMT
+
+Number of Pages: 25
+
+Markdown Content:
+# Ensemble Machine Learning and Statistical Procedures for Dynamic Predictions of Time-to-Event Outcomes 
+
+# Nina van Gerwen 1,2, Sten Willemsen 1,2, Bettina E. Hansen 1,2, Christophe Corpechot 3,Marco Carbone 4, Cynthia Levy 5, Maria-Carlota Londo˜ no 6, Atsushi Tanaka 7,Palak Trivedi 8, Alejandra Villamil 9, Gideon Hirschfield 10 , Dimitris Rizopoulos 1,2
+
+> 1
+
+Department of Biostatistics, Erasmus University Medical Center, the Netherlands 
+
+> 2
+
+Department of Epidemiology, Erasmus University Medical Center, the Netherlands 
+
+> 3
+
+Reference Center for Inflammatory Biliary Diseases and Autoimmune Hepatitis, European Reference Network on Hepatological Diseases (ERN Rare-Liver), Saint-Antoine Hospital, Assistance Publique - Hˆ opitaux de Paris; Inserm UMR S938, Saint-Antoine Research Center, Sorbonne University, Paris, France 
+
+> 4
+
+Department of Medicine and Surgery, University of Milan Bicocca, Italy 
+
+> 5
+
+Miller School of Medicine, University of Miami, United States of America 
+
+> 6
+
+Viral, Toxic and Metabolic Hepatopathies, Hospital Cl´ ınic de Barcelona, Spain 
+
+> 7
+
+Department of Medicine, Teikyo University School of Medicine, Japan 
+
+> 8
+
+Biomedical Research Unit & Centre for Liver Research, University of Birmingham, United Kingdom 
+
+> 9
+
+Division of Gastroenterology & Hepatology, Hospital Italiano de Buenos Aires, Argentina 
+
+> 10
+
+Centre for Liver Disease, Toronto General Hospital, Canada February 24, 2026 
+
+# Correspondence 
+
+Erasmus MC attn. Nina van Gerwen, Wytemaweg 12, 3015 CN, Rotterdam, the Netherlands 
+
+# Acknowledgements 
+
+We would like to thank the Global PBC Study Group for granting us availability of their data for the current article. 
+
+1
+
+> arXiv:2602.19761v1 [stat.ML] 23 Feb 2026
+
+# Statements and declarations 
+
+# Ethical considerations 
+
+Ethical approval for the analysis and publication of the retrospectively obtained and anonymised data of the Global PBC Study Group was not required. 
+
+# Consent to participate 
+
+Not applicable. 
+
+# Consent for publication 
+
+Not applicable. 
+
+# Declaration of conflicting interest 
+
+The authors declared no potential conflicts of interest with respect to the research, authorship, and/or publication of this article. 
+
+# Funding statement 
+
+This work is funded by Stress in Action. The research project ‘Stress in Action’: www.stress-in-action.nl is financially supported by the Dutch Research Council and the Dutch Ministry of Education, Culture and Science (NWO gravitation grant number 024.005.010). 
+
+# Data Availability Statement 
+
+The data that support the findings of this study are available from the Global PBC Study Group. Restrictions apply to the availability of these data, which were used under license for this study. Data are available at https://www.globalpbc.com with the permission of the Global PBC Study Group. 
+
+2Abstract 
+
+Dynamic predictions for longitudinal and time-to-event outcomes have become a versatile tool in precision medicine. Our work is motivated by the application of dynamic predictions in the decision-making process for primary biliary cholangitis patients. For these patients, serial biomarker measurements (e.g., bilirubin and alkaline phosphatase levels) are routinely collected to inform treating physicians of the risk of liver failure and guide clinical decision-making. Two popular statistical approaches to derive dynamic predictions are joint modelling and landmarking. However, recently, machine learning techniques have also been proposed. Each approach has its merits, and no single method exists to outperform all others. Consequently, obtaining the best possible survival estimates is challenging. Therefore, we extend the Super Learner framework to combine dynamic predictions from different models and procedures. Super Learner is an ensemble learning technique that allows users to combine different prediction algorithms to improve predictive accuracy and flexibility. It uses cross-validation and different objective functions of performance (e.g., squared loss) that suit specific applications to build the optimally weighted combination of predictions from a library of candi-date algorithms. In our work, we pay special attention to appropriate objective functions for Super Learner to obtain the most optimal weighted combination of dynamic predictions. In our primary biliary cholangitis application, Super Learner presented unique benefits due to its ability to flexibly combine outputs from a diverse set of models with varying assumptions for equal or better predictive performance than any model fit separately. 
+
+Keywords— dynamic predictions, ensemble learning, joint models, landmarking, predictive accuracy 
+
+# 1 Introduction 
+
+Dynamic predictions for longitudinal and time-to-event outcomes, where predictions are updated as more information is collected over time, have become a versatile tool in precision medicine for numerous diseases. 1,2,3,4 Our work is motivated by primary biliary cholangitis (PBC), a slow progressive and chronic autoimmune liver disease. There is currently no cure available for the disease, and a large proportion of patients have an inadequate response to the current clinical guidance treatment ursodeoxycholic (UDCA) therapy. 5 Thus, after diagnosis, PBC patients are routinely followed up for the remainder of their lives to track disease progression and identify patients at risk of liver failure (either an acute deterioration in liver function or the need for liver transplantation). For these patients, several liver-related biomarkers are routinely measured. Physicians then use patients’ biomarker values to guide clinical decision-making, such as who should receive a liver transplantation or be more closely followed up. To help better make these critical decisions for PBC patients, a survival model that gives highly accurate dynamic time-to-event prediction is paramount. Currently, the two most commonly used procedures for dynamic time-to-event prediction are joint modelling 6 and 
+
+3landmarking, 7 though more methods exist (e.g., DynamicDeep-Hit, 8 a neural network based approach). However, en-suring that a single model or procedure provides the most accurate dynamic predictions can be challenging for several reasons. Foremost, researchers need to have a considerable amount of a-priori information on different aspects of model specification with joint modelling or landmarking, such as variable inclusion, model terms and functional forms to link the two outcomes. For example, to accurately predict disease progression in PBC patients, a researcher should know: (a) what risk factors, biomarkers and interactions to include in the model, (b) the trajectory over time of the different biomarkers (e.g., whether the biomarkers show linear trends or nonlinear trends over time within patients), and (c) how the various biomarkers are related to disease progression (e.g., whether current biomarker concentration in the patients’ blood or the rate at which the biomarker concentration increases predicts disease progression). Commonly, researchers use standard model selection techniques (e.g., information criteria or significance tests) to answer these questions by choosing the model that displays the best fit. However, in the context we consider, joint models and landmarking cannot be directly compared because they are estimated using different likelihood functions. Furthermore, the likelihood of joint models is often dominated by the longitudinal outcome, and information criteria may not focus on optimising the predictive accuracy of the time-to-event outcome. Researchers can also use metrics of predictive accuracy (e.g., Brier Score (BS) or area-under-the-receiver operating curve (AUC)) to determine the best model. However, these metrics have been shown to not be sensitive enough to determine differences between models. 9,10 
+
+Finally, it is worth noting that because we work with multiple outcomes the set of possible statistical models increases exponentially, further complicating model specification. We propose to use ensemble learning techniques in the setting of dynamic predictions to overcome the issues de-scribed above. In ensemble learning, the predictive performance of multiple models is combined to provide better and more flexible predictions than any single model. We extend the ensemble learning technique Super Learner 11 (SL) in the context of dynamic prediction. Previously, Rizopoulos et al. 12 have shown how SL can combine multiple joint models to accommodate uncertainty in the association between the longitudinal and time-to-event outcome. However, they focused on combining exclusively joint models to accommodate different longitudinal trajectories and functional forms of the as-sociation between the two outcomes, and they paid less attention to different frameworks. Furthermore, joint models are known to be a computationally intensive method, and using solely joint models in an ensemble for SL explosively increases computational complexity. Lastly, joint models need to be fully pre-specified in covariate selection and model terms. Tanner et al. 13 took another approach to SL for dynamic predictions. By discretising time, they showed how SL can combine binary classification algorithms to estimate dynamic predictions. Even though this results in a very flexible algorithm with data-driven covariate selection, discretising time brings the disadvantages of information loss and subjectivity in the size of the discrete time intervals. Both papers also focused on optimising predictive accuracy by minimising BS or expected predictive cross-entropy. Although SL has been extended to optimise the time-invariant AUC for binary classification problems, 14 SL for dynamic predictions has not been extended to optimising the time-varying 
+
+4AUC. 15 (tv -AUC) Therefore, our work builds upon these methods by combining the predictive performance of different dynamic prediction procedures in continuous time for the optimisation of previously used and new metrics. We also further investigate the performance of SL in varying settings of longitudinal and time-to-event outcomes. The remainder of the paper is organised as follows: Section 2 formally details the methods for SL with dynamic predictions. In Section 3, we employ SL for dynamic predictions in the Global PBC dataset. Section 4 introduces a simulation study that examines the performance of SL for dynamic predictions with varying forms of censoring. Lastly, Section 5 presents the findings and practical implications. 
+
+# 2 Super Learner for dynamic predictions 
+
+Suppose we have a sample Dn = {Ti, δ i, y i; i = 1 , . . . , n } of size n from our target population. Let T ∗ 
+
+> i
+
+denote the true event time for subject i. We denote Ti = min( T ∗ 
+
+> i
+
+, C i) as the observed event time, where Ci denotes the censoring time. The event indicator δi = 1(Ti ≤ Ci), in which 1(·) is an indicator function that equals 1 when the condition within holds and 0 otherwise, tells us whether individual i was censored or experienced the event of interest. Finally, 
+
+y i = ( y i1, . . . , y iM ) is a vector of m = 1 , . . . , M longitudinal outcomes of response- and subject-specific size km,i , where 
+
+ym,il is the value of the mth longitudinal response at time points tm,il , l = 1 , . . . , k m,i . These time points need not be regular intervals and can differ per subject and longitudinal outcome. We assume right-censoring occurred where subjects are lost to follow-up. The objective is to make accurate survival predictions for a new subject j from the target population. This subject should then also have sets of longitudinal measurements up to t : y j (t), which concurrently implies survival of subject 
+
+j up to t. Therefore, we focus on survival predictions conditional on survival at t. Mathematically, we are interested in the survival probability at time u > t :
+
+πj (u | t) = Pr( T ∗ 
+
+> j
+
+≥ u | T ∗ 
+
+> j
+
+> t, y j (t), Dn). (1) This probability can then be updated whenever a new measurement for subject j becomes available at t+ > t to obtain 
+
+πj (u | t+). Different methods to estimate (1) are discussed in Section 2.2. In SL, we assume that we have set K = {M 1, . . . , MK } of K base learners for Dn that can estimate (1). Importantly, these base learners come from different modelling frameworks (e.g., landmarking, joint modelling, etc.) and vary in specification within a framework (e.g., different baseline covariates, different model terms, etc.). The process of SL works as follows. First, we split up Dn into v = 1 , . . . V folds and obtain cross-validated estimates of πi(u | t) by fitting each base learner in K on V − 1 folds, and estimating predictions on the v-th fold excluded in model fitting. This is repeated for each fold. We end up with K predictions for all i ∈ R (t), where R(t) denotes the set of individuals still at risk at 
+
+5time t (i.e., Ti > t ): ˆπvi (u | t, Mk ) = Pr( T ∗ 
+
+> i
+
+≥ u | T ∗ 
+
+> i
+
+> t, Mk , D−vn ),
+
+where Mk is base learner k ∈ K and D−vn is Dn with individuals from the v-th fold removed. Then we assign weights 
+
+ωk (t) to the estimated cross-validated predictions. SL optimises predictive accuracy by estimating ωk (t) such that an a-priori chosen loss function λ(·) is minimised. The result is an ensemble SL (eSL): ˜πvi (u | t) = 
+
+> K
+
+X
+
+> k=1
+
+ˆωk (t)ˆ πvi (u | t, Mk ), for v = 1 , . . . V, (2) in which ˆωk (t) = argmin  
+
+> ωk(t)
+
+ X
+
+> i∈R (t)
+
+λ
+
+ KX
+
+> k=1
+
+ωk (t)ˆ πvi (u | t, Mk ), T i
+
+
+
+,
+
+subject to 
+
+ωk (t) ≥ 0 ∧
+
+> K
+
+X
+
+> k=1
+
+ωk (t) = 1 .
+
+Choosing an appropriate λ(·) that fits the research objective is important, as this will define the estimation of ωk (t). We focus on three possible functions that estimate performance for dynamic predictions: BS, integrated BS (IBS) and 
+
+tv -AUC. In Section 2.1, we describe these functions in more detail. After estimation of ωk (t), SL can estimate (1) by fitting the base learners on the complete dataset to estimate πj (u | t, Mk ), and then weighing these dynamic survival probabilities by the estimated ˆ ωk (t). A critical issue in SL is specifying K. According to the philosophy of SL, users should add all possible model specifications to K because increasing the library size can only improve the accuracy of SL due to its oracle property. The oracle property states that as n and K approach infinity, the eSL performs asymptotically as well as the oracle model (OM), which is the model that would perform best in an independent test dataset. The OM is typically unknown in observational studies such as the Global PBC Study, showing the property’s desirability. Finally, in the setting of dynamic predictions, two more interlinked hyperparameters affect the performance of SL: the prediction window {t, u } and the number of folds V . Stable estimation of the predictive accuracy metrics requires a sufficient number of events within the prediction window in all folds to differentiate between event-havers and non-event-havers. If the amount of events in a fold is too low, it becomes difficult for SL to determine which base learner performs best due to the unstable estimates. If the number of events is lower, dividing the data in a fewer folds, where each fold has approximately the same number of events likely leads to more stable results compared to a larger number of folds. To help achieve stable results, we create folds stratifying on the event outcome. 16 
+
+After specifying λ(·), K, {t, u } and V , there are two types of SL to choose from. First is the eSL where we optimally weigh the K models by minimising λ(·) as shown in (2). Second is the discrete SL (dSL), in which we choose Mk with the lowest cross-validated average λ(·). In other words, the dSL is the base learner that performed best in the validation set. An added benefit of working with SL for dynamic predictions is that the weights become time-dependent and can 
+
+6be optimised for any prediction window {t, u }. For example, in a hypothetical scenario where model A gives the most accurate predictions from 0 ≤ t < 10, and model B gives the most accurate predictions for t ≥ 10, SL will properly reflect these changes when optimising predictive accuracy in the different prediction windows. 
+
+# 2.1 Loss functions for Dynamic Predictions 
+
+To estimate ωk (t) for the eSL, we use the BS, IBS and tv -AUC. Other possible options as loss functions are the expected predictive cross-entropy and mean absolute error. We focus on the BS, IBS and tv -AUC because they are regularly used to evaluate the accuracy of dynamic predictions. A challenge in the estimation of these three predictive accuracy measures is censoring. In particular, we focus on subjects at risk at time t and calculate the accuracy measures at u > t .We will account for censored observations in the interval ( t, u ) using inverse probability of censoring weighting. These weights are estimated by 
+
+Wi(u, t ) = 1(t < T i ≤ u)δi
+
+G(Ti | t) + 1(Ti > u )
+
+G(u | t) , (3) where G(·) is the distribution for censoring times. We estimate G(·) using the Kaplan-Meier estimator, assuming independent censoring. In (3), we see that patients who experience an event within the prediction window are weighed by the inverse probability of being censored at Ti. Patients who experience an event after the prediction window are weighed by the inverse probability of being censored at u, and patients censored in the interval are given zero weight. The BS measures predictive accuracy for time-to-event outcomes by balancing model discrimination and calibration. 17 
+
+For dynamic predictions, the BS is estimated by BS( u | t) = 1
+
+nR(t)
+
+X
+
+> i∈R (t)
+
+ˆWi(u, t )
+
+n
+
+1(Ti ≤ u) − ˜πvi (u | t)
+
+o2
+
+,
+
+where nR(t) is the number of patients in R(t) and ˜ πvi (u | t) is the estimate of (2). The BS estimates error only at the end of the prediction window. If prediction error over the whole prediction interval has more medical relevance, we can estimate the IBS approximated by Simpson’s rule: 18 
+
+IBS( u | t) = 1
+
+u − t
+
+Z ut
+
+BS( s, t ) ds 
+
+≈ 23 BS( t + u
+
+2 | t) + 16 BS( u | t).
+
+Lastly, the tv -AUC measures only model discrimination. The metric is interpreted as the proportion of individuals in the prediction window correctly ranked in terms of survival probability had no one been censored, i.e., the proportion of event-havers who have a lower predicted survival probability than non-event-havers. The tv -AUC for prediction window 
+
+7{t, u } is estimated through the formula 
+
+tv -AUC( u, t ) = 
+
+P
+
+> i∈R (t)
+
+P 
+
+> j∈R (t)
+
+1 ˆ˜πvi (u, t ) > ˆ˜πvj (u, t )Di(u, t ) 1 − Dj (u, t ) ˆWi(u, t ) ˆWj (u, t )
+
+P
+
+> i∈R (t)
+
+P 
+
+> j∈R (t)
+
+Di(u, t ) 1 − Dj (u, t ) ˆWi(u, t ) ˆWj (u, t ) ,
+
+where Di(u, t ) = 1(t < T i ≤ u)δi. In contrast with the BS and IBS, we maximise the tv -AUC for estimation of ωk (t). 
+
+# 2.2 Base learners for dynamic predictions 
+
+We include base learners from three procedures in the model library of SL. The first approach we use is landmarking, a computationally simple method to obtain dynamic predictions. The concept behind landmarking is to subset R(t) from 
+
+Dn. Then, a time-to-event model is fit to R(t), where time zero denotes landmark time t. In landmarking, a function f (·)of the longitudinal outcome yi is added to the time-to-event model as a baseline covariate. For example, if we landmark with a Cox’s Proportional Hazards model 19 (notated as Cox model or Cox regression from here on forth), the hazard function is: 
+
+hi(t) = h0(t) exp γ⊤w i +
+
+> M
+
+X
+
+> m=1
+
+αmf (yim ) ,
+
+where the baseline hazard h0(·) is estimated non-parametrically, and γ denotes the coefficients of the baseline covariates 
+
+w i, and αm is the coefficient of function f (·) of longitudinal outcome yim . Multiple versions of landmarking exist, with a different amount of complexity and accuracy. The most basic version is one-stage landmarking, where f (·) denotes the last value available of yim which is carried forward (LVCF) , i.e.: 
+
+f (yim ) = ym,ip , p = max l · 1(tm,il ≤ t) .
+
+One-stage landmarking has multiple issues, however. For example, with LVCF, we assume there is no measurement error. Furthermore, we assume that the risk of an event depends only on the last observed value, and we ignore the time difference between the last measurement and the landmark time and its impact on the longitudinal outcome. One-stage landmarking has been extended to two-stage landmarking to compensate for these issues. In two-stage landmarking, we take a two-step approach. First, a linear mixed model is fit to model the longitudinal outcome. The general form of a linear mixed model for continuous y im is 
+
+E(yim (t) | bim ) = ηim (t) = x ⊤
+
+> im
+
+(t)βm + z ⊤
+
+> im
+
+(t)bim , bim ∼ N (0, Dm), (4) where ηim (t) is the expected latent trajectory of the mth longitudinal outcome for individidual i over time, and x im (t)and z im (t) denote time-varying design vectors for the fixed effects βm and random effects bim , respectively. In the 
+
+8second step, the linear mixed model is used to get an estimate of ηim at t to include in the two-staged landmark model: 
+
+f (yim ) = ˆ ηim (t).
+
+For all Cox regression landmark models, we estimate (1) using the Breslow estimator 20 
+
+ˆπj (u | t) = exp 
+
+(
+
+− ˆH0(u) exp 
+
+
+
+γ⊤w j +
+
+> M
+
+X
+
+> m=1
+
+αmf (yjm )
+
+)
+
+,
+
+in which ˆH0(u) = X
+
+> i∈R (t)
+
+1(Ti ≤ u)δi
+
+P 
+
+> j∈R (t)
+
+exp {γ⊤w j + PMm=1 αmf (yjm )} .
+
+Note that more extensions have been made to landmark models to further improve their predictive accuracy. 21,22,23 
+
+Furthermore, any time-to-event landmark model can be added as a base learner to the SL ensemble (e.g., a parametric accelerated failure time landmark model). However, we adhere to Cox regression one-stage and two-stage landmarking in the current article. The second approach for base leaners we employ is a generalisation of a standard Cox landmark regression: a tree-based gradient-boosted Cox regression with landmarking. Gradient boosting is another form of ensemble learning, and by including these models as base learners in our SL ensemble we perform nested ensemble learning. For clarity, we denote the base learners used within gradient-boosted models as sub-base learners. A tree-based gradient-boosted Cox regression overcomes the issue of requiring a-priori information on covariate inclusion (baseline and longitudinal), model terms and interactions. The standard Cox landmark model also assumes a linear relationship between the logarithm of the hazard and the covariates, whereas a gradient-boosted version can estimate this relationship non-parametrically. Compared to SL, gradient boosting arrives at a final model in a different manner. In SL, the ensemble is achieved through a one-time optimisation problem, shown in (2). In tree-based gradient boosting of a Cox model with landmarking, we arrive at an optimal model Mk ∈ K by minimising the partial log-likelihood solely for i ∈ R (t) through an iterative process with the landmark time as time zero. First, we initialise our tree-based prediction function relying on X =(X1, . . . , XnR(t) ) with ˆψ0(X). Here, Xi is short-hand notation to denote the baseline and longitudinal variables for individual i at the landmark time and XnR(t) denotes that we only look at individuals included in R(t). Note that the longitudinal outcomes in X can be derived through either one-stage or two-stage landmarking. Subsequently, in each iteration b = 1 , . . . , b stop , the negative gradient vector ub = ( u1,b , . . . u nR(t),b ) is computed. For individual i in iteration 
+
+b, the value of the negative gradient vector is derived by 
+
+ui,b = δi − X
+
+> l∈R (t)
+
+δl
+
+exp 
+
+n ˆψb−1(Xl)
+
+oP 
+
+> k∈R (t)
+
+exp 
+
+n ˆψb−1(Xk )
+
+o ,
+
+where ˆψb−1(·) is the estimated tree-based prediction function of the boosting algorithm for iteration b − 1. 
+
+9Afterwards, the sub-base learners predict ub. The predicted ˆ ub from the sub-base learner that best predicts ub
+
+according to the least squares estimator is then used to update the prediction function: ˆψb(X) = ˆψb−1(X) + ν ˆub,resulting in data-driven covariate selection. The update is partly decided by ν, a step-size parameter determining the proportion of the sub-base learner added to the ensemble in each iteration. For a more detailed description of the gradient boosting algorithm, see Hofner et al. 24 
+
+There are three important hyperparameters when designing a gradient boosting model: the sub-base learners, ν
+
+and bstop . We include only regression trees of baseline and longitudinal variables and two-way interactions as sub-base learners to model the event outcome non-parametrically. We chose a small value (0 .025) for ν to decrease the chances of surpassing the global minimum of the negative partial log-likelihood. Finally, we used 5-fold cross-validation nested in 
+
+D−vn to determine the optimal number of iterations, bopt , to decrease the chances that the model either stops too early or overfits. After we fit a landmark tree-based gradient boosted Cox model, we estimate πj (u | t) with the Breslow estimator: ˆπj (u | t) = exp 
+
+
+
+− ˆH0(u) exp 
+
+h ˆψbopt (Xj )
+
+i
+
+,
+
+in which ˆH0(u) = X
+
+> i∈R (t)
+
+1(Ti ≤ u)δi
+
+P 
+
+> j∈R (t)
+
+exp 
+
+n ˆψbopt (Xj )
+
+o .
+
+Compared to a standard Cox landmark regression, the equation within the exponent is a now black-box function of the included covariates and two-way interactions. Boosted landmark models were fit using the mboost package. 25 
+
+The final framework we use to estimate (1) is joint modelling. In this framework, sub-models are defined for the two outcomes and linked through shared parameters to specify the joint distribution. For the longitudinal outcomes y i,a general form for the sub-model is defined in (4). Although the form is identical, the estimation of the longitudinal model differs in joint modelling compared to landmarking because a joint model estimates the bivariate association of the longitudinal and time-to-event outcomes. Specifically, for the time-to-event process, the joint modelling framework assumes that the instantaneous risk of having an event depends on baseline covariates, functions of the m ∈ M latent trajectories ηim (t) of the longitudinal outcomes and the vectors of random effects bi = ( bi1, . . . , biM ): 
+
+hi{t | H i(t), w i} = lim 
+
+> ∆t→0
+
+Pr t ≤ T ∗ 
+
+> i
+
+< t + ∆ t | T ∗ 
+
+> i
+
+≥ t, Hi1(t), . . . , HiM (t), w i
+
+∆t
+
+= h0(t) exp 
+
+
+
+γ⊤w i +
+
+> M
+
+X
+
+> m=1
+> Q
+
+X
+
+> q=1
+
+fmq 
+
+n
+
+ηim (t), bim , α mq 
+
+o
+
+,
+
+(5) where Him (t) = {ηim (s), 0 ≤ s < t } represents the history of the longitudinal process up to t for the mth longitudinal outcome, h0(·) is the baseline hazard function, and w i are baseline covariates with regression coefficients γ. Function 
+
+fmq (·) and its parameterisation αmq is the functional form of the mth longitudinal outcome and identifies its relation to the time-to-event outcome. Common examples of the functional form are the longitudinal outcome’s current value, 
+
+10 lagged value, slope or integral or a combination of multiple. For a more detailed overview of functional forms, see Rizopoulos et al. 26 
+
+As evident in (4) and (5), the two sub-models are linked through the distributions of random effects bi. The drawbacks of this method are that joint models assume conditional independence given bi, and estimation of the joint distribution requires integration over the random effects. Joint models are, therefore, a computationally intensive method, especially as the dimensionality of the longitudinal outcomes and random effects increases. Under the Bayesian joint modelling framework, πj (u | t) can be estimated with Markov chain Monte Carlo methods from the posterior predictive distribution: 
+
+πj (u | t) = 
+
+Z
+
+Pr( T ∗ 
+
+> j
+
+≥ u | T ∗ 
+
+> j
+
+> t, y j (t), θ) p(θ | D n) dθ,
+
+where θ represents all model parameters. For a more detailed explanation of dynamic prediction estimation under the joint modelling framework, see Rizopoulos et al. 27 Joint models were fit using the JMbayes2 package. 28 
+
+# 3 Global PBC Data 
+
+We return to our motivating example of PBC, where we apply SL to the Global PBC Data to obtain dynamic survival prediction ensembles. The Global PBC Data results from an international effort by 15 liver centres as a part of the Global PBC Study Group. We work with a subset of the complete database that contains follow-up data on 1884 PBC patients from 1988 to 2013. All patients received UDCA therapy with varying doses at the start of follow-up. Our time-to-event outcome of interest is a composite endpoint of liver decompensation, liver transplantation and death. During follow-up, 326 patients (17 .3%) experienced the composite endpoint. For patients, ten liver-related biomarkers were sporadically collected during follow-up time. We focus on three of the biomarkers that were measured most often, namely total bilirubin (TB), alkaline phosphatase (ALP), and aspartate aminotransferase (AST), as previous research has shown these to be strongly associated with event outcomes in PBC patients. 29,30 Altogether, there were 23,102 longitudinal measurement times. Patients had a rounded average of 10 measurements for TB ( SD = 11 .10), 11 measurements for ALP ( SD = 11 .17) and 11 measurements for AST ( SD =11 .10). Our goal is to utilise the information in these three biomarkers and baseline covariates sex (90 .1% Female), age at inclusion ( M = 52 .78 , SD = 11 .91), disease duration before inclusion ( M = 0 .70 , SD = 1 .60), whether lesions were discovered in a liver biopt at inclusion (85 .0% Yes) and the year of study inclusion ( M = 2000 , IQR = 1995-2005) to create a highly accurate and flexible dynamic prediction model for the composite endpoint in PBC patients through SL. In our library, we consider nine base learners. Models M1 and M2 are one-stage landmark models based respectively on a standard and boosted Cox regression. Model M3 is a standard Cox two-stage landmark model, where the linear mixed models have linear specifications for time with random intercepts and slopes. Model M4 is the boosted counterpart 
+
+11 of M3. Because the three biomarkers have been shown to follow nonlinear trajectories, 29 we included another standard Cox two-stage landmark model with nonlinear time specification in the longitudinal model through natural cubic splines as model M5. We also included a boosted version of M5 with model M6. Finally, we included three joint models based on clinical knowledge from hepatologists: a joint model with linear subject-specific time trends assuming current value association between all biomarkers and hazard ( M7), a joint model with nonlinear subject-specific time trend and current value association between all biomarkers and hazard ( M8), and a joint model with nonlinear subject-specific time trend, where the assumed association between the biomarkers and hazard were: current value and slope for TB, current value and area for ALP, and current value and area for AST ( M9). For an overview of the included models in the model library, we refer readers to the Appendix. PBC is a slow progressive chronic disease. Therefore, we estimated cross-validated predictions in two prediction windows with high clinical relevance. The prediction windows we chose are year 6 to 9 and year 9 to 12 since study inclusion. At year 6, 1257 patients were at risk of experiencing the event. During years 6 to 9, 77 patients experienced the composite event, while 373 patients were censored. At year 9, 807 patients remained in the risk set. In the following three years, another 43 patients experienced the event while 287 patients were censored. We used the following procedure to train the SL. First, we created an independent test set that contained 20% of the total data. Then, we estimate the SL for the two prediction windows on the remaining data (i.e., training data) using a cross-validation procedure. Specifically, we split the training data into seven and four folds for the prediction windows 
+
+{6, 9} and {9, 12 } respectively to have enough events in the time intervals in all folds of the validation set. Then, we used the three performance metrics described in Section 2.1 to estimate model weights for the eSL and determine the dSL. After estimation of the eSL and dSL, we train the base learners on the complete training data. In total, the two prediction windows contain 61 and 31 events. However, landmark-based base learners are trained on all events past the chosen landmark time. This means that all landmark models were trained on respectively 137 and 76 events for the two prediction windows, allowing us to learn more complex relations from the data. Finally, we estimated the performance metrics of the fitted models separately, the eSL and the dSL in the independent test set and compared the results. For a more complete overview of the data analysis, we included a pseudo-algorithm in the Appendix. We present the results of the analysis in Table 1 and Figure 1. Table 1 shows the time-dependent property of SL weights for dynamic predictions, indicating that changing the weights of models lead to a better performance in different prediction windows. For example, we find that for year 9 to 12, the weight for M8 under the IBS increases compared to year 6 to 9, indicating that the M8 most likely performed better for the later prediction window. Finally, we noted that when optimising the tv -AUC, we often ran into convergence issues. We argue this occurred due to the nature of the tv -AUC as a proportion, where the gradient of the loss function quickly becomes flat. This leads to optimisation algorithms getting stuck at local maxima when maximising the tv -AUC. We combatted this issue by running the optimisation algorithm multiple times, each time using different starting values. Afterwards, we chose 
+
+12 Loss function Model BS IBS tv -AUC 1 0.00 0.00 0.00 2 0.00 0.00 0.07 3 0.00 0.00 0.02 4 0.47 0.23 0.15 
+
+5 0.00 0.00 0.00 6 0.00 0.00 0.00 7 0.35 0.77 0.27 8 0.00 0.00 0.46 9 0.18 0.00 0.03 Loss function Model BS IBS tv -AUC 1 0.89 0.00 0.13 2 0.00 0.00 0.00 
+
+3 0.00 0.00 0.00 4 0.00 0.00 0.30 5 0.00 0.00 0.32 6 0.00 0.00 0.05 7 0.11 0.00 0.06 8 0.00 1.00 0.14 9 0.00 0.00 0.00 Table 1: Super Learner weight estimates at prediction window {6, 9 } (left) and {9, 12 } (right) under the three different loss functions described in Section 2.1 for predicting the composite endpoint in the Global PBC Data. The boldfaced numbers denote the discrete SL for a given prediction window and loss function. Models M1 to M9 are denoted by 1 to 9. the optimised weights that resulted in the highest tv -AUC. Inspecting the predictive performance of SL and the base leaners in the independent test set, Figure 1 shows that the eSL tends to perform as well as or better than any model fit separately on the different predictive accuracy metrics, displaying the benefit of SL. This is because the best model depends on both the metric used to assess performance and the specified time window. However, with SL we always optimise predictive accuracy, allowing high predictive accuracy without putting too much emphasis into one model being correctly specified. The results display only point estimates of the performance because confidence intervals for SL for dynamic predictions can only be achieved through bootstrapping the whole SL procedure, which is practically challenging to implement due to the large size of the data and the computational complexity of the more complex base learners. For an impression of the variance of the performance of SL for dynamic predictions, we refer readers to the simulation results in Section 4.2. 
+
+# 4 Simulation Study 
+
+In Section 2, we mention that we estimated the different predictive accuracy metrics using Kaplan-Meier to estimate the IPCW. However, using Kaplan-Meier for IPCW ignores a frequent issue in the setting of both longitudinal and time-to-event outcomes: the issue of informative censoring. Although there is no strong indication of informative censoring in the Global PBC Data, where most patients were censored due to administrative censoring, it often occurs that a treating physician may remove patients from a study for their safety if their condition deteriorates. In these cases, the decision to censor a subject from the study depends on their biomarker values. Misspecification of the censoring distribution by using Kaplan-Meier will then bias error estimation. Kvamme and Borgan 31 discuss this issue in more depth and have shown that ignoring informative administrative censoring may result in over-optimistic BS. As a result, we may give more weight to a model’s predictions, thinking it performs better than it actually does. Therefore, we perform a simulation study to examine the impact of informative censoring on the performance of SL and its estimates of the three predictive accuracy metrics. 
+
+13 Figure 1: Metric estimates of the ensemble SL (eSL) and discrete SL (dSL) for predicting the composite endpoint in the Global PBC Data. Models M1 to M9 are denoted by 1 to 9. The blue dashed line serves as reference point for the performance of the eSL. The textboxes in each graph denote the performance of a Kaplan-Meier (KM) model that contained no covariates. 
+
+# 4.1 Simulation Design 
+
+We designed a simulation study to examine the impact of informative censoring on the performance of SL in the setting of longitudinal and time-to-event data. We tried to emulate a setting where there is no single true model in the following way. For the longitudinal process, we generated data from one process: a mixed model with a linear time trend and parameters based on the Global PBC dataset with measurement times taken from a uniform distribution. For the survival process, we generate data from two different models. The first model imitates a one-stage landmark process. At each measurement time, we generate event times based on the latest recorded longitudinal value and baseline variables using the method from Bender et al. 32 . If the event time is shorter than the next measurement time, we assume the individual experienced the event and terminate the collection of additional longitudinal measurements. If the event time exceeds the next measurement time, we simulate a new event time based on the subsequent longitudinal outcome. In the second setting, we generate data from a joint model process using inverse transform sampling. Specifically, for each person, we estimate the hazard function in continuous time based on the longitudinal process and baseline covariates. Then by integrating out over time, we simulate event times for each individual by deriving at which point in time the cumulative hazard equals their draw from a standard uniform distribution. 
+
+14 After generating longitudinal and event data from the two processes ( n = 625), we censor under three different scenarios. In Scenario 1, we use the data as is - i.e., no censoring. In Scenario 2, we generate censoring times from a uniform distribution and censor those whose censoring time is lower than their event time to model random censoring. In Scenario 3, we assume an informative censoring process. At each measurement time point, we estimate the probability of being censored from a logistic distribution based on the current longitudinal value and baseline covariates. To ensure a fair comparison, we controlled the number of individuals censored to be similar within the prediction window between Scenario 2 and 3. Finally, we randomly sampled 125 individuals from the total dataset to form the independent test set, leaving 500 observations for fitting SL. We ran the simulation 100 times. For each scenario, we used 5-fold cross-validation to train SL with three base learners: the true one-stage landmark model and the true joint model, described above, and a two-stage landmark model. For all base learners, we employed the same longitudinal model. After estimating the weights for the eSL, we compared the performance of the eSL with the performance of the dSL and the OM - i.e., the model that performed best in the independent test set. In all scenarios, we estimated IPCW using Kaplan-Meier for the censoring distribution. 
+
+# 4.2 Results 
+
+Figure 2 presents the results of the estimates of the various metrics in the 100 simulated training and test datasets of the three scenarios. Table 2 shows the average SL weights and standard deviation for the different loss functions under the three scenarios. For the tv -AUC and BS, we find the expected result that the estimated performance under Scenario 2 is close to the true performance in Scenario 1 in both the training and test set. Comparing Scenario 1 and Scenario 3, we find that the BS increases and tv -AUC decreases in Scenario 3. That is to say, inappropriately accounting for informative censoring leads to a decrease in predictive accuracy, according to the BS and tv -AUC. These results differ from those shown of Kvamme and Borgan. 31 A possible explanation for the different findings is a dissimilarity in censoring mechanisms. For example, had we imposed stronger informative censoring in Scenario 3, more individuals would be censored before the prediction window. Consequently, there would be fewer events in the prediction window, ensuring that the BS in Scenario 3 is lower than in Scenario 2. Looking at the distribution of the weights for the BS and tv -AUC, the two true models receive the most weight. However, joint models tend to receive the larger weight. Joint models might dominate the weights for two reasons. First, they are more efficient than the landmarking method, as joint models can use all the longitudinal data up to the prediction window versus just the last observed value. Second, there is a loss of information in the landmark model as it cannot model the time gap between the last measurement time and the start of the prediction window. We find different results for the IBS. First, compared to the BS and tv -AUC the weights for the IBS seem to shift more toward the true landmark model than the joint model, indicating that the landmark model has lower estimated error 
+
+15 Figure 2: Metric estimates of the ensemble SL (eSL) and discrete SL (dSL) and oracle model (OM) under no censoring (Scenario 1), random censoring (Scenario 2) and informative censoring (Scenario 3) over 100 simulated datasets. The box plots under Train Error denote the metric values in the dataset the model was trained on, the box plots under Test Error show the metric values in the holdout data set. 
+
+Scenario 1 Scenario 2 Scenario 3 Model BS IBS tv -AUC BS IBS tv -AUC BS IBS tv -AUC 1 0.30 (0.32) 0.47 (0.28) 0.34 (0.20) 0.23 (0.29) 0.35 (0.31) 0.37 (0.23) 0.31 (0.33) 0.56 (0.30) 0.36 (0.24) 2 0.00 (0.00) 0.04 (0.05) 0.01 (0.04) 0.01 (0.02) 0.04 (0.06) 0.01 (0.05) 0.00 (0.01) 0.02 (0.04) 0.01 (0.05) 3 0.79 (0.32) 0.50 (0.28) 0.64 (0.20) 0.76 (0.29) 0.61 (0.32) 0.62 (0.23) 0.69 (0.33) 0.42 (0.29) 0.63 (0.23) Table 2: Average model weight and its standard deviation in brackets under no censoring (Scenario 1), random censoring (Scenario 2) and informative censoring (Scenario 3). Model 1 is the true one-stage landmark model, model 2 is a two-stage landmark model and model 3 is the true joint model. at the halfway point of the prediction window. However, a more important difference is that the IBS under Scenario 2 does not seem to differ from the error in Scenario 3. We hypothesise that this happens because we estimate the censoring distribution at two time points by approximating the IBS through Simpson’s rule. The differences between the two censoring mechanisms might only begin to show more prominently at later time points, which is weighed down in Simpson’s rule. From this perspective, the IBS gives biased results towards the impact of censoring on the model’s performance, ignoring informative censoring. Investigating the performance of SL in the different scenarios, we see that the performance of the dSL and eSL remains close to that of the OM for the different predictive accuracy metrics. These results indicate that the oracle property of SL also holds under non-random censoring mechanisms for dynamic predictions. 
+
+16 Finally, we checked convergence for the eSL due to the issues we encountered for the tv -AUC in the Global PBC Data. Convergence was a greater issue for the tv -AUC, where SL did not properly converge 12 .0% of the time over all scenarios. In comparison, the proportion of non-convergence for the BS and IBS were 0 .00 and 0 .02, respectively. These proportion further strengthen the importance of caution when optimising the tv -AUC. 
+
+# 5 Discussion 
+
+In the current article, we further extended the Super Learner framework in the longitudinal and time-to-event data setting. Our extensions combine the predictive performance of different dynamic prediction frameworks that work in continuous time. We also included a new predictive accuracy metric for the framework, the tv -AUC. Applying our method to optimise predictive accuracy for patients suffering from PBC using the Global PBC data, we found that the eSL performed as well as or better than any single model on the different predictive accuracy metrics with more flexibility in model specification. In our simulation study, we showed that under informative censoring, the performance of the eSL came close to the performance of the OM in an independent test set. However, informative censoring negatively impacts the performance of models, which the IBS may not correctly take into account. The SL framework presented offers unique and valuable advantages to the setting of longitudinal and time-to-event outcomes due to the large variability in procedures and model specification. For future use cases of SL for dynamic predictions, we recommend researchers to create a model library that is tailored to their objective. If computational efficiency is a primary concern, then the library should consist mostly of landmark models and simple boosting algo-rithms as these are fastest to fit. However, if the objective is optimising predictive accuracy, it is worth creating a model library that is as broad and diverse as possible while keeping computational efficiency in mind. In the creation of the model library, it is also worth considering the base learners separately and as a whole. That is to say, it may be worth adding a relatively simple base learner that by itself does not predict well yet predicts something else than the other base learners. Furthermore, previous research in similar research settings can be used to help guide the creation of the model library. For example, variable importance measures from previous studies can help guide covariate inclusion for the base learners. Nonetheless, it is important to note that the flexibility and accuracy of SL are not without costs, as SL decreases model interpretation. We caution against over-interpreting model weights and model coefficients from individual base learners. Future extensions of the framework include allowing even more diverse methods in the model library, such as discretised-time methods, and appropriately changing the loss functions to the context of competing risks. We also found that informative censoring negatively impacted the predictive accuracy of SL. Therefore, another avenue of future research is to investigate how we can mitigate the impact of informative censoring on the predictive performance of SL. Finally, the framework we presented is fully predictive. A future direction we are interested in is counterfactual pre-diction to answer causal questions such as: what would the dynamic survival probability of a patient with an inadequate 
+
+17 response on UDCA therapy have been, had they received an add-on therapy of obeticholic acid? Van der Laan and Pol-ley 11 developed SL as a semiparametric method to obtain an initial estimate of the probability distribution. This initial estimate can then be updated with extra assumptions to get a targeted causal estimate through Targeted Learning. 33 
+
+> Extending Targeted Learning to the setting of longitudinal and time-to-event data would be a highly relevant addition to drawing possible causal conclusions from observational longitudinal and time-to-event data.
+
+# References 
+
+1. Fontein DB et al. Dynamic prediction in breast cancer: proving feasibility in clinical practice using the TEAM trial. Ann Oncol 2015; 26:1254–62 2. Lafourcade A et al. Factors associated with breast cancer recurrences or mortality and dynamic prediction of death using history of cancer recurrences: the French E3N cohort. BMC cancer 2018; 18:1–9 3. Mauguen A et al. Dynamic prediction of risk of death using history of cancer recurrences in joint frailty models. Stat Med 2013; 32:5366–80 4. Prague M, Commenges D and Thi´ ebaut R. Dynamical models of biomarkers and clinical progression for personalized medicine: The HIV context. Adv Drug Deliv Rev 2013; 65:954–65 5. Suraweera D et al. Treatment of primary biliary cholangitis ursodeoxycholic acid non-responders: a sys-tematic review. Liver Int 2017; 37:1877–86 6. Tsiatis AA and Davidian M. Joint modeling of longitudinal and time-to-event data: an overview. Stat Sinica 2004 :809–34 7. Van Houwelingen HC. Dynamic prediction by landmarking in event history analysis. Scand J Stat 2007; 34:70–85 8. Lee C, Yoon J and Van Der Schaar M. Dynamic-deephit: A deep learning approach for dynamic survival analysis with competing risks based on longitudinal data. IEEE Trans Biomed Eng 2019; 67:122–33 9. Wilks DS. Sampling distributions of the Brier score and Brier skill score under serial dependence. Quart J Roy Meteorol Soc 2010; 136:2109–18 10. Benedetti R. Scoring rules for forecast verification. Mon Weather Rev 2010; 138:203–11 11. Van der Laan MJ, Polley EC and Hubbard AE. Super learner. Stat Appl Genet Mol Biol 2007; 6 12. Rizopoulos D and Taylor JM. Optimizing dynamic predictions from joint models using super learning. Stat Med 2024; 43:1315–28 18 13. Tanner KT et al. Dynamic survival prediction combining landmarking with a machine learning ensemble: Methodology and empirical comparison. J R Stat Soc 2021; 184:3–30 14. LeDell E, Laan MJ van der and Petersen M. AUC-maximizing ensembles through metalearning. Int. J. Biostat. 2016; 12:203–18 15. Blanche P et al. Quantifying and comparing dynamic predictive accuracy of joint models for longitudinal marker and time-to-event in presence of censoring and competing risks. Biometrics 2015; 71:102–13 16. Kohavi R. A study of cross-validation and bootstrap for accuracy estimation and model selection. 1995 17. Schoop R, Graf E and Schumacher M. Quantifying the predictive performance of prognostic models for censored survival data with time-dependent covariates. Biometrics 2008; 64:603–10 18. Atkinson K. An introduction to numerical analysis. John wiley & sons, 1991 19. Cox DR. Regression models and life-tables. J R Stat Soc 1972; 34:187–202 20. Breslow NE. Analysis of survival data under the proportional hazards model. Int Stat Rev 1975 :45–57 21. Putter H and Houwelingen HC van. Landmarking 2.0: bridging the gap between joint models and land-marking. Stat Med 2022; 41:1901–17 22. Nicolaie M et al. Dynamic prediction by landmarking in competing risks. Stat Med 2013; 32:2031–47 23. Van Houwelingen H and Putter H. Dynamic prediction in clinical survival analysis. CRC Press, 2011 24. Natekin A and Knoll A. Gradient boosting machines, a tutorial. Front neurorobot 2013; 7:21 25. Hofner B et al. Model-based boosting in R: a hands-on tutorial using the R package mboost. Comput Stat 2014; 29:3–35 26. Rizopoulos D. Joint models for longitudinal and time-to-event data: With applications in R. CRC press, 2012 27. Rizopoulos D. Dynamic predictions and prospective accuracy in joint models for longitudinal and time-to-event data. Biometrics 2011; 67:819–29 28. Rizopoulos D, Papageorgiou G and Miranda Afonso P. JMbayes2: Extended Joint Models for Longitudi-nal and Time-to-Event Data. R package version 0.5-1, https://github.com/drizopoulos/JMbayes2. 2024. Available from: https://drizopoulos.github.io/JMbayes2/ 
+
+29. Lammers WJ et al. Levels of alkaline phosphatase and bilirubin are surrogate end points of outcomes of patients with primary biliary cirrhosis: an international follow-up study. Gastroenterology 2014; 147:1338– 49 19 30. Nyblom H et al. The AST/ALT ratio as an indicator of cirrhosis in patients with PBC. Liver Int 2006; 26:840–5 31. Kvamme H and Borgan Ø. The Brier score under administrative censoring: problems and a solution. J Mach Learn Res 2023; 24:1–26 32. Bender R, Augustin T and Blettner M. Generating survival times to simulate Cox proportional hazards models. Stat Med 2005; 24:1713–23 33. Van der Laan MJ, Rose S, et al. Targeted learning: causal inference for observational and experimental data. Vol. 4. Springer, 2011 20 Appendix Global PBC Data 
+
+We present two tables and two pseudo-algorithms that detail the analysis of the Global PBC Data using Super Learner for dynamic predictions of time-to-event outcomes. Table 3 shows the packages and their version number that we used for the different types of base learners that we included in the ensemble and their hyperparameters. Table 4 presents a summary of all included base learners in the ensemble. Finally, Algorithms 1 and 2 detail the fitting and estimation process of the base learners and Super Learner for dynamic predictions. 
+
+21 Details Base learner Package Version Hyperparameters Landmark: Standard Cox survival 3.6-4 -Landmark: Boosted Cox mboost 2.9-10 bstop , ν, bopt 
+
+Joint Model JMbayes2 0.5-0 priors, MCMC samples, chains, burn in Table 3: Details of the implementation of the different type of base learners and their hyperparameters. For all boosted models, bstop was set to 500, ν was set to 0.025 and the early stopping criteria bopt was determined using 5-fold cross-validation in the training set (see Algorithm 2). The tree-based learners in the boosting algorithm also contain many hyperparameters, such as the minimum split size and the maximum depth of the trees. For all tree-related hyperparameters, we used the mboost package defaults. For joint models, we used the JMbayes2 package defaults for all priors. For the fitting parameters, we employed two MCMC chains with a total number of 5000 iterations of which 1000 were burn-in. For more complete information on the fitting process for the SL, we refer readers to Algorithm 1 and the Code and Data Supplement. 
+
+22 Details Functional forms Base learner Type Algorithm Longitudinal model TB ALP AST 
+
+M1 One-stage LM Standard Cox - - - -
+
+M2 One-stage LM Boosted Cox - - - -
+
+M3 Two-stage LM Standard Cox linear - - -
+
+M4 Two-stage LM Boosted Cox linear - - -
+
+M5 Two-stage LM Standard Cox splines (df = 3) - - -
+
+M6 Two-stage LM Boosted Cox splines (df = 3 - - -
+
+M7 JM - linear CV CV CV 
+
+M8 JM - splines (df = 3) CV CV CV 
+
+M9 JM - splines (df = 3) CV & S CV & A CV & A Table 4: Summary table for the 9 base learners included in the Super Learner ensemble. The column Type details the type of base learner, Algorithm defines how the base learner is estimated, Longitudinal model details the time specification for the base learner, and Functional form shows the association between per longitudinal outcome and the hazard function. A dash implies non-applicability. The abbreviations are LM = landmark; JM = joint model; df = degrees of freedom; CV = current value; S = slope; A = area. 
+
+23 Algorithm 1 Pseudo-Algorithm of Super Leaner for Dynamic Predictions Application  
+
+> 1:
+
+Initialise  
+
+> 2:
+
+Specify λ(·), K, {t, u }, V 
+
+> 3:
+
+Split Dn into Dtrain  
+
+> n
+
+and Dtest  
+
+> n
+> 4: 5:
+
+Base learners  
+
+> 6:
+
+Split Dtrain  
+
+> n
+
+up in V folds, stratifying on event indicator δi 
+
+> 7:
+
+for v in 1 : V do  
+
+> 8:
+
+Train Mk ∈ K on Dtrain ,−vn : 
+
+> 9:
+
+for Mk ∈ K do  
+
+> 10:
+
+if Mk = landmark model then  
+
+> 11:
+
+Run Algorithm 2 (see below)  
+
+> 12:
+
+else if Mk = joint model then  
+
+> 13:
+
+Define mixed model functions ηim (t) for m = 1 , . . . , M  
+
+> 14:
+
+Define hazard function hi{t | H i(t), w i} = h0(t) exp 
+
+
+
+γ⊤w i +PMm=1 
+
+PQq=1 fmq 
+
+n
+
+ηim (t), bim , α mq 
+
+o 
+
+> 15:
+
+Estimate ηim (t) and hi{t | H i(t), w i} simultaneously  
+
+> 16:
+
+end if  
+
+> 17:
+
+Predict πvi (u | t, Mk) 
+
+> 18:
+
+end for  
+
+> 19:
+
+end for  
+
+> 20:
+
+Return ˆ πvi (u | t, Mk) for all i in R(t) and all Mk ∈ K  
+
+> 21: 22:
+
+Meta learner  
+
+> 23:
+
+Estimate ˆ ωk(t) = argmin  
+
+> ωk(t)
+
+ P 
+
+> i∈R (t)
+
+λ
+
+ PKk=1 ωk(t)ˆ πvi (u | t, Mk), T i
+
+
+
+, 
+
+> 24:
+
+subject to ωk(t) ≥ 0 ∧ PKk=1 ωk(t) = 1  
+
+> 25: 26:
+
+Evaluate  
+
+> 27:
+
+Train all Mk ∈ K on full Dtrain  
+
+> n
+> 28:
+
+Evaluate ˜ πvj (u|t) = PKk=1 ˆωk(t)ˆ πvj (u | t, Mk) on R(t)test = {j ∈ D test  
+
+> n
+
+| Tj > t }
+
+24 Algorithm 2 Fitting Process for Landmark Base Learners  
+
+> 1:
+
+Filter R(t)−v = {i ∈ D train ,−vn | Ti > t } 
+
+> 2: 3:
+
+if Mk = one-stage landmark model then  
+
+> 4:
+
+For all i ∈ R (t)−v , f (yim ) = ym,ip , where p = max l · 1(tm,il ≤ t) for m = 1 , . . . , M  
+
+> 5:
+
+else if Mk = two-stage landmark model then  
+
+> 6:
+
+Filter yi(t) for all i ∈ D train ,−vn 
+
+> 7:
+
+Define and estimate mixed model functions ηim (t) for m = 1 , . . . , M  
+
+> 8:
+
+For all i ∈ R (t)−v , f (yim ) = ˆ ηim (t) for m = 1 , . . . , M  
+
+> 9:
+
+end if  
+
+> 10: 11:
+
+if Mk = standard Cox model then  
+
+> 12:
+
+Fit Cox’s Proportional Hazards Model on R(t)−v , where hi(t) = h0(t) exp γ⊤w i + PMm=1 αmf (yim ) 
+
+> 13:
+
+else if Mk = boosted Cox model then  
+
+> 14:
+
+Boosting  
+
+> 15:
+
+Create tree-based learners for all covariates and two-way interactions in X for i ∈ R (t)−v 
+
+> 16:
+
+Initialise prediction function ψ0(X) 
+
+> 17:
+
+for b in 1 : bstop do  
+
+> 18:
+
+Compute negative gradient vector ub 
+
+> 19:
+
+Predict ub with tree-based learners  
+
+> 20:
+
+Select best predicted ˆ ub according to least squares criteria  
+
+> 21:
+
+Update the estimated prediction function: ˆψb(X) = ˆψb−1(X) + ν ˆub 
+
+> 22:
+
+end for  
+
+> 23: 24:
+
+Early stopping  
+
+> 25:
+
+Split R(t)−v into p = 1 , . . . , 5 folds  
+
+> 26:
+
+for p in 1 : 5 do  
+
+> 27:
+
+Filter individuals from fold p from R(t)−v to create R(t)−v, −p 
+
+> 28:
+
+Repeat Boosting , where R(t)−v = R(t)−v, −p 
+
+> 29:
+
+Estimate the negative partial log likelihood of the model on the individuals in fold p 
+
+> 30:
+
+end for  
+
+> 31:
+
+Determine bopt = b where the average negative partial log likelihood over folds is lowest  
+
+> 32:
+
+Return ˆψbopt (X) on R(t)−v 
+
+> 33:
+
+end if 
+
+25

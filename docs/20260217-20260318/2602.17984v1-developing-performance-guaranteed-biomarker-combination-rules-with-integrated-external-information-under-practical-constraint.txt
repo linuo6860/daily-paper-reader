@@ -1,0 +1,1230 @@
+Title: Developing Performance-Guaranteed Biomarker Combination Rules with Integrated External Information under Practical Constraint
+
+URL Source: https://arxiv.org/pdf/2602.17984v1
+
+Published Time: Mon, 23 Feb 2026 01:22:04 GMT
+
+Number of Pages: 39
+
+Markdown Content:
+# Developing Performance-Guaranteed Biomarker Combination Rules with Integrated External Information under Practical Constraint 
+
+Albert Osom ∗1, Camden Lopez 2, Ashley Alexander 3, Suresh Chari 4, Ziding Feng 2, and Ying-Qi Zhao 2,1 1Department of Biostatistics, University of Washington, Seattle, WA 
+
+> 2
+
+Public Health Sciences Division, Fred Hutchinson Cancer Center, Seattle, WA 
+
+> 3
+
+Kelsey Research Foundation, Houston, TX 
+
+> 4
+
+Department of Gastroenterology, University of Texas MD Anderson Cancer Center, Houston, TX 
+
+Abstract 
+
+In clinical practice, there is significant interest in integrating novel biomarkers with exist-ing clinical data to construct interpretable and robust decision rules. Motivated by the need to improve decision-making for early disease detection, we propose a framework for developing an optimal biomarker-based clinical decision rule that is both clinically meaningful and practi-cally feasible. Specifically, our procedure constructs a linear decision rule designed to achieve optimal performance among class of linear rules by maximizing the true positive rate while adhering to a pre-specified positive predictive value constraint. Additionally, our method can adaptively incorporate individual risk information from external source to enhance performance when such information is beneficial. We establish the asymptotic properties of our proposed estimator and compare to the standard approach used in practice through extensive simulation studies. Results indicate that our approach offers strong finite-sample performance. We also apply the proposed methods to develop biomarker-based screening rules for pancreatic ductal adenocarcinoma (PDAC) among new-onset diabetes (NOD) patients. 
+
+> ∗
+
+Email: aosom@uw.edu 
+
+1
+
+> arXiv:2602.17984v1 [stat.ME] 20 Feb 2026
+
+1 Introduction 
+
+Early detection is critical in the fight against cancer and other diseases, as it offers the potential to identify diseases at a stage where they are most treatable. The concept of early detection is grounded in the principle that earlier intervention following the detection of disease can lead to better outcomes, including higher survival rates, reduced treatment complexity, and improved quality of life for patients. An immense amount of research has been dedicated to identifying candidate biomarkers to aid in early detection. The primary challenge lies in effectively combining these biomarkers to develop a clinical decision rule that satisfies specific practical and clinical needs, while optimizing the detection of the target disease. In this regard, Vickers and Elkin (2006) and Kerr et al. (2016) proposed net benefit and standardized net benefit as a measure of clinical utility of risk models, which balances the trade-off between the harm and benefit of the model at a clinically relevant cost-benefit ratio. Recently, Wang et al. (2020) developed a learning-based biomarker-assisted rule that optimizes clinical benefit under a pre-specified risk constraint, offering a flexible framework for developing both linear and nonlinear rules. Meisner et al. (2021) introduced a framework for linearly combining biomarkers that maximizes the true positive rate (TPR) for a fixed false positive rate (FPR). Our work is motivated by early detection of pancreatic ductal adenocarcinoma (PDAC). PDAC has an overall 5-year survival rate of around 13% (Siegel et al., 2025) and has been projected to be the second highest cancer-related cause of death in the United States by 2030 (Rahib et al., 2014). Due to the low prevalence of PDAC, biomarker-based screening must target high-risk populations to be feasible — such as patients over 50 years with new-onset hyperglycemia and diabetes (NOD) (Chari et al., 2005). Further, cost-effective screening tests are essential to selectively identify PDAC cases, as it is impractical to recommend all at-risk individuals for further workup that is more expensive or invasive. For instance, over one million Americans are diagnosed with new-onset diabetes each year, making broad screening in this population prohibitively expensive. In the setting of population level screening, clinician are often interested in targeting a controllable work-up burden from recommending further diagnostic procedure, especially when such follow-up evaluations are costly, invasive, or limited by resource constraints. Positive predictive value (PPV) 2naturally serves as a clinically meaningful criterion for such need, because it directly quantifies the expected number needed to screen (NNS) to detect one cancer case. For example, in ovarian cancer screening, clinical guidelines recommend a minimum PPV of 10% to justify invasive diagnostic surgery (Jacobs and Menon, 2004). A rule achieving PPV of 10% is expected to recommend 10 patients for further diagnostic work-up to identify one cancer case. This NNS interpretation is intuitive and compelling for clinicians when evaluating the feasibility of a screening modality. In contrast, existing biomarker-based decision rules that maximize TPR subject to an FPR constraint (Wang et al., 2020; Meisner et al., 2021) are not well suited for this setting. FPR is a prevalence-free measure and does not directly determine the clinical work-up burden of a screening rule. It is not straightforward to translate an FPR-constrained optimization into a rule that satisfies a pre-specified PPV requirement. For a fixed disease prevalence, PPV is a nonlinear function of both TPR and FPR, and the mapping from PPV to FPR is not identifiable, as there exist infinitely many (TPR, FPR) pairs that achieve the same PPV. Furthermore, in our setting, TPR is both the quantity being optimized and a component of the PPV constraint itself. Consequently, for a fixed PPV level, the admissible FPR is not unique but depends on the achieved TPR. Fixing an FPR threshold to approximate a target PPV while maximizing TPR can therefore yield a suboptimal rule relative to an approach that directly optimizes the clinical objective. See Table 1 for an illustrative numerical example. Additionally, when developing a new biomarker-based decision rule, there are often published risk models/algorithms available that can provide valuable insights into patient risk profile. For in-stance, the Enriching New-Onset Diabetes for Pancreatic Cancer (ENDPAC) model was developed and validated for PDAC screening in NOD patients, using patient characteristics such as weight change, blood glucose change, and age at diabetes onset (Sharma et al., 2018). Other examples in-clude the MyProstateScore test for prostate cancer, endorsed by NCCN guidelines for prebiopsy risk stratification (National Comprehensive Cancer Network, 2023), and the Framingham Risk Score for coronary heart disease (Wilson et al., 1998). Integrating this information could enhance the discriminatory power of a new biomarker decision rule. In the context of risk prediction, various strategies have been proposed to leverage external information when developing a new risk model. Assuming there is a published risk prediction 3Table 1: Comparison of the performance of the FPR-constrained method of Meisner et al. (2021), which maximizes TPR subject to an FPR constraint, with our proposed method (DOOLR), which directly maximizes TPR subject to a PPV constraint. To align the FPR constraint in Meisner et al. (2021) with a given PPV target, we solve the optimization problem over a range of FPR constraints and select the value that yields the desired PPV level. Data is generated under a linear decision rule; see Section 4.1. We report average TPR and PPV with corresponding standard errors (in parentheses) in the test sample across 500 simulation replicates for PPV constraints 
+
+α P t 0.030 , 0.040 , 0.045 u and prevalence p1 “ 0.01. Across all values of α, DOOLR achieves higher TPR than the FPR-constrained method of Meisner et al. (2021).                   
+
+> αMeasure Meisner et al. (2021) DOOLR
+> 0.030 TPR 0.870(0.177) 0.942(0.139) PPV 0.030(0.001) 0.035(0.008) 0.040 TPR 0.818(0.198) 0.926(0.120) PPV 0.040(0.001) 0.044(0.007) 0.045 TPR 0.796(0.187) 0.907(0.153) PPV 0.045(0.002) 0.048(0.013)
+
+model available, we consider two established approaches discussed in the literature. The first estimates the parameters of the new risk prediction model using penalized likelihood, incorporating a Kullback–Leibler divergence penalty to enforce similarity between the new and the published model (Kullback and Leibler, 1951; Hector and Martin, 2024; Wang et al., 2021, 2023). The second employs a constraint-based maximum likelihood estimation framework, restricting the extent to which the parameters of the new prediction model deviate from that of the published model to encourage alignment (Cheng et al., 2019; Han et al., 2023; Chatterjee et al., 2016). Both approaches assume either there is access to an external data or correct specification of the published risk model. In contrast, our approach imposes no such assumptions, relying solely on the availability of external risk information — such as calculated risk scores under a published risk model, algorithm, or risk calculator — while maintaining flexibility in model specification. Moreover, as these existing methodologies primarily focus on risk prediction, they do not directly address our research objective, rendering them less suitable for our framework. In this paper, we introduce a new criterion, termed PPV-constrained benefit function, from which we develop biomarker-based decision rules. Under this criterion, we learn decision rules that maximize the benefit of screening measured by TPR while enforcing clinical usefulness through a PPV constraint. We derive the theoretically optimal rule, based upon which a plug-in rule could be formed using either parametric or flexible nonparametric estimators, such as random forests 4(Breiman, 2001), additive models (Hastie and Tibshirani, 1990), or an ensemble of estimators implemented via the SuperLearner (Van der Laan et al., 2007). Considering the importance of interpretability in clinical practice, we further develop an approach using Direct Optimization for Optimal Linear decision Rule (DOOLR). In cases where the optimal decision rule is not linear, the proposed method ensures the development of a linear decision rule that delivers the best possible performance within the entire class of linear rules. Moreover, when external risk information, such as decisions from a published risk model or established biomarkers is available, we extend the linear decision rule to incorporate this auxiliary information, thereby improving predictive performance while preserving interpretability. We formalize this integration by introducing a penalty term into the objective function that adaptively regulates the extent to which external information is incorporated. Specifically, the penalty term quantifies the cost associated with misalignment between the decisions generated by the new biomarker rule and those recommended by the published risk model among patients with positive disease status. Importantly, our external information transfer approach does not require access to individual-level external risk scores; it only requires binary decisions (i.e., whether further screening is recommended) derived from an external risk model. The manuscript is organized as follows: we introduce the PPV-constrained benefit function function in Section 2. We propose algorithms for estimating the optimal decision rule that maxi-mizes the PPV-constrained benefit function in Section 2.2. In Section 3 , we discuss the asymptotic properties of the proposed estimator of the optimal linear rule. Simulation studies evaluating the proposed procedures are presented in Section 4. In Section 5, we illustrate our method to Pancre-atic Cancer and a retrospective cohort of controls enriched for new onset Diabetes and pre-diabetes for Research Analyses (PANDORA) study. Our goal is develop biomarker-assisted decision rule for screening of PDAC among new-onset diabetes (NOD) patients. In Section 6, we provide a discussion. 52 Methodology 
+
+2.1 PPV-constrained benefit function 
+
+Let D denote a binary outcome, with D “ 1 indicating presence of the disease of interest and 0 otherwise. Let X be the set of biomarkers and other clinical characteristics used for deriving clinical decision rules. Denote by R “ t dpXq : dpXq P t 0, 1uu the class of individualized clinical decision rules, such that dpXq “ 1 means patient is recommended for further diagnostic procedure, and dpXq “ 0 otherwise. Let TPR pdpXqq “ pr pdpXq “ 1|D “ 1q, and PPV pdpXqq “ pr pD “
+
+1|dpXq “ 1q. We are interested in constructing biomarker combination rules that maximizes TPR under a pre-specified clinically meaningful positive predictive value, α. The problem can be formulated as max 
+
+> dpXqP R
+
+TPR pdpXqq subject to PPV pdpXqq ě α. (1) For k P t 0, 1u, let pk – pr pD “ kq, where p1 denote the disease prevalence, and pr pXq and pr pD “ k|Xq denote the density function of X and the conditional probability of D “ k given X,respectively. We assume p1 is either known or can be estimated from independent data sources. We further assume that both pr pD “ 1|Xq and pr pXq are continuous functions of X, and δ0 ă
+
+pr pD “ k|Xq ă 1 ´ δ0 and δ1 ă pk ă 1 ´ δ1 almost surely for some positive constants δ0 and δ1. For notational simplicity, let γ “ p1{p 1 ´ p1q, η1pXq “ pr pD “ 1|Xq{ p1 and η0pXq “ pr pD “ 0|Xq{ p0,where p0 “ 1 ´ p1. We also denote EX as the expectation with respect to the marginal distribution of X. We can then write (1) as max  
+
+> dpXqP R
+
+EX r1tdpXq “ 1uη1pXqs 
+
+subject to γEX r1tdpXq “ 1uη1pXqs 
+
+γEX r1tdpXq “ 1uη1pXqs ` EX r1tdpXq “ 1uη0pXqs ě α. (2) 6Our goal is to find the optimal decision rule d˚pXq that solves (2). The Lagrangian corresponding to (2) is given as 
+
+LpdpXq, λ q “ Er1tdpXq “ 1ut η1pXq ´ λαγη 1pXq ´ λαη 0pXq ` λγη 1pXqus .
+
+Let d˚pXq denote the optimal rule that solves the optimization problem in (2). We can ob-tain d˚pXq by maximizing LpdpXq, λ q for a fixed λ and choose the optimal λ as the solution to 
+
+EX r1tdpXq “ 1up γη 1pXqq ´ αγη 1pXq ´ αη 0pXqs “ 0. The optimal rule is derived as d˚pXq “ 
+
+1tfλ˚ pXq ą 0u, where fλ˚ pXq “ η1pXq ´ λ˚αγη 1pXq ´ λ˚αη 0pXq ` λ˚γη 1pXq for a pre-specified 
+
+α, and λ˚ ą 0 solves EX r1tfλpXq ą 0up αγη 1pXq ` αη 0pXq ´ γη 1pXqqs “ 0. We show optimality of d˚pXq in Supplementary Appendix A. 
+
+2.2 Estimation of the optimal decision rule 
+
+Suppose tDi, Xiuni“1 data are collected from n independent identically distributed subjects. We denote n1 by the number of disease subjects and n0 the number of non-disease subjects such that n “ n0 ` n1. Given the form of the theoretical optimal decision rule, a straightforward method for estimation is to replace the expectations in the theoretical optimal decision rule and the constraint with their empirical analogs. Let ˆ η1pXq “ ˆpr pD “ 1|Xq{ p1 and ˆ η0pXq “ ˆpr pD “
+
+0|Xq{ p0 be estimates of η1pXq and η0pXq respectively, where pr pD “ 1|Xq can be estimated using either parametric (e.g., logistic regression) or data adaptive approaches (e.g., random forest, neural network, SuperLearner , etc). Subsequently, the estimated optimal decision rule is ˆdˆλpXq “ 
+
+1tˆη1pXq ´ ˆλαγ ˆη1pXq ´ ˆλα ˆη0pXq ` ˆλγ ˆη1pXq ą 0u, where ˆλ solves 
+
+n´1
+
+> n
+
+ÿ
+
+> i“1
+
+r1t ˆdˆλpXiq “ 1up αγ ˆη1pXiq ` αˆη0pXiq ´ γ ˆη1pXiqqs “ 0.
+
+We refer to the method discussed above as the plug-in approach. This method is flexible and can accommodate various estimation techniques (e.g., random forest, neural network, additive models, local polynomials, etc). 
+
+Remark 1. When estimating pr pD “ 1|Xq in the above plug-in rule using data under case-control 
+
+7sampling, we need to make adjustments to accurately estimate pr pD “ 1|Xq. To be specific, let 
+
+S be the indicator of being included into the case-control sample. We can obtain an estimate of pr pD “ 1|X, S q under the case-control data. However, we are typically more interested in estimating pr pD “ 1|Xq. In this case, we make an adjustment using the relationship 
+
+ˆpr pD “ 1|Xq
+
+ˆpr pD “ 0|Xq “ ˆpr pD “ 1|X, S q
+
+ˆpr pD “ 0|X, S q
+
+n0
+
+n1
+
+p1
+
+1 ´ p1
+
+(Huang and Pepe, 2010). If we estimate pr pD “ 1|Xq using logistic regression, this adjustment simplifies to adding log rp1n0{tp 1 ´ p1qn1us to the intercept of the estimated coefficient. 
+
+In clinical practice, simpler decision rules are preferred for their ease of implementation and interpretability. A common choice is linear decision rules — this is usually obtained in two steps; first estimate a patient’s disease probability using logistic regression and apply a risk score cutoff to achieve the pre-specified clinical constraint. While intuitive, this method can underperform when model assumptions are incorrect and is often ad hoc, meaning it may not yield the optimal rule for a given performance measure. This challenge led us to develop the Direct Optimization for Optimal Linear Decision Rule (DOOLR) approach, which constructs a robust linear rule that is asymptotically optimal within the class of all linear rules. 
+
+2.2.1 Direct optimization for optimal linear decision rule 
+
+Let RL be the class of linear decision rules of the form dpX, βq “ 1tX T β ą 0u where X “ p 1, Xq
+
+for p-dimensional feature variables X and β “ p β0, β1q. Denote by X1i and X0j the covariates for diseased and non-diseased patients, respectively. Let d˚
+
+> L
+
+pX, β˚q “ 1tX T β˚ ą 0u be the optimal linear rule that maximizes the objective in (1) among RL. The empirical analog to (1) using the observed data for the class of linear decision rules can be written as max 
+
+> βPRp`1
+
+n´11
+
+> n1
+
+ÿ
+
+> i“1
+
+r1tX T 
+
+> 1i
+
+β ą 0us 
+
+subject to zPPV pβq “ γn ´11
+
+řn1
+
+> i“1
+
+r1tX T 
+
+> 1i
+
+β ą 0us 
+
+γn ´11
+
+řn1
+
+> i“1
+
+r1tX T 
+
+> 1i
+
+β ą 0us ` n´10
+
+řn0
+
+> j“1
+
+r1tX T 
+
+> 0j
+
+β ą 0us ě α. (3) 8−4 −2 0 2 40.0  0.2  0.4  0.6  0.8  1.0 
+
+# h=1 h=0.5 h=0.05 zero−one Figure 1: Comparison of zero-one indicator with Φ px{hq for different values of h. We can observe that, when h approaches zero, the approximation of the zero-one indicator with Φ px{hq becomes more accurate. The optimization problem in (3) involving the zero–one indicator is known to be nondetermin-istic polynomial-time hard (NP-hard) (Natarajan, 1995). The presence of the indicator function introduces discontinuity into the objective and constraint functions, rendering gradient-based opti-mization methods infeasible. Our goal is not to circumvent this fundamental computational barrier, but to develop a practically tractable approximation that targets the optimal decision rule within the class of linear rules. To address this computational intractability, approximating the zero-one indicator with a smooth surrogate function is a widely used approach in the classification literature, demonstrating both computational and theoretical advantages (Bartlett et al., 2006). While com-monly used convex surrogate losses (e.g., logistic or hinge loss), are computationally convenient, they do not in general preserve optimality within a restricted model class and may converge to suboptimal linear rules under model misspecification. To ensure we estimate the optimal linear 9decision rule with guaranteed performance, we also propose using a smooth approximation loss function that converges to the zero-one indicator. Specifically, we choose our surrogate function to be Φ px{hq, where Φ is the standard normal distribution function (Ma and Huang, 2007; Fong et al., 2016; Lin et al., 2011). As h approaches zero, the surrogate function converges to the in-dicator function (see Figure 1). The parameter h in Φ px{hq controls how closely the surrogate function approximates the indicator function and should be chosen in a data-adaptive manner. Ideally, h would be selected through cross-validation to ensure that it yields the highest-performing rule. However, cross-validation is computationally burdensome as each candidate value of h re-quires solving a nonlinear optimization problem. For this reason, we adopt a practical choice 
+
+h “ n´1{3 StdDev 
+
+´
+
+X T ˆβ0{∥ ˆβ0∥
+
+¯
+
+, where ˆβ0 is an initial estimate of the coefficients via say logistic regression. This choice of h has demonstrated strong empirical performance in prior work (Lin et al., 2011; Meisner et al., 2021). Replacing the indicator function in (3) with the proposed surrogate function, the relaxed optimization problem is given as max 
+
+> βPRp`1
+
+n´11
+
+> n1
+
+ÿ
+
+> i“1
+
+Φ
+
+˜
+
+X T 
+
+> 1i
+
+β
+
+h
+
+¸
+
+subject to 
+
+γn ´11
+
+řn1 
+
+> i“1
+
+Φ
+
+ˆ X T 
+
+> 1iβ
+> h
+
+˙
+
+γn ´11
+
+řn1 
+
+> i“1
+
+Φ
+
+ˆ X T 
+
+> 1iβ
+> h
+
+˙
+
+` n´10
+
+řn0 
+
+> j“1
+
+Φ
+
+ˆ X T 
+
+> 0jβ
+> h
+
+˙ ě α. (4) The solution to the relaxed problem in (4) ˆβΦh , maximizes the Lagrangian 
+
+LΦ 
+
+> n
+
+pβ, λ q “ n´11
+
+> n1
+
+ÿ
+
+> i“1
+
+Φ
+
+˜
+
+X T 
+
+> 1i
+
+β
+
+h
+
+¸
+
+` ˆλΦγn ´11
+
+> n1
+
+ÿ
+
+> i“1
+
+Φ
+
+˜
+
+X T 
+
+> 1i
+
+β
+
+h
+
+¸
+
+´ ˆλΦαγn ´11
+
+> n1
+
+ÿ
+
+> i“1
+
+Φ
+
+˜
+
+X T 
+
+> 1i
+
+β
+
+h
+
+¸
+
+´ ˆλΦαn ´10
+
+> n0
+
+ÿ
+
+> j“1
+
+Φ
+
+˜ X T 
+
+> 0j
+
+β
+
+h
+
+¸
+
+,
+
+where ˆλΦ solves zPPV p1tX T ˆβΦh ą 0uq ´ α “ 0. To simplify notation, we write ˆβΦ to denote ˆβΦh while keeping in mind that the estimator implicitly depends on h. This is a smooth objective function which we solve using an off-the-shelf non-linear optimization package in R ( nlm ). We then perform a grid search for the Lagrange multiplier to identify the value that satisfies the PPV constraint, zPPV p1tX T ˆβΦ ą 0uq ´ α “ 0. Because the decision rule depends only on the sign 10 of X T ˆβ, we enforce the l2 constraint such that } ˆβΦ}22 “ 1, which does not affect the resulting decision rule. In Supplementary Appendix B, we summarize the full procedure in Algorithm 1 and justification of the optimization steps. We denote the estimated linear decision function obtained by the above procedure as ˆdLpX, ˆβΦq “ 
+
+1tX T ˆβΦ ą 0u. We will show in Section 3 that ˆdLpX, ˆβΦq converges to the true best linear rule, 
+
+d˚
+
+> L
+
+pX, β˚q, asymptotically. 
+
+2.2.2 Incorporating existing information to improve linear combination rule 
+
+In many situations, there already exist risk models or scores developed to aid in patient risk stratification. If these existing risk information are useful, it would be beneficial to include them when learning the new biomarker combination rule. In this section, we extend the DOOLR approach to allow incorporation of useful external risk information. Assume there exists an external risk algorithm or published model for which only the resulting binary decisions (i.e., recommend further screening or not) are available for all patients in the cur-rent dataset. Our framework does not require access to the original risk scores or model parameters; it only requires the external decisions. In some settings, the underlying risk scores may also be available. Let Z Ď X denote the subset of features used to develop the external model, and let 
+
+rpZq denote the associated risk score with clinical threshold δ0, where larger values correspond to higher disease risk. For simplicity, we assume the external decision rule takes the threshold form 
+
+1trpZq ´ δ0 ą 0u. For example, if the external model is logistic regression, then rpZq “ ZJ rβ,where rβ are published coefficients of the the model. More generally, rpZq may arise from a machine learning or domain-informed algorithm. Our method, however, relies only on the induced binary decisions and remains applicable even when the underlying scores are unavailable. To efficiently incorporate external risk information when developing the new biomarker combi-nation rule, we propose a strategy that transfers external information only when it improves the performance metric. Since our goal is to maximize TPR, we introduce a penalty term in the objec-tive function in (4) that quantifies disagreement between the decision rules among disease patients. 11 The penalty term is 1
+
+n1
+
+> n1
+
+ÿ
+
+> i“1
+
+1tX T 
+
+> 1i
+
+β ¨ p rpZiq ´ δ0q ă 0u.
+
+When the two rules align, both X T 
+
+> 1i
+
+β and prpZiq ´ δ0q have the same sign. The penalty therefore imposes an additional cost when the new rule disagrees with the external rule on true disease cases. Additionally, we introduce a tuning parameter, η, to control the extent of information transfer from the external risk model. This ensures that if the external model is not informative, its influence on developing the biomarker combination rule remains minimal. We now propose a smooth Information Transfer (IT)-based penalized maximization to construct the linear decision rule, built upon (4), we term this approach IT-DOOLR. The optimization problem is framed as max 
+
+> βPRp`1
+
+n´11
+
+> n1
+
+ÿ
+
+> i“1
+
+Φ
+
+˜
+
+X T 
+
+> 1i
+
+β
+
+h
+
+¸
+
+´ ηn ´11
+
+> n1
+
+ÿ
+
+> i“1
+
+Φ
+
+˜
+
+´X T 
+
+> 1i
+
+β ¨ p rpZiq ´ δ0q
+
+h
+
+¸
+
+subject to 
+
+γn ´11
+
+řn1 
+
+> i“1
+
+Φ
+
+ˆ X T 
+
+> 1iβ
+> h
+
+˙
+
+γn ´11
+
+řn1 
+
+> i“1
+
+Φ
+
+ˆ X T 
+
+> 1iβ
+> h
+
+˙
+
+` n´10
+
+řn0 
+
+> j“1
+
+Φ
+
+ˆ X T 
+
+> 0jβ
+> h
+
+˙ ě α. (5) Similarly, we can solve for ˆβΦIT “ argmax 
+
+> βPR1`p
+
+LΦIT ,n pβ, λ q using gradient-based methods, where 
+
+LΦIT ,n pβ, λ q “ n´11
+
+> n1
+
+ÿ
+
+> i“1
+
+Φ
+
+˜
+
+X T 
+
+> 1i
+
+β
+
+h
+
+¸
+
+` λγn ´11
+
+> n1
+
+ÿ
+
+> i“1
+
+Φ
+
+˜
+
+X T 
+
+> 1i
+
+β
+
+h
+
+¸
+
+´ λαγn ´11
+
+> n1
+
+ÿ
+
+> i“1
+
+Φ
+
+˜
+
+X T 
+
+> 1i
+
+β
+
+h
+
+¸
+
+´ λαn ´10
+
+> n0
+
+ÿ
+
+> j“1
+
+Φ
+
+˜ X T 
+
+> 0j
+
+β
+
+h
+
+¸
+
+´ ηn ´11
+
+> n1
+
+ÿ
+
+> i“1
+
+Φ
+
+˜
+
+´X T 
+
+> 1i
+
+β ¨ p rpZiq ´ δ0q
+
+h
+
+¸
+
+,
+
+and ˆλΦIT solves zPPV p1tX T ˆβΦIT ą 0uq ´ α “ 0. We will select η through cross-validation to en-sure efficient information transfer. The procedure will leverage external risk information when it enhances the TPR and maintains control over the PPV by selecting larger values of η, while minimizing negative information transfer by selecting η values closer to zero. 12 3 Theoretical properties 
+
+In this section, we discuss the asymptotic properties of the estimated linear rule using the proposed DOOLR approach. We present asymptotic guarantee that the best linear rule is achieved. We further show that the TPR under the estimated linear rule converges to the optimal TPR in the linear class and PPV is controlled for the pre-specified α. We assume the following standard conditions. (A1) Suppose n0{n, n 1{n P p 0, 1q where n “ n1 ` n0 Ñ 8 .(A2) For each d P t 0, 1u, observations Xdi , i “ 1, 2, . . . , n d, are independent and identically dis-tributed p-dimensional random vectors with distribution function Fd.(A3) For each d P t 0, 1u, the conditional distribution of X given D “ d is not supported on any proper linear subspace of Rp; that is, for all proper linear subspaces S Ă Rp, Pr pX P S|D “
+
+dq ă 1. (A4) For each d P t 0, 1u, the distribution and quantile functions of XT β1 given D “ d are globally Lipschitz continuous uniformly over β1 P Rp such that || β1|| “ 1. (A5) The map pβ0, β1q Þ Ñ TPR pβ0, β1q is globally Lipschitz continuous over Ω “ t β1 P Rp, β 0 P
+
+R : || β1|| “ 1u.To summarize, Conditions (A1) and (A2) are standard assumptions in asymptotic analysis. Condition (A3) ensures X has full support in Rp and cannot be restricted to a lower-dimensional subspace for some D. Conditions (A4) and (A5) are less stringent smoothness conditions used to show asymptotic results. The smoothness condition ensures controlled variations in the functions. The above conditions are similar to those stated in Meisner et al. (2021). 
+
+Theorem 1. Under conditions (A1)–(A5), we have that as h Ñ 0
+
+a) T P R p ˆβΦq Ñ T P R pβ˚q in probability, b) lim inf P P V p ˆβΦq ě α almost surely, c) ˆβΦ Ñ β˚ in probability. 
+
+13 The proof of the above theorem is based on Lemma 2 from Meisner et al. (2021) and M-estimation theory (Van der Vaart, 2000). Our proof of Theorem 1 utilizes Lemma 2 (Meisner et al., 2021) to first show that the empirical smooth approximations of TPR and FPR converge almost surely to the smooth versions of TPR and FPR respectively over a fixed parameter space. We then show that the smooth versions of TPR and FPR converge to TPR and FPR as h Ñ 0. We finally show c) by employing results from M-estimation theory (theorem 5.7 of Van der Vaart (2000)) in addition to the results in b). In showing consistency of ˆβΦ in c), we assume β˚ is a unique and well-separated maximizer of T P R pβq over the parameter space. Details of the proof can be found in the Supplementary Appendix D. The general implication of the above theorem is that, even in cases where the global optimal rule is not linear, we can guarantee performance of our proposed linear rule to be asymptotically close to the best linear rule within the class of linear rules. As mentioned earlier, this is not guaranteed using convex surrogate functions. 
+
+4 Numerical studies 
+
+In this section, we compare the finite sample performance of the proposed methods, namely the plug-in approaches, DOOLR, and IT-DOOLR against the standard logistic regression (‘Standard’) approach. The Standard approach is implemented in two steps; i) fit a logistic regression model for the outcome; ii) choose a threshold for the predicted probabilities that corresponds to the PPV con-straint. For the plug-in approach, we considered two ways of estimating the nuisance risk function, pr pD “ 1|Xq: 1) logistic regression (‘Plug-in Logistic’), and 2) ensemble of methods (generalized additive models, logistic regression, random forest, mean of outcome) via SuperLearner (‘Plug-in SL’). For our proposed linear rules (DOOLR and IT-DOOLR), we set, across all simulations, 
+
+h “ n´1{3 StdDev pX T ˆβ0{∥ ˆβ0∥q, where ˆβ0 denotes the coefficient estimate obtained from the Stan-dard approach. We present a numerical study examining different values of h to demonstrate the robustness of our decision rule in Supplementary Appendix C (see Table 2). To mimic a rare disease screening scenario, we generate data with disease prevalence approximately 1% across all simulation settings and repeat each simulation 500 times. We specify PPV constraints at 3%, 4%, and 4 .5% in all simulations. We present only the results for 4% here and report the remaining results in Supple-14 Table 2: Cohort study sampling simulation scenario when the true decision rule is linear, piece-wise linear, and nonlinear. Average TPR and PPV with corresponding standard error (in parentheses) in the test sample across 500 simulation replicates under PPV pα “ 0.04 q and prevalence pp1 “ 0.01 q.                                                                             
+
+> nMeasure Methods
+> Standard Plug-in Logistic Plug-in SL DOOLR
+> Linear
+> 2500 TPR 0.988(0.006) 0.987(0.010) 0.987(0.013) 0.967(0.040) PPV 0.042(0.003) 0.040(0.003) 0.038(0.012) 0.047(0.015) 5000 TPR 0.990(0.004) 0.990(0.006) 0.990(0.006) 0.980(0.017) PPV 0.042(0.001) 0.040(0.001) 0.040(0.005) 0.043(0.008)
+> Linear with contamination
+> 2500 TPR 0.508(0.284) 0.547(0.281) 0.972(0.020) 0.922(0.123) PPV 0.043(0.025) 0.032(0.014) 0.040(0.003) 0.045(0.008) 5000 TPR 0.571(0.284) 0.651(0.295) 0.977(0.011) 0.959(0.042) PPV 0.05(0.022) 0.037(0.008) 0.040(0.002) 0.043(0.003)
+> Piece-wise linear
+> 2500 TPR 0.604(0.152) 0.678(0.116) 0.771(0.159) 0.624(0.163) PPV 0.055(0.021) 0.043(0.011) 0.045(0.019) 0.050(0.019) 5000 TPR 0.628(0.144) 0.693(0.085) 0.840(0.079) 0.654(0.115) PPV 0.051(0.020) 0.042(0.007) 0.041(0.006) 0.046(0.013)
+> Nonlinear
+> 2500 TPR 0.696(0.256) 0.833(0.201) 0.984(0.033) 0.747(0.218) PPV 0.047(0.010) 0.041(0.006) 0.040(0.004) 0.042(0.009) 5000 TPR 0.601(0.296) 0.868(0.169) 0.989(0.007) 0.808(0.189) PPV 0.048(0.009) 0.041(0.004) 0.040(0.001) 0.043(0.006)
+
+mentary Appendix C (see Tables 4-7). Our implementation of the proposed methods and codes to replicate simulation results in R is available at https://github.com/albertosom/BiomarkerRule .
+
+4.1 Linear decision rule 
+
+We consider bivariate normal biomarkers with and without contamination, similar scenarios are de-scribed in Croux and Haesbroeck (2003) and Meisner et al. (2021). We first simulate the covariates 
+
+X “ p X1, X 2q, each following a standard normal distribution. The outcome D is generated from a Bernoulli distribution with success probability pr pD “ 1|X1, X 2q “ 1{p 1 ` exp pβ0 ` X1β1 ` X2β2qq .The optimal decision rule has a linear form and is expressed as dpXq “ 1tβ0 `β1X `β2X2 `c ą 0u,where c is chosen to satisfy pre-specified PPV-contraint. We set the parameters β0 “ ´ 8.7, β1 “ 2.4, 15 and β2 “ 2.4 so that the disease prevalence is approximately 1%. We further added 6% contam-inated control ( D “ 0, X 1 “ 6 and X2 “ 6) observations to depict the scenario where patients with biomarker values similar to those of cases are labeled controls. We estimate the decision rule using training samples of sizes ntrain “ 2500 and 5000. The results were then evaluated on an independent test sample of size ntest “ 10 5.The simulation results are presented in Table 2. When there are no contaminated observations, we observe that the Standard approach has the best performance. This is expected as the data is generated directly from a logistic model. The performance of the DOOLR approach improves as sample size increases. The two Plug-in approaches demonstrated comparable performance to the Standard approach. In the presence of contaminated observations, the proposed methods provided better control of the PPV compared to the Standard approach. For the estimate of TPR, the Plug-in SL approach achieved the best performance, likely due to its flexibility in modeling the nuisance risk function. Also, the developed linear rule via the DOOLR method performed remarkably well, yielding results comparable to the Plug-in SL, while offering the added advantage of a more interpretable decision rule due to its linear structure. This further illustrates its robustness in the presence of outlier observations compared to alternative methods. 
+
+4.2 Nonlinear decision rule 
+
+In this simulation setting, we consider two scenarios where the true clinical decision rule is not linear. The first scenario we consider is when the true rule is piecewise-linear. Suppose we have two independent biomarkers pX1, X 2q, each generated from a standard normal distribution. The outcome D, is generated as D “ 1trp´ 8.9 ` 2X1 ` 2X2 ˚ 1tX2 ą X0.025 2 u ` εs ą 0u where ε is distributed as a logistic random variable with location parameter zero and scale parameter one, and X0.025 2 is the 0 .025th quantile of X2. Among observations with 1tX2 ă X0.025 2 u, we randomly sample 0 .4% and set D “ 1. This setting mimics a practical scenario where the true decision rule is piece-wise linear. For example, in PDAC screening, it has been shown that higher values of serum biomarker CA19-9 in addition to other patient characteristics (e.g., A1c, age, etc.) are generally associated with higher risk of PDAC (Ballehaninna and Chamberlain, 2012). However, a small group of patients (e.g., Lewis α´β´ genotype) with very low values of CA19-9 are also at high risk 16 of PDAC (Yong and Diyana, 2022). For the second scenario, we consider when the true clinical decision rule is a nonlinear function of the covariates. Suppose we have three independent biomarkers X “ p X1, X 2, X 3q, each generated from the standard normal distribution. The outcome D, is generated as D “ 1trp β0 ` β1sin pX1q ` 
+
+β2X22 ` β3cos pX3q ` εs ą 0u where ε is distributed as a logistic random variable with location parameter zero and scale parameter one. We set the parameters β0 “ ´ 8.6, β1 “ 5, β2 “ ´ 4, and β3 “ 3 so that the disease prevalence is approximately 1%. We train the decision rules on training samples of sizes ntrain “ 2500 , 5000 and evaluate the performance on an independent test sample ntest “ 10 5. We train our decision rules on training samples of sizes ntrain “ 2500 , 5000 and evaluate the performance on an independent test sample ntest “ 10 5.The results are presented in Table 2. All proposed methods yield higher TPR estimates com-pared to the standard logistic regression approach. Notably, the superior performance of DOOLR highlights its optimality among the class of linear rules. In terms of the PPV control, the proposed methods also demonstrate favorable results. Among all methods, the Plug-in SL approach has the best performance, due to its flexible estimation of the nuisance risk function. 
+
+4.3 Incorporating existing risk information 
+
+In this simulation setting, we investigate the performance of IT-DOOLR under three scenarios where existing risk information is available. We generate data using the same data generation mechanisms under the nonlinear rule described in Section 4.2, and compare the performance of the IT-DOOLR approach, which incorporates the existing information, to the DOOLR method. We let the existing model be parameterized by rβ such that the decision rule based on the existing model is 1tp 1, H pXqq T rβ ą 0u, where HpXq “ p sin pX1q, X 22 , cos pX3qq . We train the decision rules on training datasets with sample sizes of 2500 and 5000, and evaluate the performance on a testing dataset of size of 10 6. We consider the following three scenarios 
+
+• Scenario I: the existing risk model is the same as the true model under the data generation 
+
+rβ “ β “ p´ 8.6, 5, ´4, 3q
+
+• Scenario II: the existing risk model does not include all covariates under the true data genera-17 Table 3: Simulation scenarios under incorporating auxiliary information. Average TPR and PPV with corresponding standard error (in parentheses) in the test sample across 500 simulation repli-cates under PPV pα “ 0.04 q and prevalence pp1 “ 0.01 q.                       
+
+> nMeasure DOOLR IT-DOOLR
+> Scenario I Scenario II Scenario III 2500 TPR 0.747(0.218) 0.839(0.136) 0.802(0.165) 0.781(0.179) PPV 0.043(0.009) 0.041(0.006) 0.041(0.007) 0.043(0.007) 5000 TPR 0.808(0.189) 0.880(0.097) 0.860(0.118) 0.845(0.145) PPV 0.043(0.006) 0.041(0.004) 0.042(0.005) 0.042(0.006)
+
+tion mechanism, here β “ p´ 8.6, 5, ´4, 3q and rβ “ p´ 8.6, 5, 0, 0q with two covariates omitted in the existing model. 
+
+• Scenario III: the existing risk model is very different from the model under the true data generation mechanism, here β “ p´ 8.6, 5, ´4, 3q and rβ “ p´ 15 , ´3, ´1, ´1q.We generate outcome for all three scenarios using the same data generation mechanism described in Section 4.2. The results are summarized in Table 3. In Scenario I, where the existing model aligns with the true data-generating process, IT-DOOLR effectively leverages the external risk information to improve upon the performance of DOOLR. In Scenario III, where the existing risk model deviates from the true data-generating mechanism, IT-DOOLR still achieves a modest improvement in TPR estimation. Overall, the proposed integration approach effectively utilize valuable external information (Scenarios I & II) while avoiding negative information transfer (Scenario III) when the existing model is potentially misspecified. In particular, IT-DOOLR exhibits greater stability and improved estimation of both TPR and PPV compared to DOOLR, especially in scenarios where the external information is informative. We additionally consider a scenario where the data is obtained from a nested case-control sampling design, commonly considered in biomarker studies (Ernster, 1994). The performance among the methods is similar to the performance under the simulation scenario in Section 4.1. The data generation mechanism and results are summarized in Supplementary Appendix C Table 1. 18 5 Application to PANDORA study data 
+
+Early detection of PDAC can greatly improve patients’ survival. Unfortunately, PDAC lacks an effective strategy for early detection due to several challenges. Notably, the low incidence of PDAC in the general population (10/100,000) makes it cost-prohibitive to implement a biomarker-based screening program for asymptomatic individuals. Even if a biomarker test has high sensitivity and specificity, it may still cause thousands of false positives for every identified positive cancer. Therefore, biomarker-based screening should be applied in a population that has a higher risk for PDAC. Particularly, new Onset Hyperglycemia and Diabetes (NOD) patients have shown a higher risk for PDAC (Chari et al., 2005). Leveraging data from Kelsey-Seybold Clinic (Houston, Texas) during the period 2011- 2022, the PANDORA Cohort includes a total of 357,593 patients with data on either their glycated haemoglobin (HbA1c) or fasting blood glucose (FBG) level. Out of this number, we obtained the NOD population by selecting patients based on the first occurrence of any of the following; a) HbA1c ě 6.5%, b) two consecutive FBG ě 126 mg {dl within 18 months of each other, or c) FBG ě 126 mg {dl followed by the start of diabetes medication within 30 days. Our total NOD population consists of 18,300 patients, of whom 35 developed PDAC within three years. Among the 35 confirmed PDAC cases, 32 have complete information on weight, and estimated glucose levels at both NOD date and left window (approximately 1 year prior to the NOD date). Among the 18265 controls, 11,149 have complete three years follow-up of which 7,137 have complete biomarker information at both NOD date and left window. The goal of our analysis is to develop a new biomarker combination rule that incorporates broader covariate information to identify NOD patients at high risk of developing PDAC and recommend them for further screening. Particularly, the rule should be developed under a practical constraint on the PPV. Sharma et al. (2018) proposed an algorithm (the ENDPAC model) to stratify NOD patients into high or low PDAC risk based on changes in FBG levels, weight, and age at NOD onset. While the model demonstrated promising performance in their validation cohort, efforts to validate it in other populations have shown lower performance (Chen et al., 2021; Boursi et al., 2022). Several factors may contribute to this reduced performance: (1) the 19 original ENDPAC model was developed primarily in a predominantly white population, and (2) the model relies on FBG measurements, which are often unavailable for many patients. To address the latter limitation, the authors proposed a heuristic conversion between HbA1c and FBG, given by pFBG “ 28 .7 ˆ HbA1c ´ 46 .7q, for patients without FBG values. However, this conversion is suboptimal, as it fails to fully capture the nuances of FBG and HbA1c measurements. Specifically, FBG reflects glucose control at the time of the blood test and exhibits higher day-to-day variability, whereas HbA1c represents an average blood glucose level over the past 2–3 months and thus has lower day-to-day variability. We incorporate risk information from the ENDPAC model to assess whether it improves the performance of our biomarker combination rule. Our analysis data consist of the 32 diagnosed PDAC cases and 640 random sample of controls from a total NOD cohort of size 18,300. For each case, we randomly sample 20 controls from individuals in the cohort who have not developed the outcome by the time the case occurred, this depicts a nested case-control sampling design scenario. We construct the rule based on patients’ change in HbA1c, change in weight and age at NOD. We standardized these variables before model fitting. To assess the performance of our method, we randomly split the data equally into training and testing sets. We develop the proposed methods on the training data and evaluated their performance on the independent test set. This random split was repeated 200 times, and the average of the estimates on the test sets is reported. For our analysis, we use a prevalence estimate of PDAC in the NOD population of p1 “ 0.44%, and pre-specified PPV values of 1%, 1 .5%, and 2%, corresponding to screening approximately 100, 67, and 50 individuals to detect one cancer, respectively. From the study data, we calculate ENDPAC score for each patient and identify risk thresholds to define high- and low-risk groups that satisfy the PPV constraints. We present the results of our analysis based on the proposed methods in Table 4. We considered the PPV constraint at 2%, to illustrate the proposed method. The reported values are the average estimates (with standard deviations) of TPR and PPV across the test sets. To achieve a PPV constraint of 2%, the threshold for the ENDPAC score is set at 2, and the corresponding TPR of the ENDPAC score based rule is 68.8%. The Plug-in Logistic perform similarly to the Standard approach. The IT-DOOLR estimate of TPR is 77 .1%, slightly higher than the TPR estimate for DOOLR p75 .5% q, indicating some information transfer from the ENDPAC model. Both DOOLR 20 Table 4: Application to screening NOD patients at high risk of PDAC data given 2% constraint on PPV using an estimate of prevalence of pancreatic cancer to be 0 .44%. We report average TPR, PPV, and estimate of coefficients with corresponding standard error (in parentheses). The linear decision rule from IT-DOOLR is 1t0.453 ` 0.208 ˆ Age ´ 0.677 ˆ Weightchange ` 0.672 ˆ
+
+ChangeinHbA1c ą 0u.                          
+
+> Methods
+> Standard Plug-in Logistic Plug-in SL DOOLR IT-DOOLR
+> α“2%
+> Measure TPR 0.682(0.114) 0.685(0.125) 0.760(0.101) 0.755(0.124) 0.771(0.122) PPV 0.023(0.010) 0.024(0.010) 0.020(0.010) 0.020(0.007) 0.020(0.006)
+> Predictors
+> Age 0.444(0.113) 0.204(0.098) 0.208(0.097) Weight change -0.805(0.086) -0.6828(0.127) -0.677(0.122) Change in HbA1c 0.355(0.095) 0.678(0.147) 0.672(0.149)
+
+and IT-DOOLR yield PPV estimates that closely align with the pre-specified value of 2%. Finally, Table 4 also presents the estimated coefficients of the predictors. These coefficients can be used to construct linear decision rules (DOOLR and IT-DOOLR) by comparing linear combinations of covariates and coefficients to thresholds of -0.472 and -0.453, respectively. Areduction in weight between the NOD date and the left window is associated with a higher risk of PDAC. This aligns with the current research findings, which suggest that among individuals with new-onset diabetes, unexplained weight loss may indicate underlying pancreatic cancer rather than just the metabolic changes from diabetes itself. Result for the other PPV values are reported in Supplementary Appendix C Table 2. 
+
+6 Discussion 
+
+This paper proposes a new PPV-constrained benefit function for developing individualized clinical decision rules, designed to maximize TPR while ensuring adherence to a clinically meaningful pre-specified PPV. We further extend this framework to integrate relevant external risk information from published literature. Our proposed linear and nonlinear rules offer practitioners the flexibility to choose between interpretability and predictive power. When interpretability is prioritized, we show that DOOLR is guaranteed to estimate the best rule within the class of linear rules. On the other hand, the plug-in approach allows a more flexible estimation of the nonlinear rule, serving as an attractive alternative when interpretability is less of a concern and predictive accuracy is more 21 important. The strength of our framework is that both of our approaches are model-free which can be robust when the risk model is mis-specified. A key distinction between our proposed objective and prior methods that maximize TPR un-der an FPR constraint (Wang et al., 2020; Meisner et al., 2021) lies in the complexity of PPV. Constraining FPR at a pre-specified value to achieve a target PPV is generally intractable because PPV is a nonlinear function of TPR, FPR, and disease prevalence. Instead, our approach directly maximizes TPR while incorporating FPR and prevalence from the same dataset, eliminating the need for an explicit FPR constraint and aligning the optimization with the intended clinical utility: enforcing a PPV constraint that reflects downstream diagnostic burden while optimizing sensitivity. This results in a fundamentally different optimization problem from FPR-constrained approaches and provides a more relevant framework for evaluating and deploying biomarker-based screening tools. Additionally, the developed biomarker decision rules can be broadly applicable to various early detection initiatives. For instance, in ovarian cancer screening, clinical guidelines recommend that a biomarker-based screening rule achieve a minimum PPV of 10% to justify invasive surgical diagnos-tic procedures (Jacobs and Menon, 2004). Using our proposed method, an optimal biomarker-based decision rule for ovarian cancer can be developed while ensuring the PPV is maintained at the de-sired 10% level. Similarly, Mazzone et al. (2024) investigated biomarker combination rule for the early detection of lung cancer, proposing a decision rule based on a penalized logistic regression model, which yielded a PPV of 1 .3%. They reported their rule reduced the number needed to screen with low-dose computed tomography (CT) to detect one lung cancer from 143 to 75. How-ever, while their rule is straightforward, it may not be optimal for maximizing the screening benefit (i.e., TPR). Our proposed nonparametric approach provides a rigorous alternative to developing optimal decision rules in such settings, ensuring both improved screening efficiency and adherence to clinically relevant constraints. More broadly, this method offers a valuable tool for medical decision-making, accommodating patient heterogeneity while addressing practical implementation challenges in clinical practice. In practice, PPV threshold should be specified a priori based on clinical and operational consid-erations. Particularly, PPV directly determines the number needed to screen to detect one cancer 22 case, which quantifies the downstream diagnostic burden. A clinically meaningful PPV threshold should reflect the maximum number of false-positive diagnostic evaluations that the health system can support, given the cost, availability, and invasiveness of confirmatory imaging or biopsy. For PDAC, where prevalence is extremely low (less than 1% q, PPV levels in the range of 1–5% corre-spond to realistic NNS values for CT/MRI follow-up, whereas higher PPV levels may be needed to justify invasive procedures. With our choice of non-convex surrogate function, one would have to take some care in choosing initial values for the optimization. Although we found using the coefficient estimates from standard logistic regression as initial value to work generally well, one could also implement the optimization algorithm with different multiple initial values to ensure stability. Other choice of surrogate function that could be considered is the ramp loss (Huang and Fong, 2014) which can be implemented using the difference of convex functions algorithm (DCA) (Tao et al., 1996). This could potentially provide a more reliable optimization approach as it decomposes the problem into convex sub-problems, which are generally easier to solve than non-convex ones. An interesting direction for future work is to incorporate ranking-based penalties when inte-grating external risk information. While our proposed method penalizes disagreement in binary decisions, one could instead encourage agreement in pairwise risk ranking in settings where only rel-ative risk ordering is available. This may provide a principled alternative for incorporating external information. 
+
+Acknowledgments 
+
+The work was supported by a Catalyst Award from the Pancreatic Cancer Action Network. We express our appreciation to Lynn Matrisian for helpful comments. 
+
+References 
+
+Ballehaninna, U. K. and Chamberlain, R. S. (2012). The clinical utility of serum ca 19-9 in the diagnosis, prognosis and management of pancreatic adenocarcinoma: An evidence based appraisal. Journal of gastrointestinal oncology , 3(2):105. 23 Bartlett, P. L., Jordan, M. I., and McAuliffe, J. D. (2006). Convexity, classification, and risk bounds. Journal of the American Statistical Association , 101(473):138–156. Boursi, B., Patalon, T., Webb, M., Margalit, O., Beller, T., Yang, Y.-X., and Chodick, G. (2022). Validation of the enriching new-onset diabetes for pancreatic cancer model: a retrospective cohort study using real-world data. Pancreas , 51(2):196–199. Breiman, L. (2001). Random forests. Machine learning , 45:5–32. Chari, S. T., Leibson, C. L., Rabe, K. G., Ransom, J., De Andrade, M., and Petersen, G. M. (2005). Probability of pancreatic cancer following diabetes: a population-based study. Gastroenterology ,129(2):504–511. Chatterjee, N., Chen, Y.-H., Maas, P., and Carroll, R. J. (2016). Constrained maximum likelihood estimation for model calibration using summary-level information from external big data sources. 
+
+Journal of the American Statistical Association , 111(513):107–117. Chen, W., Butler, R. K., Lustigova, E., Chari, S. T., and Wu, B. U. (2021). Validation of the enriching new-onset diabetes for pancreatic cancer model in a diverse and integrated healthcare setting. Digestive diseases and sciences , 66:78–87. Cheng, W., Taylor, J. M., Gu, T., Tomlins, S. A., and Mukherjee, B. (2019). Informing a risk prediction model for binary outcomes with external coefficient information. Journal of the Royal Statistical Society Series C: Applied Statistics , 68(1):121–139. Croux, C. and Haesbroeck, G. (2003). Implementing the bianco and yohai estimator for logistic regression. Computational statistics & data analysis , 44(1-2):273–295. Ernster, V. L. (1994). Nested case-control studies. Preventive medicine , 23(5):587–590. Fong, Y., Yin, S., and Huang, Y. (2016). Combining biomarkers linearly and nonlinearly for classification using the area under the roc curve. Statistics in medicine , 35(21):3792–3809. Han, P., Taylor, J. M., and Mukherjee, B. (2023). Integrating information from existing risk prediction models with no model details. Canadian Journal of Statistics , 51(2):355–374. 24 Hastie, T. and Tibshirani, R. (1990). Generalized Additive Models , volume 43. CRC Press. Hector, E. C. and Martin, R. (2024). Turning the information-sharing dial: efficient inference from different data sources. Electronic Journal of Statistics , 18(2):2974–3020. Huang, Y. and Fong, Y. (2014). Identifying optimal biomarker combinations for treatment selection via a robust kernel method. Biometrics , 70(4):891–901. Huang, Y. and Pepe, M. S. (2010). Assessing risk prediction models in case–control studies using semiparametric and nonparametric methods. Statistics in medicine , 29(13):1391–1410. Jacobs, I. J. and Menon, U. (2004). Progress and challenges in screening for early detection of ovarian cancer. Molecular & Cellular Proteomics , 3(4):355–366. Kerr, K. F., Brown, M. D., Zhu, K., and Janes, H. (2016). Assessing the clinical impact of risk prediction models with decision curves: guidance for correct interpretation and appropriate use. 
+
+Journal of Clinical Oncology , 34(21):2534–2540. Kullback, S. and Leibler, R. A. (1951). On information and sufficiency. The annals of mathematical statistics , 22(1):79–86. Lin, H., Zhou, L., Peng, H., and Zhou, X.-H. (2011). Selection and combination of biomarkers using roc method for disease classification and prediction. Canadian Journal of Statistics , 39(2):324– 343. Ma, S. and Huang, J. (2007). Combining multiple markers for classification using roc. Biometrics ,63(3):751–757. Mazzone, P. J., Bach, P. B., Carey, J., Schonewolf, C. A., Bognar, K., Ahluwalia, M. S., Cruz-Correa, M., Gierada, D., Kotagiri, S., Lloyd, K., et al. (2024). Clinical validation of a cell-free dna fragmentome assay for augmentation of lung cancer early detection. Cancer Discovery .Meisner, A., Carone, M., Pepe, M. S., and Kerr, K. F. (2021). Combining biomarkers by maximizing the true positive rate for a fixed false positive rate. Biometrical Journal , 63(6):1223–1240. 25 Natarajan, B. K. (1995). Sparse approximate solutions to linear systems. SIAM journal on com-puting , 24(2):227–234. National Comprehensive Cancer Network (2023). Prostate cancer early detection (version 1.2023). https://www.nccn.org/professionals/physician gls/pdf/prostate detection.pdf. Rahib, L., Smith, B. D., Aizenberg, R., Rosenzweig, A. B., Fleshman, J. M., and Matrisian, L. M. (2014). Projecting cancer incidence and deaths to 2030: the unexpected burden of thyroid, liver, and pancreas cancers in the united states. Cancer research , 74(11):2913–2921. Rose, S. and van der Laan, M. J. (2008). A note on risk prediction for case-control studies. Sharma, A., Kandlakunta, H., Nagpal, S. J. S., Feng, Z., Hoos, W., Petersen, G. M., and Chari, S. T. (2018). Model to determine risk of pancreatic cancer in patients with new-onset diabetes. 
+
+Gastroenterology , 155(3):730–739. Siegel, R. L., Kratzer, T. B., Giaquinto, A. N., Sung, H., and Jemal, A. (2025). Cancer statistics, 2025. Ca , 75(1):10. Tao, P. D. et al. (1996). Numerical solution for optimization over the efficient set by dc optimization algorithms. Operations Research Letters , 19(3):117–128. Van der Laan, M. J., Polley, E. C., and Hubbard, A. E. (2007). Super learner. Statistical applications in genetics and molecular biology , 6(1). Van der Vaart, A. W. (2000). Asymptotic statistics , volume 3. Cambridge university press. Vickers, A. J. and Elkin, E. B. (2006). Decision curve analysis: a novel method for evaluating prediction models. Medical Decision Making , 26(6):565–574. Wang, D., Ye, W., Sung, R., Jiang, H., Taylor, J. M., Ly, L., and He, K. (2021). Kullback-leibler-based discrete failure time models for integration of published prediction models with new time-to-event dataset. arXiv preprint arXiv:2101.02354 .Wang, D., Ye, W., Zhu, J., Xu, G., Tang, W., Zawistowski, M., Fritsche, L. G., and He, K. (2023). 26 Incorporating external risk information with the cox model under population heterogeneity: Ap-plications to trans-ancestry polygenic hazard scores. arXiv preprint arXiv:2302.11123 .Wang, Y., Zhao, Y.-Q., and Zheng, Y. (2020). Learning-based biomarker-assisted rules for opti-mized clinical benefit under a risk constraint. Biometrics , 76(3):853–862. Wilson, P. W., D’Agostino, R. B., Levy, D., Belanger, A. M., Silbershatz, H., and Kannel, W. B. (1998). Prediction of coronary heart disease using risk factor categories. Circulation , 97(18):1837– 1847. Yong, B. J. C. and Diyana, M. W. (2022). Low carbohydrate antigen 19-9 (ca 19-9) levels in a patient highly suspected of having caput pancreas tumor. Cureus , 14(4). 27 Supplementary Material to “ Developing Performance-Guaranteed Biomarker Combination Rules with Integrated External Information under Practical Constraint ”
+
+7 Appendix A (Optimality of decision rule) 
+
+Let the objective and constraint functions be denoted as 
+
+f pdpXqq “ EX
+
+“1tdpXq “ 1u η1pXq‰ , and 
+
+hpdpXqq “ EX
+
+”
+
+1tdpXq “ 1u ␣γη 1pXq ´ αγη 1pXq ´ αη 0pXq(ı
+
+, respectively .
+
+For λ ě 0, we define the Lagrangian 
+
+LpdpXq, λ q “ E
+
+”
+
+1tdpXq “ 1u ␣η1pXq ´ λαγη 1pXq ´ λαη 0pXq ` λγη 1pXq(ı
+
+,
+
+and its associated dual function 
+
+gpλq “ sup 
+
+> dpXq
+
+LpdpXq, λ q.
+
+For any fixed λ, the Lagrangian is maximized pointwise, yielding the decision rule 
+
+dλpXq “ 1tfλpXq ą 0u,
+
+where 
+
+fλpXq “ η1pXq ´ λαγη 1pXq ´ λαη 0pXq ` λγη 1pXq.
+
+Our goal is to establish strong duality, namely 
+
+p˚ “ sup  
+
+> dPR:hpdqě 0
+
+f pdq “ inf  
+
+> λě0
+
+gpλq “ g˚.
+
+28 We note that, weak duality holds immediately: for any decision rule d satisfying hpdq ě 0 and any λ ě 0, 
+
+f pdq ď Lpd, λ q ď gpλq,
+
+which implies p˚ ď g˚.To establish equality, we make the following assumptions: 1. There exists a strictly feasible decision rule ˜d such that hp ˜dq ą 0. 2. Pr `fλpXq “ 0˘ “ 0 for all λ ě 0, ensuring that dλ is almost surely well-defined. When λ “ 0 (unconstrained problem), f0pXq “ η1pXq. Since η1pXq ą 0, the PPV associated with the decision rule, d0pXq, is equal to the prevalence which we assume is not greater than the pre-specified, α. Denote the decision rule with λ “ 0 by d0, we have 
+
+hpd0q ă 0.
+
+Since the integrand defining hpdλq, 1tdλpXq “ 1u ␣γη 1pXq ´ αγη 1pXq ´ αη 0pXq(, is bounded and measurable, hpdλq is continuous in λ by the dominated convergence theorem. Therefore, by the intermediate value theorem, there exists λ˚ ą 0 such that 
+
+hpdλ˚ q “ 0.
+
+At this value, dλ˚ is feasible for the primal problem, so 
+
+p˚ ě f pdλ˚ q.
+
+Since dλ˚ maximizes the Lagrangian at λ˚,
+
+f pdλ˚ q “ Lpdλ˚ , λ ˚q “ gpλ˚q.
+
+29 Finally, because gpλ˚q ě g˚ ě p˚, all inequalities hold with equality, implying 
+
+p˚ “ g˚.
+
+This establishes strong duality and justifies the use of the Lagrangian formulation in our setting. 
+
+8 Appendix B (Optimization algorithm and justification) 
+
+Consider the population version of the constraint optimization problem; maximize ErDΦ
+
+˜
+
+X Ti β
+
+h
+
+¸
+
+{p1s
+
+subject to ErDΦ
+
+˜
+
+X Ti β
+
+h
+
+¸
+
+{p1s ´ αErΦ
+
+˜
+
+X Ti β
+
+h
+
+¸
+
+s ě 0 (6) The Lagrangian corresponding to (6) is 
+
+LΦpβ, λ q “ ErDΦ
+
+˜
+
+X Ti β
+
+h
+
+¸
+
+{p1s ´ λpαErΦ
+
+˜
+
+X Ti β
+
+h
+
+¸
+
+s ´ ErDΦ
+
+˜
+
+X Ti β
+
+h
+
+¸
+
+{p1sq (7) for Lagrange multiplier λ P r 0, 8s . Denote κ “ λ 
+
+> 1`λ
+
+P r 0, 1s, then for some fixed κ, our goal is solve for βΦ 
+
+> κ
+
+where 
+
+βΦ 
+
+> κ
+
+“ arg max 
+
+> β
+
+Ert Dp1 ´ κq ´ κpαp 1 ´ Dqu Φ
+
+˜
+
+X Ti β
+
+h
+
+¸
+
+s (8) Let Ppκq and Bpκq denote the expected benefit and PPV constraint associated with the optimal decision rules from (7) 
+
+Bpκq “ ErDΦ
+
+˜
+
+X Ti βΦ
+
+> κ
+
+h
+
+¸
+
+{p1s
+
+Ppκq “ ´ αErΦ
+
+˜
+
+X Ti βΦ
+
+> κ
+
+h
+
+¸
+
+s ´ ErDΦ
+
+˜
+
+X Ti βΦ
+
+> κ
+
+h
+
+¸
+
+{p1s
+
+If it holds that Pp1q ă 0 ď Pp0q, we can obtain some κ˚ ( may not be unique) such that 
+
+Ppκ˚q “ 0. The restriction Ppκq ă 0 ensures that there is a feasible solution to the constraint and 30 Algorithm 1 Estimating optimal linear decision rule  
+
+> 1:
+
+Given training data pDi, X1iq for i “ 1, . . . , n and pre-specified α. 
+
+> 2:
+
+Start with an initial value of β, i.e. ˆβ0, which one can derive from the standard logistic regression approach.  
+
+> 3:
+
+Obtain ˆβΦ 
+
+> κ
+
+“ arg max 
+
+> βn
+
+ÿ
+
+> i“1
+
+rt Dp1 ´ κq ´ κpαp 1 ´ Dqu Φ
+
+˜
+
+X Ti β
+
+h
+
+¸
+
+s
+
+using any non-linear optimization (e.g., nlm in R) of your choice.  
+
+> 4:
+
+Perform grid search on r0, 1s for ˆ κ that solves 
+
+zPPV p1tX T ˆβΦ 
+
+> κ
+
+ą 0uq ´ α “ 0. 
+
+> 5:
+
+Project ˆβΦˆκ to satisfy the } ˆβΦˆκ }22 “ 1.  
+
+> 6:
+
+Final linear rule is of the form ˆdLpX, ˆβΦ 
+
+> κ
+
+q “ 1tX T ˆβΦ 
+
+> κ
+
+ą 0u.
+
+Ppκq ě 0 is to restrict the case when the PPV under the unconstrained problem is larger than α.The above indicates that to solve (6) , we only need to solve the unconstrained problem in (8) for any κ and then find κ˚ such that the PPV associated with κ˚ satisfies the constraint. 
+
+9 Appendix C (Additional numerical study and data application) 
+
+9.1 Nested case-control sampling 
+
+Here we consider the scenario where data is obtained from a nested case-control sampling design, commonly considered in biomarker studies (Ernster, 1994). We first simulate a large cohort of size 
+
+N “ 10 6, with covariates X “ p X1, X 2q simulated from the standard normal distribution, and the outcomes D are generated from the conditional distribution pr pD “ 1|X1, X 2q “ 1{p 1 ` exp pβ0 `
+
+X1β1 ` X2β2qq . A similar simulation setting is illustrated in Rose and van der Laan (2008). We set β0 “ ´ 8, β1 “ 2.1, and β2 “ 2.1 such that the disease prevalence is approximately 1%. We further added 6% contaminated control ( D “ 0, X 1 “ 6 and X2 “ 6) observations to depict the setting where the data contains some controls that are actually cases. We then obtain the case-control data by randomly sampling n1 cases and n0 “ 20 n1 controls resulting in a sample size of 
+
+n “ n1 ` n0. We implement our methods on training samples of size ntrain “ 2100 and 4200. Performance was evaluated on an independent test sample of size ntest “ 21 , 000. The results are presented in Table 5. 31 Table 5: Nested case-control study sampling scenario with 6% contaminated control observations. Average TPR and PPV with corresponding standard error (in parentheses) in the test sample across 500 simulation replicates under PPV pα “ 0.04 q and prevalence pp1 “ 0.01 q.                       
+
+> nMeasure Methods
+> Standard Plug-in Logistic Plug-in SL DOOLR 2100 TPR 0.710(0.184) 0.591(0.273) 0.956(0.009) 0.932(0.045) PPV 0.053(0.010) 0.037(0.007) 0.040(0.003) 0.042(0.004) 4200 TPR 0.770(0.194) 0.654(0.301) 0.957(0.007) 0.945(0.019) PPV 0.053(0.008) 0.040(0.006) 0.039(0.003) 0.042(0.003)
+
+9.2 Results under different PPV constraint 
+
+We present simulation and application results for scenarios in the manuscript for different PPV constraints. Table 6: Application to identifying NOD patients at high risk of PDAC. Estimate of prevalence of pancreatic cancer in the PANDORA study is 0 .44%. We pre-specify PPV constraint values at 1%, 1.5%, and 2% and report average TPR, PPV with corresponding standard error (in parentheses). When the PPV constraint is low at 1%, the Standard approach performed better than our proposed linear rules. However, as the PPV constraints increase, we observe reduction in performance of the Standard approach. 
+
+α Measure Standard Plug-in Logistic Plug-in SL DOOLR DOOLR-IT 0.010 TPR 0.964(0.048) 0.969(0.043) 0.961(0.055) 0.906(0.068) 0.912(0.069) PPV 0.010(0.001) 0.010(0.001) 0.010(0.001) 0.010(0.002) 0.010(0.001) 0.015 TPR 0.807(0.110) 0.817(0.097) 0.848(0.092) 0.830(0.111) 0.839(0.099) PPV 0.016(0.006) 0.015(0.004) 0.015(0.003) 0.016(0.004) 0.015(0.003) 0.020 TPR 0.659(0.124) 0.671(0.127) 0.745(0.110) 0.755(0.106) 0.775(0.105) PPV 0.024(0.012) 0.024(0.015) 0.020(0.006) 0.020(0.006) 0.020(0.004) 32 Table 7: Data generation is under the linear rule with contamination scenario ( β0 “ ´ 12 .5, 
+
+β1 “ β2 “ 7, p 1 “ 0.1, and α “ 0.3): mean and standard deviation (in parentheses) of TPR and PPV for the DOOLR rule across smoothing parameters h. Here, Adaptive refers to h “
+
+n´1{3 StdDev pX T ˆβ0{∥ ˆβ0∥q. For this numerical experiment, we observe that h “ 5 and h “ 0.1 gave the best empirical performance across the selected h values. The Adaptive choice of h performed comparably to the other choices of h and not far from the best performing h values. 
+
+n Measure h “ 0.003 h “ 0.02 h “ 0.10 h “ 0.50 h “ 1.00 h “ 5.00 Adaptive 200 TPR 0.884(0.197) 0.911(0.178) 0.906(0.131) 0.843(0.236) 0.844(0.278) 0.905(0.203) 0.875(0.154) PPV 0.319(0.105) 0.306(0.120) 0.376(0.079) 0.440(0.134) 0.336(0.087) 0.339(0.093) 0.435(0.105) 400 TPR 0.887(0.204) 0.888(0.205) 0.927(0.118) 0.863(0.254) 0.933(0.205) 0.959(0.100) 0.894(0.177) PPV 0.347(0.091) 0.348(0.080) 0.386(0.071) 0.431(0.117) 0.354(0.058) 0.356(0.060) 0.430(0.100) 800 TPR 0.900(0.199) 0.906(0.193) 0.959(0.076) 0.858(0.306) 0.911(0.264) 0.964(0.120) 0.923(0.188) PPV 0.368(0.064) 0.372(0.068) 0.430(0.067) 0.402(0.108) 0.345(0.074) 0.363(0.058) 0.425(0.087) Table 8: Data generation is under the linear decision rule with no contamination: mean and standard deviation (in parentheses) of estimates of TPR and PPV for varying values of the PPV constraint pαq.
+
+α n Measure Methods 
+
+Standard Plug-in Logistic Plug-in SL DOOLR 0.030 1250 TPR 0.993(0.004) 0.993(0.007) 0.992(0.010) 0.984(0.030) PPV 0.033(0.003) 0.030(0.002) 0.030(0.012) 0.032(0.004) 2500 TPR 0.994(0.002) 0.995(0.003) 0.995(0.004) 0.990(0.011) PPV 0.032(0.002) 0.030(0.001) 0.029(0.007) 0.032(0.005) 0.040 1250 TPR 0.988(0.005) 0.988(0.009) 0.988(0.011) 0.975(0.036) PPV 0.042(0.003) 0.040(0.002) 0.039(0.011) 0.044(0.009) 2500 TPR 0.991(0.003) 0.991(0.005) 0.991(0.006) 0.983(0.017) PPV 0.042(0.002) 0.040(0.002) 0.040(0.005) 0.043(0.006) 0.045 1250 TPR 0.984(0.007) 0.984(0.010) 0.984(0.013) 0.963(0.049) PPV 0.047(0.003) 0.045(0.003) 0.043(0.011) 0.050(0.013) 2500 TPR 0.986(0.004) 0.986(0.007) 0.986(0.007) 0.976(0.019) PPV 0.046(0.002) 0.045(0.002) 0.045(0.005) 0.049(0.007) 33 Table 9: Data generation is under the linear decision rule with contamination: mean and standard deviation (in parentheses) of estimates of TPR and PPV for varying values of the PPV constraint 
+
+pαq.
+
+α n Measure Methods 
+
+Standard Plug-in Logistic Plug-in SL DOOLR 0.030 1250 TPR 0.625(0.308) 0.690(0.288) 0.986(0.019) 0.968(0.068) PPV 0.038(0.019) 0.028(0.007) 0.030(0.002) 0.033(0.006) 2500 TPR 0.677(0.287) 0.738(0.288) 0.989(0.008) 0.979(0.033) PPV 0.043(0.021) 0.029(0.005) 0.030(0.001) 0.032(0.005) 0.040 1250 TPR 0.519(0.295) 0.608(0.306) 0.973(0.022) 0.939(0.091) PPV 0.044(0.025) 0.033(0.012) 0.040(0.003) 0.044(0.009) 2500 TPR 0.606(0.271) 0.664(0.291) 0.977(0.012) 0.962(0.041) PPV 0.051(0.022) 0.037(0.008) 0.040(0.002) 0.043(0.006) 0.045 1250 TPR 0.510(0.293) 0.567(0.298) 0.965(0.024) 0.926(0.084) PPV 0.044(0.024) 0.035(0.014) 0.045(0.004) 0.048(0.010) 2500 TPR 0.591(0.269) 0.626(0.289) 0.970(0.012) 0.948(0.048) PPV 0.052(0.022) 0.040(0.011) 0.045(0.003) 0.049(0.007) 34 Table 10: Data generation is under the non-linear decision rule: mean and standard deviation (in parentheses) of estimates of TPR and PPV for varying values of the PPV constraint pαq.
+
+α n Measure Methods 
+
+Standard Plug-in Logistic Plug-in SL DOOLR 0.030 1250 TPR 0.740(0.282) 0.930(0.145) 0.993(0.023) 0.932(0.120) PPV 0.041(0.014) 0.031(0.004) 0.030(0.003) 0.031(0.006) 2500 TPR 0.641(0.338) 0.959(0.102) 0.996(0.004) 0.952(0.081) PPV 0.041(0.013) 0.030(0.002) 0.030(0.001) 0.031(0.003) 0.040 1250 TPR 0.682(0.261) 0.796(0.236) 0.983(0.027) 0.862(0.153) PPV 0.047(0.009) 0.041(0.007) 0.040(0.003) 0.038(0.011) 2500 TPR 0.613(0.301) 0.839(0.201) 0.988(0.010) 0.879(0.124) PPV 0.047(0.009) 0.041(0.004) 0.040(0.002) 0.039(0.009) 0.045 1250 TPR 0.634(0.250) 0.735(0.236) 0.965(0.067) 0.856(0.161) PPV 0.049(0.009) 0.045(0.009) 0.046(0.005) 0.038(0.016) 2500 TPR 0.584(0.259) 0.755(0.224) 0.981(0.017) 0.846(0.141) PPV 0.050(0.008) 0.045(0.005) 0.045(0.002) 0.041(0.013) 35 Table 11: Data generation is under the piece-wise linear decision rule: mean and standard deviation (in parentheses) of estimates of TPR and PPV for varying values of the PPV constraint pαq.
+
+α n Measure Methods 
+
+Standard Plug-in Logistic Plug-in SL DOOLR 0.030 1250 TPR 0.457(0.115) 0.514(0.094) 0.919(0.117) 0.499(0.101) PPV 0.035(0.012) 0.031(0.007) 0.031(0.012) 0.044(0.032) 2500 TPR 0.508(0.104) 0.561(0.075) 0.961(0.057) 0.545(0.088) PPV 0.036(0.012) 0.031(0.005) 0.030(0.003) 0.044(0.030) 0.040 1250 TPR 0.373(0.131) 0.433(0.128) 0.909(0.130) 0.458(0.106) PPV 0.044(0.016) 0.041(0.012) 0.044(0.018) 0.069(0.049) 2500 TPR 0.423(0.106) 0.475(0.100) 0.946(0.061) 0.512(0.088) PPV 0.048(0.014) 0.042(0.009) 0.041(0.006) 0.062(0.035) 0.045 1250 TPR 0.368(0.134) 0.423(0.128) 0.869(0.128) 0.458(0.120) PPV 0.050(0.015) 0.046(0.014) 0.049(0.019) 0.077(0.048) 2500 TPR 0.355(0.123) 0.415(0.120) 0.922(0.071) 0.503(0.093) PPV 0.051(0.015) 0.046(0.009) 0.045(0.005) 0.069(0.038) 36 10 Appendix D 
+
+10.1 Proof of theorems 
+
+The proof of the Theorem 1 is based on Lemma 2 from Meisner et al. (2021) and M-estimation theory (Van der Vaart, 2000). Lemma 2 is stated and proved in Meisner et al. (2021) hence we are not going to prove but just state it here. We first define the following notations, zFPR Φpβ0, β1q :“ n´10
+
+řn0 
+
+> j“1
+
+Φp β0`X0j β1 
+
+> h
+
+q, zTPR Φpβ0, β1q :“
+
+n´11
+
+řn1 
+
+> i“1
+
+Φp β0`X1iβ1 
+
+> h
+
+q, FPR Φpβ0, β1q :“ Pr 
+
+´
+
+Φp β0`Xβ 1 
+
+> h
+
+q| D “ 0
+
+¯
+
+, and TPR Φpβ0, β1q :“ Pr 
+
+´
+
+Φp β0`Xβ 1 
+
+> h
+
+q| D “ 1
+
+¯
+
+.
+
+Lemma 1 (Lemma 2 from Meisner et al. (2021)) . Under conditions (1)–(5), we have that sup 
+
+> pβ0,β1qP Ω
+
+|zFPR Φpβ0, β1q ´ FPR pβ0, β1q| Ñ 0, sup 
+
+> pβ0,β1qP Ω
+
+| zTPR Φpβ0, β1q ´ TPR pβ0, β1q| Ñ 0
+
+almost surely as n Ñ 8 , where Ω “ tp β0, β1q P R ˆ Rp : || β1|| “ 1u.
+
+Proof of theorem 1(a) 
+
+We want to show that T P R p ˆβΦq Ñ T P R pβ˚q in probability. 
+
+Proof. Define β :“ p β0, β1q, zTPR pβq :“ n´11
+
+řn1 
+
+> i“1
+
+1tX1iβ ą 0u, and zFPR pβq :“ n´10
+
+řn0 
+
+> j“1
+
+1tX0j β ą
+
+0u, then 
+
+|TPR p ˆβΦq ´ TPR pβ˚q| ď | TPR p ˆβΦq ´ zTPR p ˆβΦq ` zTPR p ˆβΦq ´ TPR pβ˚q| ď sup 
+
+> βPΩ
+
+|TPR pβq ´ zTPR pβq| ` | zTPR p ˆβΦq ´ TPR Φp ˆβΦq| ` | TPR Φp ˆβΦq ´ TPR p ˆβΦq| ` | TPR p ˆβΦq ´ TPR pβ˚q| 
+
+sup 
+
+> βPΩ
+
+|TPR pβq ´ zTPR pβq| converges to 0 by Lemma 1, |TPR Φp ˆβΦq ´ TPR p ˆβΦq| converges to 0 as 
+
+h Ñ 0, | zTPR p ˆβΦq ´ TPR Φp ˆβΦq| converges to 0 by Glivenko-Cantelli theorem, and |TPR p ˆβΦq ´ 
+
+TPR pβ˚q| converges to 0 by the continuous mapping theorem (we assumed TPR pβq is Lipschitz continuous). 37 Proof of theorem 1(b) 
+
+Here we want to show that lim sup nP P V p ˆβΦq ě α in probability 
+
+Proof. First, we define the continuous function f px, y q :“ p1xp1x`p 1´p1qy and express P P V p ˆβΦq :“       
+
+> p1T P F pˆβΦq
+> p1T P F pˆβΦq`p 1´p1qF P F pˆβΦq
+
+where ˆβΦ “ p ˆβΦ0 , ˆβΦ1 q, β “ p β0, β1q, and p1 is prevalence which we as-sumed to be fixed. Then we have that 
+
+P P V p ˆβΦq “ | {P P V Φp ˆβΦq ` t P P V p ˆβΦq ´ {P P V Φp ˆβΦqu| ě | {P P V Φp ˆβΦq| ´ | P P V p ˆβΦq ´ {P P V Φp ˆβΦq| ě α ´ sup 
+
+> βPΩ
+
+|P P V pβq ´ {P P V Φpβq| 
+
+From Lemma 1, we have that sup 
+
+> βPΩ
+
+|P P V pβq ´ {P P V Φpβq| converges to zero almost surely hence Pr tlim inf  
+
+> n
+
+PPV p ˆβq ě αu ě Pr tlim inf  
+
+> n
+
+sup 
+
+> βPΩ
+
+|P P V pβq ´ {P P V Φpβq| “ 0u “ 1.
+
+Proof of theorem 1(c) 
+
+We want to show that ˆβΦ Ñ β˚ in probability. 
+
+Proof. To show the above, we will employ Theorem 5.7 from Van der Vaart (2000). We first assume 
+
+β˚ is a well-separated point of maximum of T P R pβq and show that the following conditions: 1. sup 
+
+> βPΩ
+
+| zT P R Φpβq ´ T P R pβq| p
+
+Ñ 0 (convergence in probability) 2. zT P R Φp ˆβΦq ě zT P R Φpβ˚q ´ oP p1q hold. From Lemma 1, we have sup 
+
+> βPΩ
+
+| zT P R Φpβq ´ T P R pβq| p
+
+Ñ 0 hence 1 q hold. To show 2), we note that ˆβΦ is a near maximizer of zT P R Φpβq, that is zT P R Φp ˆβΦq ě sup 
+
+> βPΩ
+
+zT P R Φpβq ´ oP p1q. We then 38 have that 
+
+zT P R Φp ˆβΦq ě sup 
+
+> βPΩ
+
+zT P R Φpβq ´ oP p1q
+
+zT P R Φp ˆβΦq ě sup 
+
+> βPΩ
+
+zT P R Φpβq ` zT P R Φpβ˚q ´ zT P R Φpβ˚q ´ oP p1q
+
+zT P R Φp ˆβΦq ě zT P R Φpβ˚q ` sup 
+
+> βPΩ
+
+zT P R Φpβq ´ T P R pβ˚q ` T P R pβ˚q ´ zT P R Φpβ˚q ´ oP p1q
+
+zT P R Φp ˆβΦq ě zT P R Φpβ˚q ` sup 
+
+> βPΩ
+
+zT P R Φpβq ´ sup 
+
+> βPΩ
+
+T P R pβq ` T P R pβ˚q ´ zT P R Φpβ˚q ´ oP p1q
+
+We therefore have that sup 
+
+> βPΩ
+
+zT P R Φpβq ´ sup 
+
+> βPΩ
+
+T P R pβq ď sup 
+
+> βPΩ
+
+| zT P R Φpβq ´ T P R pβq| Ñ 0 and 
+
+T P R pβ˚q ´ zT P R Φpβ˚q ď sup 
+
+> βPΩ
+
+|T P R pβq ´ zT P R Φpβq| Ñ 0 almost surely from Lemma 1 hence we have zT P R Φp ˆβΦq ě zT P R Φpβ˚q ´ oP p1q. Therefore we can conclude that ˆβΦ p
+
+Ñ β.
+
+39

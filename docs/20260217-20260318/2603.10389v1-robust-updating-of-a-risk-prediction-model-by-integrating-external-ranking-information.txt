@@ -1,0 +1,1789 @@
+Title: Robust Updating of a Risk Prediction Model by Integrating External Ranking Information
+
+URL Source: https://arxiv.org/pdf/2603.10389v1
+
+Published Time: Thu, 12 Mar 2026 00:29:06 GMT
+
+Number of Pages: 39
+
+Markdown Content:
+# Robust Updating of a Risk Prediction Model by Integrating External Ranking Information 
+
+## Nicholas C. Henderson 11Department of Biostatistics, University of Michigan 
+
+Abstract 
+
+Utilizing established risk factors and prognostic models can often improve the con-struction of a newer risk model that uses novel biomarkers in a smaller, internal study. However, directly borrowing information from an established prognostic model is of-ten unsuitable due to differences in study populations, patient outcomes measured, and other specific features of the internal study design. To better enable the use of established prognostic information when constructing a novel risk model, we propose an estimation approach centered around the idea that the risk rankings rather than the risk scores from an established prognostic model are often more transportable to the internal study context. To leverage external ranking information, our approach introduces the ranking parameters associated with the regression coefficients of an in-ternal risk model and estimates the internal risk model parameters by penalizing a ranking-based discrepancy measure between the ranking parameters and the rankings implied by the established prognostic model. Our method does not require the ex-ternal prognostic model to have a specific form, but only requires one to compute risk score rankings from an external model. Simulation studies demonstrate that our method leads to competitive predictive performance and performs particularly well when the true internal and external prognostic models have high rank correlation but large discrepancies between their underlying risk scores. We demonstrate the use of our approach through the development of a prognostic model for advanced prostate cancer patients who were treated with an immune checkpoint inhibitor. 
+
+Keywords: data integration, MM algorithm, rank association, transfer learning 
+
+1
+
+> arXiv:2603.10389v1 [stat.ME] 11 Mar 2026
+
+# 1 Introduction 
+
+The growing availability of large-scale datasets and statistical summaries from such datasets has led to increased interest in incorporating information from these sources when conducting a new study. These much larger datasets include sources such as disease registries, census data, and published risk models. Such data sources can often be leveraged to improve inferences about questions of interest in the new “internal” study that has a much smaller sample size than these external data sources. In the data integration literature that focuses on this setting (e.g., Chatterjee et al. (2016)), the data integration task is often formulated in the following way. A researcher has information available from a large “external” data source that describes the relationship between an outcome variable Y and an associated set of covariates Z, and the researcher also collects the same outcome variable Y and covariates Z
+
+in a much smaller “internal” dataset that the researcher is using for the study of interest. In addition, the internal study also records information on an additional collection of covariates 
+
+B which is not available from the external data source. In this context, the main goal of data integration methods is then to harness estimates of features of the joint distribution of (Y, Z) from the external data source in order to improve inferences about the distribution (Y, Z, B) within the smaller, internal study of interest. There has been much recent activity in developing statistical methods to perform data integration between a large, external data source and a smaller, more focused internal study. To briefly highlight several prominent and relevant examples from this literature, we note that Chatterjee et al. (2016) proposed a constrained maximum likelihood framework for combining individual-level data from an internal study with summary-level information from an external data source. Other methods developed for a similar data setting include Qin et al. (2015), Estes et al. (2018), Cheng et al. (2018), and Gu et al. (2019), and methods which focus on integrating information from multiple, possibly heterogeneous, external sources include 2Antonelli et al. (2017) and Gu et al. (2023). Other related methods have focused more on incorporating information from external risk models where the covariate distributions between the external and internal covariate distributions are notably different, (Han and Lawless, 2019; Taylor et al., 2023), or where little information exists on how the external risk model utilizes patient covariates (Han et al., 2023). A limitation of many of the methods listed above is that they are often not well-equipped to handle applications where the external data source has considerable relevance to the objectives of the smaller, internal study but key study differences prevent direct application of a data integration procedure. As an example of this, suppose the internal study collects data of the form ( Y, Z, B) while the external model is a risk model characterizing the distribution of an outcome eY given Z, and the internal data and external model outcomes ( Y and eY ) are well known to have some form of positive association though the precise magnitude of the association may not be as well known and can depend on particular features of the internal study context. For example, suppose the purpose of the internal study is to investigate the role of a newer set of biomarkers in predicting prostate cancer progression and the internal data is structured so that response in the observed prostate-specific antigen (PSA) (Schr¨ oder et al., 2000) is the most sensible measure to use as the primary outcome. To better characterize the role of these novel biomarkers in prostate cancer, the internal study investigators may want to incorporate results from external prostate cancer risk models that have been constructed and validated on much larger datasets. However, one drawback of this is that such risk models may have been built on completely different outcomes such as progression-free survival (PFS), and hence, in this context, directly calibrating the internal risk model to the external risk model or shrinking parameter estimates from the internal risk model towards parameters of the external risk model is likely not a suitable approach. Nevertheless, although direct integration of estimates from the external risk model may not work in this context, risk scores from the external model may still be highly relevant for explaining variation in internal-data outcomes and incorporating such external information 3can improve inferences about the main aims of the internal study. When key differences between the internal and external data sources are present and make direct integration of study estimates inappropriate, the ranking information from the external data source is often better preserved and will often be a better feature of the external data to utilize when performing data integration. To be more concrete, suppose the external data source has information related to the expectation of an outcome eY given covariates Z
+
+(denote this expectation by fE (Z) = EE { eY | Z}), while the aim of the internal study is to estimate the conditional expectation fI (Z, B) = EI {Y | Z, B} for an outcome Y in the internal-study population. In this context, one can often expect that the rankings of fE (Z)will have a greater degree of transportability to the internal study setting. Figure 1 has a schematic summarizing a possible scenario of how the external and internal data sources are related and what main assumptions we would be making in this setting. As shown in Figure 1, the external and internal data do not use the same outcome, but we will still use the rankings of the conditional expectations EE { ˜Y | Z} of the outcomes in the external data context to inform the internal study. Letting these rankings inform the internal study is based on the assumption that, despite the differences in the internal and external study contexts, the internal and external conditional expectations EE { eY | Z} and EI {Y | Z} will have some degree of rank-based positive association. To incorporate external ranking information into an internal study, our proposed approaches focus on estimation with ranking-based penalization. Adopting a penalization framework allows for borrowing of information from the external data source without requiring exact calibration of the rankings to match the rankings implied by the external model. Often, the contexts of the internal and external studies differ enough that any form of exact calibration may be undesirable, and penalization provides more flexibility in controlling the level of borrowing by letting the user specify the magnitude of the penalty hyperparameter. To target only rankings in the penalization, we propose penalty functions that only penalize 4the degree to which the rankings from the internal risk model deviate from the rankings that the external risk model would assign to the internal-data observations, and the penalty functions do not directly penalize the magnitude of the internal-model parameters in any way. Specifically, our ranking penalties most closely resemble classical measures of rank correlation and rank-based objective functions used in robust regression approaches. While such rank-based discrepancies have been used as objective functions for robust regression (e.g., Han (1987), Johnson and Peng (2008), Sievers and Abebe (2004), Sun et al. (2024)), their use as penalty functions to perform more robust data integration from external models has, to our knowledge, received almost no attention in the data integration literature. This paper is organized as follows. Section 2 describes the data structure of interest and introduces the notion of the ranking parameters in an internal risk model. Section 2 also in-troduces association measures between these ranking parameters and an arbitrary collection of external rankings. Section 3 details a novel penalized regression procedure for estimating the regression parameters of an internal risk model where the penalization reflects the degree to which the internal model ranking parameters deviate from risk score rankings associated with an external risk model. Section 4 presents the results of two simulation studies evalu-ating the ability of our ranking penalized procedure to improve the predictive performance of estimated internal risk models. In Section 5, we demonstrate the use of our approach for updating an established risk model using an example involving prostate cancer patients receiving an immune checkpoint inhibitor, and we then conclude with a brief discussion in Section 6. 52 Internal Risk Models and Ranking Parameters 
+
+## 2.1 Data Structure 
+
+We assume that we have observed n responses Yi with associated covariate vectors xi from an internal dataset, which we denote with 
+
+DI = {(Yi, xi); i = 1 , . . . , n },
+
+where Yi ∈ R and xi = ( xi1, . . . , x ip )T ∈ Rp. The pairs ( Yi, xi) in DI represent an i.i.d. sample from a population with joint cumulative distribution function FI (y, x) = P {Yi ≤ y, x i1 ≤
+
+x1, . . . , x ip ≤ xp}. The covariate vectors xi in DI are assumed to have the form xi = ( zi, bi), where zi ∈ Rq (with q < p ) is a collection of covariates that can be used to compute risk scores from an established external risk model, and bi ∈ B ⊆ Rp−q is a collection of new covariates to be used in building a new risk model using the internal dataset DI . We will refer to the covariates in zi as the “conventional covariates” and the covariates in bi as the “novel covariates”. Regarding the stated external risk model, our only assumption about this external model is that it can take a vector z of conventional covariates as input and return an associated risk score fE (z). In the context of applying the external risk model to the internal dataset DI ,larger values of fE (zi) should be interpreted as predicting a larger value of the response Yi.
+
+Transportability Assumptions. Our main goal is to use the information provided by this external risk model to improve the construction of a new risk model using the internal dataset DI . To elaborate further, consider the random variables fI (xi) and gI (zi) defined as 
+
+fI (zi) = EI {Yi|zi} and gI (xi) = EI {Yi|xi}, (1) 6where the notation EI is used to denote taking the conditional expectation of Yi given xi
+
+using the joint internal-dataset distribution FI .We do not make the assumption that the internal study and external populations are the same or that fI (zi) in (1) should match the external risk score fE (zi). Rather, the main motivation behind our methodology is the expectation that, in many contexts, the external risk model will have enough relevance to the internal study context to ensure that fI (zi)(and gI (xi)) and fE (zi) have some degree of nonparametric association. The assumption of positive association between fI (zi) and fE (zi) is a quite weak assumption regarding the transportability between any of the external data sources and the internal dataset. More concretely, one can think of the established external risk model as being constructed from data of the form {(U Ej , zEj )}, where U Ej represents either the same type of outcome as Yi or a surrogate outcome for Yi, and where zEj represents the same types of covariates used in the zi components of the internal dataset. From this, an implicit assumption driving our methodology is that, for many common measures of rank correlation, the following quantity 
+
+ρIE = RankCorr 
+
+
+
+EI {Yi|zi}, E E {Uj |zEj = zi}
+
+
+
+will be positive and large enough to enable improved estimation of an internal risk model by borrowing the ranking information from the external risk model. 
+
+## 2.2 External Model Rankings and Internal Risk Model Ranking Parameters 
+
+Rankings from the External Model. Let z1, . . . , zn be the conventional covariates from the internal dataset so that the risk score assigned by the external risk model to individual i
+
+in the internal dataset is fE (zi). Further, let rE 
+
+> 1
+
+(z1), . . . , r En (zn) denote the ranks of the risk 7Figure 1: Schematic depicting which quantities are captured in the internal and external data sources and our transportability assumptions. scores obtained from fE (z1), . . . , f E (zn). The ranks rEi (zi) can be expressed as 
+
+rEi (zi) = 
+
+> n
+
+X
+
+> j=1
+
+I {fE (zi) ≥ fE (zj )} .
+
+Ranking parameters for the internal risk model. Our overall goal is to estimate individual-level risk scores for the internal dataset, and we will refer to the model generating such risk scores as the “internal risk model”. We assume that the internal risk model is constructed by estimating parameters β0 and β in the conditional mean function from a working model that is assumed to have the form 
+
+EW {Yi|x1, . . . , xn, β 0, β} = H
+
+
+
+β0 + xTi β
+
+
+
+(2) In (2), H is a monotonically increasing function. Common working models used in practice 8include Yi ∼ Normal( β0 + xTi β, σ 2), in which case H(x) = x, or Yi ∼ Bernoulli(1 /{1 + exp( −β0 − xTi β)}), in which case H(x) = 1 /{1 + exp( −x)}.When building an internal risk model using (2), we want to consider the risk score rankings implied by a specific value of the parameters ( β0, β), and to improve estimation of the internal risk model, we want to incorporate the rank association between these risk score rankings and the external model rankings. Under an assumed value of β0 and parameter vector β,the risk score ranking assigned to individual i can be thought of as a parameter given by 
+
+ψi(β) = rank 
+
+h
+
+EW {Yi|x1, . . . , xn, β}
+
+i
+
+, (3) where EW denotes taking expectation under the working model whose conditional mean function is defined by (2). That is, if one were to assign risk scores using working mean model (2) with parameters ( β0, β), then ψi(β) represents the risk score ranking of individual 
+
+i in the internal study. Because H in (2) is assumed to be strictly increasing, ranking by the values of ψi(β) is equivalent to ranking by the values of xTi β, and for this reason, we will express the “ranking parameters” ψ1(β), . . . , ψ n(β) in terms of the rankings of the values of 
+
+xT 
+
+> 1
+
+β, . . . , xTn β. Specifically, the ranking parameter ψi(β) can be expressed as 
+
+ψi(β) =
+
+> n
+
+X
+
+> j=1
+
+I(xTi β ≥ xTj β) = 
+
+> n
+
+X
+
+> j=1
+
+I (xi − xj )T β ≥ 0 . (4) For computational reasons, we want to work with a “smoothed” version of the ranking parameters ψi(β) when conducting estimation of the internal risk model. To this end, we define smoothed ranking parameters ψν 
+
+> 1
+
+(β), . . . , ψ νn(β) as 
+
+ψi,ν (β) = 
+
+> n
+
+X
+
+> j=1
+
+gν
+
+
+
+(xi − xj )T β
+
+
+
+, (5) where ν > 0 is a tuning parameter, and for any ν > 0, gν (·) is a cumulative distribution 9function. Examples of gν (·) include gν (x) = 1 /{1 + exp( −x/ν )} and gν (x) = Φ( x/ν ). In our implementation, we set gν (·) to gν (x) = 1 /{1 + exp( −x/ν )}. The tuning parameter ν
+
+should be chosen to be relatively small so that gν (x) approximates the indicator function, and strategies for choosing ν are discussed in Section 3.2. 
+
+Marginalized ranking parameters. Because we can roughly think of the external risk model ranks rE 
+
+> 1
+
+(z1), . . . , r En (zn) as providing estimates of the expected rankings of the internal-dataset outcomes Yi given only the conventional covariates zi, ranking parameters that can be interpreted as representing a reported ranking conditional only on the conventional co-variates have a stronger justification. To this end, we define the following alternative ranking parameters ˜ψ1(β), . . . , ˜ψn(β)˜ψi(β) = E rank 
+
+h
+
+EW {Yi|x1, . . . , xn, β 0, β} z1, . . . , zn, β
+
+i!
+
+, (6) which we refer to as the “marginalized” ranking parameters. Letting β = ( βTz , βTb )T , the relationship between ˜ψi(β) and ψi(β) is given by ˜ψi(β) = E{ψi(β) | z1, . . . , zn, β}
+
+= E
+
+h nX
+
+> j=1
+
+I{(zi − zj )T βz + ( bi − bj )T βb ≥ 0} z1, . . . , zn, β
+
+i
+
+. (7) It is worth noting that the set of marginalized ranking parameters ˜ψ1(β), . . . , ˜ψn(β) may not constitute a collection of ranks themselves in the sense that they will not be a permu-tation of the set of integers {1, . . . , n }. Nevertheless, our main aim is to utilize some degree of appropriate nonparametric association between the internal model risk scores xTi β and the external model risk rankings, and using (6) does effectively capture this association in practice, even though the ˜ψi(β) are not strictly a collection of ranks. In practice, we use smooth versions of the marginalized ranking parameters (7) by replacing 10 the indicator function with a smooth function gν and by approximating the expectation in (7) by sampling bi from an estimated conditional distribution of the novel covariates given the conventional covariates. Specifically, if we have S draws from an estimated conditional distribution of bi given zi, we define the smoothed marginalized ranking parameters ˜ψνi (β)as ˜ψνi (β) = 
+
+> n
+
+X
+
+> j=1
+
+1
+
+S
+
+> S
+
+X
+
+> s=1
+
+gν
+
+
+
+(zi − zj )T βz + ( b(s) 
+
+> i
+
+− b(s) 
+
+> j
+
+)T βb
+
+
+
+, (8) where b(s) 
+
+> i
+
+denotes the sth draw of bi from an assumed conditional distribution of b1, . . . , bn
+
+given z1, . . . , zn.
+
+## 2.3 Association Measures between the Internal and External Risk Rankings. 
+
+When estimating an internal risk model, we would like our estimation procedure to incorpo-rate comparisons between the internal risk score ranking parameters with the rankings from the external risk model. To conduct such comparisons, we will utilize several measures of association between collections of rankings. 
+
+Association based on Spearman rank correlation. A classic measure of association between two vectors of ranks is Spearman’s rank correlation. Spearman’s rank correlation 
+
+ρ  ψ(β), rE  between the vector of ranking parameters ψ(β) = ( ψ1(β), . . . , ψ n(β)) T and the vector of external-model ranks rE =  rE 
+
+> 1
+
+(z1), . . . , r En (zn)T is given by 
+
+ρ  ψ(β), rE  =
+
+Pni=1 ψi(β)( rEi (zi) − ¯r)
+
+qPni=1 {ψi(β) − ¯ψ(β)}2pP ni=1 {rEi (zi) − ¯r}2
+
+,
+
+where ¯ψ(β) = 1
+
+> n
+
+Pni=1 ψi(β) and ¯ r = 1
+
+> n
+
+Pni=1 rEi (zi). If there are no ties among the ranking parameters ψ1(β), . . . , ψ n(β), one can express (see Appendix A) Spearman’s rank correlation 11 as 
+
+ρ  ψ(β), rE  = 4n2
+
+p(n3 − n)/12 pP ni=1 (rEi (zi) − ¯r)2
+
+h 14n2
+
+> n
+
+X
+
+> i=1
+
+ψi(β)rEi (zi) − ¯r(n + 1) 8n
+
+i
+
+.
+
+Note that ρ(ψ(β), rE ) only depends on β through Pni=1 ψi(β)rEi (zi) and that larger values of 14n2
+
+Pni=1 ψi(β)rEi (zi) imply larger values of the Spearman rank correlation. Hence, one measure of the “concordance” between ψ(β) and rE is the sum 14n2
+
+Pni=1 ψi(β)rEi (zi). Using this as motivation, we define the following smooth measure of rank concordance between the smooth ranking parameters and the external risk model rankings 
+
+DνSp, 0(β; rE ) = 14n2
+
+> n
+
+X
+
+> i=1
+
+ψνi (β)rEi (zi) = 14n2
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+rEi (zi)gν
+
+
+
+(xi − xj )T β
+
+
+
+. (9) 
+
+Association based on Kendall’s τ . Kendall’s tau between the vector of ranking param-eters ψ(β) and the vector of external model rankings rE is defined as 
+
+κ(ψ(β), rE ) = 1
+
+n(n − 1) 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+I
+
+
+
+{ψi(β) − ψj (β)}{ rEi (zi) − rEj (zj )} > 0
+
+
+
+.
+
+Under an assumption of no ties among the ranking parameters ψ1(β), . . . , ψ n(β), the above expression can be rewritten (see Appendix A) as 
+
+κ(ψ(β), rE ) = C + 2
+
+n(n − 1) 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+I
+
+
+
+(xi − xj )T β > 0
+
+n 
+
+I
+
+
+
+rEi (zi) > r Ej (zj )
+
+
+
+− 1/2
+
+o
+
+, (10) where C is a constant that does not depend on β, and using (10) as motivation, we define the following smooth Kendall’s τ -inspired measure of rank concordance 
+
+DνKe, 0(β; rE ) = 2
+
+n(n − 1) 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+gν
+
+
+
+(xi − xj )T β
+
+n 
+
+I
+
+
+
+rEi (zi) > r Ej (zj )
+
+
+
+− 1/2
+
+o
+
+. (11) 12 Association measures with marginalized ranking parameters. When using the marginalized ranking parameters, we define a Spearman-type concordance measure by re-placing xi in (9) with draws x(s) 
+
+> i
+
+from the conditional distribution of xi given zi. Specifically, our Spearman-type concordance measure for marginalized ranking parameters is defined as 
+
+DνSp, 1(β; rE ) = − 14Sn 2
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+> S
+
+X
+
+> s=1
+
+rEi (zi)gν
+
+
+
+(x(s) 
+
+> i
+
+− x(s) 
+
+> j
+
+)T β
+
+
+
+,
+
+where x(s) 
+
+> i
+
+= ( zTi , (b(s) 
+
+> i
+
+)T )T and b(s) 
+
+> i
+
+is a draw from the conditional distribution of bi given zi.Similarly, one can define a Kendall’s τ -type measure of association for marginalized ranking parameters DνKe, 1 by replacing xi with x(s) 
+
+> i
+
+in (11). To summarize, we consider four different possible association measures DνSp, 0, DνKe, 0, DνSp, 1,
+
+DνKe, 1 whose choice depends on: (a) the choice of association measure (Spearman versus Kendall’s τ ), (b) the choice of ranking parameter type (marginalized versus not marginal-ized). Henceforth, we will use the generic notation Dν 
+
+> •
+
+(·, ·) to denote that Dν 
+
+> •
+
+is one of the four possible association measures discussed above. It is worthwhile to note that each possible choice of Dν 
+
+> •
+
+satisfies 0 < D ν 
+
+> •
+
+< 1 and, when using the non-marginalized ranking parameters, can be expressed as 
+
+Dν 
+
+> •
+
+(β; rE ) = 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+wij gν
+
+
+
+(xi − xj )T β
+
+
+
+, (12) where wij can be thought of as fixed weights whose form depends on the chosen association measure. Specifically, wij = rEi (zi)/4n2 when considering the Spearman association measure 
+
+DνSp, 0, and setting wij = [2 I rEi (zi) > r Ej (zj )−1] /[n(n−1)] yields the Kendall’s τ association measure DνKe, 0. Similar to (12), when using marginalized ranking parameters, each choice of 13 Dν 
+
+> •
+
+can be expressed as 
+
+Dν 
+
+> •
+
+(β; rE ) = 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+> S
+
+X
+
+> s=1
+
+wijs gν
+
+
+
+(x(s) 
+
+> i
+
+− x(s) 
+
+> j
+
+)T β
+
+
+
+, (13) where wijs = wij /S .
+
+# 3 Estimating the Internal Risk Model 
+
+## 3.1 Penalized Estimation 
+
+To estimate the regression coefficients of an internal risk model, we propose minimizing a penalized objective function ℓλ,α that has the form 
+
+ℓλ,α (β0, β) = LI (β0, β; α) − λ log Dν 
+
+> •
+
+(β, rE ), (14) where λ ≥ 0 is a nonnegative tuning parameter and where LI (β0, β; α) is a “local objective function” that depends only on ( β0, β), a hyperparameter α ≥ 0, and observations from the internal dataset. Also, Dν 
+
+> •
+
+is one of the rank-based concordance measures between the internal model ranking parameters and the external ranks described in Section 2.3. In this paper, we describe our approach when the local objective function LI (β0, β; α) is a penalized, negative log-likelihood associated with the assumption that the internal-dataset outcomes arise from a generalized linear model (GLM). Specifically, we assume the density function of Yi in the internal data can be expressed as 
+
+f (Yi; β0, β) = exp 
+
+nYiθ(β0 + xTi β) − b{θ(β0 + xTi β)}
+
+ai(ϕ) + c(Yi, ϕ )
+
+o
+
+,
+
+where ϕ is a dispersion parameter and the function θ(·) is determined by the mean E(Yi|xi, β 0β)and choice of link function h, i.e., h−1{E(Yi|xi, β)} = b′{θ(xTi β)}. Under this setup, the 14 penalized objective function (14) for a fixed value of ϕ becomes 
+
+ℓλ,α (β0, β) =
+
+> n
+
+X
+
+> i=1
+
+b{θ(β0 + xTi β)}
+
+ai(ϕ) −
+
+> n
+
+X
+
+> i=1
+
+Yiθ(β0 + xTi β)
+
+ai(ϕ) + α
+
+2
+
+> p
+
+X
+
+> j=1
+
+β2 
+
+> j
+
+− λ log Dν 
+
+> •
+
+(β, r).
+
+We refer to the vector of regression coefficients ˆβλ,α that minimizes the penalized objec-tive function (14) as the Rank-ASociated PEnalized Regression (RASPER) estimate of the regression coefficients. 
+
+## 3.2 Computation and Choice of ν
+
+One computational challenge raised by the goal of minimizing (14) is that this penalized objective function will not be convex for many typical choices of the local objective func-tion LI (β0, β; α). To address this, we have developed a general inequality for the penalized objective function ℓλ,α (β0, β) that can be used to generate direct majorize-minimize (MM) algorithms for common choices of the local objective function. MM algorithms are numeri-cally stable procedures that we have found to work well in practice. An important feature of an MM algorithm is that it is guaranteed to produce a final estimate of β that improves the value of ℓλ,α (β0, β) relative to the initial value of β chosen. This implies that, while an MM algorithm does not ensure that one finds a global minimizer of (14), it is guaranteed to always produce an estimate β∗ that has a smaller value of the objective compared to the minimizer ˆβloc ,λ,α of the local objective function, provided that one sets the initial value of the MM algorithm to ˆβloc ,λ,α .To better describe our computational strategy, we introduce additional notation for a few terms. First, we define the n2 × p matrix Aν as Aν = 1
+
+> ν
+
+ X ⊗ 1n − 1n ⊗ X, where 
+
+⊗ denotes the Kronecker product. Similarly, we define the n2 × 1 vector w to be w =(w11 , w 12 , w 13 , . . . , w nn )T . Using Aν and w, we can more compactly express the family of 15 concordance measures defined in (12) as 
+
+Dν 
+
+> •
+
+(β, rE ) = wT g1
+
+ Aν β, (15) An MM algorithm for minimizing (14) can often be developed by utilizing the results detailed in Theorem 1 below. 
+
+Theorem 1 When ℓλ,α (β0, β) has the form (14) and Dν 
+
+> •
+
+(·, ·) has the form (12), then for any β ∈ Rp and β(t) ∈ Rp, there is a constant C(β(t)) not depending on β such that the following inequality and equality hold 
+
+ℓλ,α (β0, β) ≤ LI (β0, β; α) − λ
+
+2 βT ATν Wt1 − λ
+
+2 βT ATν VtWtAν β + C(β(t)) (16) 
+
+ℓλ,α (β0, β) = LI (β0, β(t); α) − λ
+
+2 (β(t))T ATν Wt1 − λ
+
+2 (β(t))T ATν VtWtAν β(t) + C(β(t)),
+
+where Wt and Vt are n2 × n2 diagonal matrices. The kth diagonal elements of Wt and Vt
+
+are [w]kg1([ Aν β(t)]k)/{wT g1(Aν β(t))} and 0.5 tanh( −[Aν β(t)]k/2) /2[ Aν β(t)]k, respectively, where [w]k and [Aν β]k refer to the kth elements of w and Aν β, respectively. 
+
+A valid MM algorithm for generating a sequence of iterates β(0 , β(1) , β(2) , . . . guaranteed to reduce the objective function ℓλ,α (β0, β) in every iteration is obtained by minimizing the upper bound for ℓλ,α (β0, β) in (16). When the chosen local objective function is a penalized residual sum of squares, i.e., LI (β0, β; α) = 12 || Y − β01 − Xβ|| 2 + α 
+
+> 2
+
+|| β|| 2, this MM algorithm leads to a direct, iteratively reweighted least squares procedure, where the update of the regression coefficients in the tth iteration of the procedure takes the form 
+
+β(t+1) =
+
+
+
+XT X + αIp − λATν VtWtAν
+
+−1λ
+
+2 ATν Wt1 + XT (Y − β01)
+
+
+
+. (17) 
+
+Choice of ν. When setting a default value of ν, we assume that the columns of the design 16 matrix X have been standardized to have mean zero and unit variance; that is, Pni=1 xik = 0 and Pni=1 x2 
+
+> ik
+
+= ( n − 1), for each k. When the covariates are standardized and assumed to be independent, we have E{(xi − xj )T β} = 0 and Var {(xi − xj )T β} = || β|| 2, for any β.For the default choice of ν, we set ν so that gν (−0.25 || β|| ) ≤ 0.01 and gν (0 .25 || β|| ) ≥ 0.99, and the approximate smallest value of ν that guarantees these inequalities is ν = 0 .1|| β|| .Because β is not known in practice, we set ν to ν = 0 .1|| ˆβM LE || , where ˆβM LE is the estimate of β obtained by maximizing the unpenalized local objective function LI (β0, β; 0). The motivation for this choice of ν is to ensure that gν
+
+ x is a close approximation of the indicator function I (xi − xj )T β ≥ 0 for most values of ( xi − xj )T β that one would consider when estimating the internal risk model regression parameters. Our choice of ν implies that, for most plausible choices of β, we will have gν (uij ) ≤ 0.01 for values of uij = ( xi − xj )T β
+
+more than one-fourth standard deviation less than the mean of uij while gν (uij ) ≥ 0.99 for values of uij greater than one-fourth standard deviation from the mean of uij . Our approach for setting ν also resembles other approaches that employ smooth logistic approximations of indicator functions, for example, in the context of maximizing a smooth approximation of the area under the ROC curve (Ma and Huang, 2005) or in the context of optimizing individualized treatment rules (Wu and Wang (2021); Varadhan et al. (2016)). 
+
+## 3.3 Hyperparameter Selection 
+
+Leave-one-out cross-validation. A direct way to select the hyperparameters ( λ, α ) is through leave-one-out cross-validation. The leave-one-out cross-validation score LOO( λ, α )we use is obtained by evaluating the local objective function LI (β0, β; α) on each holdout observation while ignoring the contribution of the L2 penalty to the local objective function. Specifically, we define LOO( λ, α ) as LOO( λ, α ) = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+L−iI ( ˆβ−i
+
+> 0,λ,α
+
+, ˆβ−iλ,α ; 0) ,
+
+17 where LiI is the local objective function obtained by only using the single observation ( yi, xi)and ˆβ−iλ,α = ( ˆβ−iλ,α, 1, ˆβ−iλ,α, 2, . . . , ˆβ−iλ,α,p )T is the estimate of the vector of regression coefficients obtained when ( yi, xi) has been deleted from the internal dataset. In our implementation, we evaluate LOO( λ, α ) on a two dimensional grid of points {(λj , α k) : 
+
+j = 0 , . . . , J + 1; k = 0 , . . . , K + 1 }, where both the λj and αk are equally spaced on the log scale. Specifically, we create the grid with ( J + 2)( K + 2) points by first selecting maximum values λmax and αmax and minimum nonzero values λmin and αmin for λ and α, respectively. Then, the λj are set to λ0 = 0 and λj = λmin exp (j − 1) log( λmax /λ min )/J , for j ≥ 1, and the αk are defined as α0 = 0 with αk = αmin exp (k − 1) log( αmax /α min )/K , for k ≥ 1. 
+
+AIC-based criterion. A potential drawback of using cross-validation to select ( λ, α ) is that the size of the internal dataset can be quite modest, and a cross-validation selection rule for (λ, α ) can have high variance and lead to poor predictive performance. An alternative to this is to look at the effective degrees of freedom associated with a given choice of ( λ, α ) and to choose these hyperparameters by minimizing an information criterion. Traditionally, the degrees of freedom associated with a method for generating a vector of fitted values of the form ˆY = c + HY is defined as tr( H). Motivated by this and by (17), we define the degrees of freedom associated with any value of ( λ, α ) as df( λ, α ) = tr 
+
+(
+
+XT X + αIp − λ
+
+4 ATν W0Aν
+
+−1
+
+XT X
+
+)
+
+. (18) Note that the degrees of freedom in (18) equals the trace of H(1) , where H(1) arises from the fitted values of the one-step estimator Xβ(1) = c(1) + H(1) Y where it is assumed that 
+
+β(0) = 0. Using the degrees of freedom defined in (18), we define the AIC criterion associated with an estimate ˆβλ,α as AIC( λ, α ) = 2 LI (β0, ˆβλ,α ; α) + 2df( λ, α ). 18 4 Simulation Studies 
+
+In these simulation studies, we primarily assess the ability of our ranking integration ap-proach to improve the predictive performance of an estimated internal risk model. To this end, we evaluate the mean-squared error (MSE) 1
+
+> ntest
+
+Pntest  
+
+> i=1
+
+{μI (x′
+
+> i
+
+) − ˆμI (x′
+
+> i
+
+)}2, where 
+
+x′
+
+> i
+
+, i = 1 , . . . , n test are independent draws from the same distribution as the covariates xi
+
+the internal data, and where ˆ μI (x) is an estimate of the internal risk model mean function 
+
+EI {Yi | xi}, using the internal data DI = {(Yi, xi); i = 1 , . . . , n I } with nI observations. We compare our method with the following alternative methods for incorporating an ex-ternally available estimate βE of the regression coefficients of interest: ridge regression, a distance transfer learning (DTL) estimate, and angle-based transfer learning (ATL). The es-timators of the internal risk model regression coefficients ˆβri (α), ˆβdtl (α), ˆβatl (α, λ ) for these approaches are defined as 
+
+ˆβri (α) = (XT X + αIp)−1XT Yˆβdtl (α) = (XT X + αIp)−1(XT Y + αβE )
+
+ˆβatl (α, λ ) = (XT X + αIp)−1(XT Y + λβE ). (19) In addition to assessing the performance of the three methods in (19), we evaluate a rank-ing “stacking” approach where we add an extra column to the internal design matrix X
+
+containing the external rankings rE 
+
+> 1
+
+(x1), . . . , r En (xn) and perform ordinary least squares. 
+
+## 4.1 Simulation Study 1: Linear External and Internal Risk Mod-els 
+
+In the first simulation study, we generated an internal dataset DI = {(Yi, xi); i = 1 , . . . , n I }
+
+in each simulation replication. Outcomes Yi in DI were generated as Yi ∼ N (μI (xi), σ 2 
+
+> I
+
+), 19 where μI (·) represents the internal data mean function. External risk scores were computed using an assumed external model mean function μE (·). Both the internal and external mean functions have the form 
+
+μE (zi) = 
+
+> q
+
+X
+
+> j=1
+
+βEj zij and μI (xi) = 
+
+> p
+
+X
+
+> j=1
+
+βIj xij ,
+
+where xi = ( zTi , bTi )T . Components of the conventional and novel covariate vectors were drawn independently as zij ∼ N (0 , 1) and bij ∼ N (0 , 1), but the random variables zik and 
+
+bij are not necessarily independent. In each simulation replication, external rankings rEi (zi)for the internal risk model were computed as rEi (zi) = Pnj=1 I{μE (zi) ≥ μE (zj )}.
+
+Simulation Study 1(a): Internal dataset only contains conventional covariates. 
+
+We first simulate a setting where the internal dataset DI only contains the conventional covariates. That is, xi = zi, where the components of zi represent the same conventional covariates used by the external risk model. The length of zi is 5 so that p = q = 5. We considered 11 different choices for the external and internal mean functions μE (·) and μI (·). The expectation of the distance PnI
+
+> i=1
+
+{μI (zi) − μE (zi)}2, and the expected Spearman’s rank correlation between μE (zi) and μI (zi) is reported in Table 1 for each of the 11 settings. 
+
+Simulation Study 1(b): Internal dataset contains novel covariates. For this study, we considered a similar design to Simulation Study 1(a), except that the dimension of the internal covariate vector xi is now different from zi. Specifically, xi = ( zTi , bTi )T , where 
+
+bi = ( bi1, b i2)T contains two additional novel covariates bi1 and bi2. The external risk model, in this simulation study, take the form fE (zi) = zTi βz,E . To induce correlation between the novel and conventional covariates, internal-dataset novel covariates were simulated as 
+
+bi1 = 0 .4zi1 + ei1 and bi2 = 0 .25 zi1 + 0 .5zi3 + 0 .1zi4 + ei2, where eij ∼ N (0 , 1). Because xi contains novel covariates, we also evaluate the performance of ? with the use of marginalized ranking parameters (8) in addition to the ranking parameters defined by 20 (5). To sample the novel covariates bi for creating the marginalized parameters, we use the conditional distribution bi|zi ∼ N (Σbz zi, I2 − Σbz ΣTbz ), where, in each simulation replication, 
+
+Σbz = E(bizTi ) is estimated from the observed values of bi and zi.In this simulation study, both the DTL and ATL estimators used the target vector βE of regression coefficients, where the coefficients associated with the conventional covariates are set to βz,E , while those of the novel covariates are set to 0. Specifically, βE = ( βTz,E , 0T )T .
+
+Simulation 1 Results. Table 1 presents the MSE results for each of the 11 settings of Simulation Study 1(a). In settings with substantial rank correlation between μE and μI
+
+and a small expected distance || μE − μI || 2 between the external and internal mean functions (i.e., Settings 1, 2, 4, and 6), distance transfer learning (DTL) performs very well relative to competing methods. In contrast, both RASPER and angle transfer learning (ATL) exhibit stronger MSE performance in settings with substantial rank correlation and a large expected distance between the mean functions (i.e., Settings 3, 5, and 7). Among these three settings, ATL had better performance when rank correlation was close to one (Setting 3), while RASPER had superior MSE performance to ATL in the two settings where rank correlation was substantial but not as close to 1 (Settings 5 and 7). Ridge regression performed the best in settings with modest or near-zero rank correlation (i.e., Settings 8,9,10,11), but the RASPER method was very competitive with ridge regression in these settings. This suggests there is a very modest reduction in performance when using RASPER, even in settings where there is little association between the external and internal mean functions. In all settings, choosing the hyperparameters for RASPER using leave-one-out cross-validation performed superior to hyperparameter selection using AIC. Table 2 summarizes the MSE results for Simulation Study 1(b). As in Simulation Study 1(a), both ATL and RASPER perform particularly well relative to ridge regression and DTL in settings with high rank correlation but a large expected discrepancy between the internal and external mean functions (Settings 3, 5, and 7), and in the remaining settings other 21 RASPER S
+
+Setting RC( μE , μ I ) || μE − μI || 2 RASPER S RASPER K Ridge DTL ATL Stacking (AIC) 1 1.00 0.0 0.63 0.45 0.76 0.11 0.27 1.40 0.88 2 0.84 2.1 0.72 0.68 0.81 0.58 0.62 1.29 0.92 3 0.87 8.3 0.63 0.61 0.77 0.90 0.55 1.30 0.90 4 0.69 3.4 0.87 0.88 0.93 0.82 0.81 1.32 0.94 5 0.68 10.2 0.70 0.74 0.76 1.03 0.79 1.24 0.94 6 0.52 3.8 0.77 0.83 0.80 0.74 0.86 1.30 0.95 7 0.51 13.1 0.84 0.88 0.87 0.95 0.90 1.37 0.94 8 0.28 4.8 0.88 0.91 0.86 0.87 0.98 1.28 1.00 9 0.25 11.4 0.90 0.92 0.89 0.96 0.99 1.25 0.96 10 0.08 6.2 0.82 0.83 0.80 0.85 0.87 1.26 0.99 11 0.07 15.9 0.85 0.87 0.84 0.94 0.89 1.31 0.97 
+
+Table 1: Simulation Study 1(a). Relative mean-squared error is reported for each method. RASPER S (AIC) denotes the RASPER method using the Spearman association measure and hyperparameter selection according to AIC. The relative MSE is defined as the MSE divided by the MSE obtained by least-squares estimation. For each of the 11 settings, the expected rank correlation RankCorr( μE , μ I ) and expected distance || μE − μI || 2 between the internal and external mean functions μI (·) and μE (·) are reported, and the relative MSE of the best performing method in each setting is in bold text. than Setting 1, RASPER was either the best or very competitive with the best performing method. RASPER with Kendall’s τ association has the best performance in Setting 3, while RASPER with Spearman association had the best performance in Setting 7. ATL had the best performance in Setting 5, but RASPER with both association measures had a very close MSE to that of ATL. In all settings, RASPER with marginalized ranking parameters performed very similarly to RASPER with non-marginalized ranking parameters 
+
+## 4.2 Simulation Study 2: A Nonlinear External Risk Model 
+
+In this simulation study, we use 4 conventional covariates zi = ( zi1, . . . , z i4)T and 2 novel covariates bi = ( bi1, b i2)T , and we use the same correlation structure between zi and bi as in Simulation Study 1(b). In all settings of this study, the mean function for the internal study is linear; specifically, μI (xi) = P4 
+
+> j=1
+
+βj xij , where xi = ( zTi , bTi )T . In contrast, the external 22 Setting RC( μE , μ I ) || μE − μI || 2 RASPER S RASPER K Ridge DTL ATL Stack RASPER M
+
+1 0.93 0.7 0.71 0.57 0.79 0.30 0.46 1.17 0.71 2 0.87 3.2 0.61 0.54 0.69 0.53 0.53 1.15 0.61 3 0.88 6.7 0.59 0.53 0.65 0.93 0.55 1.11 0.60 4 0.72 4.9 0.71 0.72 0.78 0.74 0.78 1.19 0.72 5 0.70 14.3 0.72 0.73 0.77 0.92 0.70 1.17 0.72 6 0.51 5.5 0.73 0.75 0.75 0.67 0.73 1.21 0.73 7 0.49 15.9 0.71 0.73 0.73 0.82 0.73 1.17 0.71 8 0.27 6.6 0.82 0.85 0.81 0.80 0.88 1.13 0.81 9 0.30 10.4 0.77 0.79 0.77 0.93 0.89 1.15 0.77 
+
+10 0.05 8.0 0.69 0.70 0.69 0.72 0.74 1.14 0.69 11 0.07 17.6 0.78 0.80 0.76 0.92 0.84 1.16 0.78 
+
+Table 2: Simulation Study 1(b). Relative mean-squared error is reported for each method. RASPER M denotes RASPER with Spearman association and marginalized ranking parame-ters. The relative MSE is defined as the MSE divided by the MSE obtained by least-squares estimation. For each of the 11 settings, the expected rank correlation RC( μE , μ I ) and ex-pected distance || μE −μI || 2 between the internal and external mean functions μI (·) and μE (·)are reported, and the relative MSE of the best performing method in each setting is in bold text. risk score functions μE (·) are nonlinear, and in all settings considered, μE (·) has the form 
+
+μE (zi) = 
+
+
+
+1+ f1(zi1)+ θ2f2(zi2)+ θ3f1(zi1)f2(zi2)
+
+
+
+exp 
+
+n
+
+−θ4I(zi3 < 2)+10 θ4I(zi3 ≥ 2) −θ5zi5
+
+o
+
+,
+
+where the functions fj are defined as f1(u) = 1 /(1 + e−u) − 1/(1 + e1−u) and f2(u) = 0.5( u − 2) 2I(u < 7) + 12 .5I(u ≥ 7). Because the external risk model is not a linear function of the conventional covariates, the DTL and ATL estimators cannot be directly applied in this setting. Nevertheless, we can consider modified versions of DTL and ATL where the risk score ZβE associated with the target vector βE matches the true external risk scores as closely as possible. Specifically, we set β = ( ˜βTz , 0T )T , where ˜βz = ( ZT Z)−1ZT μE and where μE = ( μE (z1), . . . , μ E (zn)) T .
+
+Simulation 2 Results. Table 3 summarizes the MSE performance across each of the 10 settings of Simulation Study 2. RASPER with marginalized ranking parameters had the best MSE performance in every setting with a rank correlation between the internal and external mean functions that was greater than 0 .40. In all settings, RASPER with non-marginalized 23 Setting RC( μE , μ I ) || μE − μI || 2 RASPER S Ridge DTL ATL Stack RASPER M                                                                                
+
+> 10.78 3.2 0.46 0.59 0.61 0.53 1.17 0.45
+> 20.77 7.2 0.66 0.76 0.76 0.67 1.13 0.66
+> 30.65 10.2 0.67 0.85 0.86 0.77 1.14 0.67
+> 40.64 13.3 0.73 0.84 0.83 0.73 1.19 0.73
+> 50.52 44.6 0.87 0.97 0.95 0.97 1.14 0.87
+> 60.42 15.5 0.84 0.88 0.93 0.89 1.16 0.84
+> 70.35 35.1 1.05 1.05 1.05 1.08 1.16 1.05
+> 80.35 6.8 0.57 0.57 0.56 0.59 1.18 0.56 90.13 5.5 0.43 0.41 0.41 0.43 1.16 0.43 10 0.12 9.6 0.84 0.82 0.81 0.85 1.20 0.83
+
+Table 3: Simulation Study 2. Relative mean-squared error is reported for each method. The relative MSE is defined as the MSE divided by the MSE obtained by least-squares estimation. For each of the 10 simulation settings, the expected rank correlation RC( μE , μ I )and expected distance || μE − μI || 2 between the internal and external mean functions μI (·)and μE (·) are reported, and the relative MSE of the best performing method in each setting is in bold text. ranking parameters performed very close to RASPER with marginalized parameters, and RASPER had the second best MSE performance whenever the rank correlation exceeded 0.40. The consistent, strong MSE performance of RASPER in Settings 1-6 demonstrates the greater flexibility of RASPER to utilize risk rankings from a nonlinear external risk model, compared to the alternative methods that shrink the fitted values directly towards a linear regression surface. In Settings 7 and 8, where rank correlation was a more modest 0.35, RASPER still either had the best MSE performance (Setting 7) or was extremely close to the best performing method (Setting 8). In settings with low rank correlation (Settings 9 and 10), ridge regression and DTL achieved the lowest MSE, but RASPER was quite close to these methods, demonstrating that RASPER does not lead to substantial reductions in predictive performance in settings where there is little rank correlation between the internal and external risk models. 24 5 Application: A prognostic model for prostate cancer patients receiving immunotherapy 
+
+In recent years, immune checkpoint inhibitors (ICIs) have revolutionized the treatment of many cancers. However, their use in prostate cancer has been more limited, and only a smaller fraction of patients possessing certain molecular signatures are recommended to receive treatment with an ICI (Lanka et al., 2023). Because the proportion of patients with such molecular signatures is quite modest, the available sample size to construct a risk model for prostate cancer patients receiving an ICI will typically be small. Fortunately, a wide range of prognostic models for metastatic castration-resistant prostate cancer (mCRPC) have been developed and validated with larger cohorts of patients (e.g, Armstrong et al. (2010), Halabi et al. (2014)), and the risk ranking information from such prognostic models has the potential to improve estimation of an ICI-specific prognostic model. To construct our internal risk model, we utilize the MSK-CHORD dataset (Jee et al., 2024). This is a harmonized clinicogenomic data source that records patient outcomes across a large group of patients ( n = 24 , 490) and five cancer types. This data source contains 3,211 participants with prostate cancer, but only n = 129 of these patients ever received treatment with an ICI. After restricting our analysis to patients who had chemotherapy prior to initiation of an ICI and who had available tumor sequencing information, we had 79 patients with which to construct our internal risk model. 
+
+Conventional Covariates and External Risk Model. To select an appropriate external risk model, we restricted our analysis to those who first received an ICIs after undergoing chemotherapy in mCRPC, which has been the primary context in which ICIs have been ad-ministered. There are a number of widely used and well-validated risk models that apply to mCRPC prostate cancer patients after receiving first-line chemotherapy (e.g., Halabi et al. 25 (2013)) However, due to the limitations of the MSK-CHORD data source, we selected an external risk model that does not require as many lab measurements as that in (Halabi et al., 2013). Instead, we considered simpler risk models (e.g., Smaletz et al. (2002) or Templeton et al. (2014)) that use fewer lab measurements. One such risk model is the more recent nomogram described in Suzuki et al. (2025), which only requires two lab measurements in addition to common clinical covariates that are used in many other mCRPC risk models. Specifically, the following clinical covariates are needed to compute the risk score in Suzuki et al. (2025): the level of prostate specific antigen (PSA) at the start of treatment, visceral metastasis (i.e., cancer presence in either the liver, lungs, pleura, or central nervous sys-tem), Eastern Cooperative Oncology Group (ECOG) performance status score, and disease progression on prior chemotherapy. The specific values of the external risk scores fE (zi) in Suzuki et al. (2025) are calculated as 
+
+fE (zi) = 0 .74 I(PSA i > 30 ng ml ) + 0 .49 I(visceral mets) + 0 .65 I(ECOG i ≥ 2) + 0 .45 
+
+
+
+2 − min 
+
+n
+
+2, days to progression on prior chemotherapy 180 
+
+o 
+
+.
+
+Novel Covariates. We included several molecular features recorded in MSK CHORD that are likely to be relevant in stratifying patient responses to immunotherapy. These include microsatellite instability (MSI), mismatch repair deficiency (MMRd), and tumor mutational burden (TMB) which are all factors that have been reported as valuable biomarkers for predicting patient response to an ICI (Abida et al., 2019). In addition, we used an in-dicator of whether there was an alteration in one of the three common tumor-suppressor genes (TSG): TP53 , PTEN , and RB1 , because these genes are known to play an important role in prostate cancer prognosis. Moreover, we include CDK12 as an additional genomic marker because it has been noted as an important contributor to immunotherapy response by multiple researchers (e.g., Antonarakis et al. (2020)). 26 Analysis and Results. We used overall survival (OS), measured from the time of ICI treatment start, as the endpoint of interest. To enable a least-squares criterion for the local objective function, we used restricted mean survival times (RMST) “pseudovalues” (Ander-sen et al., 2004) as proxy outcomes. The pseudovalue for the ith patient is a jackknife-based quantity whose expectation equals the conditional expectation of the RMST among a pop-ulation with the same covariate vector xi as the ith patient. Specifically, the ith pseudovalue 
+
+Vi is defined as Vi,τ = nˆμτ − (n − 1)ˆ μ(−i) 
+
+> τ
+
+, where ˆ μτ is an estimate of the RMST using all observations, and ˆ μ(−i) 
+
+> τ
+
+is an estimate of the RMST using all observations except for the ith 
+
+observation. The RMST is defined as the expectation of min {Ti, τ }, where Ti is the time to the survival endpoint of interest, and τ is a truncation point chosen to increase the stability of the RMST estimate. In our analysis, we set the RMST truncation point to 36 months after the start of ICI. When using the RMST pseudovalues, our local objective function is 
+
+Pni=1 (Vi,τ − β0 − xTi β)2.Table 4 presents the regression coefficients for internal RMST risk models generated from the following different approaches: ordinary least squares (OLS), ridge regression, DTL, ATL, and RASPER (using both Spearman and Kendall’s τ -based penalization). Note that the external risk model of Suzuki et al. (2025) is on the log-hazard ratio scale, and direct use of these coefficients for an RMST regression model is inappropriate. Nevertheless, the risk rankings from this external model can provide useful information that can be harnessed by RASPER. As is apparent from Table 4, estimates from ridge regression and DTL substan-tially shrink the OLS coefficient estimates towards zero. One notable difference between OLS and ridge regression and the methods which largely use the ordering information of the external risk model (i.e., ATL and RASPER) is the role of ECOG status. The reversal of the sign of the ECOG coefficient for OLS is attributable to the very small number of patients with ECOG ≥ 2 in the MSK-CHORD cohort. In contrast to OLS and ridge regression, the well-known role of ECOG in increasing risk is preserved by ATL and RASPER K , and its role is estimated to be nearly zero by RASPER S . For novel covariates where the external 27 Variable External OLS Ridge DTL ATL RASPER S RASPER K                                                                          
+
+> PSA >30ng/mL -0.74 -175.4 -106.5 -106.8 -169.2 -117.7 -117.1 Visceral Metastasis Yes -0.49 -192.1 -123.7 -123.9 -135.1 -122.4 -106.0 ECOG ≥2-0.65 24.2 11.0 10.5 -122.9 0.9 -7.3 Prior Chemo TTP -0.45 -54.2 -41.4 -41.5 -78.0 -49.0 -52.1 MSI Unknown 0-157.3 -72.4 -72.4 -25.9 -71.8 -57.9 MSI Unstable 0-81.1 6.9 6.8 2.5 8.7 10.9 MMRd 0-106.0 -51.5 -51.5 -18.6 -51.8 -45.2 TMB 012.9 11.1 11.1 10.4 10.8 10.7 TSG 0-89.2 -63.2 -63.2 -32.3 -59.4 -46.8
+> CDK12 0142.8 39.4 39.4 16.9 34.8 22.0
+
+Table 4: Estimated regression coefficients for 3-year RMST risk models for prostate cancer patients receiving an immune checkpoint inhibitor after first-line chemotherapy in metastatic castration-resistant prostate cancer (mCRPC) using outcomes from the MSK-CHORD data. model provides no information, RASPER shrinks the coefficients for these covariates more strongly towards zero than it does for the conventional covariates, and hence, the coefficient estimates that RASPER generates for the novel covariates are much closer to those of ridge regression. Figure 2 shows the value of the tuning parameter λ that would lead to very strong concor-dance between RASPER and the external model. Specifically, this figure plots Kendall’s-τ
+
+between the fitted RASPER model and the external model fitted values as the ranking pe-nalization term λ varies from e10 to e17 . For each value of λ, the value of the shrinkage term α is selected by LOOCV. Thus, when λ = 0, RASPER corresponds to ridge regression with LOOCV selection of the tuning parameter. As the ranking penalty term approaches 0, Kendall’s τ between RASPER and the external model converges to approximately 0.45. Figure 3 shows the risk rankings of OLS, ridge regression, and RASPER versus the risk rankings from applying the external model of Suzuki et al. (2025). While there is not a dramatic difference in the concordance of RASPER with the external model when compared with OLS and ridge regression, this figure shows that the risk rankings from RASPER tend to have noticeably greater agreement with the external model risk rankings. 28 10 11 12 13 14 15 16 17 0.4 0.5 0.6 0.7 0.8 0.9 1.0 
+
+> Rank Association between the External Risk Model and RASPER
+> ln
+
+(λ ) 
+
+> Kendall's  τ
+> RASPER (Spearman) RASPER (Kendall's τ)
+
+Figure 2: MSK-CHORD cohort: rank association between the fitted values from RASPER and the fitted values from the external model across different choices of λ. Rank association is measured by Kendall’s τ . For each fixed value of λ, the hyperparameter α is selected using leave-one-out cross-validation. 
+
+# 6 Discussion 
+
+In this article, we focused on the setting where the internal risk model uses a direct lin-ear combination of the internal data covariates. However, because our ranking penalized approach only depends on performing comparisons with a fixed set of external risk score rankings, it can easily be used to construct more flexible internal risk models that use, for example, regression splines and generalized additive models. In such cases, the internal model covariates would simply be transformed values of the original conventional and novel covariates, and the ranking parameters (4) would be directly defined using this transformed set of covariates. Because the regression penalization is performed with respect to these ranking parameters, one would not need to modify the external risk score rankings or the form of the rank association measures (12) in any way. 29 020 40 60 80       
+
+> 020 40 60
+> Rank of External Model
+> Rank of Internal Model
+> Estimation Method
+> RASPER (K)
+> OLS
+> 020 40 60 80
+> 020 40 60
+> Rank of External Model
+> Rank of Internal Model
+> Estimation Method
+> RASPER (K)
+> Ridge Regression
+
+Figure 3: MSK-CHORD cohort: internal model risk rankings versus external rankings for the following methods: OLS, ridge regression, and RASPER using the Kendall association appraoch. In our simulation studies, we have mostly observed minor differences between using marginal-ized ranking parameters and non-marginalized ranking parameters. This is largely due to the fact that the non-marginalized ranking parameters can be viewed as a one-sample ap-proximation of the marginalized ranking parameters rather than an approximation based on multiple draws from the conditional distribution of the novel covariates given the con-ventional covariates. In practice, this means that the difference between the two forms of ranking parameters is rather modest for many candidate values of the internal regression parameters β, and these differences are even more muted when evaluating their impact on the estimated regression coefficient in the final estimated internal risk model. 30 References 
+
+Abida, W., M. L. Cheng, J. Armenia, S. Middha, K. A. Autio, H. A. Vargas, D. Rathkopf, M. J. Morris, D. C. Danila, S. F. Slovin, et al. (2019). Analysis of the prevalence of microsatellite instability in prostate cancer and response to immune checkpoint blockade. 
+
+JAMA oncology 5 (4), 471–478. Andersen, P. K., M. G. Hansen, and J. P. Klein (2004). Regression analysis of restricted mean survival time based on pseudo-observations. Lifetime data analysis 10 (4), 335–350. Antonarakis, E. S., P. Isaacsson Velho, W. Fu, H. Wang, N. Agarwal, V. S. Santos, B. L. Maughan, R. Pili, N. Adra, C. N. Sternberg, et al. (2020). Cdk12-altered prostate cancer: clinical features and therapeutic outcomes to standard systemic therapies, poly (adp-ribose) polymerase inhibitors, and PD-1 inhibitors. JCO precision oncology 4 , 370–381. Antonelli, J., C. Zigler, and F. Dominici (2017). Guided Bayesian imputation to adjust for confounding when combining heterogeneous data sources in comparative effectiveness research. Biostatistics 18 (3), 553–568. Armstrong, A. J., E. Garrett-Mayer, R. De Wit, I. Tannock, and M. Eisenberger (2010). Prediction of survival following first-line chemotherapy in men with castration-resistant metastatic prostate cancer. Clinical Cancer Research 16 (1), 203–211. Chatterjee, N., Y.-H. Chen, P. Maas, and R. J. Carroll (2016). Constrained maximum likelihood estimation for model calibration using summary-level information from external big data sources. Journal of the American Statistical Association 111 (513), 107–117. Cheng, W., J. M. Taylor, P. S. Vokonas, S. K. Park, and B. Mukherjee (2018). Improving estimation and prediction in linear regression incorporating external information from an established reduced model. Statistics in Medicine 37 (9), 1515–1530. 31 Estes, J. P., B. Mukherjee, and J. M. Taylor (2018). Empirical Bayes estimation and pre-diction using summary-level information from external big data sources adjusting for vio-lations of transportability. Statistics in Biosciences 10 , 568–586. Gu, T., J. M. Taylor, W. Cheng, and B. Mukherjee (2019). Synthetic data method to incor-porate external information into a current study. Canadian Journal of Statistics 47 (4), 580–603. Gu, T., J. M. G. Taylor, and B. Mukherjee (2023). A synthetic data integration framework to leverage external summary-level information from heterogeneous populations. Biomet-rics 79 (4), 3831–3845. Halabi, S., C.-Y. Lin, W. K. Kelly, K. S. Fizazi, J. W. Moul, E. B. Kaplan, M. J. Morris, and E. J. Small (2014). Updated prognostic model for predicting overall survival in first-line chemotherapy for patients with metastatic castration-resistant prostate cancer. Journal of Clinical Oncology 32 (7), 671–677. Halabi, S., C.-Y. Lin, E. J. Small, A. J. Armstrong, E. B. Kaplan, D. Petrylak, C. N. Sternberg, L. Shen, S. Oudard, J. De Bono, et al. (2013). Prognostic model predicting metastatic castration-resistant prostate cancer survival in men treated with second-line chemotherapy. Journal of the National Cancer Institute 105 (22), 1729–1737. Han, A. K. (1987). Non-parametric analysis of a generalized regression model: the maximum rank correlation estimator. Journal of Econometrics 35 (2-3), 303–316. Han, P. and J. F. Lawless (2019). Empirical likelihood estimation using auxiliary summary information with different covariate distributions. Statistica Sinica 29 (3), 1321–1342. Han, P., J. M. Taylor, and B. Mukherjee (2023). Integrating information from existing risk prediction models with no model details. Canadian Journal of Statistics 51 (2), 355–374. 32 Jaakkola, T. S. and M. I. Jordan (2000). Bayesian parameter estimation via variational methods. Statistics and Computing 10 (1), 25–37. Jee, J., C. Fong, K. Pichotta, T. N. Tran, A. Luthra, M. Waters, C. Fu, M. Altoe, S.-Y. Liu, S. B. Maron, et al. (2024). Automated real-world data integration improves cancer outcome prediction. Nature 636 (8043), 728–736. Johnson, B. A. and L. Peng (2008). Rank-based variable selection. Journal of Nonparametric Statistics 20 (3), 241–252. Lanka, S. M., N. A. Zorko, E. S. Antonarakis, and P. C. Barata (2023). Metastatic castration-resistant prostate cancer, immune checkpoint inhibitors, and beyond. Current Oncol-ogy 30 (4), 4246–4256. Ma, S. and J. Huang (2005). Regularized roc method for disease classification and biomarker selection with microarray data. Bioinformatics 21 (24), 4356–4362. Qin, J., H. Zhang, P. Li, D. Albanes, and K. Yu (2015). Using covariate-specific disease prevalence information to increase the power of case-control studies. Biometrika 102 (1), 169–180. Schr¨ oder, F. H., R. Kranse, N. Barbet, W. C. Hop, A. Kandra, and M. Lassus (2000). Prostate-specific antigen: A surrogate endpoint for screening new agents against prostate cancer? The Prostate 42 (2), 107–115. Sievers, G. L. and A. Abebe (2004). Rank estimation of regression coefficients using iterated reweighted least squares. Journal of Statistical Computation and Simulation 74 (11), 821– 831. Smaletz, O., H. I. Scher, E. J. Small, D. A. Verbel, A. McMillan, K. Regan, W. K. Kelly, and M. W. Kattan (2002). Nomogram for overall survival of patients with progressive 33 metastatic prostate cancer after castration. Journal of Clinical Oncology 20 (19), 3972– 3982. Sun, J., M. Zhao, N. Li, and J. Yang (2024). Rank estimation for the function-on-scalar model. Computational Statistics 39 (4), 1807–1823. Suzuki, K., J. Hirata, H. Ueki, N. Wakita, Y. Okamura, T. Hara, T. Terakawa, Y. Hyodo, K. Chiba, J. Teishima, et al. (2025). Nomogram for predicting the survival outcome of cabazitaxel treatment in patients with metastatic castration-resistant prostate cancer: A multi-institutional analysis. International Journal of Urology 32 (12), 1792–1799. Taylor, J. M., K. Choi, and P. Han (2023). Data integration: exploiting ratios of parameter estimates from a reduced external model. Biometrika 110 (1), 119–134. Templeton, A. J., C. Pezaro, A. Omlin, M. G. McNamara, R. Leibowitz-Amit, F. E. Vera-Badillo, G. Attard, J. S. De Bono, I. F. Tannock, and E. Amir (2014). Simple prognostic score for metastatic castration-resistant prostate cancer with incorporation of neutrophil-to-lymphocyte ratio. Cancer 120 (21), 3346–3352. Varadhan, R., N. C. Henderson, and C. O. Weiss (2016). Cross-design synthesis for ex-tending the applicability of trial evidence when treatment effect is heterogeneous: Part i. methodology. Communications in Statistics: Case Studies, Data Analysis and Applica-tions 2 (3-4), 112–126. Wu, Y. and L. Wang (2021). Resampling-based confidence intervals for model-free robust inference on optimal treatment regimes. Biometrics 77 (2), 465–476. 34 A Further Details for Rank Association Measures 
+
+## A.1 Spearman’s Rank Correlation 
+
+If there are no ties among the ranking parameters ψ1(β), . . . , ψ n(β), then the ranking pa-rameters ψ1(β), . . . , ψ n(β) exhaust the set of intergers {1, . . . , n } and we have 
+
+> n
+
+X
+
+> i=1
+
+ψi(β)¯ r = ¯ r
+
+> n
+
+X
+
+> i=1
+
+i = ¯rn (n + 1) 2
+
+> n
+
+X
+
+> i=1
+
+ψi(β) − ¯ψ(β) 2 =
+
+> n
+
+X
+
+> i=1
+
+i2 − 2
+
+n + 1 2
+
+ nX
+
+> i=1
+
+i + n(n + 1) 2
+
+4= n(n + 1)(2 n + 1) 6 − n(n + 1) 2
+
+2 + n(n + 1) 2
+
+4= 2n(n + 1)(2 n + 1) 12 − 3n(n + 1) 2
+
+12 = 4n3 + 6 n2 + 2 n
+
+12 − 3n3 − 6n2 − 3n
+
+12 = n3 − n
+
+12 .
+
+## A.2 Kendall’s τ
+
+The usual way to express Kendall’s tau between the vectors ( ψ1(β), . . . , ψ n(β)) and ( r1, . . . , r n)is the following 
+
+κ(ψ(β), r) = 2
+
+n(n − 1) 
+
+X
+
+> i<j
+
+I
+
+
+
+{ψj (β) − ψi(β)}{ rj − ri} > 0
+
+
+
+= 1
+
+n(n − 1) 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+I
+
+
+
+{ψi(β) − ψj (β)}{ ri − rj } > 0
+
+
+
+35 Then, if we use the fact that ψi(β) − ψj (β) > 0 only if xTi β > xTj β, we can see that, if there are no ties among the xTi β, we have 
+
+I
+
+
+
+{ψi(β) − ψj (β)}{ ri − rj } > 0
+
+
+
+= I
+
+
+
+{(xi − xj )T β}{ ri − rj } > 0
+
+
+
+= I{(xi − xj )T β > 0}I(ri − rj > 0) + I{(xi − xj )T β < 0}I(ri − rj < 0) = I{(xi − xj )T β > 0}I(ri − rj > 0) + 
+
+h
+
+1 − I{(xi − xj )T β > 0}
+
+i
+
+I(ri − rj < 0) = I(ri − rj < 0) + I{(xi − xj )T β > 0}
+
+h
+
+I(ri − rj > 0) − I(ri − rj < 0) 
+
+i
+
+= I(ri − rj < 0) + I{(xi − xj )T β > 0}
+
+h
+
+2I(ri − rj > 0) − 1
+
+i
+
+,
+
+where above we used the fact that if there are no ties among the xTi β we have I{(xi −xj )T β >
+
+0} = 1 − I{(xi − xj )T β < 0}.Hence, when there are no ties among the xTi β, Kendall’s tau can be re-expressed as 
+
+κ(ψ(β), r) = 1
+
+n(n − 1) 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+I
+
+
+
+{ψj (β) − ψi(β)}{ rj − ri} > 0
+
+
+
+.
+
+= 1
+
+n(n − 1) 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+I(ri − rj < 0) + 1
+
+n(n − 1) 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+I{(xi − xj )T β > 0}
+
+h
+
+2I(ri − rj > 0) − 1
+
+i
+
+.
+
+# B Justification of MM Algorithm (Theorem 1) 
+
+Letting aij = ( xi − xj )/ν , our aim is to minimize the following objective function: 
+
+ℓ(β0, β) = LI (β) − λ log 
+
+ nX
+
+> i=1
+> n
+
+X
+
+> j=1
+
+wij g1(aTij β)
+
+
+
+= LI (β) + λL E (β).
+
+36 To minimize this, let us first define the quasi-probabilities Vij (β) as 
+
+Vij (β) = wij g1(aTij β)
+
+P
+
+> i
+
+P 
+
+> j
+
+wij g1(aTij β) = vij (β)
+
+P
+
+> i
+
+P 
+
+> j
+
+vij (β), (20) where vij (β) = wij g1(aTij β). From (20), we can see that, for any vectors β and β(t), we have 
+
+− log 
+
+ vij (β)
+
+Vij (β)
+
+
+
+= LE (β) and 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) = 1 .
+
+Hence, we can express LE (β) as 
+
+LE (β) = 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t))LE (β) = −
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+ vij (β)
+
+Vij (β)
+
+
+
+. (21) Further expanding (21), we have 
+
+LE (β) = −
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+vij (β)
+
+
+
+−
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+ 1
+
+Vij (β)
+
+
+
+= −
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+vij (β)
+
+
+
+−
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+Vij (β(t))
+
+Vij (β)
+
+
+
++
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+Vij (β(t))
+
+
+
+≤ −
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+vij (β)
+
+
+
++
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+Vij (β(t))
+
+
+
+=
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+1 + exp {− aTij β}
+
+
+
+− X
+
+> i
+
+X
+
+> j
+
+Vij (β(t)) log( wij )+
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+Vij (β(t))
+
+
+
+, (22) where the above inequality follows from Gibb’s inequality. To further develop the inequality for LE (β) in (22), we consider the following inequality for 37 logistic log-likelihoods established in (Jaakkola and Jordan, 2000): log 
+
+
+
+1 + exp {− aTij β}
+
+
+
+≤ 12aTij (β(t) − β) + 12Wij (β(t))
+
+
+
+(aTij β(t))2 − (aTij β)2
+
+
+
++ log 
+
+
+
+1 + exp {− aTij β(t)}
+
+
+
+, (23) which holds for any vectors β and β(t). In (23), the term Wij (β(t)) is defined as 
+
+Wij (β(t)) = tanh( −aTij β(t)/2) 2aTij β(t) .
+
+Combining (22) and (23), we obtain 
+
+LE (β) ≤ −12
+
+X
+
+> i
+
+X
+
+> j
+
+Vij (β(t))aTij β − 12
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t))Wij (β(t))( aTij β)2 + 12
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t))aTij β(t)
+
++12
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t))Wij (β(t))( aTij β(t))2 +
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+1 + exp {− aTij β(t)}
+
+
+
+−
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log( wij ) + 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+Vij (β(t))
+
+
+
+= G(β|β(t)).
+
+So, we have established that LE (β) ≤ G(β|β(t)) for any vectors β and β(t). Now, consider 38 G(β(t)|β(t)): 
+
+G(β(t)|β(t)) =
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+1 + exp {− aTij β(t)}
+
+
+
+−
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log( wij )+
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+Vij (β(t)) log 
+
+
+
+Vij (β(t))
+
+
+
+= − X
+
+> i
+
+X
+
+> j
+
+Vij (β(t)) log 
+
+ wij 
+
+1 + exp {− aTij β(t)}
+
+
+
++ X
+
+> i
+
+X
+
+> j
+
+Vij (β(t)) log 
+
+
+
+Vij (β(t))
+
+
+
+= − X
+
+> i
+
+X
+
+> j
+
+Vij (β(t)) log 
+
+
+
+vij (β(t))
+
+
+
++ X
+
+> i
+
+X
+
+> j
+
+Vij (β(t)) log 
+
+
+
+Vij (β(t))
+
+
+
+= − X
+
+> i
+
+X
+
+> j
+
+Vij (β(t)) log 
+
+vij (β(t))
+
+Vij (β(t) )
+
+
+
+= X
+
+> i
+
+X
+
+> j
+
+Vij (β(t))LE (β(t))= LE (β(t)).
+
+We can express G(β|β(t)) as 
+
+G(β|β(t)) = −12(VtAβ)T 1 − 12βT AT VtWtAβ + C(β(t)),
+
+where Wt is a matrix with diagonal elements Wij (β(t)) and Vt is a matrix with diagonal elements Vij (β(t)). Note that for continuous outcomes, 
+
+ℓ(β) = −βT XT y + 12βT XT Xβ − λ
+
+2 βT AT Vt1 + λ
+
+2 βT AT VtWtAβ + λC (β(t))= −βT (XT y + λ
+
+2 AT Vt1) + 12βT
+
+
+
+XT X + λAT VtWtA
+
+
+
+β + C(β(t)).
+
+Thus, the MM update of the parameter vector is 
+
+β(t+1) =
+
+
+
+XT X + λAT VtWtA
+
+−1
+
+(XT y + λ
+
+2 AT Vt1).
+
+39

@@ -1,0 +1,3321 @@
+Title: Factor-Adjusted Multiple Testing for High-Dimensional Individual Mediation Effects
+
+URL Source: https://arxiv.org/pdf/2602.16497v1
+
+Published Time: Thu, 19 Feb 2026 02:01:20 GMT
+
+Number of Pages: 72
+
+Markdown Content:
+# Factor-Adjusted Multiple Testing for High-Dimensional Individual Mediation Effects 
+
+## Chen Shi 1, Zhao Chen ∗1 , and Christina Dan Wang †2 1School of Data Science, Fudan University 
+
+> 2
+
+Business Division, New York University Shanghai 
+
+## February 19, 2026 
+
+Abstract 
+
+Identifying individual mediators is a central goal of high-dimensional mediation analysis, yet pervasive dependence among mediators can invalidate standard debiased inference and lead to substantial false discovery rate (FDR) inflation. We propose a Factor-Adjusted Debiased Mediation Testing (FADMT) framework that enables large-scale inference for individual mediation effects with FDR control under com-plex dependence structures. Our approach posits an approximate factor structure on the unobserved errors of the mediator model, extracts common latent factors, and con-structs decorrelated pseudo-mediators for the subsequent inferential procedure. We establish the asymptotic normality of the debiased estimator and develop a multiple testing procedure with theoretical FDR control under mild high-dimensional condi-tions. By adjusting for latent factor induced dependence, FADMT also improves robustness to spurious associations driven by shared latent variation in observational studies. Extensive simulations demonstrate the superior finite-sample performance across a wide range of correlation structures. Applications to TCGA-BRCA multi-omics data and to China’s stock connect study further illustrate the practical utility of the proposed method. 
+
+Keywords: High-dimensional mediation analysis; High dimensional inference; Factor model; False discovery rate 
+
+> ∗
+
+Corresponding author: zchen_fdu@fudan.edu.cn. 
+
+> †
+
+Corresponding author: christina.wang@nyu.edu. 
+
+1
+
+> arXiv:2602.16497v1 [stat.ME] 18 Feb 2026
+
+# 1 Introduction 
+
+Understanding the mechanisms through which an exposure affects an outcome is a central problem across many scientific disciplines. Mediation analysis provides a principled frame-work for decomposing the total effect into a direct effect and an indirect effect transmitted through intermediate variables (Baron & Kenny 1986, MacKinnon et al. 2004). In modern genomics and multi-omics studies and increasingly in finance, hundreds or thousands of candidate mediators are routinely measured, making individual mediator discovery both scientifically important and statistically challenging. Two difficulties are particularly acute in high dimensions: mediators exhibit strong dependence driven by shared latent variation, and identifying active mediators necessitates rigorous simultaneous inference to maintain false discovery rate (FDR) control. A growing literature studies high-dimensional mediation, with much of it focusing on inference for the overall indirect effect, which aggregates contributions from all mediators (Huang & Pan 2016, Zhou et al. 2020, Guo et al. 2022, 2023, Lin et al. 2023). Although informative, overall indirect effects can mask important mechanistic signals when individ-ual mediation effects cancel out due to opposing directions. This motivates methods for individual mediation effect discovery. Existing methods for testing individual mediation effects in high dimensions generally follow two paradigms: marginal modeling, which relies on simplifying independence as-sumptions and apply multiple testing to marginal regression coefficients (Dai et al. 2022, Liu et al. 2022, Du et al. 2023) and joint modeling, which employs high-dimensional infer-ence or variable selection techniques such as screening, debiased Lasso, and adaptive Lasso (Zhang et al. 2016, 2021, Derkach et al. 2019, Shuai et al. 2023). While these approaches offer modeling flexibility, their validity is severely compromised by pervasive dependence among mediators. 2Strong dependence among mediators presents two fundamental challenges. First, high-dimensional inference or variable selection procedure rely on structural conditions such as irrepresentable condition for variable selection, or the compatibility/restricted eigenvalue (RE) conditions for valid inference. Strong correlation can disrupt these regular conditions, leading to procedure failure (Fan et al. 2020). Second, controlling the FDR in large-scale multiple testing becomes difficult when test statistics are strongly dependent, violating the assumptions underlying many classical FDR procedures (Benjamini & Hochberg 1995, Benjamini & Yekutieli 2001, Storey et al. 2004). Empirical evidence shows that ignoring such dependence can result in severe FDR inflation (Wu 2008, Blanchard & Roquain 2009, Fan, Han & Gu 2012, Fan et al. 2019). To address these challenges, we propose a Factor-Adjusted Debiased Mediation Testing (FADMT) framework for high-dimensional individual mediation analysis with FDR control. Our motivation is that dependence among mediators in modern omics studies is often driven by a few common factors, so that an approximate factor structure can provide a useful and parsimonious representation (Bai 2003, Fan et al. 2013). By separating pervasive factor-driven dependence from idiosyncratic variation, factor-adjusted methods have been shown to substantially improve inference and multiple testing accuracy (Fan et al. 2019, 2024). A fundamental difference between our setting and existing factor-adjusted frameworks is that traditional approximate factor models are applied to observable data, whereas we innovatively apply factor analysis to the unobserved errors of the mediator model. This requires a two-step construction: we first estimate the latent factor component and obtain estimated idiosyncratic components, which serve as decorrelated pseudo-mediators. We then use these pseudo-mediators for downstream debiased inference and multiple testing. This shift introduces new technical challenges as the first-step estimation error propagates into downstream procedure. We establish the asymptotic normality of the debiased estimator under mild regular con-3ditions and develop a theoretically valid FDR control rule for individual mediation effects. Extensive simulations further demonstrate strong finite-sample performance: FADMT con-trols FDR across a wide range of dependence structures while maintaining competitive power relative to existing methods. We further apply our method to a multi-omics dataset from the TCGA-BRCA cohort, investigating whether DNA methylation mediates the ef-fect of age at diagnosis on MKI67 gene expression, and to a financial stock connect setting, examining whether market liberalization affects firms’ idiosyncratic risk through changes in corporate fundamentals. These applications demonstrate the method’s ability to uncover interpretable mediation effects in real-world high-dimensional data across domains. This paper makes several key contributions. First, in the theory of high-dimensional inference and FDR control under strong dependence, we provide a rigorous foundation for large-scale multiple testing in settings where classical FDR procedures can fail due to pervasive correlations. Rather than relying on independence or weak-dependence assump-tions, we establish a factor-adjusted framework which enables accurate FDR control even in strongly correlated, high-dimensional regimes. This offers a general theoretical resolution to a long-standing challenge in high-dimensional inference. Second, at the methodological level of factor-adjusted inference, we expand the existing paradigm by moving factor adjustment from observable quantities to a latent error structure. Unlike FARM (Fan et al. 2024) and FarmTest (Fan et al. 2019), which impose factor models on observed variables, our framework posits and exploits an approximate factor structure in the unobserved errors of the mediator model. Third, we instantiate these theoretical and methodological developments in high-dimensional individual mediation testing under a composite null. For the product-form mediation effect, we propose and analyze a MaxP-based, factor-adjusted testing procedure that explicitly accounts for the union structure of the null hypothesis. Moreover, our framework improves robustness to latent common-factor dependence that manifests as 4pervasive shared components driving strong correlations among mediators. By estimating and adjusting for these latent factors through the mediator error structure, FADMT separates shared variation from mediator-specific signals, stabilizes downstream inference, and enhances the interpretability of discovered mediation findings. We adopt the following notations throughout the article. For a vector 𝒂 = (𝑎 1, … , 𝑎 𝑑 ) ∈ ℝ𝑑 , we denote its ℓ1, ℓ 2, and ℓ∞ norms by ‖𝒂‖ 1, ‖𝒂‖ 2, and ‖𝒂‖ ∞, respectively. The sub-Gaussian norm of a random variable 𝑍 is defined as ‖𝑍‖ 𝜓 2 = inf {𝑡 > 0 ∶ 𝔼 exp (𝑍 2/𝑡 2) ≤ 2} ,and for a random vector 𝒙 , ‖𝒙‖ 𝜓 2 = sup ‖𝒗‖ 2=1 ‖𝒗 ⊤𝒙‖ 𝜓 2 . For a matrix 𝐀 = (𝑎 𝑖𝑗 ), we let 
+
+‖𝐀‖ max = max 𝑖,𝑗 |𝑎 𝑖𝑗 |, ‖𝐀‖ 𝐹 be its Frobenius norm, and ‖𝐀‖ 1, ‖𝐀‖ ∞, ‖𝐀‖ (or ‖𝐀‖ 2) be its ℓ1, ℓ ∞, and spectral norms. 𝜆 min (𝐀) and 𝜆 max (𝐀) denote the minimum and maximum eigenvalues of a square matrix 𝐀 . For any set 𝒮 , |𝒮| denotes its cardinality, and [𝑝] = {1, … , 𝑝} . For two positive sequences 𝑎 𝑛 and 𝑏 𝑛 , we write 𝑎 𝑛 = 𝑂(𝑏 𝑛 ) if there exists a positive constant 𝐶 such that 𝑎 𝑛 ≤ 𝐶𝑏 𝑛 for all sufficiently large 𝑛 , and 𝑎 𝑛 = 𝑜(𝑏 𝑛 )
+
+if 𝑎 𝑛 /𝑏 𝑛 → 0 as 𝑛 → ∞ . Similarly, 𝑎 𝑛 = 𝑂 𝑃 (𝑏 𝑛 ) and 𝑎 𝑛 = 𝑜 𝑃 (𝑏 𝑛 ) indicate that the corresponding relationships hold in probability. The rest of the article is organized as follows. Section 2 introduces the model and hy-potheses and presents the proposed factor-adjusted debiased inference and multiple testing procedure. Section 3 establishes theoretical guarantees, including asymptotic validity and FDR control. Section 4 reports simulation studies. Section 5 presents data applications, and Section 6 concludes the paper. 
+
+# 2 Methodology 
+
+## 2.1 Problem Setup 
+
+We consider a high-dimensional mediation framework with 𝑛 independent and identically distributed (i.i.d.) observations {(𝑦 𝑖 , 𝑠 𝑖 , m𝑖 )} 𝑛 𝑖=1 , where 𝑦 𝑖 ∈ ℝ is the outcome, 𝑠 𝑖 ∈ ℝ is the 5exposure (or treatment), and 𝒎 𝑖 = (𝑚 1𝑖 , … , 𝑚 𝑝𝑖 )⊤ ∈ ℝ 𝑝 collects 𝑝 candidate mediators. We allow the number of mediators 𝑝 to exceed the sample size 𝑛 , accommodating high-dimensional settings. The underlying relationships among these variables are modeled via the following linear structural equations: 
+
+𝑦 𝑖 = 𝑠 𝑖 𝛼 𝑠 + 𝒎 ⊤𝑖 𝜶 𝑚 + 𝜉 𝑖 , (1) 
+
+𝒎 𝑖 = 𝑠 𝑖 𝜸 𝑠 + 𝒓 𝑖 , (2) where 𝜶 𝑚 = (𝛼 𝑚1 , … , 𝛼 𝑚𝑝 )⊤ ∈ ℝ 𝑝 captures the mediator-outcome effects, and 𝜸 𝑠 =(𝛾 𝑠1 , … , 𝛾 𝑠𝑝 )⊤ ∈ ℝ 𝑝 captures the exposure-mediator effects. The errors {𝜉 𝑖 }𝑛 𝑖=1 are i.i.d. with 𝔼(𝜉 𝑖 ) = 0 and Var (𝜉 𝑖 ) = 𝜎 2. The residual vectors {𝒓 𝑖 }𝑛 𝑖=1 are i.i.d. with 𝔼(𝒓 𝑖 ) = 0
+
+and Cov (𝒓 𝑖 ) = 𝜮 𝑅 . We assume 𝜉 𝑖 is independent of (𝑠 𝑖 , 𝒎 𝑖 , 𝒓 𝑖 ) and 𝒓 𝑖 is independent of 
+
+𝑠 𝑖 .In matrix form, let 𝒚 = (𝑦 1, … , 𝑦 𝑛 )⊤ ∈ ℝ𝑛 denote the outcome vector, 𝒔 =(𝑠 1, … , 𝑠 𝑛 )⊤ ∈ ℝ 𝑛 the exposure vector, and 𝐌 = (𝒎 1, … , 𝒎 𝑛 )⊤ ∈ ℝ 𝑛×𝑝 the mediator design matrix. We also write 𝝃 = (𝜉 1, … , 𝜉 𝑛 )⊤ ∈ ℝ 𝑛 and 𝐑 = (𝒓 1, … , 𝒓 𝑛 )⊤ ∈ ℝ 𝑛×𝑝 .Substituting (2) into (1) yields the reduced-form model for the outcome: 
+
+𝑦 𝑖 = 𝑠 𝑖 𝛼 𝑠 + 𝑠 𝑖 𝜸 ⊤𝑠 𝜶 𝑚 + 𝒓 ⊤𝑖 𝜶 𝑚 + 𝜉 𝑖 . (3) In this expression, 𝛼 𝑠 captures the direct effect of the exposure 𝑠 𝑖 on the outcome 𝑦 𝑖 ,and 𝜸 ⊤𝑠 𝜶 𝑚 = ∑ 𝑝 𝑗=1 𝛾 𝑠𝑗 𝛼 𝑚𝑗 is the total (aggregate) mediation effect through all mediators. Prior work has primarily focused on testing the overall mediation effect (Zhou et al. 2020, Guo et al. 2023, Lin et al. 2023): H0 ∶ 𝜸 ⊤𝑠 𝜶 𝑚 = 0 𝑣𝑒𝑟𝑠𝑢𝑠 H1 ∶ 𝜸 ⊤𝑠 𝜶 𝑚 ≠ 0. 
+
+While testing the overall mediation effect provides a global assessment of whether medi-ators collectively transmit the effect of the exposure on the outcome, it does not reveal which specific mediators are responsible for the observed indirect effect. This limitation is 6especially pertinent in high-dimensional settings, where the effects of individual mediators may vary in direction, potentially canceling each other out in the overall effect. There-fore, testing individual mediation effects becomes essential for identifying specific active mediators and understanding the underlying causal mechanisms in greater detail. Our goal is to test individual mediation effects for each mediator 𝑗 ∈ [𝑝] , defined as the product 𝛾 𝑠𝑗 𝛼 𝑚𝑗 . The corresponding hypotheses are stated as: H0𝑗 ∶ 𝛾 𝑠𝑗 𝛼 𝑚𝑗 = 0 𝑣𝑒𝑟𝑠𝑢𝑠 H1𝑗 ∶ 𝛾 𝑠𝑗 𝛼 𝑚𝑗 ≠ 0, 𝑗 = 1, … , 𝑝. 
+
+Testing these individual hypotheses in high-dimensional settings presents several challenges. First, the regime where 𝑝 ≫ 𝑛 necessitates regularized estimation. Classical estimators tend to be biased in high dimensions due to regularization effects, which calls for debi-ased estimation methods. Second, mediators often exhibit complex dependencies due to shared biological pathways or latent factors. These dependencies pose significant challenges for both variable selection and statistical inference. Third, the simultaneous testing of 𝑝 
+
+hypotheses requires rigorous control of the False Discovery Rate (FDR). Standard FDR procedures may suffer from inflated error rates under the strong dependence, emphasizing the importance of dependence-adjusted multiple testing frameworks. 
+
+## 2.2 Latent Factor Adjustment and Model Reformulation 
+
+To mitigate the strong dependence among mediators, we adopt a factor-adjusted strategy inspired by recent work on high-dimensional inference under latent factor structures (Fan et al. 2019, 2024). The key idea is to remove a low-rank common component that drives most cross-mediator correlations, and to use the estimated idiosyncratic components for downstream inference. We work with the mediator-equation errors 𝒓 𝑖 in (2), which capture the variation in 𝒎 𝑖 
+
+7not explained by the exposure 𝑠 𝑖 . We assume an approximate factor model: 
+
+𝒓 𝑖 = 𝐁𝒇 𝑖 + 𝒖 𝑖 ,
+
+where 𝒇 𝑖 ∈ ℝ 𝐾 are latent factors, 𝐁 ∈ ℝ 𝑝×𝐾 is the loading matrix, and 𝒖 𝑖 ∈ ℝ 𝑝 are idiosyn-cratic components with weak dependence. A crucial distinction between our framework and traditional factor analysis where models are typically applied to observable data is that 𝒓 𝑖 is unobserved. Consequently, we must first estimate it by ̂ 𝒓 𝑖 = 𝒎 𝑖 − 𝑠 𝑖 ̂ 𝜸 𝑠 using the OLS estimator ̂ 𝜸 𝑠 . This additional estimation step introduces a first-stage error, which propagates into the subsequent factor extraction and high-dimensional inference. Let 𝐅 = (𝒇 1, … , 𝒇 𝑛 )⊤ ∈ ℝ 𝑛×𝐾 , and 𝐔 = (𝒖 1, … , 𝒖 𝑛 )⊤ ∈ ℝ 𝑛×𝑝 . We apply prin-cipal component analysis (Bai 2003, Fan et al. 2013) to the estimated residual matrix ̂𝐑 = (̂𝒓 1, … ,̂ 𝒓 𝑛 )⊤ ∈ ℝ 𝑛×𝑝 to obtain the latent factors and loadings. Under standard identifiability conditions: Cov (𝒇 𝑖 ) = 𝐈 𝐾 , and 𝐁 ⊤𝐁 is diagonal .
+
+The estimators are derived as follows: the columns of ̂ F/√𝑛 are the eigenvectors of ̂ 𝐑̂𝐑 ⊤
+
+corresponding to the top 𝐾 eigenvalues, ̂ B = 𝑛 −1 ̂ 𝐑 ⊤̂ F, and ̂ 𝐔 =̂ 𝐑 −̂ 𝐅̂𝐁 ⊤ = (𝐈 𝑛 −𝑛 −1 ̂ 𝐅̂𝐅 ⊤)̂𝐑 .
+
+Remark 1. A practical consideration is the choice of the number of factors 𝐾 . There have been various method to estimate the number of factors (Bai & Ng 2002, Lam & Yao 2012, Ahn & Horenstein 2013, Fan et al. 2022).We adopt the eigenvalue ratio method in Lam & Yao (2012), Ahn & Horenstein (2013), which is widely used in the factor modeling literature and yields a consistent estimator for the number of factors 𝐾 . Let 𝜆 𝑘 (̂𝐑̂𝐑 ⊤) be the 𝑘 -th largest eigenvalue of ̂ 𝐑̂𝐑 ⊤ and 𝐾 max be a prescribed upper bound. Then, the number of factors is given by ̂𝐾 = arg max 
+
+> 𝑘≤𝐾 max
+
+𝜆 𝑘 (̂𝐑̂𝐑 ⊤)𝜆 𝑘+1 (̂𝐑̂𝐑 ⊤).
+
+8With the factor structure identified, we can decompose the mediator matrix as 𝐌 = 𝒔̂𝜸 ⊤𝑠 +̂ 𝐅̂𝐁 ⊤ +̂ 𝐔 . Substituting this decomposition into the outcome model (1) and rear-ranging terms, we arrive at the factor-adjusted regression framework: 
+
+𝒚 = 𝒔(𝛼 𝑠 +̂ 𝜸 ⊤𝑠 𝜶 𝑚 ) +̂ 𝐅̂𝐁 ⊤𝜶 𝑚 +̂ 𝐔𝜶 𝑚 + 𝝃 = 𝒔𝛼 1 +̂ 𝐅𝜶 2 +̂ 𝐔𝜶 𝑚 + 𝝃, (4) where 𝛼 1 = 𝛼 𝑠 +̂ 𝜸 ⊤𝑠 𝜶 𝑚 and 𝜶 2 =̂ 𝐁 ⊤𝜶 𝑚 are treated as nuisance parameters. This re-formulation allows us to explicitly adjust for shared latent dependencies among mediators, while leveraging the decorrelated idiosyncratic residuals ̂ 𝐔 as pseudo-predictors for infer-ence. This transformation enables valid inference even in the presence of strong dependence and high dimensionality, as will be demonstrated in our theoretical and numerical analyses. 
+
+## 2.3 Test Statistic 
+
+Building on the factor-adjusted model, we now develop the inferential procedure for indi-vidual mediation effects. A widely adopted strategy in mediation literature is the joint significance test (also known as the MaxP test) in MacKinnon et al. (2002), which has been shown to outperform the Sobel test in both theoretical and empirical studies (Liu et al. 2022, Du et al. 2023). The MaxP test rejects the null hypothesis 𝐻 0𝑗 only when both components are statistically significant. Specifically, let 𝑝 𝛾 𝑠𝑗 and 𝑝 𝛼 𝑚𝑗 be the 𝑝 -values for testing 𝛾 𝑠𝑗 = 0 and 𝛼 𝑚𝑗 = 0 , respectively. The test statistic is defined as: 
+
+𝑃 max ,𝑗 = max {𝑝 𝛾 𝑠𝑗 , 𝑝 𝛼 𝑚𝑗 }, 𝑗 = 1, … , 𝑝. 
+
+While can be readily obtained via standard OLS regression, constructing a valid 𝑝 -value for 𝛼 𝑚𝑗 in (4) is challenging due to the high-dimensionality and the latent dependence structure. To this end, we employ a factor-adjusted debiased Lasso approach to recover asymptotic normality for the estimated mediator-outcome effects. 9Recalling the augmented Equation (4), we obtain an initial penalized estimator of 𝜶 𝑛 𝑚 
+
+by fitting a high-dimensional regression of 𝒚 on (𝒔,̂ 𝐅,̂ 𝐔) , treating the coefficients on (𝒔,̂ 𝐅) 
+
+as nuisance parameters. Specifically, we solve ̂𝜶 𝑛 𝑚 ∈ arg min 
+
+> 𝛼 1,𝜶 2,𝜶 𝑚
+
+{ 12𝑛 ‖𝒚 − 𝒔𝛼 1 −̂ 𝐅𝜶 2 −̂ 𝐔𝜶 𝑚 ‖22 + 𝜆‖𝜶 𝑚 ‖1} . (5) Due to regularization, ̂ 𝜶 𝑛 𝑚 is biased. Following the debiasing framework for high-dimensional M-estimators (Javanmard & Montanari 2014, Van de Geer et al. 2014), we define the debiased estimator as: ̂𝜶 𝑑 𝑚 =̂ 𝜶 𝑛 𝑚 + 1𝑛̃ 𝜴̂𝐔 ⊤(𝒚 −̂ 𝐔̂𝜶 𝑛 𝑚 )=̂ 𝜶 𝑛 𝑚 + 1𝑛̃ 𝜴̂𝐔 ⊤(𝒔𝛼 1 +̂ 𝐅𝜶 2 +̂ 𝐔𝜶 𝑚 + 𝝃 −̂ 𝐔̂𝜶 𝑛 𝑚 )
+
+where ̃ 𝜴 ∈ ℝ 𝑝×𝑝 serves as a decorrelating matrix. Using the orthogonality properties ̂𝐔 ⊤𝒔 = 0 and ̂ 𝐔 ⊤̂ 𝐅 = 0 , the error of the debiased estimator can be decomposed as: 
+
+√𝑛(̂𝜶 𝑑 𝑚 − 𝜶 𝑚 ) = 1√𝑛̃ 𝜴̂𝐔 ⊤𝝃 + √𝑛(̃𝜴̂𝜮 𝑈 − 𝐈)(𝜶 𝑚 −̂ 𝜶 𝑛 𝑚 ), 
+
+where ̂ 𝜮 𝑈 = 𝑛 −1 ̂ 𝐔 ⊤̂ 𝐔 . The first term represents the leading stochastic component with asymptotic variance 𝜎 2̃ 𝜴̂𝜮 𝑈 ̃ 𝜴 ⊤, while the second term is the bias that becomes negligible under appropriate regular conditions. The decorrelating matrix ̃ 𝜴 can be constructed via node-wise Lasso regression (Van de Geer et al. 2014, Javanmard & Montanari 2018) or constrained convex optimization (Javanmard & Montanari 2014, Battey et al. 2018). We provide details for these approaches in the Appendix and compare their finite-sample performance in Section 4. 
+
+Remark 2 (Orthogonality of the pseudo-mediators) . By construction, the estimated id-iosyncratic component matrix satisfies ̂ 𝐔 ⊤̂ 𝐅 = 0 and ̂ 𝐔 ⊤𝒔 = 0. Since ̂ 𝐑 is the OLS residual matrix from regressing 𝐌 on 𝒔 , we have ̂ 𝐑 ⊤𝒔 = 0 . Given that ̂ 𝐅 is derived from the principal components of ̂ 𝐑 , its columns lie in the column space of ̂ 𝐑 , implying ̂ 𝐅 ⊤𝒔 = 0 .Consequently, ̂ 𝐔 = (𝐈 𝑛 − 𝑛 −1 ̂ 𝐅̂𝐅 ⊤)̂𝐑 also satisfies ̂ 𝐔 ⊤𝒔 = 0 .
+
+10 Based on the asymptotic normality of the debiased estimator ̂ 𝜶 𝑑 𝑚 established in Theo-rem 1, the 𝑝 -value for testing 𝐻 0 ∶ 𝛼 𝑚𝑗 = 0 is given by: 
+
+𝑝 𝛼 𝑚𝑗 = 2(1 − Φ( √𝑛|̂𝛼 𝑑 𝑚𝑗 |̂ 𝜎[̃𝜴̂𝜮 𝑈 ̃ 𝜴 ⊤]1/2 𝑗,𝑗 
+
+)), 
+
+where Φ(⋅) denotes the cumulative distribution function (CDF) of the standard normal distribution, ̂ 𝜎 is a consistent estimator for 𝜎 . By combining 𝑝 𝛼 𝑚𝑗 with the 𝑝 -value 𝑝 𝛾 𝑠𝑗 
+
+obtained from the first-stage OLS regression, we arrive at the joint significance test statistic 
+
+𝑃 max ,𝑗 = max {𝑝 𝛾 𝑠𝑗 , 𝑝 𝛼 𝑚𝑗 } for each 𝑗 ∈ [𝑝] . The complete procedure is summarized in Algorithm 1. 
+
+## 2.4 Multiple Testing and FDR Control 
+
+We aim to simultaneously test the 𝑝 mediation hypotheses 𝐻 0𝑗 ∶ 𝛾 𝑠𝑗 𝛼 𝑚𝑗 = 0 versus 𝐻 1𝑗 ∶𝛾 𝑠𝑗 𝛼 𝑚𝑗 ≠ 0 for 𝑗 = 1, … , 𝑝 . Let 𝑃 max ,𝑗 = max {𝑝 𝛾 𝑠𝑗 , 𝑝 𝛼 𝑚𝑗 } be the MaxP 𝑝 -value. For a threshold 𝑡 ∈ [0, 1] , define the rejection set ℛ(𝑡) = {𝑗 ∶ 𝑃 max ,𝑗 ≤ 𝑡} with 𝑅(𝑡) = |ℛ(𝑡)| . Let 
+
+𝒮 0 = {𝑗 ∶ 𝛾 𝑠𝑗 𝛼 𝑚𝑗 = 0} be the set of true mediation nulls and 𝑉 (𝑡) = |ℛ(𝑡) ∩ 𝒮 0| be the number of false discoveries. False Discovery Proportion (FDP) and FDR are defined as: FDP (𝑡) = 𝑉 (𝑡) 𝑅(𝑡) ∨ 1 , FDR (𝑡) = 𝔼{ FDP (𝑡)}. 
+
+A unique challenge in mediation analysis is that the null hypothesis H 0𝑗 is a composite null, representable as the union of three disjoint cases: H01,𝑗 ∶ 𝛼 𝑚𝑗 = 0, 𝛾 𝑠𝑗 ≠ 0 
+
+H10,𝑗 ∶ 𝛼 𝑚𝑗 ≠ 0, 𝛾 𝑠𝑗 = 0 
+
+H00,𝑗 ∶ 𝛼 𝑚𝑗 = 0, 𝛾 𝑠𝑗 = 0. 
+
+Write 𝜋 01 , 𝜋 10 , 𝜋 00 for their proportions among all 𝑝 tests. Standard FDR procedures, such as the Benjamini-Hochberg (BH) method, assume a uniform 𝑈 (0, 1) distribution for 11 Algorithm 1 Factor-adjusted debiased inference for individual mediation effects 
+
+Require: Data {(𝑦 𝑖 , 𝑠 𝑖 , 𝒎 𝑖 )} 𝑛 𝑖=1 with 𝒎 𝑖 ∈ ℝ 𝑝 .
+
+Ensure: MaxP 𝑝 -values 𝑃 max ,𝑗 for 𝑗 = 1, … , 𝑝 . 
+
+> 1:
+
+Path A (exposure →mediator). For each 𝑗 , regress 𝑚 𝑗𝑖 on 𝑠 𝑖 by OLS to obtain ̂ 𝛾 𝑠𝑗 
+
+and the 𝑝 -value 𝑝 𝛾 𝑠𝑗 . Let ̂ 𝐑 = 𝐌 − 𝒔̂𝜸 ⊤𝑠 . 
+
+> 2:
+
+Residual factor extraction. Apply PCA to ̂ 𝐑 to obtain (̂𝐅,̂ 𝐁) and the estimated idiosyncratic component matrix ̂ 𝐔 =̂ 𝐑 −̂ 𝐅̂𝐁 ⊤. 
+
+> 3:
+
+Factor-adjusted Lasso. Fit the penalized regression of 𝒚 on (𝒔,̂ 𝐅,̂ 𝐔) with an ℓ1
+
+penalty on 𝜶 𝑚 (as in (5)), yielding ̂ 𝜶 𝑛 𝑚 . 
+
+> 4:
+
+Debiasing. Construct a decorrelating matrix ̃ 𝜴 (nodewise Lasso or convex optimiza-tion). Form the debiased estimator ̂𝜶 𝑑 𝑚 =̂ 𝜶 𝑛 𝑚 + 1𝑛̃ 𝜴̂𝐔 ⊤(𝒚 −̂ 𝐔̂𝜶 𝑛 𝑚 ).  
+
+> 5:
+
+Path B (mediator →outcome) 𝑝 -values. Compute ̂ 𝜮 𝑈 = 𝑛 −1 ̂ 𝐔 ⊤̂ 𝐔 and a consistent ̂𝜎 . For each 𝑗 , compute 
+
+𝑝 𝛼 𝑚𝑗 = 2 {1 − Φ( √𝑛 |̂𝛼 𝑑 𝑚𝑗 |̂ 𝜎 [̃𝜴̂𝜮 𝑈 ̃ 𝜴 ⊤]1/2 𝑗𝑗 
+
+)} .  
+
+> 6:
+
+MaxP combination. Output 𝑃 max ,𝑗 = max {𝑝 𝛾 𝑠𝑗 , 𝑝 𝛼 𝑚𝑗 } for 𝑗 = 1, … , 𝑝 .null 𝑝 -values (Benjamini & Hochberg 1995, Benjamini & Yekutieli 2001). However, under the double-null H 00,𝑗 , 𝑃 𝑚𝑎𝑥,𝑗 follows Beta(2,1) distribution, as shown in Liu et al. (2022), Dai et al. (2022). This deviates from the standard uniform reference and makes BH-type procedures overly conservative. Motivated by recent developments in mediation testing, we construct a mixture null distribution to estimate the FDP more accurately (Liu et al. 2022, Dai et al. 2022). Under the high-dimensional sparse modeling framework, we assume that most mediators have no effect on the outcome. Consequently, the proportion of null cases where only the 12 mediator-outcome effect is present ( 𝜋 10 ) is negligible, and we focus on the mixture of H 01 
+
+and H 00 . We estimate the proportion of null exposure-mediator effects, 𝜋 𝛾 0 , using Storey’s method (Storey 2002): ̂𝜋 𝛾 0 (𝜂) = 1(1 − 𝜂)𝑝 
+
+> 𝑝
+
+∑
+
+> 𝑗=1
+
+1(𝑝 𝛾 𝑠𝑗 ≥ 𝜂), (6) where 𝜂 is a tuning parameter. This estimator assumes that most large 𝑝 values come from true null hypotheses and are uniformly distributed. For well-chosen 𝜂 , about 𝜋 0(1 − 𝜂) of the 𝑝 values lie in the interval (𝜂, 1] . Therefore, the proportion of 𝑝 values that exceed 𝜂 
+
+should be close to 𝜋 0(1 − 𝜂) . Under sparsity, ̂ 𝜋 𝛾 0 (𝜂) serves as an estimate for 𝜋 00 , while 
+
+1 −̂ 𝜋 𝛾 0 (𝜂) estimates 𝜋 01 .
+
+Remark 3. A value of 𝜂 = 1/2 is used in the SAM software in Storey (2003). Blanchard & Roquain (2009) suggests to use 𝜂 equal to the significance level for dependent 𝑝 values. We follow Storey et al. (2004) to adopt a bootstrap-based automatic selection for 𝜂 .
+
+Using the estimated null proportions, we define the adjusted FDP estimator as: ̂
+
+FDP 𝜂 (𝑡) = 𝑝 [̂𝜋 𝛾 0 (𝜂)𝑡 2 + (1 −̂ 𝜋 𝛾 0 (𝜂))𝑡] ∑𝑝 𝑗=1 1(𝑃 𝑚𝑎𝑥,𝑗 ≤ 𝑡) . (7) For a target FDR level 𝑞 ∈ (0, 1) , the optimal significance threshold is determined by: ̂𝑡 𝑞,𝜂 = sup {𝑡 ∶̂ FDP 𝜂 (𝑡) ≤ 𝑞}. (8) Theoretical results show this procedure controls the FDR asymptotically under appropriate regularity conditions. The full procedure is detailed in Algorithm 2. 
+
+# 3 Theoretical Results 
+
+This section establishes the theoretical foundations of the proposed factor-adjusted infer-ence framework. We begin by outlining the regularity conditions, then derive the con-vergence rates for the estimated latent structures. Finally, we establish the asymptotic normality of the debiased estimator and the validity of the FDR control procedure. 13 Algorithm 2 FDR control for MaxP 𝑝 -values 
+
+Require: {𝑝 𝛾 𝑠𝑗 , 𝑝 𝛼 𝑚𝑗 }𝑝 𝑗=1 ; target level 𝑞 ; tuning 𝜂 . 
+
+> 1:
+
+Compute 𝑃 max ,𝑗 = max {𝑝 𝛾 𝑠𝑗 , 𝑝 𝛼 𝑚𝑗 } for all 𝑗 . 
+
+> 2:
+
+Estimate ̂ 𝜋 𝛾 0 (𝜂) by (6) (with 𝜂 selected as in Storey et al. 2004).  
+
+> 3:
+
+For 𝑡 in the set of observed {𝑃 max ,𝑗 }, compute ̂ FDP 𝜂 (𝑡) in (7).  
+
+> 4:
+
+Set ̂ 𝑡 𝑞,𝜂 by (8) and reject {𝑗 ∶ 𝑃 max ,𝑗 ≤̂ 𝑡 𝑞,𝜂 }.
+
+## 3.1 Regularity Conditions and Error Propagation 
+
+To accommodate the high-dimensional setting, we impose the following assumptions on the data-generating process and the latent factor structure. 
+
+Assumption 1 (Sub-Gaussianity) . The sequence {(𝑠 𝑖 , 𝒇 ⊤𝑖 , 𝒖 ⊤𝑖 )⊤}𝑛 𝑖=1 are i.i.d. random vectors. The exposure 𝑠 𝑖 is sub-Gaussian with 𝔼[𝑠 2𝑖 ] > 0 . The latent factors 𝒇 𝑖 and idiosyncratic components 𝒖 𝑖 are zero mean sub-Gaussian vectors such that ‖𝒇 𝑖 ‖𝜓 2 ≤ 𝑐 0 and 
+
+‖𝒖 𝑖 ‖𝜓 2 ≤ 𝑐 0 for some positive constant 𝑐 0 ≤ ∞ .
+
+Assumption 2 (Pervasive Condition) . All the eigenvalues of B⊤B/𝑝 are bounded away from 0 and ∞ as 𝑝 → ∞ . That is, 0 < 𝑐 ≤ 𝜆 min (B⊤B/𝑝) ≤ 𝜆 max (B⊤B/𝑝) ≤ 𝐶 < ∞ .
+
+Assumption 3 (Loading matrix and Idiosyncratic component) . Let 𝜮 𝑢 = Cov (𝒖 𝑖 ). As-sume 𝜆 min (𝜮 𝑢 ) ≥ 𝑐 1, ‖𝜮 𝑢 ‖1 ≤ 𝑐 2, min 𝑠,𝑡∈[𝑝] var (𝑢 𝑠𝑖 𝑢 𝑡𝑖 ) > 𝑐 1 for some constants 𝑐 1, 𝑐 2 > 0 ,and ‖𝐁‖ max ≤ 𝐶 for some constant 𝐶 > 0 . In addition, for all 𝑖, 𝑗 ∈ [𝑛] there exists 
+
+𝐶 4 < ∞ such that 𝔼[𝑝 −1/2 {𝒖 ⊤𝑖 𝒖 𝑗 − 𝔼(𝒖 ⊤𝑖 𝒖 𝑗 )} 4] < 𝐶 4 and 𝔼‖𝑝 −1/2 𝐁 ⊤𝒖 𝑖 ‖42 < 𝐶 4.
+
+Remark 4. Assumption 1 is standard for high-dimensional inference, ensuring that tail behaviors are well-controlled via concentration inequalities. Assumptions 2 and 3 is common in factor models (Fan et al. 2013, 2020, 2024). Together, Assumptions 2 and 3 ensure that 
+
+𝒇 𝑖 and 𝒖 𝑖 can be consistently estimated by the PCA method . 
+
+A distinctive feature of our framework is that the factor model is fitted to estimated 14 residuals. The following proposition quantifies the error introduced by the first-stage OLS estimation. 
+
+Proposition 1. Under Assumption 1, we have 
+
+‖̂𝐑 − 𝐑‖ max = 𝑂 𝑃 (√ log 𝑛 log 𝑝 𝑛 ) . 
+
+Proposition 1 shows the OLS estimation error which propagates into the factor extrac-tion process. This rate determines the precision of the estimated idiosyncratic component ̂𝐔 , which serve as our pseudo-predictors. We define 𝑟 𝑛,𝑝 ∶= √ log 𝑛 log 𝑝 𝑛 for notational convenience. 
+
+Proposition 2. Suppose Assumptions 1-3 hold. Let 𝐇 = 𝑛 −1 𝐕 −1 ̂ 𝐅 ⊤𝐅𝐁 ⊤𝐁 , where 𝐕 ∈ ℝ𝐾×𝐾 is a diagonal matrix containing the first 𝐾 largest eigenvalues of 𝑛 −1 ̂ 𝐑̂𝐑 ⊤. Then: 1. max 𝑘∈[𝐾] 1𝑛 ∑𝑛 𝑖=1 ∣(̂𝒇 𝑖 − 𝐇𝒇 𝑖 )𝑘 ∣2
+
+= 𝑂 𝑃 (1/𝑛 + 1/𝑝 + 𝑟 2𝑛,𝑝 ) ; 
+
+2. 1𝑛 ∑𝑛 𝑖=1 ∥̂𝒇 𝑖 − 𝐇𝒇 𝑖 ∥2
+
+= 𝑂 𝑃 (1/𝑛 + 1/𝑝 + 𝑟 2𝑛,𝑝 )
+
+3. max 𝑗∈[𝑝] 𝑛 −1 ∑𝑛 𝑖=1 |̂𝑢 𝑗𝑖 − 𝑢 𝑗𝑖 |2 = 𝑂 𝑃 (log 𝑝 𝑛 + 1𝑝 + 𝑟 2𝑛,𝑝 ) ; 
+
+Remark 5. The results extend classical PCA error bounds (e.g., Fan et al. 2013) to the present two-stage setting, where PCA is applied to ̂ 𝐑 rather than the unobserved 𝐑 . The additional 𝑟 2𝑛,𝑝 term quantifies the impact of the first-stage residual-proxy error. 
+
+## 3.2 Asymptotic Normality of the Debiased Estimator 
+
+To establish the validity of the individual mediation tests, we require the debiased esti-mator to be asymptotically normal. In the theory below, we focus on constructing the decorrelating matrix ̃ 𝜴 via nodewise Lasso. This necessitates a sparsity condition on the mediator-outcome effects and the precision matrix of the idiosyncratic errors. Accordingly, the following sparsity conditions are imposed on the precision matrix 𝜣 𝑢 = 𝜮 −1 𝑢 , which are standard for nodewise-Lasso-based debiasing. 15 Assumption 4 (Sparsity) . Let 𝑠 𝛼 ∶= |{𝑗 ∈ [𝑝] ∶ 𝛼 𝑚𝑗 ≠ 0}| and let 𝑠 𝑗 ∶= |{ℓ ≠ 𝑗 ∶ (𝜣 𝑢 )𝑗ℓ ≠0}| where 𝜣 𝑢 = 𝜮 −1 𝑢 . Let 𝑑 ∶= 𝐾 + 1 denote the dimension of the unpenalized nuisance parameter (𝛼 1, 𝜶 2). Assume 
+
+𝑠 𝛼 + 𝑑 = 𝑜( √𝑛 
+
+log 𝑝 log 𝑛 ) , max  
+
+> 1≤𝑗≤𝑝
+
+𝑠 𝑗 = 𝑜( 𝑛 
+
+log 𝑝 log 𝑛 ) . 
+
+Assumption 5 (Consistent Estimation of 𝜎 ). Assume ̂ 𝜎 2 = 𝜎 2 + 𝑜 𝑝 (1) .
+
+Remark 6. Assumption 4 imposes a sparsity condition to ensure the asymptotic normality of the debiased Lasso estimator. Previous studies have established that 𝑠 ∗ = 𝑜(𝑛/ log 𝑝) is the sparisity condition for consistent estimation (Candes & Tao 2007, Bickel et al. 2009), while 𝑠 ∗ = 𝑜( √𝑛/ log 𝑝) is the condition for asympotic normality (Van de Geer et al. 2014, Javanmard & Montanari 2014, Zhang & Zhang 2014). We adopt a similar sparsity condition up to the logarithmic factor to account for the additional complexity introduced by the factor estimation. The sparsity assumption for 𝑠 𝑗 is standard in high-dimensional inference using nodewise Lasso (Van de Geer et al. 2014, Javanmard & Montanari 2018). Under the usual sub-Gaussian assumption, the sparsity requirement on 𝑠 𝑗 is typically max 𝑗 𝑠 𝑗 =𝑜(𝑛/ log 𝑝) . We also adopt a similar sparsity condition, with an additional log 𝑛 factor in the denominator, to account for the extra complexity introduced by the factor estimation step. Assumption 5 holds when ̂ 𝜎 is computed by refitted cross-validation in Fan, Guo & Hao (2012) or scaled lasso in Sun & Zhang (2013). 
+
+Theorem 1. Under Assumptions 1-4, and assuming that the error term 𝜉 𝑖 ∼ 𝑁 (0, 𝜎 2) .Let 
+
+𝜆 ≍ √ log 𝑝/𝑛 + 𝑝 −1/2 + 𝑟 𝑛,𝑝 in the factor-adjusted Lasso (5), and let the nodewise-Lasso tuning parameters satisfy the same order uniformly in 𝑗 . Then 
+
+√𝑛(̂𝜶 𝑑 𝑚 − 𝜶 𝑚 ) = 𝐙 + 𝜟, 𝐙 ∣̂ 𝐔 ∼ 𝑁( 0, 𝜎 2̃ 𝜴̂𝜮 𝑈 ̃ 𝜴 ⊤), ‖𝜟‖ ∞ = 𝑜 𝑝 (1), 
+
+where ̂ 𝜮 𝑈 = 𝑛 −1 ̂ 𝐔 ⊤̂ 𝐔 .
+
+16 Corollary 1. Under the conditions of Theorem 1, for any 𝑗 ∈ ℋ 𝛼 0𝑗 , the debiased 𝑝 -value 
+
+𝑝 𝛼 𝑚𝑗 is asymptotically uniform conditional on ℱ ∶= 𝜎(𝒔, 𝐌) . Specifically, for any 𝑡 ∈ [0, 1] ,
+
+sup 
+
+> 𝑡∈[0,1]
+
+∣ Pr (𝑝 𝛼 𝑚𝑗 ≤ 𝑡 ∣ ℱ) − 𝑡∣ 𝑃 
+
+−→ 0 as 𝑛, 𝑝 → ∞. 
+
+Consequently, for any ℱ-measurable statistic 𝑇 , 𝑝 𝛼 𝑚𝑗 is asymptotically independent of 𝑇 .
+
+Remark 7. In finite samples, the debiased inference for 𝛼 𝑚𝑗 may exhibit mild conserva-tiveness, manifesting as 𝑝 -values that are stochastically larger than the uniform distribution (i.e., super-uniform) under the null hypothesis. This behavior is primarily attributed to factor-estimation error and the regularization involved in constructing ̃ 𝜴 . Such conserva-tiveness does not compromise the validity of the FDR control procedure. Since the FDR control framework relies on the FDP estimator being a conservative upper bound, super-uniform null 𝑝 -values merely result in a more protective threshold. 
+
+## 3.3 Validity of FDR Control 
+
+Finally, we show that the proposed FDR control procedure is valid. We make the following assumptions for our asymptotic results. 
+
+Assumption 6 (Empirical convergence of 𝑝 𝛾 𝑠𝑗 and sparsity) . Let ℋ00 , ℋ 01 , ℋ 10 , ℋ 11 
+
+denote the four component sets, and |ℋ 𝑎𝑏 |/𝑝 → 𝜋 𝑎𝑏 for 𝑎𝑏 ∈ {00, 01, 10, 11} as 𝑝 → ∞ .(i) (Empirical tail convergence of 𝑝 𝛾 𝑠𝑗 ) For 𝑎𝑏 ∈ {01, 11} , there exist continuous functions 
+
+𝐺 𝑎𝑏 (⋅) such that for all 𝑡 ∈ (0, 1] ,
+
+1|ℋ 𝑎𝑏 | ∑
+
+> 𝑗∈ℋ 𝑎𝑏
+
+1(𝑝 𝛾 𝑠𝑗 > 𝑡) → 𝐺 𝑎𝑏 (𝑡) almost surely .
+
+Moreover, for 𝑗 ∈ ℋ 00 ∪ ℋ 10 (i.e., 𝛾 𝑠𝑗 = 0 ), 𝑝 𝛾 𝑠𝑗 are asymptotically Unif (0, 1) and satisfy the corresponding empirical convergence. (ii) (Sparsity) |ℋ 10 |/𝑝 → 0 .
+
+17 Remark 8. Assumption 6 requires the almost sure pointwise convergence of the empirical 
+
+𝑝 -value processes, a condition widely used in establishing FDR control (Storey et al. 2004, Dai et al. 2022). Assumption 6 does not preclude strong cross-sectional correlation in 𝒓 𝑖 
+
+which is explicitly modeled through a low-dimensional latent factor structure. In particular, strong dependence induced by a fixed number of pervasive factors is compatible with empir-ical convergence, provided that the remaining idiosyncratic components exhibit only weak dependence. 
+
+Theorem 2. Assume Theorem 1 and Corollary 1 hold, and Assumption 6 holds. As 
+
+𝑛, 𝑝 → ∞ ,̂ FDP 𝜂 (𝑡) is a conservative estimate of FDR (𝑡) for all 𝑡 ∈ (0, 1) that satisfies 
+
+𝐺 01 (𝑡) ≥ 𝐺 01 (𝜂) 1−𝜂 . Moreover, the significance threshold ̂ 𝑡 𝑞,𝜂 expressed in (8) controls the FDR at level 𝑞 :
+
+FDP (̂𝑡 𝑞,𝜂 ) ≤ 𝑞 + 𝑜 𝑝 (1) and lim sup 
+
+> 𝑝→∞
+
+FDR (̂𝑡 𝑞,𝜂 ) ≤ 𝑞. 
+
+Remark 9. The conservativeness of ̂ FDP 𝜂 (𝑡) is established pointwise over an admissible set of 𝑡 ’s, rather than uniformly for all 𝑡 ∈ (0, 1) . This phenomenon is standard for mixture-based FDP estimators under composite (union) nulls; see Dai et al. (2022) for an analogous condition. Indeed, 𝜂 is typically chosen close to 1, and the distribution of 𝑝 -values under alternative hypothesis is stochastically less than the uniform distribution. The condition should hold for the small significance cutoffs typically used in multiple testing. 
+
+# 4 Simulation Studies 
+
+In this section, we conduct Monte Carlo simulations to investigate the finite-sample perfor-mance of our proposed Factor-Adjusted Debiased Mediation Testing (FADMT) and com-pare it with existing methodologies. We consider a sample size 𝑛 = 300 and 𝑝 = 500 mediators. The exposure is generated as 𝑠 𝑖 ∼ 𝑁 (0, 1) . The mediators are generated as 𝒎 𝑖 = 𝑠 𝑖 𝜸 𝑠 + 𝒓 𝑖 , where 𝒓 𝑖 ∼ 𝑁 (0, 𝜮 ∗). We 18 set the exposure-mediator effects 𝛾 𝑠𝑗 = 𝛿 for 𝑗 = 1, … , 250 , and 𝛾 𝑠𝑗 = 0 for 𝑗 > 250 . The response 𝑦 𝑖 is generated from 𝑦 𝑖 = 𝑠 𝑖 𝛼 𝑠 +𝒎 ⊤𝑖 𝜶 𝑚 +𝜉 𝑖 , where 𝛼 𝑠 = 0.5 , 𝜉 𝑖 ∼ 𝑁 (0, 0.5 2), and the mediation-outcome effects are 𝜶 𝑚 = (𝛿, … , 𝛿 ⏟
+
+> 10
+
+, 0, … , 0) ⊤. The parameter 𝛿 represents the signal strength. The simulation results are based on 200 replications. The target FDR level is set to 𝑞 = 0.1 . We consider five covariance structures for 𝜮 ∗ corresponding to Model 1 through Model 5: Model 1 (AR): Assume the covariance matrix 𝜮 ∗ being an AR correlation structure. That is Σ∗𝑖𝑗 = 0.8 |𝑖−𝑗| .Model 2 (Factor Model): Assume 𝒓 𝑖 are generated from three factor model 𝒓 𝑖 = B𝒇 𝑖 +𝒖 𝑖 ,where factors 𝒇 𝑖 ∼ 𝑁 (0, 𝐈 3), the element of loading matrix B is generated from a uniform distribution 𝑈 [−1, 1] , and 𝒖 𝑖 ∼ 𝑁 (0, 𝐈 𝑝 ).Model 3 (Compound Symmetric): Consider a symmetric matrix 𝜮 ∗ with diagonal ele-ments 1 and each off-diagonal element equals 0.8. Model 4 (Long Memory): Consider 𝜮 ∗ where each element is defıned as Σ∗𝑖𝑗 = 0.5(||𝑖 − 𝑗| + 1| 2𝐻 − 2|𝑖 − 𝑗| 2𝐻 + ||𝑖 − 𝑗|− 1| 2𝐻 ), 1 ⩽ 𝑖, 𝑗 ⩽ 𝑝 , with 𝐻 = 0.9. Model 4 is from Bickel & Levina (2008) and has also recently been considered by Fan & Han (2017) for strong long memory dependence. Model 5 (Independent): 𝜮 ∗ = 𝐈 𝑝 .We compare the proposed FADMT (Factor-Adjusted Debiased Mediation Testing) with an ablation baseline DMT (Debiased Mediation Testing), which applies the same debiased inference and the same multiple-testing pipeline but without factor adjustment. For each of FADMT and DMT, we consider two constructions of the decorrelating matrix ̃ 𝜴 : (i) nodewise regression (Van de Geer et al. 2014) and (ii) convex optimization (Javanmard & Montanari 2014). In addition, we include two methods for high-dimensional individual mediation effect testing under sparse linear models, HIMA (Zhang et al. 2016) and HIMA2 19 (Perera et al. 2022) 1.Let ̂ ℋ be the selected set of mediators at FDR level 𝑞 . We report the empirical average false discovery proportion (FDP) and true positive rate (TPR), where TPR is obtained by averaging the proportion of correctly selected mediators |̂ℋ∩ℋ ∗|/|ℋ ∗| over 200 repetitions. Table 1 reports the overall FDR and TPR for FADMT and DMT under signal 𝛿 = 0.5 .Across all covariance designs, FADMT controls FDR at the nominal level 𝑞 = 0.1 , while DMT can exhibit substantial inflation, especially under strong dependence. This isolates the practical benefit of factor adjustment in stabilizing debiased inference for 𝜶 𝑚 .Table 1 further reveals difference between the two constructions of the decorrelating matrix, namely nodewise Lasso regression and convex optimization. For the DMT method, the convex optimization approach generally leads to worse FDR control than nodewise Lasso across most dependent designs, likely reflecting the difficulty of solving the opti-mization problem accurately when the mediator covariance structure is highly correlated. Only in Model 5, where mediators are independent, does convex optimization outperform nodewise Lasso in terms of FDR control. Interestingly, this pattern reverses under the proposed FADMT framework. Both nodewise Lasso and convex optimization achieve valid FDR control after factor adjustment, but nodewise Lasso tends to be more conservative, often yielding type I error rates for inference on 𝜶 𝑚 below the nominal level and cor-respondingly conservative FDR values. In contrast, convex optimization attains higher power while maintaining accurate FDR control. This improvement can be attributed to the factor adjustment step, which effectively removes cross-sectional dependence among mediators and simplifies the residual covariance structure. As a result, convex optimiza-tion becomes more efficient and benefits from its variance-minimization objective, leading to reduced estimator variance and enhanced power. From a practical perspective, these gains are particularly appealing, as convex optimization is computationally substantially   
+
+> 1Both HIMA and HIMA2 are implemented using the HIMA R package, with their default methods.
+
+20 more efficient than nodewise Lasso. Consequently, the proposed FADMT method not only improves statistical stability under dependence but also amplifies the computational advan-tages of convex optimization in large-scale applications. Additional decomposition results, including the Type I error and power for testing individual 𝛼 𝑚𝑗 and 𝛾 𝑠𝑗 effects, are re-ported in Appendix B.1. We also assess the convergence of the empirical 𝑝 -value processes in the Appendix B.2, showing that the empirical distributions of the null 𝑝 𝛾 𝑠𝑗 and 𝑝 max ,𝑗 
+
+closely follow their theoretical references. These results provide empirical support for the theoretical guarantees established in Theorem 2. To further investigate the robustness of FADMT, we vary the signal strength 𝛿 ∈ {0.3, 0.4, 0.5} , affecting both 𝛾 𝑠𝑗 and 𝛼 𝑚𝑗 simultaneously. Figure 1 compares FADMT with DMT, HIMA, and HIMA2 across all five covariance designs and signal levels. As shown in Figure 1, FADMT consistently controls the FDR at the nominal level across all signal strengths and all covariance models, for both the nodewise Lasso and convex optimization implementations. In contrast, competing methods exhibit pronounced FDR inflation in the presence of strong dependence among mediators. In particular, under Models 2 and 3, DMT, HIMA, and HIMA2 frequently exceed the target FDR level. Meanwhile, the improved FDR control of FADMT does not come at the expense of statistical power. Across all signal levels, the TPR achieved by FADMT is comparable to that of existing methods.This results highlight the robustness of FADMT in simultaneously maintaining valid error control and competitive power in challenging high-dimensional settings. 21 Table 1: Overall FDR and TPR under five models with (𝑛, 𝑝) = (300, 500) .
+
+FADMT (nodewise) FADMT (convex) DMT (nodewise) DMT (convex) Model FDR TPR FDR TPR FDR TPR FDR TPR 1 0.0568 0.9470 0.0725 0.9710 0.0918 1.0000 0.3098 1.0000 2 0.0708 0.9955 0.0948 0.9955 0.1109 0.9955 0.3209 0.9960 3 0.0750 0.9965 0.0973 1.0000 0.2043 1.0000 0.6420 1.0000 4 0.0713 1.0000 0.0750 1.0000 0.0919 1.0000 0.1727 1.0000 5 0.0647 0.9145 0.0848 0.9520 0.1623 1.0000 0.1497 1.0000 Model 1 Model 2 Model 3 Model 4 Model 5                                 
+
+> 0.3 0.4 0.5 0.3 0.4 0.5 0.3 0.4 0.5 0.3 0.4 0.5 0.3 0.4 0.5 0.0 0.1 0.2 0.3 0.4 0.5 0.6
+> FDR
+> Model 1 Model 2 Model 3 Model 4 Model 5
+> 0.3 0.4 0.5 0.3 0.4 0.5 0.3 0.4 0.5 0.3 0.4 0.5 0.3 0.4 0.5 0.0 0.2 0.4 0.6 0.8 1.0
+
+Signal strength TPR 
+
+> FADMT (nodewise) FADMT (convex) DMT (nodewise) DMT (convex) HIMA HIMA2
+
+Figure 1: Comparison of FDR and TPR across different methods and signal strengths. 22 5 Data Application 
+
+## 5.1 Biomedical Application 
+
+To demonstrate the practical utility of our proposed methodology, we apply it to multi-omics data from the TCGA-BRCA cohort 2, focusing on the role of DNA methylation in mediating the relationship between age at diagnosis and the expression of MKI67, a well-established proliferation marker in breast cancer. Previous studies have shown that aging is accompanied by systematic changes in gene expression and epigenetic modifications that can influence cancer development and progression (Baylin & Jones 2011, Rakyan et al. 2011). In particular, DNA methylation alterations have been reported to mediate transcriptional regulation in an age-dependent manner (Chatsirisupachai et al. 2021). Data were retrieved from the GDC portal via the R package TCGAbiolinks , including RNA-seq, DNA methylation (Illumina HumanMethylation450K), and clinical records. Af-ter preprocessing, we retained 811 samples with complete data for age, methylation, gene expression, and covariates (race and AJCC pathologic stage). The RNA-seq counts for MKI67 were normalized using DESeq2’s variance-stabilizing transformation (vst) to ad-dress heteroscedasticity, while DNA methylation 𝛽 -values were converted to M-values via logit transformation ( 𝑀 = log 2(𝛽/(1−𝛽)) ) as recommended by Du et al. (2010) to improve normality. Age at diagnosis (range: 26-89 years; mean ± SD: 58.0 ± 13.3) served as the exposure variable, and 299,813 CpG sites with non-missing values across all samples were included as potential mediators. The transformed MKI67 expression levels constituted the outcome variable, adjusted for race and tumor stage. Following Guo et al. (2022) we first carry out a screening step to retain the top 1000 potential mediators by ranking the absolute value of the product of two correlations—the correlation between exposure variable and each element of mediators, and between outcome 
+
+> 2Data available at https://portal.gdc.cancer.gov/projects/TCGA-BRCA.
+
+23 and each element of mediators. This indeed is a marginal screening procedure based on Pearson correlation proposed by Fan & Lv (2008). They show that for linear models, under some regularity conditions, the screening procedure possesses a sure screening property. We then employ our proposed Factor-Adjusted Debiased Mediation Testing (FADMT) method to statistically test the mediation effects of individual CpG sites. Under a prespecified false discovery rate (FDR) level of 0.1, we identify DNA methylation sites with significant mediation effects and further analyze their potential biological mechanisms. In Table 2, we report the summary results on the three selected mediators by our method. Three CpG sites were identified as significant mediators of age-associated MKI67 expression (FDR-adjusted 𝑝 -value < 0.1). The strongest mediation signal is observed at an intergenic site ch.2.71774667F (chr2:71921159), located near LINC01807. This site shows negative age-to-methylation and methylation-to-expression effects, resulting in a positive total mediation effect ( ̂ 𝛼 ×̂ 𝛾 = 0.0026 ). Biologically, this finding suggests that age-related hypomethylation at this locus might lead to the downregulation of LINC01807. Given that long non-coding RNAs have been implicated in the regulation of chromatin architecture and gene expression (Li et al. 2016), the observed effect is consistent with the hypothesis that reduced LINC01807 expression may relieve repression on the MKI67 promoter, thereby enhancing cellular proliferation. The CpG site cg10404601 (chr19:8468449), located in the 3’ UTR of RAB11B, exhibits a negative age-to-methylation effect and a positive methylation-to-expression association, yielding a negative mediation effect ( ̂ 𝛼 ×̂ 𝛾 = −0.0037 ). This pattern suggests that age-associated hypomethylation may reduce RAB11B expression, ultimately leading to sup-pressed MKI67 levels and decreased cell proliferation. Supporting the biological relevance of this locus, RAB11B-AS1, a natural antisense transcript of RAB11B, has been shown to promote angiogenesis and metastasis in breast cancer by enhancing the expression of angiogenic factors such as VEGFA and ANGPTL4 in a hypoxia-inducible manner (Niu 24 et al. 2020). This evidence highlights the potential regulatory importance of the RAB11B region in breast cancer progression. Lastly, cg24461063 (chr12:124971775), located in the gene body of NCOR2, shows a moderate negative effect of age on methylation and a stronger positive effect of methylation on expression, resulting in a negative mediation effect ( ̂ 𝛼×̂𝛾 = −0.0046 ). This is consistent with NCOR2’s known function as an estrogen receptor (ER 𝛼 ) corepressor: hypomethylation may lead to upregulation of NCOR2, which in turn inhibits ER signaling and attenuates proliferative activity (Tsai et al. 2022). Collectively, these findings provide biologically plausible insights into the epigenetic regulation of proliferation in breast cancer. The observed mediation effects are supported by previous studies on cancer epigenomics in Baylin & Jones (2011), Rakyan et al. (2011) and highlight the complex interplay between aging, DNA methylation, and gene expression. Table 2: Summary of selected CpGs with significant mediation effects                             
+
+> CpGs Chromosome Neighboring gene ̂𝛼 𝑚𝑗 ̂𝛾 𝑠𝑗 𝑃 max ,𝑗 adj-P ch.2.71774667F chr2:71921159 LINC01807 -0.2006 -0.0130 8.53 ×10 −7 0.0001 cg10404601 chr19:8468449 RAB11B -0.4973 0.0074 1.26 ×10 −4 0.0631 cg24461063 chr12:124971775 NCOR2 -0.2070 0.0223 2.12 ×10 −4 0.0705 Notes: 𝑃 max ,𝑗 represents the unadjusted 𝑝 -value for the mediation effect; adj-P denotes FDR-adjusted
+> 𝑝 -value.
+
+## 5.2 Financial Application 
+
+We next provide a financial case study to illustrate the applicability of our mediation effect testing framework in financial scenarios. We study whether the launch of the Shanghai– Hong Kong Stock Connect affects firms’ long-run idiosyncratic risk through changes in corporate fundamentals. Stock Connect is widely viewed as a quasi-natural experiment 25 of partial equity market liberalization in China. Existing studies document that this pro-gram can affect market quality, corporate policies, and firm risk-related outcomes through through changes in investor base and information environment (Ma et al. 2019, Xu et al. 2020, Xiong et al. 2021, Li et al. 2024). However, existing mechanism analyses typically consider only a small number of candidate channels. In contrast, we study the mecha-nism question in a high-dimensional mediation setting by jointly analyzing a broad set of corporate accounting and valuation indicators with strong dependence. Our empirical design adopts a two-period difference-in-differences framework around the policy date 𝑡 0 =
+
+2014/11/17, when the first batch of 568 stocks became eligible for northbound trading. For each stock 𝑖 , we measure the change in firm-specific risk as Δ𝑦 𝑖 = 𝜎 𝑖𝑑𝑖𝑜 𝑖,𝑝𝑜𝑠𝑡 − 𝜎 𝑖𝑑𝑖𝑜 𝑖,𝑝𝑟𝑒 ,where 𝜎 𝑖𝑑𝑖𝑜 𝑖,𝑝𝑟𝑒 and 𝜎 𝑖𝑑𝑖𝑜 𝑖,𝑝𝑜𝑠𝑡 are computed from daily Capital Asset Pricing Model (CAPM) residuals in the pre window (2014/05/22–2014/11/14) and the post window (2014/11/17– 2015/05/14), each spanning 120 trading days (about six months) 3. The treatment indicator 
+
+𝑠 𝑖 equals one if stock 𝑖 is included in Stock Connect at 𝑡 0, and zero otherwise. To mitigate selection on observables, we implement a propensity score matching (PSM) design with 1:1 matching without replacement, using a caliper of 0.2 times the standard deviation of the propensity score (Rosenbaum & Rubin 1985, Austin 2011). Potential con-trols are Shanghai-listed stocks that were not included in Stock Connect during the post window 4. We match on industry, market capitalization, book-to-market (all measured at 2014Q3), and pre-window idiosyncratic volatility. From 403 potential controls, the proce-dure yields 129 valid matched pairs (258 observations) after removing 13 pairs with fewer than 50 trading-day observations in the post window. Daily returns, industry classifications,         
+
+> 3We remove the common market component by estimating the CAPM model 𝑟 𝑖𝑡 = 𝛼 𝑖 + 𝛽 𝑖 𝑟 𝑚𝑘𝑡,𝑡 + 𝜀 𝑖𝑡
+> and then defining 𝜎 𝑖𝑑𝑖𝑜 𝑖,⋅ as the standard deviation of the fitted residuals ̂𝜀 𝑖𝑡 within the corresponding window. This construction isolates firm-specific fluctuations after controlling for market-wide movements, following the standard market-model definition of idiosyncratic volatility (Sharpe 1964).
+> 4Restricting to the same exchange helps remove confounding exchange-level differences.
+
+26 and accounting/valuation indicators are obtained from the CSMAR database. We first assess the total effect of stock connect on firms’ long-run idiosyncratic risk by regressing Δ𝑦 on treatment indicator in the matched sample. The estimated coeffi-cient on Stock Connect is −0.0016 with a 𝑝 -value of 0.0618 , suggesting that connected stocks experienced a modest decline in idiosyncratic risk relative to otherwise comparable non-connected firms. We further examine the mediation effect to see which corporate fun-damentals might affect firm-specific risk through Stock Connect. To this end, we consider 316 quarterly accounting and valuation indicators as candidate mediators and define the mediator change as Δ𝑀 𝑖𝑗 = 𝑀 𝑖𝑗 (2015Q1 ) − 𝑀 𝑖𝑗 (2014Q3 ), using percentage changes for level (currency-denominated) variables and simple differences otherwise to mitigate scale effects. These financial indicators are highly correlated, making this application a natural setting for our FADMT procedure. At an FDR level of 𝑞 = 0.1 , our method identifies seven significant mediators. Table 3 summarizes the results. Table 3: Summary of selected mediators for Stock Connect and idiosyncratic risk change                                          
+
+> Mediator Description ̂𝛼 𝑚𝑗 ̂𝛾 𝑠𝑗 𝑃 max ,𝑗 adj-P ROE Return on equity (parent) −1.52×10 −3 −0.4606 7.73×10 −4 0.0701
+> PEIC Equity-to-invested capital ratio (parent) −8.29×10 −4 −0.3872 4.31×10 −3 0.0879
+> PS Price-to-sales ratio 8.22×10 −4 −0.3519 4.43×10 −3 0.0879
+> TAPS Tangible assets per share 5.44×10 −4 0.3479 4.91×10 −3 0.0879
+> LPS Liabilities per share 5.16×10 −4 0.3941 6.50×10 −3 0.0879
+> EPS Earnings per share (parent) −9.88×10 −4 −0.6269 6.24×10 −3 0.0879
+> TDTA Liability-to-tangible assets ratio 4.93×10 −4 0.3356 6.69×10 −3 0.0879
+
+Notes: The suffix “parent” denotes figures attributable specifically to the parent company. ̂𝛼 𝑚𝑗 
+
+denotes the effect from mediator change to Δ𝑦 , and ̂ 𝛾 𝑠𝑗 denotes the effect from stock connect eligibility to mediator change. 𝑃 max ,𝑗 represents the unadjusted 𝑝 -value for the mediation effect; adj-P denotes FDR-adjusted 𝑝 -value. 
+
+The selected mediators align with standard channels emphasized in the finance litera-27 ture. First, leverage-related variables (liability-to-tangible assets ratio, equity-to-invested capital ratio, liabilities per share, and tangible assets per share) suggest a capital-structure channel: changes in financing conditions and risk-bearing can affect firm-specific risk. Sec-ond, profitability measures (ROE and EPS) capture an operating-performance channel, as improvements in firm fundamentals are typically associated with lower idiosyncratic volatility. Third, the price-to-sales ratio reflects a valuation/discount-rate channel, consis-tent with the idea that investor base changes can reshape pricing and firm-specific risk. This case study highlights that our method remains applicable and yields interpretable signals in dependent, high-dimensional financial environments. 
+
+# 6 Conclusion 
+
+In this paper, we propose a novel Factor-Adjusted Debiased Mediation Testing (FADMT) framework to address the long-standing challenges posed by high-dimensional dependence among mediators in mediation analysis. By integrating approximate factor modeling with debiased Lasso inference, we effectively decouple pervasive correlation patterns driven by unobserved common factors from idiosyncratic variations. Our theoretical results estab-lish the asymptotic validity of the proposed tests, and extensive simulations demonstrate that FADMT substantially outperforms standard debiased mediation testing methods and existing approaches, particularly under strong inter-mediator correlations. Application to TCGA-BRCA multi-omics data and a financial stock connect study further illustrate the practical relevance of the method in uncovering meaningful mediation effects. 28 References 
+
+Ahn, S. C. & Horenstein, A. R. (2013), ‘Eigenvalue ratio test for the number of factors’, 
+
+Econometrica 81 (3), 1203–1227. Austin, P. C. (2011), ‘Optimal caliper widths for propensity-score matching when estimat-ing differences in means and differences in proportions in observational studies’, Phar-maceutical Statistics 10 (2), 150–161. Bai, J. (2003), ‘Inferential theory for factor models of large dimensions’, Econometrica 
+
+71 (1), 135–171. Bai, J. & Ng, S. (2002), ‘Determining the number of factors in approximate factor models’, 
+
+Econometrica 70 (1), 191–221. Baron, R. M. & Kenny, D. A. (1986), ‘The moderator–mediator variable distinction in social psychological research: Conceptual, strategic, and statistical considerations.’, Journal of Personality and Social Psychology 51 (6), 1173. Battey, H., Fan, J., Liu, H., Lu, J. & Zhu, Z. (2018), ‘Distributed testing and estimation under sparse high dimensional models’, The Annals of Statistics 46 (3), 1352. Baylin, S. B. & Jones, P. A. (2011), ‘A decade of exploring the cancer epigenome—biological and translational implications’, Nature Reviews Cancer 11 (10), 726–734. Benjamini, Y. & Hochberg, Y. (1995), ‘Controlling the false discovery rate: a practical and powerful approach to multiple testing’, Journal of the Royal statistical society: series B (Methodological) 57 (1), 289–300. Benjamini, Y. & Yekutieli, D. (2001), ‘The control of the false discovery rate in multiple testing under dependency’, The Annals of Statistics pp. 1165–1188. 29 Bickel, P. J. & Levina, E. (2008), ‘Regularized estimation of large covariance matrices’, 
+
+The Annals of Statistics pp. 199–227. Bickel, P. J., Ritov, Y. & Tsybakov, A. B. (2009), ‘Simultaneous analysis of lasso and dantzig selector’, The Annals of Statistics 37 (4), 1705–1732. Blanchard, G. & Roquain, E. (2009), ‘Adaptive false discovery rate control under indepen-dence and dependence.’, Journal of Machine Learning Research 10 (12). Candes, E. & Tao, T. (2007), ‘The dantzig selector: Statistical estimation when p is much larger than n’, The Annals of Statistics 35 (6), 2313–2351. Chatsirisupachai, K., Lesluyes, T., Paraoan, L., Van Loo, P. & De Magalhães, J. P. (2021), ‘An integrative analysis of the age-associated multi-omic landscape across cancers’, Na-ture Communications 12 (1), 2345. Dai, J. Y., Stanford, J. L. & LeBlanc, M. (2022), ‘A multiple-testing procedure for high-dimensional mediation hypotheses’, Journal of the American Statistical Association 
+
+117 (537), 198–213. Derkach, A., Pfeiffer, R. M., Chen, T.-H. & Sampson, J. N. (2019), ‘High dimensional mediation analysis with latent variables’, Biometrics 75 (3), 745–756. Du, J., Zhou, X., Clark-Boucher, D., Hao, W., Liu, Y., Smith, J. A. & Mukherjee, B. (2023), ‘Methods for large-scale single mediator hypothesis testing: Possible choices and comparisons’, Genetic Epidemiology 47 (2), 167–184. Du, P., Zhang, X., Huang, C.-C., Jafari, N., Kibbe, W. A., Hou, L. & Lin, S. M. (2010), ‘Comparison of beta-value and m-value methods for quantifying methylation levels by microarray analysis’, BMC Bioinformatics 11 , 1–9. 30 Fan, J., Guo, J. & Zheng, S. (2022), ‘Estimating number of factors by adjusted eigenvalues thresholding’, Journal of the American Statistical Association 117 (538), 852–861. Fan, J., Guo, S. & Hao, N. (2012), ‘Variance estimation using refitted cross-validation in ultrahigh dimensional regression’, Journal of the Royal Statistical Society Series B: Statistical Methodology 74 (1), 37–65. Fan, J. & Han, X. (2017), ‘Estimation of the false discovery proportion with unknown dependence’, Journal of the Royal Statistical Society Series B: Statistical Methodology 
+
+79 (4), 1143–1164. Fan, J., Han, X. & Gu, W. (2012), ‘Estimating false discovery proportion under arbitrary covariance dependence’, Journal of the American Statistical Association 107 (499), 1019– 1035. Fan, J., Ke, Y., Sun, Q. & Zhou, W.-X. (2019), ‘Farmtest: Factor-adjusted robust multiple testing with approximate false discovery control’, Journal of the American Statistical Association .Fan, J., Ke, Y. & Wang, K. (2020), ‘Factor-adjusted regularized model selection’, Journal of Econometrics 216 (1), 71–85. Fan, J., Liao, Y. & Mincheva, M. (2013), ‘Large covariance estimation by thresholding principal orthogonal complements’, Journal of the Royal Statistical Society Series B: Statistical Methodology 75 (4), 603–680. Fan, J., Lou, Z. & Yu, M. (2024), ‘Are latent factor regression and sparse regression adequate?’, Journal of the American Statistical Association 119 (546), 1076–1088. Fan, J. & Lv, J. (2008), ‘Sure independence screening for ultrahigh dimensional fea-31 ture space’, Journal of the Royal Statistical Society Series B: Statistical Methodology 
+
+70 (5), 849–911. Guo, X., Li, R., Liu, J. & Zeng, M. (2022), ‘High-dimensional mediation analysis for selecting dna methylation loci mediating childhood trauma and cortisol stress reactivity’, 
+
+Journal of the American Statistical Association 117 (539), 1110–1121. Guo, X., Li, R., Liu, J. & Zeng, M. (2023), ‘Statistical inference for linear mediation models with high-dimensional mediators and application to studying stock reaction to covid-19 pandemic’, Journal of Econometrics 235 (1), 166–179. Huang, Y.-T. & Pan, W.-C. (2016), ‘Hypothesis test of mediation effect in causal mediation model with high-dimensional continuous mediators’, Biometrics 72 (2), 402–413. Javanmard, A. & Montanari, A. (2014), ‘Confidence intervals and hypothesis testing for high-dimensional regression’, The Journal of Machine Learning Research 15 (1), 2869– 2909. Javanmard, A. & Montanari, A. (2018), ‘Debiasing the lasso: Optimal sample size for gaussian designs’, The Annals of Statistics 46 (6A), 2593–2622. Lam, C. & Yao, Q. (2012), ‘Factor modeling for high-dimensional time series: inference for the number of factors’, The Annals of Statistics pp. 694–726. Li, W., Notani, D. & Rosenfeld, M. G. (2016), ‘Enhancers as non-coding rna transcription units: recent insights and future perspectives’, Nature Reviews Genetics 17 (4), 207–223. Li, Z., Liu, C., Ni, X. & Pang, J. (2024), ‘Stock market liberalization and corporate invest-ment revisited: Evidence from china’, Journal of Banking & Finance 158 , 107053. Lin, Y., Guo, Z., Sun, B. & Lin, Z. (2023), ‘Testing high-dimensional mediation effect with arbitrary exposure-mediator coefficients’, arXiv preprint arXiv:2310.05539 .32 Liu, Z., Shen, J., Barfield, R., Schwartz, J., Baccarelli, A. A. & Lin, X. (2022), ‘Large-scale hypothesis testing for causal mediation effects with applications in genome-wide epigenetic studies’, Journal of the American Statistical Association 117 (537), 67–81. Loh, P.-L. & Wainwright, M. J. (2012), ‘High-dimensional regression with noisy and missing data: Provable guarantees with non-convexity’, The Annals of Statistics 40 (3), 1637– 1664. Ma, C., Rogers, J. H. & Zhou, S. (2019), ‘The effect of the china connect’, Available at SSRN 3432134 .MacKinnon, D. P., Lockwood, C. M., Hoffman, J. M., West, S. G. & Sheets, V. (2002), ‘A comparison of methods to test mediation and other intervening variable effects.’, Psy-chological Methods 7(1), 83. MacKinnon, D. P., Lockwood, C. M. & Williams, J. (2004), ‘Confidence limits for the indi-rect effect: Distribution of the product and resampling methods’, Multivariate Behavioral Research 39 (1), 99–128. Niu, Y., Bao, L., Chen, Y., Wang, C., Luo, M., Zhang, B., Zhou, M., Wang, J. E., Fang, Y. V., Kumar, A. et al. (2020), ‘Hif2-induced long noncoding rna rab11b-as1 promotes hypoxia-mediated angiogenesis and breast cancer metastasis’, Cancer research 
+
+80 (5), 964–975. Perera, C., Zhang, H., Zheng, Y., Hou, L., Qu, A., Zheng, C., Xie, K. & Liu, L. (2022), ‘Hima2: high-dimensional mediation analysis and its application in epigenome-wide dna methylation data’, BMC Bioinformatics 23 (1), 296. Rakyan, V. K., Down, T. A., Balding, D. J. & Beck, S. (2011), ‘Epigenome-wide association studies for common human diseases’, Nature Reviews Genetics 12 (8), 529–541. 33 Rosenbaum, P. R. & Rubin, D. B. (1985), ‘Constructing a control group using multivari-ate matched sampling methods that incorporate the propensity score’, The American Statistician 39 (1), 33–38. Sharpe, W. F. (1964), ‘Capital asset prices: A theory of market equilibrium under condi-tions of risk’, The Journal of Finance 19 (3), 425–442. Shuai, K., Liu, L., He, Y. & Li, W. (2023), ‘Mediation pathway selection with unmeasured mediator-outcome confounding’, arXiv preprint arXiv:2311.16793 .Storey, J. D. (2002), ‘A direct approach to false discovery rates’, Journal of the Royal Statistical Society Series B: Statistical Methodology 64 (3), 479–498. Storey, J. D. (2003), ‘The positive false discovery rate: a bayesian interpretation and the q-value’, The Annals of Statistics 31 (6), 2013–2035. Storey, J. D., Taylor, J. E. & Siegmund, D. (2004), ‘Strong control, conservative point estimation and simultaneous conservative consistency of false discovery rates: a unified approach’, Journal of the Royal Statistical Society Series B: Statistical Methodology 
+
+66 (1), 187–205. Sun, T. & Zhang, C.-H. (2013), ‘Sparse matrix inversion with scaled lasso’, The Journal of Machine Learning Research 14 (1), 3385–3418. Tsai, K. K., Huang, S.-S., Northey, J. J., Liao, W.-Y., Hsu, C.-C., Cheng, L.-H., Werner, M. E., Chuu, C.-P., Chatterjee, C., Lakins, J. N. et al. (2022), ‘Screening of organoids derived from patients with breast cancer implicates the repressor ncor2 in cytotoxic stress response and antitumor immunity’, Nature Cancer 3(6), 734–752. Van de Geer, S., Bühlmann, P., Ritov, Y. & Dezeure, R. (2014), ‘On asymptotically opti-34 mal confidence regions and tests for high-dimensional models’, The Annals of Statistics 
+
+42 (3), 1166–1202. Wang, W. & Fan, J. (2017), ‘Asymptotics of empirical eigenstructure for high dimensional spiked covariance’, Annals of statistics 45 (3), 1342. Wu, W. B. (2008), ‘On false discovery control under dependence’, The Annals of Statistics 
+
+36 (1), 364–380. Xiong, L., Deng, H. & Xiao, L. (2021), ‘Does stock market liberalization mitigate litigation risk? evidence from stock connect in china’, Economic Modelling 102 , 105581. Xu, K., Zheng, X., Pan, D., Xing, L. & Zhang, X. (2020), ‘Stock market openness and market quality: Evidence from the shanghai–hong kong stock connect program’, Journal of Financial Research 43 (2), 373–406. Zhang, C.-H. & Zhang, S. S. (2014), ‘Confidence intervals for low dimensional parameters in high dimensional linear models’, Journal of the Royal Statistical Society Series B: Statistical Methodology 76 (1), 217–242. Zhang, H., Zheng, Y., Hou, L., Zheng, C. & Liu, L. (2021), ‘Mediation analysis for survival data with high-dimensional mediators’, Bioinformatics 37 (21), 3815–3821. Zhang, H., Zheng, Y., Zhang, Z., Gao, T., Joyce, B., Yoon, G., Zhang, W., Schwartz, J., Just, A., Colicino, E. et al. (2016), ‘Estimating and testing high-dimensional mediation effects in epigenetic studies’, Bioinformatics 32 (20), 3150–3154. Zhou, R. R., Wang, L. & Zhao, S. D. (2020), ‘Estimation and inference for the indirect effect in high-dimensional linear mediation models’, Biometrika 107 (3), 573–589. 35 Supplementary Material 
+
+This supplementary document provides additional methodological and technical details that complement the main paper. It is organized as follows. Section A presents the convex optimization approach for constructing the decorrelating matrix ̃ 𝜴 . Section B reports additional simulation results supplementing those in the main text. Section C collects proofs of the main theoretical results. Section D states and proves a set of technical lemmas used throughout the analysis. 
+
+# A Convex Optimization Approach for Constructing the Decorrelating Matrix ̃ 𝜴 
+
+In this section, we introduce the idea and general procedure of constructing the decorre-lating matrix ̃ 𝜴 using a convex optimization approach, which was originally proposed in Javanmard & Montanari (2014). The goal of this approach is to obtain a matrix ̃ 𝜴 that effectively reduces both the bias and variance of the coordinates of the debiased estimator ̂𝜶 𝑑 𝑚 . Specifically, the matrix ̃ 𝜴 = (̃𝝎 1,̃ 𝝎 2, … ,̃ 𝝎 𝑝 )⊤ ∈ ℝ 𝑝×𝑝 is constructed by solving a sequence of convex optimization problems, where each column is obtained as the solution to the following program: minimize ̃ 𝝎 ⊤̂ 𝜮̃𝝎, 
+
+subject to ∥̂𝜮̃𝝎 − 𝒆 𝑖 ∥∞ ≤ 𝜇, 
+
+where ̂ 𝜮 is the empirical covariance matrix, 𝒆 𝑖 ∈ ℝ 𝑝 denotes the 𝑖 -th standard basis vector, and 𝜇 is a small positive tuning parameter that controls the approximation accuracy. If the optimization problem for any 𝑖 is not feasible, we follow the practice in Javanmard & Montanari (2014) and set ̃ 𝜴 = 𝐈 𝑝×𝑝 . In our implementation, we use the R package 36 provided by the authors, sslasso ,5 to compute the matrix ̃ 𝜴 efficiently. For comparison, in Section D.2 we describe an alternative approach to estimating ̃ 𝜴 
+
+based on nodewise Lasso regression, along with its theoretical properties. 
+
+# B Additional Simulation Results 
+
+## B.1 Type I error & power 
+
+Table 4 additionally reports the empirical Type I error rates and power for testing 𝛼 𝑚𝑗 
+
+and 𝛾 𝑠𝑗 across the five covariance models under the nominal level 0.05 . Across all five models, the debiased inference for the high-dimensional coefficients 𝛼 𝑚𝑗 exhibits mild con-servativeness in finite samples: the resulting 𝑝 -values tend to be super-uniform under the null, leading to empirical Type I error rates slightly below the nominal level 0.05 . This con-servativeness is mainly driven by (i) first-stage factor estimation error, which propagates into the plug-in pseudo-design, and (ii) regularization bias from estimating the precision matrix ̃ 𝜴 , both of which can inflate the estimated standard errors and thus yield slightly larger 𝑝 -values. Comparing implementations, the convex-optimization method typically outperforms the nodewise alternative, delivering higher power with Type I error control. This improvement is consistent with the fact that the convex approach directly targets a variance-minimization criterion for the debiasing direction, thereby reducing estimator variance and improving finite-sample efficiency. 
+
+## B.2 Empirical convergence of null 𝑝 -values 
+
+To complement these finite-sample summaries, we provide an empirical check of Assump-tion 6 in the main text, which posits that the empirical process of the null 𝑝 -values for 
+
+> 5https://web.stanford.edu/~montanar/sslasso/code.html
+
+37 Table 4: Empirical Type I error and power for testing 𝛼 𝑚𝑗 and 𝛾 𝑠𝑗 (nominal level 0.05 ). 
+
+Testing 𝛼 𝑚𝑗 Testing 𝛾 𝑠𝑗 
+
+Model FADMT (nodewise) FADMT (convex) DMT (nodewise) DMT (convex) Common Type I Power Type I Power Type I Power Type I Power Type I Power 1 0.0336 0.9705 0.0335 0.9780 0.0447 1.0000 0.0636 1.0000 0.0516 1.0000 
+
+2 0.0372 1.0000 0.0401 1.0000 0.0408 1.0000 0.0389 1.0000 0.0489 0.9996 
+
+3 0.0408 0.9995 0.0435 1.0000 0.0456 1.0000 0.0488 1.0000 0.0520 1.0000 
+
+4 0.0392 1.0000 0.0407 1.0000 0.0427 1.0000 0.0464 1.0000 0.0517 1.0000 
+
+5 0.0338 0.9510 0.0364 0.9950 0.0466 1.0000 0.0441 1.0000 0.0490 1.0000 
+
+Notes: Entries are averaged over 200 replications with (𝑛, 𝑝) = (300, 500) . Type I error is the empirical rejection probability under the null at nominal level 0.05 , and power is the empirical rejection probability under the alternative. For testing 𝛾 𝑠𝑗 , FADMT and DMT yield identical results (for both nodewise and convex implementations) across all five models; hence we report a single set of results under “Common”. 
+
+testing 𝛾 𝑠𝑗 converges to its theoretical limit. We conduct this diagnostic under Model 2 (the same simulation setting as in Table 4). Panel (2a) of Figure 2 plots the empirical cumulative distribution function (CDF) of the null 𝑝 𝛾 𝑠𝑗 , defined as ̂𝐹 𝛾 (𝑡) ∶= #{𝑗 ∈ ℋ 𝛾 0 ∶ 𝑝 𝛾 𝑠𝑗 ≤ 𝑡} |ℋ 𝛾 0 | , 𝑡 ∈ [0, 1], 
+
+and compares it with the theoretical reference line 𝑡 . The close agreement between ̂ 𝐹 𝛾 (𝑡) 
+
+and 𝑡 provides empirical evidence that the null 𝑝 𝛾 𝑠𝑗 behave approximately uniformly, consis-tent with the claimed empirical-process convergence under factor-structured dependence. Panel (2b) further examines the tail behavior of the combined statistic 𝑝 max ,𝑗 for 𝑗 ∈ ℋ00 . We plot the empirical rejection proportion ̂𝐹 max ,00 (𝑡) ∶= #{𝑗 ∈ ℋ 00 ∶ 𝑝 max ,𝑗 ≤ 𝑡} |ℋ 00 | , 𝑡 ∈ [0, 0.1], 
+
+38 against the theoretical benchmark 𝑡 2, which corresponds to the product-form tail proba-bility under asymptotic independence of the two component 𝑝 -values. Panel (2c) reports the same comparison for 𝑗 ∈ ℋ 01 (only the mediation–outcome effect is null), where the appropriate reference line is 𝑡 .The tail diagnostics highlight the practical difficulty of inference on the high-dimensional vector 𝜶 𝑚 in the presence of strong inter-mediator correlation. In particular, when the nuisance pathway is active (e.g., 𝛾 𝑠𝑗 ≠ 0 ), DMT may exhibit visible tail distortions near the origin, especially under the convex-optimization construction of the decorrelating matrix, which can translate into inflated discoveries and unstable FDR control. The nodewise implementation typically alleviates this issue but may still show mild deviations in the tail. In contrast, the proposed FADMT tracks the theoretical benchmarks well in the critical tail region and tends to be mildly conservative away from the tail, aligning with the Type I error patterns in Table 4. Overall, these results support Assumption 6 empirically and illustrate that factor adjustment can partially mitigate the inferential challenge caused by strong mediator dependence. 39 0.0 0.2 0.4 0.6 0.8 1.0 0.0  0.4  0.8 
+
+> Empirical CDF
+> Theoretical CDF: y = t Empirical Estimates
+
+(a) Empirical CDF of null 𝑝 𝛾 𝑠𝑗 with reference line 𝑡 .0.00 0.02 0.04 0.06 0.08 0.10 0.000  0.004  0.008     
+
+> Empirical CDF
+> Theoretical CDF: y=t2FADMTNode FADMTConvex DMTNode DMTConvex
+
+(b) Empirical CDF of 𝑝 max ,𝑗 for 𝑗 ∈ ℋ 00 (tail region 𝑡 ∈ [0, 0.1] ) with reference line 𝑡 2.0.00 0.02 0.04 0.06 0.08 0.10 0.00  0.04  0.08 
+
+> Empirical CDF
+> Theoretical CDF: y = t FADMTNode FADMTConvex DMTNode DMTConvex
+
+(c) Empirical CDF of 𝑝 max ,𝑗 for 𝑗 ∈ ℋ 01 (tail region 𝑡 ∈ [0, 0.1] ) with reference line 𝑡 .
+
+Figure 2: Empirical validation of null 𝑝 -value behavior under Model 2. 40 C Proofs for Results in the Main Text 
+
+## C.1 Proof of Proposition 1 
+
+Proof. By the definition of ̂ 𝑅 𝑗𝑖 and the OLS estimator ̂ 𝛾 𝑠𝑗 = (𝒔 ⊤𝒔) −1 𝒔 ⊤(𝒔𝛾 𝑠𝑗 + 𝐑 𝑗 ), we have, for each (𝑗, 𝑖) ,
+
+|̂𝑅 𝑗𝑖 − 𝑅 𝑗𝑖 | = |𝑠 𝑖 (𝛾 𝑠𝑗 −̂ 𝛾 𝑠𝑗 )| = ∣𝑠 𝑖 (𝛾 𝑠𝑗 − (𝒔 ⊤𝒔) −1 𝒔 ⊤(𝒔𝛾 𝑠𝑗 + 𝐑 𝑗 ))∣ = ∣𝑠 𝑖 (𝒔 ⊤𝒔) −1 𝒔 ⊤𝐑 𝑗 ∣≤ ∣( 𝒔 ⊤𝒔 𝑛 )−1 
+
+∣∣ 𝒔 ⊤𝐑 𝑗 
+
+𝑛 ∣ |𝑠 𝑖 |. (9) Here 𝐑 𝑗 = (𝑅 𝑗1 , … , 𝑅 𝑗𝑛 )⊤ ∈ ℝ 𝑛 . Taking maxima in (9) yields 
+
+‖̂𝐑 − 𝐑‖ max ∶= max  
+
+> 𝑖,𝑗
+
+|̂𝑅 𝑗𝑖 − 𝑅 𝑗𝑖 | ≤ ∣( 𝒔 ⊤𝒔 𝑛 )−1 
+
+∣( max 
+
+> 𝑗∈[𝑝]
+
+∣𝒔 ⊤𝐑 𝑗 
+
+𝑛 ∣)( max 
+
+> 𝑖∈[𝑛]
+
+|𝑠 𝑖 |). (10) Under Assumption 1, {𝑠 𝑖 }𝑛 𝑖=1 are i.i.d. sub-Gaussian. Standard concentration implies 
+
+∣( 𝒔 ⊤𝒔 𝑛 )−1 
+
+∣ = 𝑂 𝑃 (1), max 
+
+> 𝑖∈[𝑛]
+
+|𝑠 𝑖 | = 𝑂 𝑃 (√ log 𝑛). 
+
+It remains to bound the middle term. Note that max 
+
+> 𝑗∈[𝑝]
+
+∣𝒔 ⊤𝐑 𝑗 
+
+𝑛 ∣ = max 
+
+> 𝑗∈[𝑝]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑠 𝑖 𝑅 𝑗𝑖 ∣ = max 
+
+> 𝑗∈[𝑝]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑠 𝑖 (𝒃 ⊤𝑗 𝒇 𝑖 + 𝑢 𝑗𝑖 )∣. 
+
+For any fixed 𝑗 , the summands 𝑠 𝑖 (𝒃 ⊤𝑗 𝒇 𝑖 + 𝑢 𝑗𝑖 ) are independent sub-Gaussian, so by Bern-stein’s inequality, for any 𝑡 > 0 ,
+
+ℙ(∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑠 𝑖 (𝒃 ⊤𝑗 𝒇 𝑖 + 𝑢 𝑗𝑖 )∣ ≥ 𝑡) ≤ 2 exp (−𝑐𝑛 𝑡 2
+
+𝐾 2 ) , 
+
+for some constants 𝑐 > 0 and 𝐾 > 0 depending on sub-Gaussian norms. By the union bound over 𝑗 = 1, … , 𝑝 ,
+
+ℙ( max 
+
+> 𝑗∈[𝑝]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑠 𝑖 (𝒃 ⊤𝑗 𝒇 𝑖 + 𝑢 𝑗𝑖 )∣ ≥ 𝑡) ≤ 2𝑝 exp (−𝑐𝑛 𝑡 2
+
+𝐾 2 ) . 
+
+41 Taking 𝑡 = 𝐶√ log 𝑝 𝑛 gives max 𝑗∈[𝑝] ∣𝒔 ⊤𝐑 𝑗  
+
+> 𝑛
+
+∣ = 𝑂 𝑃 (√ log 𝑝 𝑛 ). 
+
+Combining the bounds in (10), we conclude 
+
+‖̂𝐑 − 𝐑‖ max = 𝑂 𝑃 (√ log 𝑛 log 𝑝 𝑛 ) , 
+
+which completes the proof of Proposition 1. 
+
+## C.2 Proof of Proposition 2 
+
+Proof. The proof is an adaption of that in Fan et al. (2013). Note that ̂𝐑 = 𝐅𝐁 ⊤ +̃ 𝐔,̃ 𝐔 = 𝐔 + (̂𝐑 − 𝐑). 
+
+Let 𝛿 𝑗𝑖 be the (𝑗, 𝑖) th element of ̂ 𝐑 − 𝐑 , so that ̃ 𝑢 𝑗𝑖 = 𝑢 𝑗𝑖 + 𝛿 𝑗𝑖 . Using expression (A.1) of Bai (2003), we have the identity ̂𝒇 𝑖 − 𝐇𝒇 𝑖 = ( 𝐕 𝑝 )−1 
+
+{ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝒇 𝑠 
+
+𝔼(𝒖 ⊤𝑠 𝒖 𝑖 )𝑝 + 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+(̂𝒇 𝑠 ̃ 𝜁 𝑠𝑖 +̂ 𝒇 𝑠 ̃ 𝜂 𝑠𝑖 +̂ 𝒇 𝑠 ̃ 𝜉 𝑠𝑖 )} , (11) where 𝐕 ∈ ℝ 𝐾×𝐾 is the diagonal matrix of the largest 𝐾 eigenvalues of 𝑛 −1 ̂ 𝐑̂𝐑 ⊤. By Lemma 12, ‖(𝐕/𝑝) −1 ‖ = 𝑂 𝑃 (1) .Define ̃𝜁 𝑠𝑖 =̃ 𝒖 ⊤𝑠 ̃ 𝒖 𝑖 
+
+𝑝 − 𝔼( 𝒖 ⊤𝑠 𝒖 𝑖 
+
+𝑝 ) = ( 𝒖 ⊤𝑠 𝒖 𝑖 
+
+𝑝 − 𝔼( 𝒖 ⊤𝑠 𝒖 𝑖 
+
+𝑝 )) + ( 𝒖 ⊤𝑠 𝜹 𝑖 
+
+𝑝 + 𝜹 ⊤𝑠 𝒖 𝑖 
+
+𝑝 + 𝜹 ⊤𝑠 𝜹 𝑖 
+
+𝑝 ) = 𝜁 𝑠𝑖 + 𝜁 ∗𝑠𝑖 ,
+
+(12) ̃𝜂 𝑠𝑖 = 𝒇 ⊤𝑠 ∑𝑝 𝑗=1 𝒃 𝑗 ̃ 𝑢 𝑗𝑖 
+
+𝑝 = 𝒇 ⊤𝑠 ∑𝑝 𝑗=1 𝒃 𝑗 𝑢 𝑗𝑖 
+
+𝑝 + 𝒇 ⊤𝑠 ∑𝑝 𝑗=1 𝒃 𝑗 𝛿 𝑗𝑖 
+
+𝑝 = 𝜂 𝑠𝑖 + 𝜂 ∗𝑠𝑖 , (13) ̃𝜉 𝑠𝑖 = 𝒇 ⊤𝑖 ∑𝑝 𝑗=1 𝒃 𝑗 ̃ 𝑢 𝑗𝑠 
+
+𝑝 = 𝒇 ⊤𝑖 ∑𝑝 𝑗=1 𝒃 𝑗 𝑢 𝑗𝑠 
+
+𝑝 + 𝒇 ⊤𝑖 ∑𝑝 𝑗=1 𝒃 𝑗 𝛿 𝑗𝑠 
+
+𝑝 = 𝜉 𝑠𝑖 + 𝜉 ∗𝑠𝑖 . (14) 
+
+(a) Convergence rate of factors. Using (𝑎 + 𝑏 + 𝑐 + 𝑑) 2 ≤ 4(𝑎 2 + 𝑏 2 + 𝑐 2 + 𝑑 2) and 42 (11), we obtain max 
+
+> 𝑘∈[𝐾]
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+∣(̂𝒇 𝑖 − 𝐇𝒇 𝑖 )𝑘 ∣2 ≤ 𝐶 max 
+
+> 𝑘∈[𝐾]
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 
+
+𝔼(𝒖 ⊤𝑠 𝒖 𝑖 )𝑝 ]
+
+> 2
+
++ 𝐶 max 
+
+> 𝑘∈[𝐾]
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 ̃ 𝜁 𝑠𝑖 ]
+
+> 2
+
++ 𝐶 max 
+
+> 𝑘∈[𝐾]
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 ̃ 𝜂 𝑠𝑖 ]
+
+> 2
+
++ 𝐶 max 
+
+> 𝑘∈[𝐾]
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 ̃ 𝜉 𝑠𝑖 ]
+
+> 2
+
+.
+
+Each of the four terms on the right-hand side is bounded in Lemma 11, which yields max 
+
+> 𝑘∈[𝐾]
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+∣(̂𝒇 𝑖 − 𝐇𝒇 𝑖 )𝑘 ∣2 = 𝑂 𝑃 ( 1𝑛 + (1/ √𝑝 + 𝑟 𝑛,𝑝 + 𝑟 2𝑛,𝑝 )2) . 
+
+(b) Part (b) follows from part (a) and the bound 
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+‖̂𝒇 𝑖 − 𝐇𝒇 𝑖 ‖2 ≤ 𝐾 max 
+
+> 𝑘≤𝐾
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+∣(̂𝒇 𝑖 − 𝐇𝒇 𝑖 )𝑘 ∣2.
+
+(c) Convergence rate of idiosyncratic components. By definition, 
+
+𝑢 𝑗𝑖 −̂ 𝑢 𝑗𝑖 = 𝑅 𝑗𝑖 −̂ 𝑅 𝑗𝑖 +̂ 𝒃 ⊤𝑗 ̂ 𝒇 𝑖 − 𝒃 ⊤𝑗 𝒇 𝑖 
+
+= 𝑅 𝑗𝑖 −̂ 𝑅 𝑗𝑖 + 𝒃 ⊤𝑗 𝐇 ⊤(̂𝒇 𝑖 − 𝐇𝒇 𝑖 ) + (̂𝒃 ⊤𝑗 − 𝒃 ⊤𝑗 𝐇 ⊤)̂𝒇 𝑖 + 𝒃 ⊤𝑗 (𝐇 ⊤𝐇 − 𝐈 𝐾 )𝒇 𝑖 .
+
+Using (𝑎 + 𝑏 + 𝑐 + 𝑑) 2 ≤ 4(𝑎 2 + 𝑏 2 + 𝑐 2 + 𝑑 2), we have max 
+
+> 𝑗∈[𝑝]
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+|𝑢 𝑗𝑖 −̂ 𝑢 𝑗𝑖 |2 ≤ 4 max 
+
+> 𝑗∈[𝑝]
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+|𝑅 𝑗𝑖 −̂ 𝑅 𝑗𝑖 |2
+
++ 4 max 
+
+> 𝑗∈[𝑝]
+
+‖𝒃 ⊤𝑗 𝐇 ⊤‖2 ⋅ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+‖̂𝒇 𝑖 − 𝐇𝒇 𝑖 ‖2
+
++ 4 max 
+
+> 𝑗∈[𝑝]
+
+‖̂𝒃 ⊤𝑗 − 𝒃 ⊤𝑗 𝐇 ⊤‖2 ⋅ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+‖̂𝒇 𝑖 ‖2
+
++ 4 max 
+
+> 𝑗∈[𝑝]
+
+‖𝒃 𝑗 ‖2 ⋅ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+‖𝒇 𝑖 ‖2 ‖𝐇 ⊤𝐇 − 𝐈‖ 2𝐹 .
+
+By Proposition 1 and Lemma 14, max 
+
+> 𝑗∈[𝑝]
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+|̂𝑢 𝑗𝑖 − 𝑢 𝑗𝑖 |2 = 𝑂 𝑃 (log 𝑝 𝑛 + 1𝑝 + 𝑟 2𝑛,𝑝 + 𝑟 4𝑛,𝑝 + 𝑟 6𝑛,𝑝 ) . 
+
+43 C.3 Proof of Theorem 1 
+
+Proof. We have already derived the expansion of the debiased estimator ̂ 𝜶 𝑑 𝑚 :
+
+√𝑛 (̂𝜶 𝑑 𝑚 − 𝜶 𝑚 ) = 1√𝑛̃ 𝜴̂ 𝐔 ⊤𝝃 + √𝑛 (̃𝜴̂𝜮 𝑈 − 𝐈) (𝜶 𝑚 −̂ 𝜶 𝑛 𝑚 )=∶ 𝑍 + Δ. (15) The term 𝑍 is Gaussian with covariance 𝜎 2̃ 𝜴̂𝜮 𝑈 ̃ 𝜴 ⊤ since it is a linear transformation of the Gaussian vector 𝝃 ∼ 𝑁 ( 0, 𝜎 2𝐈) .It remains to show that Δ is asymptotically negligible. Using the ℓ1–ℓ∞ product bound, 
+
+‖Δ‖ ∞ ≤ √𝑛 ‖̃𝜴̂𝜮 𝑈 − 𝐈‖ ∞ ‖̂𝜶 𝑛 𝑚 − 𝜶 𝑚 ‖1. (16) By Lemmas 6 and 9, 
+
+‖̃𝜴̂𝜮 𝑈 − 𝐈‖ ∞ = 𝑂 𝑃 (√ log 𝑝 𝑛 + 1√𝑝 + 𝑟 𝑛,𝑝 ) . (17) Furthermore, by Lemma 3 and Lemma 4, 
+
+‖̂𝜶 𝑛 𝑚 − 𝜶 𝑚 ‖1 = 𝑂 𝑃 ((𝑠 ∗ + 𝐾 + 1)(√ log 𝑝 𝑛 + 1√𝑝 + 𝑟 𝑛,𝑝 )) . (18) Recall that 𝑟 𝑛,𝑝 = √ log 𝑛 log 𝑝 𝑛 . Combining (16)–(18) yields 
+
+‖Δ‖ ∞ ≤ √𝑛 𝑂 𝑃 ((𝑠 ∗ + 𝐾 + 1) 𝑟 2𝑛,𝑝 ). 
+
+Under Assumption 4, this term is asymptotically negligible. This completes the proof of Theorem 1. 
+
+## C.4 Proof of Corollary 1 
+
+Proof. Define the standardized statistic 
+
+𝑊 𝑗 ∶= √𝑛̂ 𝛼 𝑑 𝑚𝑗 ̂𝜎 [̃𝜴̂𝜮 𝑈 ̃ 𝜴 ⊤]1/2 𝑗𝑗 
+
+.
+
+44 Under the stated regularity conditions, ̂ 𝜎 2 is a consistent estimator of 𝜎 2. Moreover, ̂ 𝐔 ,̂𝜮 𝑈 , and ̃ 𝜴 are functions of the observed (𝒔, 𝐌) and hence are measurable with respect to the filtration ℱ ∶= 𝜎(𝒔, 𝐌) . By Slutsky’s theorem, 
+
+𝑊 𝑗 ∣ ℱ 𝑑 
+
+−→ 𝑁 (0, 1), as 𝑛, 𝑝 → ∞. 
+
+Therefore, for 𝑡 ∈ [0, 1] ,Pr (𝑝 𝛼 𝑚𝑗 ≤ 𝑡 ∣ ℱ) = Pr (2{1 − Φ(|𝑊 𝑗 |)} ≤ 𝑡 ∣ ℱ) = Pr (|𝑊 𝑗 | ≥ Φ −1 (1 − 𝑡/2) ∣ ℱ). (19) For any fixed 𝑡 ∈ [0, 1] , the conditional weak convergence implies Pr (𝑝 𝛼 𝑚𝑗 ≤ 𝑡 ∣ ℱ) 𝑃 
+
+−→ 2{1 − Φ(Φ −1 (1 − 𝑡/2))} = 𝑡. 
+
+Since the limiting distribution function 𝐹 (𝑡) = 𝑡 is continuous on [0, 1] , by Pólya’s theorem this pointwise convergence strengthens to uniform convergence in probability: sup 
+
+> 𝑡∈[0,1]
+
+∣Pr (𝑝 𝛼 𝑚𝑗 ≤ 𝑡 ∣ ℱ) − 𝑡∣ 𝑃 
+
+−→ 0. (20) To show that 𝑝 𝛼 𝑚𝑗 is asymptotically independent of any ℱ-measurable statistic 𝑇 , fix 
+
+𝑡 ∈ [0, 1] and 𝑦 ∈ ℝ . By the tower property, Pr (𝑝 𝛼 𝑚𝑗 ≤ 𝑡, 𝑇 ≤ 𝑦) = 𝔼[ Pr (𝑝 𝛼 𝑚𝑗 ≤ 𝑡, 𝑇 ≤ 𝑦 ∣ ℱ)] = 𝔼[ 1(𝑇 ≤ 𝑦) Pr (𝑝 𝛼 𝑚𝑗 ≤ 𝑡 ∣ ℱ)] . (21) Using (20), we have Pr (𝑝 𝛼 𝑚𝑗 ≤ 𝑡 ∣ ℱ) = 𝑡 + 𝑜 𝑃 (1) uniformly over 𝑡 ∈ [0, 1] . Substituting this into (21) yields Pr (𝑝 𝛼 𝑚𝑗 ≤ 𝑡, 𝑇 ≤ 𝑦) = 𝔼[ 1(𝑇 ≤ 𝑦) (𝑡 + 𝑜 𝑃 (1))] = 𝑡 Pr (𝑇 ≤ 𝑦) + 𝑜(1), 
+
+which proves the claimed asymptotic independence. 45 C.5 Proof of Theorem 2 
+
+Proof. We follow the proof framework of Theorem 2 in Dai et al. (2022). We first examine the asymptotic behavior of ̂ 𝜋 𝛾 0 (𝜂) :lim 
+
+> 𝑝→∞
+
+̂ 𝜋 𝛾 0 (𝜂) = 𝜋 00 + 𝜋 10 + 𝜋 01 
+
+𝐺 01 (𝜂) 1 − 𝜂 + 𝜋 11 
+
+𝐺 11 (𝜂) 1 − 𝜂 , (22) lim 
+
+> 𝑝→∞
+
+{1 −̂ 𝜋 𝛾 0 (𝜂)} = 𝜋 01 + 𝜋 11 − 𝜋 01 
+
+𝐺 01 (𝜂) 1 − 𝜂 − 𝜋 11 
+
+𝐺 11 (𝜂) 1 − 𝜂 . (23) Write 
+
+𝑉 (𝑡) ∶= ∑ 
+
+> 𝑗∈𝒮 0
+
+1(𝑃 max ,𝑗 ≤ 𝑡), FDP (𝑡) = 𝑉 (𝑡) 𝑅(𝑡) ∨ 1 .
+
+Decompose 𝑉 (𝑡) = 𝑉 00 (𝑡) + 𝑉 01 (𝑡) + 𝑉 10 (𝑡) , where 
+
+𝑉 𝑎𝑏 (𝑡) ∶= ∑
+
+> 𝑗∈ℋ 𝑎𝑏
+
+1(𝑃 max ,𝑗 ≤ 𝑡), (𝑎, 𝑏) ∈ {0, 1} 2.
+
+By Corollary 1, for 𝑗 with 𝛼 𝑚𝑗 = 0 , 𝑝 𝛼 𝑚𝑗 is asymptotically Unif (0, 1) conditional on ℱ = 𝜎(𝒔, 𝐌) and is asymptotically independent of any ℱ-measurable quantity. Since 𝑝 𝛾 𝑠𝑗 is ℱ-measurable, this yields asymptotic independence between 𝑝 𝛼 𝑚𝑗 and 𝑝 𝛾 𝑠𝑗 for 𝑗 ∈ ℋ 00 ∪ ℋ 01 .Moreover, by Assumption 6(ii), 𝑉 10 (𝑡)/𝑝 ≤ |ℋ 10 |/𝑝 → 0. 
+
+By the Functional Law of Large Numbers (FLLN) for weakly dependent processes (or a generalized Glivenko–Cantelli theorem), and given continuity of the limiting distributions, we have the uniform convergences lim  
+
+> 𝑝→∞
+
+sup 
+
+> 𝑡∈[0,1]
+
+∣𝑉 00 (𝑡) 𝑝 − 𝜋 00 𝑡 2∣ = 0, (24) lim  
+
+> 𝑝→∞
+
+sup 
+
+> 𝑡∈[0,1]
+
+∣𝑉 01 (𝑡) 𝑝 − 𝜋 01 𝑡{1 − 𝐺 01 (𝑡)}∣ = 0, (25) lim  
+
+> 𝑝→∞
+
+sup 
+
+> 𝑡∈[0,1]
+
+∣𝑉 10 (𝑡) 𝑝 ∣ = 0. (26) Under the alternative, 𝑝 -values are stochastically smaller than the uniform distribution, hence 𝐺 11 (𝜂)/(1 − 𝜂) ≤ 1 . Let 
+
+𝑐 ∶= 𝐺 −1 01 (𝐺 01 (𝜂) 1 − 𝜂 ) , 
+
+46 noting that 𝐺 01 is monotone decreasing. For any 𝛿 > 0 and 𝛿 ≤ 𝑡 ≤ 𝑐 , we have lim 
+
+> 𝑝→∞
+
+̂ 𝜋 𝛾 0 (𝜂) 𝑡 2 ≥ 𝜋 00 𝑡 2, (27) lim 
+
+> 𝑝→∞
+
+{1 −̂ 𝜋 𝛾 0 (𝜂)} 𝑡 = (𝜋 01 + 𝜋 11 − 𝜋 01 
+
+𝐺 01 (𝜂) 1 − 𝜂 − 𝜋 11 
+
+𝐺 11 (𝜂) 1 − 𝜂 ) 𝑡 ≥ 𝜋 01 𝑡{1 − 𝐺 01 (𝑡)}. (28) Therefore, lim  
+
+> 𝑝→∞
+
+inf  
+
+> 𝛿≤𝑡≤𝑐
+
+{̂ 𝜋 𝛾 0 (𝜂)𝑡 2 + {1 −̂ 𝜋 𝛾 0 (𝜂)}𝑡 𝑅(𝑡) ∨ 1 − 𝜋 00 𝑡 2 + 𝜋 01 𝑡{1 − 𝐺 01 (𝑡)} 𝑅(𝑡) ∨ 1 } ≥ 0. (29) Next, observe that lim  
+
+> 𝑝→∞
+
+sup 
+
+> 𝛿≤𝑡≤𝑐
+
+∣𝑉 00 (𝑡) + 𝑉 01 (𝑡) + 𝑉 10 (𝑡) 𝑅(𝑡) ∨ 1 − 𝑝{𝜋 00 𝑡 2 + 𝜋 01 𝑡(1 − 𝐺 01 (𝑡))} 𝑅(𝑡) ∨ 1 ∣≤ lim  
+
+> 𝑝→∞
+
+∣ 𝑝 𝑅(𝛿) ∨ 1 ∣ sup 
+
+> 𝛿≤𝑡≤𝑐
+
+∣𝑉 00 (𝑡) + 𝑉 01 (𝑡) + 𝑉 10 (𝑡) 𝑝 − {𝜋 00 𝑡 2 + 𝜋 01 𝑡(1 − 𝐺 01 (𝑡))}∣ = 0. (30) Combining (29) and (30) yields lim  
+
+> 𝑝→∞
+
+inf  
+
+> 𝛿≤𝑡≤𝑐
+
+{̂ FDP (𝑡) − FDP (𝑡)} ≥ 0. (31) Let ̂𝑡 𝑞,𝜂 = sup {𝑡 ∶̂ FDP 𝜂 (𝑡) ≤ 𝑞}. 
+
+For typical FDR levels of interest (e.g., 𝑞 = 0.05 ), ̂ 𝑡 𝑞,𝜂 lies in the extreme left tail of the 
+
+𝑝 -value distribution, hence it is close to 0 and typically satisfies ̂ 𝑡 𝑞,𝜂 < 𝑐 . Therefore, (31) implies lim inf  
+
+> 𝑝→∞
+
+{̂ FDP (̂𝑡 𝑞,𝜂 ) − FDP (̂𝑡 𝑞,𝜂 )} ≥ 0. 
+
+Since ̂ FDP (̂𝑡 𝑞,𝜂 ) ≤ 𝑞 , it follows that lim sup 
+
+> 𝑝→∞
+
+FDP (̂𝑡 𝑞,𝜂 ) ≤ 𝑞. 
+
+By Fatou’s lemma, lim sup 
+
+> 𝑝→∞
+
+𝔼[ FDP (̂𝑡 𝑞,𝜂 )] ≤ 𝔼[ lim sup 
+
+> 𝑝→∞
+
+FDP (̂𝑡 𝑞,𝜂 )] ≤ 𝑞, 
+
+47 which proves lim sup 
+
+> 𝑝→∞
+
+FDR (̂𝑡 𝑞,𝜂 ) ≤ 𝑞. 
+
+The proof of Theorem 2 is completed. 
+
+# D Technical Lemmas 
+
+This section collects auxiliary results used in the proof of Theorem 1. Subsections D.1 and D.2 provide lemmas controlling the remainder term in the debiased expansion and establishing the required properties of the decorrelating matrix. Subsection D.3 summarizes additional lemmas for factor-model estimation that are invoked throughout the proofs. 
+
+## D.1 Convergence rate of ℓ1 norm 
+
+In this subsection, we present the lemmas and proofs needed for Theorem 1, focusing on controlling the remainder term 
+
+Δ = √𝑛 (̃𝜴̂𝜮 𝑈 − 𝐈) (𝜶 𝑚 −̂ 𝜶 𝑛 𝑚 ), 
+
+via the standard ℓ1–ℓ∞ inequality. Let ̂𝒘 𝑖 ∶= (̂𝒖 ⊤𝑖 , 𝑠 𝑖 ,̂ 𝒇 ⊤𝑖 )⊤ ∈ ℝ 𝑝+𝐾+1 , 𝜽 ∗ ∶= (𝜶 ⊤𝑚 , 𝛼 1, 𝜶 ⊤2 )⊤,̂ 𝜽 ∶= (̂𝜶 ⊤𝑚 ,̂ 𝛼 1,̂ 𝜶 ⊤2 )⊤.
+
+Define the design matrix and its sample covariance by ̂𝐖 ∶= (̂𝒘 1, … ,̂ 𝒘 𝑛 )⊤ ∈ ℝ 𝑛×(𝑝+𝐾+1) ,̂ 𝜮 𝑊 ∶= 𝑛 −1 ̂ 𝐖 ⊤̂ 𝐖. 
+
+For any index set 𝒮 ⊂ {1, … , 𝑝 + 𝐾 + 1} , define the cone 
+
+𝒞(𝒮, 3) ∶= {𝒗 ∈ ℝ 𝑝+𝐾+1 ∶ ‖𝒗 𝒮 𝑐 ‖1 ≤ 3‖𝒗 𝒮 ‖1}. 
+
+48 Recall that 𝑆 ∗ = {𝑗 ∈ [𝑝] ∶ 𝛼 ∗𝑚𝑗 ≠ 0} and 𝑆 ⋄ = 𝑆 ∗ ∪ {𝑝 + 1, … , 𝑝 + 𝐾 + 1}. Then 
+
+𝑆 𝑐 ⋄ = 𝑆 𝑐 ∗ = {𝑗 ∈ [𝑝] ∶ 𝛼 ∗𝑚𝑗 = 0}. 
+
+We bound the two factors in the product ‖Δ‖ ∞ ≤ √𝑛 ‖̃𝜴̂𝜮 𝑈 − 𝐈‖ ∞ ‖̂𝜶 𝑛 𝑚 − 𝜶 𝑚 ‖1
+
+separately. Lemma 3 establishes the stochastic order of the Lasso tuning parameter 𝜆 for the initial estimator. Lemma 4 then provides the ℓ1-convergence rate of the initial Lasso estimator under a Restricted Eigenvalue (RE) condition on the design. Finally, Lemma 5 verifies that this RE condition holds with high probability. 
+
+Lemma 3 (Order of 𝜆 ). Under Assumptions 1–3, and assuming 𝜉 𝑖 ∼ 𝑁 (0, 𝜎 2), we have 
+
+2𝑛 ∥
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(𝑦 𝑖 −̂ 𝒘 ⊤𝑖 𝜽 ∗)̂𝒘 𝑖 ∥∞
+
+= 𝑂 𝑃 (√ log 𝑝 𝑛 + 1√𝑝 + 𝑟 𝑛,𝑝 ) . (32) 
+
+Proof. Let 𝐖 = (𝐔, 𝒔, 𝐅) ∈ ℝ 𝑛×(𝑝+𝐾+1) ,̂ 𝐖 = (̂𝐔, 𝒔,̂ 𝐅) ∈ ℝ 𝑛×(𝑝+𝐾+1) , and ̃ 𝐖 = (𝐔, 𝒔, 𝐅𝐇 ⊤) ∈ ℝ 𝑛×(𝑝+𝐾+1) . Write ̂ 𝒘 ⊤𝑖 for the 𝑖 th row of ̂ 𝐖 , and similarly for ̃ 𝒘 ⊤𝑖 .Since 𝑦 𝑖 −̂ 𝒘 ⊤𝑖 𝜽 ∗ = 𝜉 𝑖 , we can write 
+
+2𝑛 ∥
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(𝑦 𝑖 −̂ 𝒘 ⊤𝑖 𝜽 ∗)̂𝒘 𝑖 ∥∞
+
+= ∥ 2𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+̂𝒘 𝑖 𝜉 𝑖 ∥∞
+
+.
+
+By the triangle inequality, 
+
+∥ 2𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+̂𝒘 𝑖 𝜉 𝑖 ∥∞
+
+≤ ∥ 2𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(̂𝒘 𝑖 −̃ 𝒘 𝑖 ) 𝜉 𝑖 ∥∞
+
++ ∥ 2𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+̃𝒘 𝑖 𝜉 𝑖 ∥∞
+
+= 2 max 
+
+> 𝑗∈[𝑝+𝐾+1]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(̂ 𝑤 𝑗𝑖 −̃ 𝑤 𝑗𝑖 )𝜉 𝑖 ∣ + 2 max 
+
+> 𝑗∈[𝑝+𝐾+1]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+̃𝑤 𝑗𝑖 𝜉 𝑖 ∣ . (33) By Cauchy–Schwarz inequality, 
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(̂ 𝑤 𝑗𝑖 −̃ 𝑤 𝑗𝑖 )𝜉 𝑖 ∣ ≤ ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(̂ 𝑤 𝑗𝑖 −̃ 𝑤 𝑗𝑖 )2)
+
+> 1/2
+
+( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝜉 2𝑖 )
+
+> 1/2
+
+.
+
+Taking maxima over 𝑗 ∈ [𝑝 + 𝐾 + 1] gives max 
+
+> 𝑗∈[𝑝+𝐾+1]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(̂ 𝑤 𝑗𝑖 −̃ 𝑤 𝑗𝑖 )𝜉 𝑖 ∣ ≤ max 
+
+> 𝑗∈[𝑝+𝐾+1]
+
+( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(̂ 𝑤 𝑗𝑖 −̃ 𝑤 𝑗𝑖 )2)
+
+> 1/2
+
+( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝜉 2𝑖 )
+
+> 1/2
+
+. (34) 49 By Proposition 2 (ignoring higher-order terms in 𝑟 𝑛,𝑝 ), max 
+
+> 𝑗∈[𝑝+𝐾+1]
+
+( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(̂ 𝑤 𝑗𝑖 −̃ 𝑤 𝑗𝑖 )2)
+
+> 1/2
+
+= 𝑂 𝑃 (√ log 𝑝 𝑛 + 1√𝑝 + 𝑟 𝑛,𝑝 ) . (35) Moreover, ( 1𝑛 ∑𝑛 𝑖=1 𝜉 2𝑖 )1/2 
+
+= 𝑂 𝑃 (1). Combining with (34) yields max 
+
+> 𝑗∈[𝑝+𝐾+1]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(̂ 𝑤 𝑗𝑖 −̃ 𝑤 𝑗𝑖 )𝜉 𝑖 ∣ = 𝑂 𝑃 (√ log 𝑝 𝑛 + 1√𝑝 + 𝑟 𝑛,𝑝 ) . (36) By Assumption 1 and Bernstein’s inequality, for some constant 𝐶 > 0 ,
+
+ℙ(∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+̃𝑤 𝑗𝑖 𝜉 𝑖 ∣ > 𝐶√ log 𝑝 𝑛 ) ≤ 𝑝 −2 , for all 𝑗 ∈ [𝑝 + 𝐾 + 1]. 
+
+By the union bound, max 
+
+> 𝑗∈[𝑝+𝐾+1]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+̃𝑤 𝑗𝑖 𝜉 𝑖 ∣ = 𝑂 𝑃 (√ log 𝑝 𝑛 ) . (37) Finally, substituting (36) and (37) into (33) establishes (32). 
+
+Lemma 4 (Convergence rate in ℓ1). Under Assumptions 1–3 and 𝜉 𝑖 ∼ 𝑁 (0, 𝜎 2), suppose that 
+
+𝜆 ≥ 2𝑛 ∥
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(𝑦 𝑖 −̂ 𝒘 ⊤𝑖 𝜽 ∗)̂𝒘 𝑖 ∥∞
+
+. (38) 
+
+Assume further that there exists a constant 𝜙 0 > 0 such that the restricted eigenvalue condition holds: 
+
+min 
+
+> 0≠𝒗∈𝒞(𝒮,3)
+
+𝒗 ⊤̂ 𝜮 𝑊 𝒗 ‖𝒗‖ 22
+
+≥ 𝜙 20, (39) 
+
+where ̂ 𝜮 𝑊 = 𝑛 −1 ̂ 𝐖 ⊤̂ 𝐖 and 𝒞(𝒮, 3) = {𝒗 ∶ ‖𝒗 𝒮 𝑐 ‖1 ≤ 3‖𝒗 𝒮 ‖1}. Then, 
+
+‖̂𝜽 − 𝜽 ∗‖1 = 𝑂 𝑃 (𝜆 |𝒮 ⋄|𝜙 20
+
+) . 
+
+Proof. By optimality of ̂ 𝜽 ,
+
+12𝑛 ‖𝒚 −̂ 𝐖̂𝜽‖ 22 + 𝜆‖̂𝜶 𝑚 ‖1 ≤ 12𝑛 ‖𝒚 −̂ 𝐖𝜽 ∗‖22 + 𝜆‖𝜶 ∗𝑚 ‖1. (40) 50 Rearranging (40) yields the basic inequality 
+
+12𝑛 ‖̂𝐖(̂𝜽 − 𝜽 ∗)‖ 22 + 𝜆‖̂𝜶 𝑚 ‖1 ≤ 𝝃 ⊤̂ 𝐖(̂𝜽 − 𝜽 ∗)𝑛 + 𝜆‖𝜶 ∗𝑚 ‖1
+
+≤ 𝜆 2 ‖̂𝜽 − 𝜽 ∗‖1 + 𝜆‖𝜶 ∗𝑚 ‖1, (41) where the last step uses (38). Let 𝑆 ∗ = {𝑗 ∈ [𝑝] ∶ 𝛼 ∗𝑚𝑗 ≠ 0} and 𝑆 ⋄ = 𝑆 ∗ ∪ {𝑝 + 1, … , 𝑝 + 𝐾 + 1} . Define 𝜟 ∶=̂ 𝜽 − 𝜽 ∗.Then 𝑆 𝑐 ⋄ = 𝑆 𝑐 ∗ and 
+
+‖𝜶 ∗𝑚 ‖1 = ‖𝜽 ∗𝑆 ∗ ‖1, ‖̂𝜶 𝑚 ‖1 = ‖̂𝜽 𝑆 ∗ ‖1 + ‖̂𝜽 𝑆 𝑐 ⋄ ‖1 = ‖̂𝜽 𝑆 ∗ ‖1 + ‖𝜟 𝑆 𝑐 ⋄ ‖1.
+
+Using these identities in (41) and canceling the common ‖̂𝜽 𝑆 ∗ ‖1 term gives 
+
+𝜆‖𝜟 𝑆 𝑐 ⋄ ‖1 ≤ 𝜆 2 (‖𝜟 𝑆 ⋄ ‖1 + ‖𝜟 𝑆 𝑐 ⋄ ‖1) + 𝜆‖𝜽 ∗𝑆 ∗ ‖1 − 𝜆‖̂𝜽 𝑆 ∗ ‖1.
+
+Moreover, 
+
+‖𝜽 ∗𝑆 ∗ ‖1 ≤ ‖̂𝜽 𝑆 ∗ ‖1 + ‖̂𝜽 𝑆 ∗ − 𝜽 ∗𝑆 ∗ ‖1 ≤ ‖̂𝜽 𝑆 ∗ ‖1 + ‖𝜟 𝑆 ⋄ ‖1,
+
+hence 
+
+3𝜆 2 ‖𝜟 𝑆 ⋄ ‖1 − 𝜆 2 ‖𝜟 𝑆 𝑐 ⋄ ‖1 ≥ 0, i.e., ‖𝜟 𝑆 𝑐 ⋄ ‖1 ≤ 3‖𝜟 𝑆 ⋄ ‖1.
+
+Therefore, 𝜟 ∈ 𝒞(𝑆 ⋄, 3) .From 𝜟 ∈ 𝒞(𝑆 ⋄, 3) and (41), we obtain 
+
+1𝑛 ‖̂𝐖𝜟‖ 22 + 𝜆‖𝜟 𝑆 𝑐 ⋄ ‖1 ≤ 3𝜆‖𝜟 𝑆 ⋄ ‖1. (42) Consequently, 
+
+1𝑛 ‖̂𝐖𝜟‖ 22 + 𝜆‖𝜟‖ 1 = 1𝑛 ‖̂𝐖𝜟‖ 22 + 𝜆‖𝜟 𝑆 ⋄ ‖1 + 𝜆‖𝜟 𝑆 𝑐 ⋄ ‖1
+
+≤ 4𝜆‖𝜟 𝑆 ⋄ ‖1. (43) By Cauchy–Schwarz and (39), 
+
+‖𝜟 𝑆 ⋄ ‖1 ≤ √|𝑆 ⋄| ‖𝜟‖ 2 ≤ √|𝑆 ⋄| ‖̂𝐖𝜟‖ 2
+
+√𝑛 𝜙 0
+
+.
+
+51 Plugging this into (43) yields 
+
+1𝑛 ‖̂𝐖𝜟‖ 22 + 𝜆‖𝜟‖ 1 ≤ 4𝜆√|𝑆 ⋄|‖̂𝐖𝜟‖ 2
+
+√𝑛 𝜙 0
+
+.
+
+Using 4𝑢𝑣 ≤ 𝑢 2 + 4𝑣 2 with 𝑢 = ‖̂𝐖𝜟‖ 2/√𝑛 and 𝑣 = 2𝜆√|𝑆 ⋄|/𝜙 0 gives 
+
+1𝑛 ‖̂𝐖𝜟‖ 22 + 𝜆‖𝜟‖ 1 ≤ 12𝑛 ‖̂𝐖𝜟‖ 22 + 8𝜆 2|𝑆 ⋄|𝜙 20
+
+.
+
+Therefore, 
+
+1𝑛 ‖̂𝐖𝜟‖ 22 + 2𝜆‖𝜟‖ 1 ≤ 16𝜆 2|𝑆 ⋄|𝜙 20
+
+,
+
+and hence 
+
+‖̂𝜽 − 𝜽 ∗‖1 = 𝑂 𝑃 (𝜆 |𝑆 ⋄|𝜙 20
+
+) . 
+
+Lemma 5 (Restricted eigenvalue condition) . Under Assumptions 1–3, let 𝒮 ⊂ {1, … , 𝑝 + 𝐾 + 1} satisfy 
+
+|𝒮| = 𝑜( 𝑛 
+
+log 𝑝 log 𝑛 ) . (44) 
+
+Then there exists a constant 𝜙 20 > 0 such that 
+
+ℙ( min 
+
+> 0≠𝜷∈𝒞(𝒮,3)
+
+𝜷 ⊤̂ 𝜮 𝑊 𝜷 ‖𝜷‖ 22
+
+≥ 𝜙 20) → 1, 𝑛 → ∞, 
+
+where ̂ 𝜮 𝑊 ∶= 𝑛 −1 ̂ 𝐖 ⊤̂ 𝐖 .Proof. Write 𝜷 = (𝜷 ⊤1 , 𝛽 2, 𝜷 ⊤3 )⊤ conformably with ̂ 𝐖 = (̂𝐔, 𝒔,̂ 𝐅) . By construction we have the orthogonality relations ̂𝐔 ⊤𝒔 = 0,̂ 𝐅 ⊤𝒔 = 0,̂ 𝐔 ⊤̂ 𝐅 = 0,
+
+and hence 
+
+𝜷 ⊤̂ 𝜮 𝑊 𝜷 = 𝜷 ⊤1̂ 𝜮 𝑈 𝜷 1 + 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑠 2𝑖 𝛽 22 + 𝜷 ⊤3̂ 𝜮 𝐹 𝜷 3, (45) 52 where ̂ 𝜮 𝑈 ∶= 𝑛 −1 ̂ 𝐔 ⊤̂ 𝐔 and ̂ 𝜮 𝐹 ∶= 𝑛 −1 ̂ 𝐅 ⊤̂ 𝐅 . The last two terms in (45) are nonnegative, so it suffices to lower-bound 𝜷 ⊤1̂ 𝜮 𝑈 𝜷 1 uniformly over cone-restricted directions. By Lemma 4, ̂ 𝜽 − 𝜽 ∗ ∈ 𝒞(𝑆 ⋄, 3) . Recall 𝑆 ∗ = {𝑗 ∈ [𝑝] ∶ 𝛼 ∗𝑚𝑗 ≠ 0} and 𝑆 ⋄ = 𝑆 ∗ ∪ {𝑝 + 1, … , 𝑝 + 𝐾 + 1} . Since the nuisance part (̂𝛼 1,̂ 𝜶 ⊤2 )⊤ is low-dimensional and √𝑛 -consistent, we have 
+
+‖̂𝛼 1 − 𝛼 ∗1‖1 + ‖̂𝜶 2 − 𝜶 ∗2‖1 = 𝑂 𝑃 (𝑛 −1/2 ). 
+
+Therefore, from ̂ 𝜽 − 𝜽 ∗ ∈ 𝒞(𝑆 ⋄, 3) we obtain 
+
+‖̂𝜶 𝑚,𝑆 𝑐 ∗ − 𝜶 ∗𝑚,𝑆 𝑐 ∗ ‖1 ≤ 3‖̂𝜶 𝑚,𝑆 ∗ − 𝜶 ∗𝑚,𝑆 ∗ ‖1 + 𝑂 𝑃 (𝑛 −1/2 ), 
+
+which implies 
+
+ℙ(‖̂𝜶 𝑚,𝑆 𝑐 ∗ − 𝜶 ∗𝑚,𝑆 𝑐 ∗ ‖1 ≤ 3‖̂𝜶 𝑚,𝑆 ∗ − 𝜶 ∗𝑚,𝑆 ∗ ‖1) → 1. 
+
+Hence, with probability tending to one, ̂ 𝜶 𝑚 − 𝜶 ∗𝑚 ∈ 𝒞(𝑆 ∗, 3) .Let 𝒮 1 ⊂ {1, … , 𝑝} and suppose 𝜷 1 ∈ ℝ 𝑝 satisfies ‖𝜷 1,𝒮 𝑐 1 ‖1 ≤ 3‖𝜷 1,𝒮 1 ‖1. Then 
+
+‖𝜷 1‖21 ≤ 16‖𝜷 1,𝒮 1 ‖21 ≤ 16|𝒮 1| ‖𝜷 1‖22. (46) Let ̃ 𝜮 𝑈 ∶= 𝑛 −1 𝐔 ⊤𝐔 . By adding and subtracting ̃ 𝜮 𝑈 ,
+
+𝜷 ⊤1̂ 𝜮 𝑈 𝜷 1
+
+‖𝜷 1‖22
+
+≥ 𝜷 ⊤1̃ 𝜮 𝑈 𝜷 1
+
+‖𝜷 1‖22
+
+− ‖̂𝜮 𝑈 −̃ 𝜮 𝑈 ‖max ‖𝜷 1‖21
+
+‖𝜷 1‖22
+
+≥ 𝜷 ⊤1̃ 𝜮 𝑈 𝜷 1
+
+‖𝜷 1‖22
+
+− 16|𝒮 1| ‖̂𝜮 𝑈 −̃ 𝜮 𝑈 ‖max , (47) where the last step uses (46). By Lemma 8 and (44), we have 
+
+ℙ(ℰ 1) → 1, ℰ1 ∶= {16|𝒮 1| ‖̂𝜮 𝑈 −̃ 𝜮 𝑈 ‖max ≤ 𝜆 min (𝜮 𝑢 )8 } , 
+
+where 𝜮 𝑢 ∶= Cov (𝒖 𝑖 ).Next, for 𝑠 ≥ 1 define the sparse set 
+
+𝒦(𝑠) ∶= {𝜷 1 ∈ ℝ 𝑝 ∶ ‖𝜷 1‖0 ≤ 𝑠, ‖𝜷 1‖2 ≤ 1}. 
+
+53 Take 𝑠 ∶= 64|𝒮 1|, so that 𝑠 = 𝑜(𝑛/ log 𝑝) by (44). By Lemma 15 of Loh & Wainwright (2012), 
+
+ℙ(ℰ 2) → 1, ℰ2 ∶= { sup 
+
+> 𝜷 1∈𝒦(2𝑠)
+
+∣𝜷 ⊤1 (̃𝜮 𝑈 − 𝜮 𝑢 )𝜷 1∣ ≤ 𝜆 min (𝜮 𝑢 )54 } . 
+
+Under ℰ2, Lemma 13 of Loh & Wainwright (2012) implies 
+
+𝜷 ⊤1̃ 𝜮 𝑈 𝜷 1 ≥ 𝜆 min (𝜮 𝑢 )2 ‖𝜷 1‖22 − 𝜆 min (𝜮 𝑢 )2𝑠 ‖𝜷 1‖21
+
+≥ 𝜆 min (𝜮 𝑢 )2 ‖𝜷 1‖22 − 16|𝒮 1| 𝜆 min (𝜮 𝑢 )2𝑠 ‖𝜷 1‖22,
+
+where the last step uses (46). Combining this bound with (47), on ℰ1 ∩ ℰ 2,
+
+𝜷 ⊤1̂ 𝜮 𝑈 𝜷 1
+
+‖𝜷 1‖22
+
+≥ 𝜆 min (𝜮 𝑢 )2 − 16|𝒮 1| 𝜆 min (𝜮 𝑢 )2𝑠 − 𝜆 min (𝜮 𝑢 )8 ≥ 𝜆 min (𝜮 𝑢 )4 ,
+
+where the last inequality follows by 𝑠 = 64|𝒮 1|.Since ℙ(ℰ 1 ∩ ℰ 2) → 1 , the above lower bound together with (45) implies that, with probability tending to one, min 
+
+> 0≠𝜷∈𝒞(𝒮,3)
+
+𝜷 ⊤̂ 𝜮 𝑊 𝜷 ‖𝜷‖ 22
+
+≥ 𝜙 20, for some 𝜙 20 > 0, 
+
+which completes the proof. 
+
+## D.2 Convergence rate of ℓ∞ norm 
+
+The convergence rate of ‖̃𝜴̂𝜮 𝑈 − 𝐈‖ ∞ depends on how the decorrelating matrix ̃ 𝜴 is con-structed. Popular choices include nodewise regression (Van de Geer et al. 2014, Javanmard & Montanari 2018) and convex-optimization based estimators that trade off bias and vari-ance (Javanmard & Montanari 2014, Battey et al. 2018). For the theoretical analysis, we focus on the nodewise Lasso construction, which yields an explicit control of ‖̃𝜴̂𝜮 𝑈 − 𝐈‖ ∞.Following Van de Geer et al. (2014), for each 𝑗 ∈ [𝑝] we run the nodewise regression of the 𝑗 th column ̂ 𝒖 𝑗 on the remaining columns ̂ 𝐔 −𝑗 :̂𝜸 𝑗 ∈ arg min 
+
+> 𝜸∈ℝ 𝑝−1
+
+{ 12𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸‖ 22 + 𝜆 𝑗 ‖𝜸‖ 1} , (48) 54 where ̂ 𝜸 𝑗 = (̂𝛾 𝑗,𝑘 )𝑘≠𝑗 . Define the matrix ̂ 𝐂 ∈ ℝ 𝑝×𝑝 by ̂𝐂 𝑗𝑗 = 1,̂ 𝐂 𝑗𝑘 = −̂𝛾 𝑗,𝑘 (𝑘 ≠ 𝑗), 
+
+and the diagonal matrix ̂ 𝐓 2 = diag (̂𝜏 21 , … ,̂ 𝜏 2𝑝 ). with ̂𝜏 2𝑗 ∶= 1𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 ̂ 𝜸 𝑗 ‖22 + 𝜆 𝑗 ‖̂𝜸 𝑗 ‖1, 𝑗 = 1, … , 𝑝. 
+
+We then set ̃𝜴 ∶=̂ 𝐓 −2 ̂ 𝐂. 
+
+The KKT conditions for (48) imply the standard bound 
+
+‖̃𝜴̂𝜮 𝑈 − 𝐈‖ ∞ ≤ max 
+
+> 𝑗∈[𝑝]
+
+𝜆 𝑗 ̂𝜏 2𝑗 
+
+. (49) Let the population nodewise regression coefficient be 
+
+𝜸 ∗𝑗 ∈ arg min 
+
+> 𝜸∈ℝ 𝑝−1
+
+𝔼(𝑢 𝑗 − 𝒖 ⊤−𝑗 𝜸) 2, 𝜏 2𝑗 ∶= 𝔼(𝑢 𝑗 − 𝒖 ⊤−𝑗 𝜸 ∗𝑗 )2.
+
+For each 𝑗 ∈ [𝑝] , define the 𝑝 -dimensional vector ̃ 𝜸 𝑗 ∈ ℝ 𝑝 by ̃ 𝜸 𝑗𝑗 = 1 and ̃ 𝜸 𝑗𝑘 = −𝜸 ∗𝑗,𝑘 for 
+
+𝑘 ≠ 𝑗 . Lemma 6 gives the order of the tuning parameter 𝜆 𝑗 , chosen as 
+
+𝜆 𝑗 ≍ 1𝑛 ∥̂𝐔 ⊤−𝑗 (̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 )∥ ∞
+
+= 1𝑛 ‖̂𝐔 ⊤−𝑗 ̂ 𝐔̃ 𝜸 𝑗 ‖∞.
+
+Lemma 9 further shows that, under mild conditions, max 𝑗∈[𝑝] ̂ 𝜏 −2 𝑗 = 𝑂 𝑃 (1) .
+
+Lemma 6 (Order of 𝜆 𝑗 ). Under Assumptions 1–3, uniformly over 𝑗 ∈ [𝑝] ,
+
+1𝑛 ∥̂𝐔 ⊤−𝑗 ̂ 𝐔̃ 𝜸 𝑗 ∥∞ = 𝑂 𝑃 (√ log 𝑝 𝑛 + 1√𝑝 + 𝑟 𝑛,𝑝 ) . 
+
+Proof. Fix 𝑗 ∈ [𝑝] . By the triangle inequality, 
+
+∥̂𝐔 ⊤−𝑗 ̂ 𝐔̃ 𝜸 𝑗 ∥∞ ≤ ∥𝐔 ⊤−𝑗 𝐔̃ 𝜸 𝑗 ∥∞ + ∥̂𝐔 ⊤−𝑗 (̂𝐔 − 𝐔)̃ 𝜸 𝑗 ∥∞ + ∥(̂𝐔 − 𝐔) ⊤𝐔̃ 𝜸 𝑗 ∥∞. (50) Recall ̃ 𝜸 𝑗 ∈ ℝ 𝑝 is defined by ̃ 𝜸 𝑗𝑗 = 1 and ̃ 𝜸 𝑗𝑙 = −𝛾 ∗𝑗,𝑙 for 𝑙 ≠ 𝑗 . Under Assumption 3, 
+
+‖̃𝜸 𝑗 ‖22 ≤̃ 𝜸 ⊤𝑗 𝜮 𝑢 ̃ 𝜸 𝑗 
+
+𝜆 min (𝜮 𝑢 ) = 1𝜣 𝑗,𝑗 𝜆 min (𝜮 𝑢 ) ≤ 𝜆 max (𝜮 𝑢 )𝜆 min (𝜮 𝑢 ) ≤ 𝑐 2
+
+𝑐 1
+
+. (51) 55 Therefore, {𝒖 ⊤𝑖 ̃ 𝜸 𝑗 }𝑛 𝑖=1 are i.i.d. mean-zero sub-Gaussian random variables. By Bernstein’s inequality and a union bound over 𝑘 ≠ 𝑗 ,
+
+1𝑛 ∥𝐔 ⊤−𝑗 𝐔̃ 𝜸 𝑗 ∥∞ = 𝑂 𝑃 (√ log 𝑝 𝑛 ) . (52) Using ‖̂𝐔 ⊤−𝑗 (⋅)‖ ∞ ≤ ‖̂𝐔 ⊤(⋅)‖ ∞,
+
+∥̂𝐔 ⊤−𝑗 (̂𝐔 − 𝐔)̃ 𝜸 𝑗 ∥∞ ≤ ∥̂𝐔 ⊤(̂𝐔 − 𝐔)̃ 𝜸 𝑗 ∥∞. (53) Recall ̂ 𝐔 − 𝐔 = (̂𝐑 − 𝐑) + (𝐅𝐁 ⊤ −̂ 𝐅̂𝐁 ⊤). By the plug-in identities, ̂ 𝐑 − 𝐑 = 𝒔(𝛾 𝑠 −̂ 𝛾 𝑠 )⊤
+
+and ̂ 𝐔 ⊤𝒔 = 0, hence ̂𝐔 ⊤(̂𝐑 − 𝐑)̃𝜸 𝑗 = 0.
+
+Consequently, the only remaining contribution is from the factor part, and we obtain 
+
+∥̂𝐔 ⊤−𝑗 (̂𝐔 − 𝐔)̃ 𝜸 𝑗 ∥∞ ≤ ∥̂𝐔 ⊤𝐅𝐁 ⊤̃ 𝜸 𝑗 ∥∞. (54) Under Assumption 3, ‖𝐁‖ max ≤ 𝐶 . Therefore, 
+
+‖𝐁 ⊤̃ 𝜸 𝑗 ‖2 ≤√√√⎷
+
+> 𝐾
+
+∑
+
+> 𝑟=1
+
+(
+
+> 𝑝
+
+∑
+
+> 𝑙=1
+
+𝐵 𝑙𝑟 ̃ 𝛾 𝑗𝑙 )2
+
+≤ 𝐶 √𝐾 ‖̃𝜸 𝑗 ‖2 = 𝑂(1), 
+
+where the last step uses (51). Applying Lemma 7 yields 
+
+1𝑛 ∥̂𝐔 ⊤𝐅𝐁 ⊤̃ 𝜸 𝑗 ∥∞ = 𝑂 𝑃 (√log 𝑝 log 𝑛 𝑛 ) . (55) By Cauchy–Schwarz, 
+
+1𝑛 ∥(̂𝐔 − 𝐔) ⊤𝐔̃ 𝜸 𝑗 ∥∞ ≤ { 1𝑛 ‖𝐔̃𝜸 𝑗 ‖22 ⋅ max 
+
+> 𝑘∈[𝑝]
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(̂𝑢 𝑘𝑖 − 𝑢 𝑘𝑖 )2}
+
+> 1/2
+
+. (56) The first factor is 𝑂 𝑃 (1) ; the second factor equals 𝑂 𝑃 (√ log 𝑝 𝑛 + 1√𝑝 + 𝑟 𝑛,𝑝 ) by the factor-estimation error bounds. Hence, 
+
+1𝑛 ∥(̂𝐔 − 𝐔) ⊤𝐔̃ 𝜸 𝑗 ∥∞ = 𝑂 𝑃 (√ log 𝑝 𝑛 + 1√𝑝 + 𝑟 𝑛,𝑝 ) . (57) 56 Combining (50)–(57) and dividing by 𝑛 yields 
+
+1𝑛 ∥̂𝐔 ⊤−𝑗 ̂ 𝐔̃ 𝜸 𝑗 ∥∞ = 𝑂 𝑃 (√ log 𝑝 𝑛 + 1√𝑝 + 𝑟 𝑛,𝑝 ) , 
+
+uniformly in 𝑗 ∈ [𝑝] , which proves the lemma. 
+
+Lemma 7. Under Assumptions 1–3, for any vector 𝜙 ∈ ℝ 𝐾 with ‖𝜙‖ 2 = 1 ,
+
+∥̂𝐔 ⊤𝐅𝜙∥ ∞ = 𝑂 𝑃 (√ log 𝑝 log 𝑛) . 
+
+Proof. Since ̂ 𝐅 ⊤̂ 𝐔 = 0, we can write 
+
+∥̂𝐔 ⊤𝐅𝜙∥ ∞ = ∥̂𝐔 ⊤(𝐅 −̂ 𝐅𝐇 −⊤ )𝜙∥ ∞
+
+≤ ∥(̂𝐔 − 𝐔) ⊤(𝐅𝐇 ⊤ −̂ 𝐅)𝐇 −⊤ 𝜙∥ ∞ + ∥𝐔 ⊤(𝐅𝐇 ⊤ −̂ 𝐅)𝐇 −⊤ 𝜙∥ ∞
+
+=∶ Δ 1 + Δ 2. (58) By Proposition 1 and Lemma 13, 
+
+Δ1 ≤ ( max 
+
+> 𝑗∈[𝑝] 𝑛
+
+∑
+
+> 𝑖=1
+
+|̂𝑢 𝑗𝑖 − 𝑢 𝑗𝑖 |2)
+
+> 1/2
+
+∥̂𝐅 − 𝐅𝐇 ⊤∥𝐹 ∥𝐇 −⊤ 𝜙∥ 2
+
+= 𝑂 𝑃 (√ log 𝑝 + 𝑛/𝑝 + log 𝑝 log 𝑛) ⋅ 𝑂 𝑃 (1) = 𝑂 𝑃 (√ log 𝑝 log 𝑛) . (59) We then bound Δ2. Recall 𝐇 = 𝑛 −1 𝐕 −1 ̂ 𝐅 ⊤𝐅𝐁 ⊤𝐁 , where 𝐕 ∈ ℝ 𝐾×𝐾 is diagonal containing the largest 𝐾 eigenvalues of 𝑛 −1 ̂ 𝐑̂𝐑 ⊤. Hence ̂ 𝐅𝐕 = 𝑛 −1 ̂ 𝐑̂𝐑 ⊤̂ 𝐅 , and thus ̂𝐅 − 𝐅𝐇 ⊤ = 𝑛 −1 ̂ 𝐑̂𝐑 ⊤̂ 𝐅𝐕 −1 − 𝑛 −1 𝐑𝐑 ⊤̂ 𝐅𝐕 −1 + {𝑛 −1 𝐑𝐑 ⊤̂ 𝐅𝐕 −1 − 𝐅𝐇 ⊤}. (60) Substituting 𝐑 = 𝐅𝐁 ⊤ + 𝐔 yields 
+
+𝑛 −1 𝐑𝐑 ⊤̂ 𝐅𝐕 −1 − 𝐅𝐇 ⊤ = 1𝑛 𝐅𝐁 ⊤𝐔 ⊤̂ 𝐅𝐕 −1 + 1𝑛 𝐔𝐁𝐅 ⊤̂ 𝐅𝐕 −1 + 1𝑛 𝐔𝐔 ⊤̂ 𝐅𝐕 −1 .
+
+Therefore, by the triangle inequality, 
+
+Δ2 ≤ 1𝑛 ∥𝐔 ⊤(̂𝐑̂𝐑 ⊤ − 𝐑𝐑 ⊤)̂𝐅𝐕 −1 𝐇 −⊤ 𝜙∥ ∞ + 1𝑛 ∥𝐔 ⊤𝐅𝐁 ⊤𝐔 ⊤̂ 𝐅𝐕 −1 𝐇 −⊤ 𝜙∥ ∞
+
++ 1𝑛 ∥𝐔 ⊤𝐔𝐁𝐅 ⊤̂ 𝐅𝐕 −1 𝐇 −⊤ 𝜙∥ ∞ + 1𝑛 ∥𝐔 ⊤𝐔𝐔 ⊤̂ 𝐅𝐕 −1 𝐇 −⊤ 𝜙∥ ∞
+
+=∶ Δ (1) 2 + Δ (2) 2 + Δ (3) 2 + Δ (4) 2 . (61) 57 First bounding Δ(1) 2 . Recall 𝐑 −̂ 𝐑 = 𝒔(𝜸 𝑠 −̂ 𝜸 𝑠 )⊤ = 𝒔(𝒔 ⊤𝒔) −1 𝒔 ⊤𝐑 . Let 𝐏 𝑆 ∶= 𝒔(𝒔 ⊤𝒔) −1 𝒔 ⊤. Then ̂𝐑̂𝐑 ⊤ − 𝐑𝐑 ⊤ = 𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 − 𝐑𝐑 ⊤𝐏 𝑆 − 𝐏 𝑆 𝐑𝐑 ⊤.
+
+Hence 
+
+Δ(1) 2 = 1𝑛 max 
+
+> 𝑗∈[𝑝]
+
+∣𝒆 ⊤𝑗 𝐔 ⊤𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 ̂ 𝐅𝐕 −1 𝐇 −⊤ 𝜙∣ + 1𝑛 max 
+
+> 𝑗∈[𝑝]
+
+∣𝒆 ⊤𝑗 𝐔 ⊤𝐑𝐑 ⊤𝐏 𝑆 ̂ 𝐅𝐕 −1 𝐇 −⊤ 𝜙∣ + 1𝑛 max 
+
+> 𝑗∈[𝑝]
+
+∣𝒆 ⊤𝑗 𝐔 ⊤𝐏 𝑆 𝐑𝐑 ⊤̂ 𝐅𝐕 −1 𝐇 −⊤ 𝜙∣. (62) We bound the three terms in (62) one by one. For the first term, 
+
+1𝑛 max 
+
+> 𝑗∈[𝑝]
+
+∣𝒆 ⊤𝑗 𝐔 ⊤𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 ̂ 𝐅𝐕 −1 𝐇 −⊤ 𝜙∣ ≤ 1𝑛 max 
+
+> 𝑗∈[𝑝]
+
+∥𝒆 ⊤𝑗 𝐔 ⊤𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 ∥2 ⋅ ∥̂𝐅𝐕 −1 𝐇 −⊤ 𝜙∥ 2
+
+≤ 1𝑛 (𝒔 ⊤𝒔) −2 max 
+
+> 𝑗∈[𝑝]
+
+∥𝒆 ⊤𝑗 𝐔 ⊤𝒔𝒔 ⊤𝐑𝐑 ⊤𝒔𝒔 ⊤∥2 ⋅ ∥̂𝐅𝐕 −1 𝐇 −⊤ 𝜙∥ 2
+
+= 1𝑛 𝑂 𝑃 (1/𝑛 2)𝑂 𝑃 (√𝑛 log 𝑝)𝑂 𝑃 (√𝑝)𝑂 𝑃 (√𝑝)𝑂 𝑃 (√𝑛)𝑂 𝑃 (√𝑛)𝑂 𝑃 (1/𝑝) =√𝑛 log 𝑝 𝑛 2 , (63) where ‖𝒔 ⊤𝐑‖ 2 = 𝑂 𝑃 (√𝑝) follows from Lemma 13. For the second term, 
+
+1𝑛 max 
+
+> 𝑗∈[𝑝]
+
+|𝒆 ⊤𝑗 𝐔 ⊤𝐑𝐑 ⊤𝐏 𝑆 ̂ 𝐅𝐕 −1 𝐇 −⊤ 𝜙| ≤ 1𝑛 (𝒔 ⊤𝒔) −1 max 
+
+> 𝑗∈[𝑝]
+
+‖𝒆 ⊤𝑗 𝐔 ⊤𝐑𝐑 ⊤𝒔𝒔 ⊤‖2‖̂𝐅𝐕 −1 𝐇 −⊤ 𝜙‖ 2
+
+≤ 1𝑛 (𝒔 ⊤𝒔) −1 max 
+
+> 𝑗∈[𝑝]
+
+‖𝒆 ⊤𝑗 𝐔 ⊤‖2‖𝐑‖ 2‖𝐑 ⊤𝒔‖ 2‖𝒔 ⊤‖2‖̂𝐅𝐕 −1 𝐇 −⊤ 𝜙‖ 2
+
+= 1𝑛 𝑂 𝑃 (1/𝑛)𝑂 𝑃 (√ log 𝑝)𝑂 𝑃 (√𝑛𝑝)𝑂 𝑃 (√𝑝)𝑂 𝑃 (√𝑛)𝑂 𝑃 (√𝑛)𝑂 𝑃 (1/𝑝) = 𝑂 𝑃 (√ log 𝑝/𝑛) 
+
+The third term is handled analogously, hence 
+
+Δ(1) 2 = 𝑂 𝑃 (√ log 𝑝 𝑛 ) . (64) 58 Next bounding Δ(2) 2 , Δ(3) 2 , and Δ(4) 2 . We follow the same argument as Lemma C.3 in Fan et al. (2024). For Δ(2) 2 ,
+
+Δ(2) 2 = max 
+
+> 𝑗∈[𝑝]
+
+1𝑛 ∣𝒆 ⊤𝑗 𝐔 ⊤𝐅𝐁 ⊤𝐔 ⊤̂ 𝐅𝐕 −1 𝐇 −⊤ 𝜙∣ ≤ max 
+
+> 𝑗∈[𝑝]
+
+1𝑛 ∥𝒆 ⊤𝑗 𝐔 ⊤𝐅∥ 2 ⋅ ∥𝐁 ⊤𝐔 ⊤̂ 𝐅∥ 𝐹 ⋅ ‖𝐕 −1 ‖2 ⋅ ‖𝐇 −⊤ ‖2
+
+where max 𝑗∈[𝑝] ‖𝒆 ⊤𝑗 𝐔 ⊤𝐅‖ 22 = max 𝑗∈[𝑝] ‖ ∑ 𝑛 𝑖=1 𝑢 𝑗𝑖 𝒇 𝑖 ‖22 = 𝑂 𝑃 (𝑛 log 𝑝) .
+
+‖𝐁 ⊤𝐔 ⊤̂ 𝐅‖ 𝐹 ≤ ‖𝐁 ⊤𝐔 ⊤(̂𝐅 − 𝐅𝐇 ⊤)‖ 𝐹 + ‖𝐁 ⊤𝐔 ⊤𝐅𝐇 ⊤‖𝐹 
+
+≤ ‖𝐁 ⊤𝐔 ⊤‖𝐹 ‖̂𝐅 − 𝐅𝐇 ⊤‖𝐹 + ‖𝐇‖ 2‖𝐁 ⊤𝐔 ⊤𝐅‖ 𝐹 
+
+= 𝑂 𝑃 (√𝑛𝑝)𝑂 𝑃 (1) + 𝑂 𝑃 (√𝑛𝑝) = 𝑂 𝑃 (√𝑛𝑝). 
+
+Combining the above results, Δ(2) 2 = 1𝑛 𝑂 𝑃 (√𝑛 log 𝑝)𝑂 𝑃 (√𝑛𝑝)𝑂 𝑃 (1/𝑝) = 𝑂 𝑃 (√ log 𝑝/𝑝) .Likewise, 
+
+Δ(3) 2 = max 
+
+> 𝑗∈[𝑝]
+
+1𝑛 ∣
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑢 𝑗𝑖 𝒖 ⊤𝑖 𝐁 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+𝒇 𝑠 ̂ 𝒇 ⊤𝑠 𝐕 −1 𝐇 −⊤ 𝜙∣ ≤ 1𝑛 ‖𝐕 −1 ‖2 ‖𝐇 −⊤ ‖2 ∥
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+𝒇 𝑠 ̂ 𝒇 ⊤𝑠 ∥
+
+> 2
+
+max 
+
+> 𝑗∈[𝑝]
+
+∥
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑢 𝑗𝑖 𝒖 ⊤𝑖 𝐁∥ 
+
+> 2
+
+. (65) where max 
+
+> 𝑗∈[𝑝]
+
+∥
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑢 𝑗𝑖 𝒖 ⊤𝑖 𝐁∥ 
+
+> 2
+
+= 𝑂 𝑃 (𝑛 + √𝑛𝑝 log 𝑝), 
+
+and 
+
+∥
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+𝒇 𝑠 ̂ 𝒇 ⊤𝑠 ∥
+
+> 2
+
+= ∥ 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝒇 𝑠 𝒇 ⊤𝑠 ∥
+
+> 2
+
+= ∥ 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+(̂𝒇 𝑠 − 𝐇𝒇 𝑠 + 𝐇𝒇 𝑠 )𝒇 ⊤𝑠 ∥
+
+> 2
+
+= ∥(̂𝐅 − 𝐅𝐇 ⊤ + 𝐅𝐇 ⊤)⊤𝐅∥ 2
+
+≤ ‖̂𝐅 − 𝐅𝐇‖ 𝐹 ‖𝐅‖ 2 + ‖𝐅 ⊤𝐅‖ 2 ‖𝐇‖ = 𝑂 𝑃 (√𝑛 + 𝑛) = 𝑂 𝑝 (𝑛). (66) Therefore, 
+
+Δ(3) 2 = 1𝑛 𝑂 𝑃 (1/𝑝) 𝑂 𝑃 (𝑛) 𝑂 𝑃 (𝑛 + √𝑛𝑝 log 𝑝) = 𝑂 𝑃 (𝑛 𝑝 + √ 𝑛 log 𝑝 𝑝 ) . (67) 59 For Δ(4) 2 , by the triangle inequality, 
+
+Δ(4) 2 ≤ 1𝑛 (max 
+
+> 𝑗∈[𝑝]
+
+∥𝒆 ⊤𝑗 𝐔 ⊤𝐔𝐔 ⊤𝐅𝐇∥ 2 + max 
+
+> 𝑗∈[𝑝]
+
+∥𝒆 ⊤𝑗 𝐔 ⊤𝐔𝐔 ⊤(̂𝐅 − 𝐅𝐇 ⊤)∥ 2) ‖𝐕 −1 ‖2 ‖𝐇 −⊤ ‖2
+
+= Δ 4∘ 2 + Δ 4∗ 2 . (68) By Assumption 3, it follows from Lemma C.3 in Fan et al. (2024) that 
+
+1𝑛 max 
+
+> 𝑗∈[𝑝]
+
+∥𝒆 ⊤𝑗 𝐔 ⊤𝐔𝐔 ⊤𝐅𝐇∥ 2 ‖𝐕 −1 ‖2 ‖𝐇 −⊤ ‖2 = 𝑂 𝑃 (√ log 𝑝 𝑛 + √ 𝑛 𝑝 ) . (69) For Δ4∗ 2 ,
+
+1𝑛 max 
+
+> 𝑗∈[𝑝]
+
+∥𝒆 ⊤𝑗 𝐔 ⊤𝐔𝐔 ⊤(̂𝐅 − 𝐅𝐇 ⊤)∥ 2 ‖𝐕 −1 ‖2 ‖𝐇 −⊤ ‖2
+
+≤ 1𝑛 max 
+
+> 𝑗∈[𝑝]
+
+∥𝒆 ⊤𝑗 𝐔 ⊤𝐔𝐔 ⊤∥2 ‖̂𝐅 − 𝐅𝐇 ⊤‖𝐹 ‖𝐕 −1 ‖2 ‖𝐇 −⊤ ‖2. (70) Denote 𝒆 𝑠 ∈ ℝ 𝑛 as a vector where the 𝑠 -th element is 1 and all other elements are 0. Then 
+
+1𝑛 max 
+
+> 𝑗∈[𝑝]
+
+∥𝒆 ⊤𝑗 𝐔 ⊤𝐔𝐔 ⊤∥2 = 1𝑛 max 
+
+> 𝑗∈[𝑑]
+
+∥
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑢 𝑗𝑖 𝒖 ⊤𝑖 𝑛 
+
+∑
+
+> 𝑠=1
+
+𝒖 𝑠 𝒆 ⊤𝑠 ∥
+
+> 2
+
+≤ 1𝑛 ∥
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑢 𝑗𝑖 (
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+[𝒖 ⊤𝑖 𝒖 𝑠 − 𝔼(𝒖 ⊤𝑖 𝒖 𝑠 ) + 𝔼(𝒖 ⊤𝑖 𝒖 𝑠 )]𝒆 ⊤𝑠 )∥ 
+
+> 2
+
+≤ tr (𝜮 𝑢 )𝑛 max 
+
+> 𝑗∈[𝑑]
+
+∥
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑢 𝑗𝑖 𝒆 ⊤𝑖 ∥
+
+> 2
+
++ 1𝑛 max 
+
+> 𝑗∈[𝑑]
+
+∥
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑢 𝑗𝑖 𝑛 
+
+∑
+
+> 𝑠=1
+
+[𝒖 ⊤𝑖 𝒖 𝑠 − 𝔼(𝒖 ⊤𝑖 𝒖 𝑠 )]𝒆 ⊤𝑠 ∥
+
+> 2
+
+= 𝑂 𝑃 (𝑝 √log 𝑝 𝑛 + √𝑛𝑝) , (71) where the last inequality uses 𝔼(𝒖 𝑖 𝒖 ⊤𝑠 ) = 𝜮 𝑢 when 𝑖 = 𝑠 . Therefore, 
+
+Δ4∗ 2 = 𝑂 𝑃 (𝑝 √log 𝑝 𝑛 + √𝑛𝑝) 𝑂 𝑃 (1/𝑝) = 𝑂 𝑃 (√log 𝑝 𝑛 + √ 𝑛 𝑝 ) , (72) and hence 
+
+Δ(4) 2 = 𝑂 𝑃 (√ log 𝑝 𝑛 + √ 𝑛 𝑝 ) . (73) Combine all these pieces together, 
+
+∥̂𝐔 ⊤𝐅𝜙∥ ∞ = 𝑂 𝑃 (√ log 𝑝 log 𝑛) + 𝑜 𝑝 (√ log 𝑝 log 𝑛) = 𝑂 𝑃 (√ log 𝑝 log 𝑛) . 
+
+Then, Lemma 7 is obtained. 60 Lemma 8. Under Assumptions 1–3, we have 
+
+∥̂𝐔 ⊤̂ 𝐔 − 𝐔 ⊤𝐔∥ max = 𝑂 𝑃 (log 𝑝 log 𝑛). 
+
+Proof of Lemma 8. By the triangle inequality, 
+
+∥̂𝐔 ⊤̂ 𝐔 − 𝐔 ⊤𝐔∥ max ≤ 2 ∥̂𝐔 ⊤(̂𝐔 − 𝐔)∥ max + ∥(̂𝐔 − 𝐔) ⊤(̂𝐔 − 𝐔)∥ max .
+
+By Lemma 7, 
+
+∥̂𝐔 ⊤(̂𝐔 − 𝐔)∥ max ≤ ∥̂𝐔 ⊤𝐅𝐁 ⊤∥max = max 
+
+> 𝑗∈[𝑝]
+
+∥̂𝐔 ⊤𝐅𝒃 𝑗 ∥∞ = 𝑂 𝑃 (√ log 𝑝 log 𝑛) . 
+
+By Proposition 2, 
+
+∥(̂𝐔 − 𝐔) ⊤(̂𝐔 − 𝐔)∥ max ≤ max 
+
+> 𝑗∈[𝑝] 𝑛
+
+∑
+
+> 𝑖=1
+
+∣̂𝑢 𝑗𝑖 − 𝑢 𝑗𝑖 ∣2 = 𝑂 𝑃 (log 𝑝 + 𝑛 𝑝 + log 𝑝 log 𝑛) . 
+
+Combining the bounds yields 
+
+∥̂𝐔 ⊤̂ 𝐔 − 𝐔 ⊤𝐔∥ max = 𝑂 𝑃 (log 𝑝 log 𝑛), 
+
+which completes the proof. 
+
+Lemma 9. Under Assumptions 1–3 with row-sparsity for the precision matrix Θ bounded by 
+
+max 
+
+> 𝑗∈[𝑝]
+
+𝑠 𝑗 (log 𝑝 𝑛 + 1𝑝 + 𝑟 2𝑛,𝑝 ) → 0, (74) 
+
+then, with suitably chosen regularization parameters 
+
+𝜆 𝑗 ≍ 2𝑛 ∥̂𝐔 ⊤−𝑗 (̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 )∥ ∞
+
+uniformly for 𝑗 ∈ [𝑝], 
+
+we have 
+
+max 
+
+> 𝑗∈[𝑝]
+
+1̂ 𝜏 2𝑗 
+
+= 𝑂 𝑃 (1). 
+
+Proof. We first show that the population error variance 
+
+𝜏 2𝑗 ∶= 𝔼(𝑢 𝑗 − 𝒖 ⊤−𝑗 𝜸 ∗𝑗 )2
+
+61 is 𝑂(1) . Recall that 𝜮 𝑢 = cov (𝒖) , and by the definition 𝜸 ∗𝑗 = 𝜮 −1 𝑢 −𝑗,−𝑗 𝜮 𝑢 −𝑗,𝑗 . Therefore, 
+
+𝜏 2𝑗 = 𝔼(𝑢 𝑗 − 𝒖 ⊤−𝑗 𝜸 ∗𝑗 )2 = 𝜮 𝑢 𝑗,𝑗 − 𝜮 𝑢 𝑗,−𝑗 𝜮 −1 𝑢 −𝑗,−𝑗 𝜮 𝑢 −𝑗,𝑗 .
+
+According to the inverse formula for a block matrix of 𝜮 𝑢 ,
+
+𝜏 2𝑗 = 1Θ𝑗,𝑗 
+
+≥ 𝜆 min (𝜮 𝑢 ), 𝜏 2𝑗 ≤ 𝔼(𝑢 2𝑗 ) = 𝜮 𝑢 𝑗,𝑗 = 𝑂(1) (by Assumption 3) .
+
+We then prove ̂ 𝜏 2𝑗 = 𝜏 2𝑗 + 𝑜 𝑃 (1) . By definition, 
+
+12𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 ̂ 𝜸 𝑗 ‖22 + 𝜆 𝑗 ‖̂𝜸 𝑗 ‖1 ≤ 12𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 ‖22 + 𝜆 𝑗 ‖𝜸 ∗𝑗 ‖1. (75) This implies 
+
+12𝑛 ∥̂𝐔 −𝑗 (̂𝜸 𝑗 − 𝜸 ∗𝑗 )∥ 22 + 𝜆 𝑗 ‖̂𝜸 𝑗 ‖1 ≤ 1𝑛 (̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 )⊤̂ 𝐔 −𝑗 (̂𝜸 𝑗 − 𝜸 ∗𝑗 ) + 𝜆 𝑗 ‖𝜸 ∗𝑗 ‖1.
+
+By choosing 
+
+𝜆 𝑗 ≥ 2𝑛 ∥̂𝐔 ⊤−𝑗 (̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 )∥ ∞
+
+,
+
+according to Lemma 4, 
+
+‖̂𝜸 𝑗 − 𝜸 ∗𝑗 ‖1 = 𝑂 𝑃 (𝜆 𝑗 𝑠 𝑗 ), 1𝑛 ∥̂𝐔 −𝑗 (̂𝜸 𝑗 − 𝜸 ∗𝑗 )∥ 22 = 𝑂 𝑃 (𝜆 2𝑗 𝑠 𝑗 ). 
+
+Recall that ̂𝜏 2𝑗 ∶= 1𝑛 ∥̂𝒖 𝑗 −̂ 𝐔 −𝑗 ̂ 𝜸 𝑗 ∥22 + 𝜆 𝑗 ‖̂𝜸 𝑗 ‖1.
+
+We first bound 𝜆 𝑗 ‖̂𝜸 𝑗 ‖1. Under Assumption 3, 
+
+‖𝜸 ∗𝑗 ‖1 ≤ √𝑠 𝑗 ‖𝜸 ∗𝑗 ‖2 ≤ √𝑠 𝑗 ‖̃𝜸 𝑗 ‖2 = √𝑠 𝑗 𝑂(1), 
+
+which implies 
+
+𝜆 𝑗 ‖̂𝜸 𝑗 ‖1 ≤ 𝜆 𝑗 ‖𝜸 ∗𝑗 ‖1 + 𝜆 𝑗 ‖̂𝜸 𝑗 − 𝜸 ∗𝑗 ‖1 ≤ 𝜆 𝑗 𝑂(√𝑠 𝑗 ) + 𝜆 𝑗 𝑂 𝑃 (𝜆 𝑗 𝑠 𝑗 ). 
+
+62 We now turn to the term 1𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 ̂ 𝜸 𝑗 ‖22. By algebra, 
+
+1𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 ̂ 𝜸 𝑗 ‖22 = 1𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 ‖22 + 1𝑛 ∥̂𝐔 −𝑗 (̂𝜸 𝑗 − 𝜸 ∗𝑗 )∥ 22
+
++ 2𝑛 (̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 )⊤̂ 𝐔 −𝑗 (̂𝜸 𝑗 − 𝜸 ∗𝑗 )= 1𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 ‖22 + 𝑂 𝑃 (𝜆 2𝑗 𝑠 𝑗 ) + 2 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 ‖2
+
+√𝑛 𝑂 𝑃 (𝜆 𝑗 𝑠 𝑗 ). 
+
+We next show that 
+
+1𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 ‖22 = 1𝑛 ‖𝒖 𝑗 − 𝐔 −𝑗 𝜸 ∗𝑗 ‖22 + 𝑜 𝑃 (1) = 𝜏 2𝑗 + 𝑂 𝑃 (𝑛 −1/2 ) + 𝑜 𝑃 (1) = 𝑂 𝑃 (1). 
+
+For a fixed 𝑗 ∈ [𝑝] , let 
+
+𝑟 𝑗 ∶= 𝒖 𝑗 − 𝐔 −𝑗 𝜸 ∗𝑗 
+
+denote the residual vector. Define the estimation errors 
+
+𝜹 𝑗 ∶=̂ 𝒖 𝑗 − 𝒖 𝑗 , Δ−𝑗 ∶=̂ 𝐔 −𝑗 − 𝐔 −𝑗 .
+
+Then 
+
+1𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 ‖22 = 1𝑛 ‖𝑟 𝑗 ‖22 + 2𝑛 ⟨𝑟 𝑗 , 𝒆 𝑗 ⟩ + 1𝑛 ‖𝒆 𝑗 ‖22, (76) where 𝒆 𝑗 ∶= 𝜹 𝑗 − Δ −𝑗 𝜸 ∗𝑗 .By Proposition 2, 
+
+1𝑛 ‖𝜹 𝑗 ‖22 = 𝑂 𝑃 (log 𝑝 𝑛 + 1𝑝 + 𝑟 2𝑛,𝑝 ) . 
+
+By Hölder’s inequality, along with boundedness (in ℓ1-norm) of 𝜸 ∗𝑗 ,
+
+1𝑛 ‖Δ −𝑗 𝜸 ∗𝑗 ‖22 ≤ ‖𝜸 ∗𝑗 ‖21 max 
+
+> 𝑘≠𝑗
+
+1𝑛 ‖Δ −𝑗,𝑘 ‖22 = 𝑂 𝑃 (𝑠 𝑗 (log 𝑝 𝑛 + 1𝑝 + 𝑟 2𝑛,𝑝 )) . 
+
+By the triangle inequality, 
+
+1𝑛 ‖𝒆 𝑗 ‖22 ≤ 2𝑛 ‖𝜹 𝑗 ‖22 + 2𝑛 ‖Δ −𝑗 𝜸 ∗𝑗 ‖22 = 𝑂 𝑃 (𝑠 𝑗 (log 𝑝 𝑛 + 1𝑝 + 𝑟 2𝑛,𝑝 )) . 
+
+By the sparsity condition (74), this term is 𝑜 𝑃 (1) .63 For the cross-term 2𝑛 ⟨𝑟 𝑗 , 𝒆 𝑗 ⟩ in (76), by the Cauchy–Schwarz inequality, 
+
+∣ 2𝑛 ⟨𝑟 𝑗 , 𝒆 𝑗 ⟩∣ ≤ 2√𝑛 ⋅ ‖𝑟 𝑗 ‖2
+
+√𝑛 ⋅ ‖𝒆 𝑗 ‖2 = 𝑂 𝑃 (1) 𝑂 𝑃 (√𝑠 𝑗 (log 𝑝 𝑛 + 1𝑝 + 𝑟 2𝑛,𝑝 )) . 
+
+Combining the bounds yields 
+
+1𝑛 ‖̂𝒖 𝑗 −̂ 𝐔 −𝑗 𝜸 ∗𝑗 ‖22 = 1𝑛 ‖𝒖 𝑗 − 𝐔 −𝑗 𝜸 ∗𝑗 ‖22 + 𝑜 𝑃 (1) = 𝜏 2𝑗 + 𝑂 𝑃 (𝑛 −1/2 ) + 𝑜 𝑃 (1) = 𝑂 𝑃 (1). 
+
+This completes the proof. 
+
+## D.3 Lemmas for Factor Model Estimation 
+
+The Lemmas below are an adaption of Lemma 5, Theorem 4 and Lemmas 8-11 in Fan et al. (2013), Lemmas S.8-S.11 in Fan et al. (2020) and Lemma D.2 in Wang & Fan (2017) to include the estimation error in the sample covariance matrix. 
+
+Lemma 10. Suppose Assumptions 1 and 3 hold. (a) 𝜁 𝑠𝑖 = 𝑂 𝑃 (𝑝 −1/2 ).(b) 𝜂 𝑠𝑖 = 𝑂 𝑃 (𝑝 −1/2 ).(c) 𝜉 𝑠𝑖 = 𝑂 𝑃 (𝑝 −1/2 ).(d) 𝜁 ∗𝑠𝑖 = 𝑂 𝑃 (𝑟 𝑛,𝑝 + 𝑟 2𝑛,𝑝 ).(e) 𝜂 ∗𝑠𝑖 = 𝑂 𝑃 (𝑟 𝑛,𝑝 ).(f) 𝜉 ∗𝑠𝑖 = 𝑂 𝑃 (𝑟 𝑛,𝑝 ).Proof. Part (𝑎) follows directly from Assumption 3. Parts (𝑏) and (𝑐) follow from the Cauchy– Schwarz inequality and Assumption 3. For part (d), recall the expression 11 and 𝛿 𝑗𝑖 be the 
+
+(𝑗, 𝑖) th element of ̂ 𝐑 − 𝐑 . By Proposition 1, 
+
+‖𝜹 𝑖 ‖2 ≤ √𝑝 ‖Δ‖ max = 𝑂 𝑃 (√𝑝 𝑟 𝑛,𝑝 ). 
+
+64 Moreover, for all 𝑠 ∈ [𝑛] , ‖𝒖 𝑠 ‖2 = 𝑂 𝑃 (√𝑝) can be obtained either from the sub-Gaussian assumption ( ‖𝒖 𝑠 ‖𝜓 2 ≤ 𝑐 0) or from the eigenvalue condition in Assumption 3. Using the eigenvalue condition, 
+
+𝔼(‖𝒖 𝑠 ‖22) = 𝔼(𝒖 ⊤𝑠 𝒖 𝑠 ) = tr (𝔼(𝒖 𝑠 𝒖 ⊤𝑠 )) = tr (𝜮 𝑢 ) = 𝑂(𝑝), 
+
+and the result follows by Markov’s inequality. Therefore, by the Cauchy–Schwarz inequality, 
+
+1𝑝 ∣𝒖 ⊤𝑠 𝜹 𝑖 ∣ ≤ 1𝑝 ‖𝒖 𝑠 ‖2 ‖𝜹 𝑖 ‖2 = 1𝑝 𝑂 𝑃 (√𝑝) 𝑂 𝑃 (√𝑝 𝑟 𝑛,𝑝 ) = 𝑂 𝑃 (𝑟 𝑛,𝑝 ). 
+
+Parts (𝑒) and (𝑓) follow from similar arguments. 
+
+Lemma 11. Suppose Assumptions 1 and 3 hold. For all 𝑘 ≤̂ 𝐾 ,(a) 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 
+
+𝔼(𝒖 ⊤𝑠 𝒖 𝑖 )𝑝 ]
+
+> 2
+
+= 𝑂 𝑃 (1/𝑛) .(b) 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 ̃ 𝜁 𝑠𝑖 ]
+
+> 2
+
+= 𝑂 𝑃 ( 1√𝑝 + √ log 𝑛 log 𝑝 𝑛 + log 𝑛 log 𝑝 𝑛 )
+
+> 2
+
+.(c) 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 ̃ 𝜂 𝑠𝑖 ]
+
+> 2
+
+= 𝑂 𝑃 ( 1𝑝 + log 𝑛 log 𝑝 𝑛 ).(d) 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 ̃ 𝜉 𝑠𝑖 ]
+
+> 2
+
+= 𝑂 𝑃 ( 1𝑝 + log 𝑛 log 𝑝 𝑛 ).Proof. (a) For all 𝑘 ≤̂ 𝐾 , ∑𝑛 𝑠=1 ̂ 𝑓 2𝑠𝑘 = 𝑛 . By the Cauchy–Schwarz inequality, 
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 
+
+𝔼(𝒖 ⊤𝑠 𝒖 𝑖 )𝑝 ]
+
+> 2
+
+≤ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+[𝔼(𝒖 ⊤𝑠 𝒖 𝑖 )𝑝 ]
+
+> 2
+
+≤ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+1𝑛 [𝔼(𝒖 ⊤𝑖 𝒖 𝑖 )𝑝 ]
+
+> 2
+
+= 𝑂(1/𝑛), 
+
+where the last inequality follows from the i.i.d. assumption and Assumption 3. 
+
+(b) For all 𝑘 ≤̂ 𝐾 , ∑𝑛 𝑠=1 ̂ 𝑓 2𝑠𝑘 = 𝑛 . By the Cauchy–Schwarz inequality, 
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 ̃ 𝜁 𝑠𝑖 ]
+
+> 2
+
+≤ ⎡⎢⎣1𝑛 2𝑛 
+
+∑
+
+> 𝑠=1 𝑛
+
+∑
+
+> 𝑙=1
+
+( 1𝑇 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+̃𝜁 𝑠𝑖 ̃ 𝜁 𝑙𝑖 )
+
+> 2
+
+⎤⎥⎦
+
+> 1/2
+
+= 𝑂 𝑃 ( 1√𝑝 + √ log 𝑛 log 𝑝 𝑛 + log 𝑛 log 𝑝 𝑛 )
+
+> 2
+
+,
+
+65 where ̃ 𝜁 𝑠𝑖 = 𝜁 𝑠𝑖 + 𝜁 ∗𝑠𝑖 = 𝑂 𝑃 (1/ √𝑝 + 𝑟 𝑛,𝑝 + 𝑟 2𝑛,𝑝 ) by Lemma 10. 
+
+(c) According to the definition of ̃ 𝜂 𝑠𝑖 ,
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 ̃ 𝜂 𝑠𝑖 ]
+
+> 2
+
+= 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 𝒇 ⊤𝑠 𝑝 
+
+∑
+
+> 𝑗=1
+
+𝒃 𝑗 ̃ 𝑢 𝑗𝑖 /𝑝] 
+
+> 2
+
+≤ ∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 𝒇 ⊤𝑠 ∥
+
+> 2
+
+⋅ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+∥
+
+> 𝑝
+
+∑
+
+> 𝑗=1
+
+𝒃 𝑗 ̃ 𝑢 𝑖𝑗 
+
+1𝑝 ∥
+
+> 2
+
+≤ 1𝑛𝑝 2𝑛 
+
+∑
+
+> 𝑖=1
+
+∥
+
+> 𝑝
+
+∑
+
+> 𝑗=1
+
+𝒃 𝑗 ̃ 𝑢 𝑖𝑗 ∥
+
+> 2
+
+( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 2𝑠𝑘 ) ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+‖𝒇 𝑠 ‖2) , 
+
+where 1𝑛 ∑𝑛 𝑠=1 ‖𝒇 𝑠 ‖2 = 𝑂 𝑃 (1) . By the triangle inequality, 
+
+∥
+
+> 𝑝
+
+∑
+
+> 𝑗=1
+
+𝒃 𝑗 ̃ 𝑢 𝑗𝑖 ∥
+
+> 2
+
+≤ ∥ 
+
+> 𝑝
+
+∑
+
+> 𝑗=1
+
+𝒃 𝑗 𝑢 𝑗𝑖 ∥
+
+> 2
+
++ ∥ 
+
+> 𝑝
+
+∑
+
+> 𝑗=1
+
+𝒃 𝑗 𝛿 𝑖𝑗 ∥
+
+> 2
+
+.
+
+It follows from Assumption 3 that 𝔼[∥∑ 𝑝 𝑗=1 𝒃 𝑗 𝑢 𝑗𝑖 ∥2
+
+] = 𝑂(𝑝) , which implies 
+
+∥∑ 𝑝 𝑗=1 𝒃 𝑗 𝑢 𝑗𝑖 ∥2
+
+= 𝑂 𝑃 (𝑝) . By Proposition 1 and Assumption 3, ∥∑ 𝑝 𝑗=1 𝒃 𝑗 𝛿 𝑖𝑗 ∥2
+
+=𝑂 𝑃 (𝑝 2 log 𝑛 log 𝑝 𝑛 ). Therefore, 
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 ̃ 𝜂 𝑠𝑖 ]
+
+> 2
+
+= 1𝑛𝑝 2 𝑂 𝑃 (𝑛𝑝 + 𝑛𝑝 2 log 𝑛 log 𝑝 𝑛 ) 𝑂 𝑃 (1) = 𝑂 𝑃 ( 1𝑝 + log 𝑛 log 𝑝 𝑛 ) . 
+
+(d) Similar to part (c), 
+
+1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+[ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑠=1
+
+̂𝑓 𝑠𝑘 ̃ 𝜉 𝑠𝑖 ]
+
+> 2
+
+= 𝑂 𝑃 ( 1𝑝 + log 𝑛 log 𝑝 𝑛 ) . 
+
+Lemma 12. Under Assumptions 1–3, (a) ‖𝐕 −1 ‖ = 𝑂 𝑃 (𝑝 −1 ).(b) ‖𝐇‖ = 𝑂 𝑃 (1) .Proof. (a) Recall that 𝐕 ∈ ℝ 𝐾×𝐾 is the diagonal matrix containing the first 𝐾 largest eigenvalues of 𝑛 −1 ̂ 𝐑̂𝐑 ⊤, which also equal the first 𝐾 largest eigenvalues of 𝑛 −1 ̂ 𝐑 ⊤̂ 𝐑 . Let 66 ̂𝑎 1, … ,̂ 𝑎 𝐾 denote the eigenvalues of ̂ 𝜮 𝑅 ∶= 𝑛 −1 ̂ 𝐑 ⊤̂ 𝐑 , and let 𝑎 1, … , 𝑎 𝐾 denote the top 𝐾 
+
+eigenvalues of 𝜮 𝑅 ∶= 𝔼(𝒓 𝑖 𝒓 ⊤𝑖 ). Also define ̃ 𝜮 𝑅 ∶= 𝑛 −1 𝐑 ⊤𝐑 . Under Assumptions 2 and 3, 
+
+𝑎 𝑗 = 𝑂(𝑝) for 1 ≤ 𝑗 ≤ 𝐾 . By Weyl’s inequality, 
+
+|̂𝑎 𝑗 − 𝑎 𝑗 | ≤ ‖̂𝜮 𝑅 − 𝜮 𝑅 ‖ ≤ ‖̂𝜮 𝑅 −̃ 𝜮 𝑅 ‖ + ‖̃𝜮 𝑅 − 𝜮 𝑅 ‖, 1 ≤ 𝑗 ≤ 𝐾. 
+
+We also use the fact that for a 𝑝 × 𝑝 matrix 𝐀 , ‖𝐀‖ ≤ 𝑝‖𝐀‖ max . Hence, 
+
+‖̂𝜮 𝑅 − 𝜮 𝑅 ‖ ≤ 𝑝‖̂𝜮 𝑅 −̃ 𝜮 𝑅 ‖max + ‖̃𝜮 𝑅 − 𝜮 𝑅 ‖. 
+
+Let Δ ∶=̂ 𝐑 − 𝐑 . By Proposition 1, ‖Δ‖ max = 𝑂 𝑃 (𝑟 𝑛,𝑝 ). Moreover, ̂𝜮 𝑅 −̃ 𝜮 𝑅 = 1𝑛 Δ⊤Δ + 1𝑛 Δ⊤𝐑 + 1𝑛 𝐑 ⊤Δ. 
+
+Note that ∥ 1𝑛 Δ⊤Δ∥ max ≤ ‖Δ‖ 2 
+
+> max
+
+= 𝑂 𝑃 (𝑟 2𝑛,𝑝 ). Next, consider ∥ 1𝑛 Δ⊤𝐑∥ max . The (𝑗, 𝑙) -th element of 1𝑛 Δ⊤𝐑 is 1𝑛 ∑𝑛 𝑖=1 Δ𝑗𝑖 𝑅 𝑙𝑖 , so 
+
+∥ 1𝑛 Δ⊤𝐑∥ max 
+
+= max 
+
+> 𝑗,𝑙∈[𝑝]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+Δ𝑗𝑖 𝑅 𝑙𝑖 ∣ . 
+
+Recall that ̂ 𝐑 is obtained from OLS estimation: Δ𝑗𝑖 =̂ 𝑅 𝑗𝑖 − 𝑅 𝑗𝑖 = 𝑠 𝑖 𝐑 ⊤𝑗 𝒔 (𝒔 ⊤𝒔) −1 , where 
+
+𝐑 𝑗 = (𝑅 𝑗1 , … , 𝑅 𝑗𝑛 )⊤ ∈ ℝ 𝑛 . Substituting this expression yields max 
+
+> 𝑗,𝑙∈[𝑝]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+Δ𝑗𝑖 𝑅 𝑙𝑖 ∣ = max 
+
+> 𝑗,𝑙∈[𝑝]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑅 𝑙𝑖 𝑠 𝑖 𝐑 ⊤𝑗 𝒔 (𝒔 ⊤𝒔) −1 ∣= max 
+
+> 𝑙∈[𝑝]
+
+∣ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑅 𝑙𝑖 𝑠 𝑖 ∣ ⋅ max 
+
+> 𝑗∈[𝑝]
+
+∣𝐑 ⊤𝑗 𝒔 𝑛 ∣ ⋅ ∣ 𝒔 ⊤𝒔 𝑛 ∣
+
+> −1
+
+.
+
+By the sub-Gaussian assumption, concentration inequalities and union bounds imply max 𝑙∈[𝑝] ∣ 1𝑛 ∑𝑛 𝑖=1 𝑅 𝑙𝑖 𝑠 𝑖 ∣ = 𝑂 𝑃 (√ log 𝑝/𝑛) and max 𝑗∈[𝑝] ∣𝐑 ⊤𝑗 𝒔 𝑛 ∣ = 𝑂 𝑃 (√ log 𝑝/𝑛) . Conse-quently, 
+
+∥ 1𝑛 Δ⊤𝐑∥ max 
+
+= 𝑂 𝑃 (log 𝑝/𝑛). 
+
+Therefore, 
+
+𝑝‖̂𝜮 𝑅 −̃ 𝜮 𝑅 ‖max = 𝑂 𝑃 (𝑟 2𝑛,𝑝 + log 𝑝/𝑛) = 𝑜 𝑃 (𝑝), 
+
+67 since log 𝑝 log 𝑛 = 𝑜(𝑛) .For the term ‖̃𝜮 𝑅 − 𝜮 𝑅 ‖, note that ̃𝜮 𝑅 = 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒓 𝑖 𝒓 ⊤𝑖 = 𝐁 ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒇 𝑖 𝒇 ⊤𝑖 ) 𝐁 ⊤ + 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒖 𝑖 𝒖 ⊤𝑖 
+
++ 𝐁 ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒇 𝑖 𝒖 ⊤𝑖 ) + ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒖 𝑖 𝒇 ⊤𝑖 ) 𝐁 ⊤,
+
+while the population covariance satisfies 𝜮 𝑅 = 𝔼(𝒓 𝑖 𝒓 ⊤𝑖 ) = 𝐁𝜮 𝑓 𝐁 ⊤ + 𝜮 𝑢 . Thus, ̃𝜮 𝑅 − 𝜮 𝑅 = 𝐁 ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒇 𝑖 𝒇 ⊤𝑖 − 𝜮 𝑓 ) 𝐁 ⊤ + ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒖 𝑖 𝒖 ⊤𝑖 − 𝜮 𝑢 )+ 𝐁 ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒇 𝑖 𝒖 ⊤𝑖 ) + ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒖 𝑖 𝒇 ⊤𝑖 ) 𝐁 ⊤.
+
+It follows from Lemma 5 in Fan et al. (2013) that ‖̃𝜮 𝑅 − 𝜮 𝑅 ‖ = 𝑜 𝑃 (𝑝) . Combining the above displays yields 
+
+|̂𝑎 𝑗 − 𝑎 𝑗 | ≤ ‖̂𝜮 𝑅 − 𝜮 𝑅 ‖ ≤ 𝑝‖̂𝜮 𝑅 −̃ 𝜮 𝑅 ‖max + ‖̃𝜮 𝑅 − 𝜮 𝑅 ‖ = 𝑜 𝑃 (𝑝). 
+
+Finally, ‖𝐕 −1 ‖ = 𝑂 𝑃 (1/𝑝) follows from the triangle inequality together with 𝑎 𝑗 = 𝑂(𝑝) .
+
+(b) We have already shown that ‖𝐕 −1 ‖ = 𝑂 𝑃 (1/𝑝) . Also, ‖𝐅‖ 2 = 𝜆 1/2 
+
+> max
+
+(𝐅𝐅 ⊤) = 𝑂 𝑃 (√𝑛) , and ‖̂𝐅‖ = √𝑛 . It then follows from the definition of 𝐇 and Assumption 2 that 
+
+‖𝐇‖ = 𝑂 𝑃 (1) .
+
+Lemma 13. Under Assumptions 1–3, 
+
+‖̂𝐅 − 𝐅𝐇 ⊤‖𝐹 = 𝑂 𝑃 (1 + √ 𝑛 𝑝 + 1√𝑛 ) . (77) 
+
+Proof of Lemma 13. By the definitions of ̂ 𝐅 and 𝐇 ,̂𝐅 − 𝐅𝐇 ⊤ = 1𝑛 (̂𝐑̂𝐑 ⊤ − 𝐅𝐁 ⊤𝐁𝐅 ⊤)̂𝐅𝐕 −1 .
+
+Recall that 𝐑 −̂ 𝐑 = 𝒔̂𝜸 𝑆 − 𝒔𝜸 ⊤𝑆 = 𝒔(𝒔 ⊤𝒔) −1 𝒔 ⊤𝐑 . Let 𝐏 𝑆 ∶= 𝒔(𝒔 ⊤𝒔) −1 𝒔 ⊤ denote the 68 projection matrix. Then ̂𝐅 − 𝐅𝐇 ⊤ = 1𝑛 (𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 − 𝐑𝐑 ⊤𝐏 𝑆 − 𝐏 𝑆 𝐑𝐑 ⊤ + 𝐑𝐑 ⊤ − 𝐅𝐁 ⊤𝐁𝐅 ⊤)̂𝐅𝐕 −1 
+
+= 1𝑛 (𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 − 𝐑𝐑 ⊤𝐏 𝑆 − 𝐏 𝑆 𝐑𝐑 ⊤)̂𝐅𝐕 −1 + 1𝑛 (𝐅𝐁 ⊤𝐔 ⊤ + 𝐔𝐁𝐅 ⊤ + 𝐔𝐔 ⊤)̂𝐅𝐕 −1 
+
+=∶ Δ 1 + Δ 2.
+
+Since ‖̂𝐅‖ 𝐹 = 𝑂 𝑃 (√𝑛) , ‖̂𝐅‖ 2 = 𝑂 𝑃 (√𝑛) , and ‖𝐕 −1 ‖ = 𝑂 𝑃 (1/𝑝) , using ‖𝐀𝐁‖ 𝐹 ≤‖𝐀‖ 2‖𝐁‖ 𝐹 yields 
+
+‖Δ 1‖𝐹 ≤ 1𝑛 ∥𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 − 𝐑𝐑 ⊤𝐏 𝑆 − 𝐏 𝑆 𝐑𝐑 ⊤∥𝐹 ‖̂𝐅‖ 2 ‖𝐕 −1 ‖≤ 1𝑛 (‖𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 ‖𝐹 + ‖𝐑𝐑 ⊤𝐏 𝑆 ‖𝐹 + ‖𝐏 𝑆 𝐑𝐑 ⊤‖𝐹 ) 𝑂 𝑃 (√𝑛/𝑝). 
+
+Note that ‖𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 ‖𝐹 = 𝒔 ⊤𝐑𝐑 ⊤𝒔 𝒔 ⊤𝒔 = ‖𝐑 ⊤𝒔‖ 22
+
+> ‖𝒔‖ 22
+
+. By Assumption 1, ‖𝒔‖ 22 = 𝑂 𝑃 (𝑛) , and 
+
+𝔼‖𝐑 ⊤𝒔‖ 22 =
+
+> 𝑝
+
+∑
+
+> 𝑗=1
+
+𝔼[ 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑅 𝑗𝑖 𝑠 𝑖 ]
+
+> 2
+
+=
+
+> 𝑝
+
+∑
+
+> 𝑗=1 𝑛
+
+∑
+
+> 𝑖=1
+
+𝔼[𝑅 𝑗𝑖 𝑠 𝑖 ]2 =
+
+> 𝑝
+
+∑
+
+> 𝑗=1 𝑛
+
+∑
+
+> 𝑖=1
+
+𝔼(𝑅 2𝑗𝑖 )𝔼(𝑠 2𝑖 )= 𝑛 𝑂 𝑃 (1) 
+
+> 𝑝
+
+∑
+
+> 𝑗=1
+
+𝔼(𝑅 2𝑗𝑖 ) = 𝑂 𝑃 (𝑛𝑝), 
+
+where the second and third equalities follow from the independence and zero-mean assump-tions. Therefore, by Markov’s inequality, ‖𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 ‖𝐹 = 𝑂 𝑃 (𝑝) . Moreover, 
+
+‖𝐑𝐑 ⊤𝐏 𝑆 ‖𝐹 ≤ ‖𝐑‖ 2 ‖𝐑 ⊤𝐏 𝑆 ‖𝐹 = 𝑂 𝑃 (√𝑛𝑝) √ tr (𝐏 𝑆 𝐑𝐑 ⊤𝐏 𝑆 )= 𝑂 𝑃 (√𝑛𝑝) √ 𝒔 ⊤𝐑𝐑 ⊤𝒔 𝒔 ⊤𝒔 = 𝑂 𝑃 (𝑝 √𝑛), 
+
+and the same bound applies to ‖𝐏 𝑆 𝐑𝐑 ⊤‖𝐹 . Consequently, 
+
+‖Δ 1‖𝐹 = 1𝑛 𝑂 𝑃 (𝑝) 𝑂 𝑃 (√𝑛/𝑝)+ 1𝑛 𝑂 𝑃 (𝑝 √𝑛) 𝑂 𝑃 (√𝑛/𝑝)+ 1𝑛 𝑂 𝑃 (𝑝 √𝑛) 𝑂 𝑃 (√𝑛/𝑝) = 𝑂 𝑃 (1 + 1√𝑛 ) . 
+
+For Δ2, the bound ‖Δ 2‖𝐹 = 𝑂 𝑃 (√𝑛/𝑝 + 1/ √𝑛) follows directly from Lemma D.2 in Wang & Fan (2017). Combining the bounds for Δ1 and Δ2 yields (77). 
+
+Lemma 14. Under Assumptions 1-3 
+
+69 (a) ∥𝐇 ⊤𝐇 − 𝐈 𝐾 ∥𝐹 = 𝑂 𝑃 ( 1√𝑛 + 1√𝑝 + √ log 𝑛 log 𝑝 𝑛 + log 𝑛 log 𝑝 𝑛 ) . 
+
+(b) max 𝑗∈[𝑝] ∥̂𝒃 𝑗 − 𝐇𝒃 𝑗 ∥ = 𝑂 𝑃 (√ log 𝑝 𝑛 + 1√𝑝 + √ log 𝑛 log 𝑝 𝑛 + log 𝑛 log 𝑝 𝑛 + ( log 𝑛 log 𝑝 𝑛 )3/2 
+
+) . 
+
+Proof. (a) We first prove that 
+
+∥𝐇𝐇 ⊤ − 𝐈 𝐾 ∥𝐹 = 𝑂 𝑃 ( 1√𝑛 + 1√𝑝 + √ log 𝑛 log 𝑝 𝑛 + log 𝑛 log 𝑝 𝑛 ) . 
+
+By Lemma 12, ‖𝐕 −1 ‖ = 𝑂 𝑃 (𝑝 −1 ) and ‖𝐇‖ = 𝑂 𝑃 (1) . By the triangle inequality, 
+
+∥𝐇𝐇 ⊤ − 𝐈 𝐾 ∥𝐹 ≤ ∥𝐇𝐇 ⊤ − 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝐇𝒇 𝑖 (𝐇𝒇 𝑖 )⊤∥
+
+> 𝐹
+
++ ∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝐇𝒇 𝑖 (𝐇𝒇 𝑖 )⊤ − 𝐈 𝐾 ∥
+
+> 𝐹
+
+.
+
+Using ‖𝐀𝐁‖ 𝐹 ≤ ‖𝐀‖ ‖𝐁‖ 𝐹 , the first term satisfies 
+
+∥𝐇𝐇 ⊤ − 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝐇𝒇 𝑖 (𝐇𝒇 𝑖 )⊤∥
+
+> 𝐹
+
+≤ ‖𝐇‖ 2 ∥𝐈 𝐾 − 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒇 𝑖 𝒇 ⊤𝑖 ∥
+
+> 𝐹
+
+= 𝑂 𝑃 (1) 𝑂 𝑃 (𝑛 −1/2 ). 
+
+For the second term, by the Cauchy–Schwarz inequality and Proposition 2, 
+
+∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝐇𝒇 𝑖 (𝐇𝒇 𝑖 )⊤ − 𝐈 𝐾 ∥
+
+> 𝐹
+
+= ∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝐇𝒇 𝑖 (𝐇𝒇 𝑖 )⊤ − 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+̂𝒇 𝑖 ̂ 𝒇 ⊤𝑖 ∥
+
+> 𝐹
+
+≤ ∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(𝐇𝒇 𝑖 −̂ 𝒇 𝑖 )(𝐇𝒇 𝑖 )⊤∥
+
+> 𝐹
+
++ ∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+̂𝒇 𝑖 (̂𝒇 ⊤𝑖 − (𝐇𝒇 𝑖 )⊤)∥ 
+
+> 𝐹
+
+≤ ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+‖𝐇𝒇 𝑖 −̂ 𝒇 𝑖 ‖2 ⋅ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+‖𝐇𝒇 𝑖 ‖2)
+
+> 1/2
+
++ ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+‖𝐇𝒇 𝑖 −̂ 𝒇 𝑖 ‖2 ⋅ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+‖̂𝒇 𝑖 ‖2)
+
+> 1/2
+
+= 𝑂 𝑃 ( 1√𝑛 + 1√𝑝 + √ log 𝑛 log 𝑝 𝑛 + log 𝑛 log 𝑝 𝑛 ) . 
+
+Hence, 
+
+𝐇𝐇 ⊤ = 𝐈 𝐾 + 𝑂 𝑃 ( 1√𝑛 + 1√𝑝 + √ log 𝑛 log 𝑝 𝑛 + log 𝑛 log 𝑝 𝑛 ) . 
+
+Since ‖𝐇‖ = 𝑂 𝑃 (1) and ‖𝐇 −1 ‖ = 𝑂 𝑃 (1) , right-multiplying by 𝐇 and left-multiplying by 
+
+𝐇 −1 yields the stated bound for ‖𝐇 ⊤𝐇 − 𝐈 𝐾 ‖𝐹 .70 (b) Since ̂ 𝒃 𝑗 = 1𝑛 ∑𝑛 𝑖=1 ̂ 𝑅 𝑗𝑖 ̂ 𝒇 𝑖 = 1𝑛 ∑𝑛 𝑖=1 (𝑅 𝑗𝑖 + 𝛿 𝑗𝑖 )̂𝒇 𝑖 , we have ̂𝒃 𝑗 − 𝐇𝒃 𝑗 = 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(𝑅 𝑗𝑖 + 𝛿 𝑗𝑖 )̂𝒇 𝑖 − 𝐇𝒃 𝑗 
+
+= 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(𝑅 𝑗𝑖 + 𝛿 𝑗𝑖 )(̂𝒇 𝑖 − 𝐇𝒇 𝑖 ) − 𝐇𝒃 𝑗 + 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(𝑅 𝑗𝑖 + 𝛿 𝑗𝑖 )𝐇𝒇 𝑖 
+
+= 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝐇𝒇 𝑖 𝑢 𝑗𝑖 + 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(𝑅 𝑗𝑖 + 𝛿 𝑗𝑖 )(̂𝒇 𝑖 − 𝐇𝒇 𝑖 )+ 𝐇 ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒇 𝑖 𝒇 ⊤𝑖 − 𝐈 𝐾 ) 𝒃 𝑗 + 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝐇𝒇 𝑖 𝛿 𝑗𝑖 .
+
+By concentration inequalities and a union bound, the first term satisfies max 
+
+> 𝑗∈[𝑝]
+
+∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝐇𝒇 𝑖 𝑢 𝑗𝑖 ∥ ≤ ‖𝐇‖ max 
+
+> 𝑗∈[𝑝]
+
+√√√⎷
+
+> 𝐾
+
+∑
+
+> 𝑘=1
+
+( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑓 𝑖𝑘 𝑢 𝑗𝑖 )
+
+> 2
+
+= 𝑂 𝑃 (√ log 𝑝 𝑛 ) . 
+
+For the second term, max 
+
+> 𝑗∈[𝑝]
+
+∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(𝑅 𝑗𝑖 + 𝛿 𝑗𝑖 )(̂𝒇 𝑖 − 𝐇𝒇 𝑖 )∥ ≤ max 
+
+> 𝑗∈[𝑝]
+
+∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑅 𝑗𝑖 (̂𝒇 𝑖 − 𝐇𝒇 𝑖 )∥ + max 
+
+> 𝑗∈[𝑝]
+
+∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝛿 𝑗𝑖 (̂𝒇 𝑖 − 𝐇𝒇 𝑖 )∥ ≤ max 
+
+> 𝑗∈[𝑝]
+
+( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑅 2𝑗𝑖 ⋅ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+‖̂𝒇 𝑖 − 𝐇𝒇 𝑖 ‖2)
+
+> 1/2
+
++ max 
+
+> 𝑗∈[𝑝]
+
+( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝛿 2𝑗𝑖 ⋅ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+‖̂𝒇 𝑖 − 𝐇𝒇 𝑖 ‖2)
+
+> 1/2
+
+.
+
+Since 𝔼(𝑅 2𝑗𝑖 ) = 𝑂(1) , max 𝑗∈[𝑝] 1𝑛 ∑𝑛 𝑖=1 𝑅 2𝑗𝑖 = 𝑂 𝑃 (1) , and max 𝑗∈[𝑝] 1𝑛 ∑𝑛 𝑖=1 𝛿 2𝑗𝑖 ≤ ‖Δ‖ 2 
+
+> max
+
+=𝑂 𝑃 (log 𝑛 log 𝑝 𝑛 ), it follows that max 
+
+> 𝑗∈[𝑝]
+
+∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+(𝑅 𝑗𝑖 + 𝛿 𝑗𝑖 )(̂𝒇 𝑖 − 𝐇𝒇 𝑖 )∥ = 𝑂 𝑃 ( 1√𝑛 + 1√𝑝 + √ log 𝑛 log 𝑝 𝑛 + log 𝑛 log 𝑝 𝑛 )+ 𝑂 𝑃 (√ log 𝑛 log 𝑝 𝑛 ( 1√𝑛 + 1√𝑝 + √ log 𝑛 log 𝑝 𝑛 + log 𝑛 log 𝑝 𝑛 )) . 
+
+For the third term, max 
+
+> 𝑗∈[𝑝]
+
+∥𝐇 ( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒇 𝑖 𝒇 ⊤𝑖 − 𝐈 𝐾 ) 𝒃 𝑗 ∥ ≤ ‖𝐇‖ ∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝒇 𝑖 𝒇 ⊤𝑖 − 𝐈 𝐾 ∥ max 
+
+> 𝑗∈[𝑝]
+
+‖𝒃 𝑗 ‖ = 𝑂 𝑃 (1) 𝑂 𝑃 (𝑛 −1/2 ) 𝑂 𝑃 (1). 
+
+71 For the last term, max 
+
+> 𝑗∈[𝑝]
+
+∥ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝐇𝒇 𝑖 𝛿 𝑗𝑖 ∥ ≤ ‖𝐇‖ max 
+
+> 𝑗∈[𝑝]
+
+√√√⎷
+
+> 𝐾
+
+∑
+
+> 𝑘=1
+
+( 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑓 𝑖𝑘 𝛿 𝑗𝑖 )
+
+> 2
+
+≤ ‖𝐇‖√ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝑓 2𝑖𝑘 max 
+
+> 𝑗∈[𝑝]
+
+√ 1𝑛 
+
+> 𝑛
+
+∑
+
+> 𝑖=1
+
+𝛿 2𝑗𝑖 = 𝑂 𝑃 (√ log 𝑛 log 𝑝 𝑛 ) . 
+
+Combining the bounds above gives max 
+
+> 𝑗∈[𝑝]
+
+∥̂𝒃 𝑗 − 𝐇𝒃 𝑗 ∥ = 𝑂 𝑃 (√ log 𝑝 𝑛 + 1√𝑝 + √ log 𝑛 log 𝑝 𝑛 + log 𝑛 log 𝑝 𝑛 + ( log 𝑛 log 𝑝 𝑛 )
+
+> 3/2
+
+) . 
+
+72

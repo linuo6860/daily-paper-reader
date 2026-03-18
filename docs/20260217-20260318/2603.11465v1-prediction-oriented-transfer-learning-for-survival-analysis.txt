@@ -1,0 +1,761 @@
+Title: Prediction-Oriented Transfer Learning for Survival Analysis
+
+URL Source: https://arxiv.org/pdf/2603.11465v1
+
+Published Time: Fri, 13 Mar 2026 00:23:42 GMT
+
+Number of Pages: 26
+
+Markdown Content:
+# Prediction-Oriented Transfer Learning for Survival Analysis 
+
+## Yu Gu ∗1, Donglin Zeng 2, and D. Y. Lin 31Department of Statistics and Actuarial Science, University of Hong Kong, Hong Kong 
+
+2Department of Biostatistics, University of Michigan, U.S.A. 
+
+3Department of Biostatistics, University of North Carolina at Chapel Hill, U.S.A. 
+
+Abstract 
+
+Transfer learning is beneficial for survival analysis, especially when the target study has a limited number of events. However, existing transfer learning methods rely on the restrictive assumption that the target and source studies share similar parameters under Cox models, and most require access to individual-level source data. In this article, we propose a novel transfer learning framework that enhances model-based survival prediction by transferring predictive rather than distributional knowledge from source studies. Our approach employs flexible semiparametric trans-formation models for the target data while eliminating the need to model or share the source data. The ingeniously designed penalty enables simple and stable com-putation via an EM algorithm. We rigorously establish the asymptotic properties of the proposed estimator and show that it achieves a faster convergence rate than the target-only estimator when source knowledge is sufficiently accurate. We demon-strate the advantages of our methods through extensive simulation studies and an application to two major breast cancer studies. 
+
+Keywords: EM algorithm; Nonparametric likelihood; Survival prediction; Transfer learning; Transformation models. 
+
+> ∗
+
+yugu@hku.hk 
+
+1
+
+> arXiv:2603.11465v1 [stat.ME] 12 Mar 2026
+
+# 1 Introduction 
+
+Transfer learning has been extensively studied in computer science over the past decade. By leveraging knowledge from related source studies, transfer learning can address challenges posed by insufficient samples and improve learning performance in the target study. It has been successfully applied to a wide range of real-world problems, such as natural language processing, image processing, speech recognition, biomedical research, and recommender systems (Zhuang et al. 2020). Recently, transfer learning has gained considerable attention within the statistics com-munity. Various methods have been developed to tackle statistical problems such as high-dimensional linear regression (Bastani 2021, Li et al. 2022, Gu et al. 2024), high-dimensional generalized linear models (Tian & Feng 2023, Li et al. 2024), functional linear regression models (Lin & Reimherr 2022), and Cox regression models (Li et al. 2023, Xie et al. 2024). Most existing methods incorporate source information into the target learning procedure via a penalty that encourages similarity between the modeled target and source distribu-tions, with the specific penalty determined by the underlying similarity assumption. In regression models, a typical assumption is that the Lr-distance ( r ∈ [0 , 2]) between the target and source parameters is small, motivating the use of the Lr-penalty (Bastani 2021, Li et al. 2022, Tian & Feng 2023, Li et al. 2023, Xie et al. 2024). Alternatively, Gu et al. (2024) proposed an angle-based penalty assuming the angle distance between the target and source parameters is small. These methods fall into the category of distance-based transfer learning. Another category, representation transfer learning, assumes shared or similar low-dimensional representations between the target and source parameters (Tian et al. 2023, He et al. 2024). In this article, we explore transfer learning in the model-based prediction context of 2survival analysis, which holds important implications for medicine and public health. For example, studies of chronic diseases often face limitations due to a small number of events resulting from short study periods or low disease incidence rates. Relying solely on data from a single study can lead to unsatisfactory performance in risk evaluation and survival prediction. Transfer learning can enhance performance by using auxiliary knowledge from related studies with higher event rates or longer study periods. Another example is sur-vival analysis for underrepresented populations, such as racial and ethnic minorities and children, where transferring knowledge from majority populations can improve estimation and prediction performance on the target population. Despite its potential, the literature on transfer learning for survival analysis is quite limited. All existing methods are established under the Cox regression model, and none have theoretical justifications. Li et al. (2016) used an L2,1-penalty to learn a shared representation between the target and source studies. Li et al. (2023) and Xie et al. (2024) developed distance-based transfer learning methods for right- and interval-censored data, respectively, with L0- or L1-penalties applied to both the regression coefficients and the cumulative baseline hazard function. Lu et al. (2025) addressed covariate shift using density ratio weighting and aggregated the weighted partial likelihood functions from the target and source studies as the objective function. All these methods specify Cox models for both the target and source data and require that all studies have the same set of covariates. Thus, they are susceptible to model misspecification and are not optimal when the target and source studies have different sets of covariates, as only shared covariates can be used. Moreover, these methods impose the restrictive assumption that the (cumulative) baseline hazard functions are similar between the target and source studies, which can be easily violated in practice due to heterogeneities in study populations. Last but not least, the 3methods of Li et al. (2016) and Lu et al. (2025) require sharing individual-level source data, which is often infeasible due to privacy concerns. For instance, investigators typically cannot download individual-level data from large biobanks such as UK Biobank (Sudlow et al. 2015) and the All of Us Research Program (All of Us Research Program Investigators 2019). Similarly, individual-level data from major cohort studies such as the Atherosclerosis Risk in Communities (ARIC) Study (ARIC Investigators 1989) and the Women’s Health Initiative (WHI) (Writing Group for the Women’s Health Initiative Investigators et al. 2002), as well as from electronic health records across different health care systems, are generally not shareable, even in anonymized form, due to regulatory and institutional restrictions. To overcome the limitations of existing transfer learning methods for survival analy-sis, we propose a novel framework called Prediction-Oriented Transfer Learning (POTL). POTL aims to enhance model-based prediction by directly integrating predictive knowledge from source studies. Unlike existing approaches, which focus on transferring knowledge of model parameters, POTL is fully prediction-driven: the entire transfer learning procedure operates on survival predictions rather than on parameter sharing. This prediction-oriented feature distinguishes POTL from all existing methods. Moreover, transferring predictive knowledge requires imposing penalties directly on survival probabilities, which is compu-tationally far more challenging than penalizing individual model parameters. For example, even under simple Cox models, applying conventional Lr-penalties ( r ∈ [0 , 2]) to sur-vival probabilities leads to intractable computation. We overcome this difficulty in POTL through a new penalization strategy and an efficient optimization algorithm. Our approach has several major advantages. First, unlike existing methods that require similar distributions or model parameters between the target and source studies, we impose 4a much weaker assumption that the studies share similar survival predictions. Thus, our approach remains applicable even when source models differ substantially from the target model and direct parameter transfer is infeasible. Second, we consider a broad class of semi-parametric transformation models with potentially time-dependent covariates for the target study, while leaving the models for all source studies completely unrestricted—they can be traditional regression models, machine learning models, or artificial intelligence (AI) mod-els such as large language models. This flexibility makes POTL highly robust to model misspecification and allows it to accommodate a wide variety of source models. Third, POTL does not require sharing individual-level source data, as only summary-level predic-tion information is transferred. Finally, we introduce a novel cross-entropy-type penalty that is computationally much easier than traditional Lr penalties. This computational advantage arises from our penalty’s natural connection to the weighted log-likelihood of current status data, which enables simple and stable computation via an EM algorithm. We establish a rigorous asymptotic theory for transfer learning in survival analysis through the novel use of empirical process theory. Specifically, we show that the proposed estimator for the survival function converges to the true survival function at an optimal rate that is no slower than the standard n1/2 rate based on target data only. This theoret-ical foundation ensures that our POTL approach effectively leverages source information to enhance prediction performance in the target study. We evaluate the operating charac-teristics of our approach through extensive simulation studies and provide an application to the TCGA–BRCA (The Cancer Genome Atlas Network 2012) and METABRIC (Curtis et al. 2012) studies on breast cancer. 52 Methods 
+
+## 2.1 Transformation Models for the Target Study 
+
+For the target study, let T denote the failure time and X(·) denote a p-vector of potentially time-dependent covariates. We consider a broad class of semiparametric transformation models for the conditional cumulative hazard function of T given X in the form of Λ( t|X) = G
+
+Z t
+
+> 0
+
+exp {βTX(s)}dΛ( s)
+
+
+
+, (1) where G(·) is a strictly increasing transformation function, β is a p-vector of unknown regression parameters, and Λ( ·) is an unknown increasing function with Λ(0) = 0. Let C
+
+denote the censoring time, which is assumed to be independent of T conditional on X. We observe Y = min( T, C ) and ∆ = I(T ≤ C). Thus, the data from n independent subjects consist of {Yi, ∆i, Xi(t) : t ∈ [0 , τ ]} (i = 1 , . . . , n ), where τ is the end time of the target study. The likelihood function concerning ( β, Λ) is 
+
+Ln(β, Λ) = 
+
+> n
+
+Y
+
+> i=1
+
+
+
+Λ′(Yi)eβTXi(Yi)G′
+
+Z Yi
+
+> 0
+
+eβTXi(s)dΛ( s)
+
+ ∆i
+
+exp 
+
+
+
+−G
+
+Z Yi
+
+> 0
+
+eβTXi(s)dΛ( s)
+
+ 
+
+,
+
+where we use f ′(x) to denote the first-order derivative of function f (x) with respect to x.It is useful to consider the log-Laplace transformation 
+
+G(x) = − log 
+
+Z ∞
+
+> 0
+
+e−xz f (z)dz, 
+
+where f (z) is the density function of a frailty variable with support [0 , ∞). The choice of the gamma density with mean 1 and variance r > 0 for f (z) yields the class of logarithmic transformations G(x) = r−1 log(1+ rx ), which includes the proportional odds model ( r = 1) and the proportional hazards model ( r = 0). Under the log-Laplace transformation, the likelihood can be rewritten as 
+
+Ln(β, Λ) = 
+
+> n
+
+Y
+
+> i=1
+
+Z ∞
+
+> 0
+
+n
+
+ziΛ′(Yi)eβTXi(Yi)
+
+o∆i
+
+exp 
+
+
+
+−zi
+
+Z Yi
+
+> 0
+
+eβTXi(s)dΛ( s)
+
+
+
+f (zi)dz i,
+
+6which is the likelihood of the proportional hazards frailty model with frailty zi.
+
+## 2.2 Prediction-Oriented Transfer Learning 
+
+Suppose that there are K source studies, each providing a predictor for the covariate-specific survival function, denoted by ˇSk(t|Xk), where Xk(·) is a set of potentially time-dependent covariates for the kth source study ( k = 1 , . . . , K ). These source predictors can be derived through any survival analysis techniques, such as Cox regression models, transformation models similar to (1), and machine learning/AI methods. Thus, our approach is highly flexible in terms of source data analysis. Moreover, it does not require sharing individual-level data between the target and source studies, thereby circumventing potential data privacy concerns. We allow the covariates to vary across the ( K +1) studies. To ensure that the covariates in the target study include all necessary covariate information for the source predictors, we require that each Xk (k = 1 , . . . , K ) be fully determined by X. Therefore, we will denote the source predictors as ˇSk(t|X) hereafter, with the understanding that ˇSk
+
+is actually conditioned only on the covariates Xk.We propose the prediction-oriented transfer learning (POTL) approach which leverages source predictors to improve the prediction performance of the target study. We first obtain a pooled source predictor by taking a weighted average among all K source predictors, i.e., ˇS(t|X) = PKk=1 ck ˇSk(t|X), where the weights ck reflect the relative reliability of each source predictor and are typically chosen to be proportional to the sample size of the corresponding source study. Let S(t|X; β, Λ) = exp[ −G{R t 
+
+> 0
+
+eβTX(s)dΛ( s)}] denote the survival function of the target study. We define the similarity metric between S(t|X) and ˇS(t|X) by 
+
+ψm(β, Λ) = m−1
+
+> m
+
+X
+
+> i=1
+
+wi
+
+h ˇS( ˜Yi| ˜Xi) log S( ˜Yi| ˜Xi) + 
+
+n
+
+1 − ˇS( ˜Yi| ˜Xi)
+
+o
+
+log 
+
+n
+
+1 − S( ˜Yi| ˜Xi)
+
+oi 
+
+,
+
+(2) 7where m > 0 is a sufficiently large integer, {wi : i = 1 , . . . , m } are pre-specified weights, 
+
+{ ˜Yi : i = 1 , . . . , m } and { ˜Xi : i = 1 , . . . , m } are independent copies of Y and X, respec-tively. A simple and practical choice is to set m = n, wi = 1, and ( ˜Yi, ˜Xi) = ( Yi, Xi) for 
+
+i = 1 , . . . , n , which achieves satisfactory performance with low computational cost in our numerical studies. 
+
+Remark 1. Although our asymptotic theory requires m to be sufficiently large in order to achieve the optimal convergence rate, we find that setting m = n is generally adequate to achieve satisfactory performance in finite-sample settings. Our methods are flexible and allow for many other choices of wi and ( ˜Yi, ˜Xi). For example, the weight wi can be set to the inverse of the variance of ˇS( ˜Yi| ˜Xi) to reflect the uncertainty of the source prediction, provided such information is available; ˜Xi can be generated from the empirical distribution of X based on the target samples, and ˜Yi can be generated from Unif(0 , τ ). Based on our numerical experience, the performance of the proposed methods is insensitive to these choices. The similarity metric in (2) is reminiscent of the negative cross-entropy loss and can serve as a penalty to encourage similarity between target and source predictions, thereby facilitating knowledge transfer. Let ℓn(β, Λ) = log Ln(β, Λ) denote the log-likelihood func-tion for the target study. We estimate ( β, Λ) by solving the optimization problem ( ˆβ, ˆΛ) = arg max 
+
+> (β,Λ)
+
+n−1ℓn(β, Λ) + ξnψm(β, Λ) , (3) where ξn ≥ 0 is a tuning parameter that controls the degree of knowledge transfer and may depend on n. When ξn = 0, (3) reduces to the target-only optimization problem, which can be solved using the nonparametric maximum likelihood estimation (NPMLE) procedure, treating Λ as a step function with jumps at the distinct observed failure times (Zeng & Lin 82007). In general, however, the presence of the penalty term poses a major challenge for optimization, due to the lack of analytical expressions for the jump sizes of Λ. To overcome the above challenge, we propose a surrogate penalty which coincides with the likelihood for current status data, such that the original optimization problem (3) becomes a maximum likelihood estimation problem with mixed censored data. Specifically, for a sufficiently large integer J > 0 and every fixed i ∈ { 1, . . . , m }, 1 − ˇS( ˜Yi| ˜Xi) is approximately the mean of J number of independent Bernoulli random variables, denoted by {δij : j = 1 , . . . , J }, all with success probability 1 − ˇS( ˜Yi| ˜Xi). Thus, the original penalty 
+
+ψm(β, Λ) can be approximated by ˜ψmJ (β, Λ) = ( mJ )−1
+
+> m
+
+X
+
+> i=1
+> J
+
+X
+
+> j=1
+
+wi
+
+h
+
+(1 − δij ) log S( ˜Yi| ˜Xi) + δij log 
+
+n
+
+1 − S( ˜Yi| ˜Xi)
+
+oi 
+
+.
+
+For j = 1 , . . . , J , let ˜Yij ≡ ˜Yi and ˜Xij ≡ ˜Xi. Then the surrogate penalty ˜ψmJ (β, Λ) can be regarded as the weighted log-likelihood function of the current status data { ˜Yij , δ ij , ˜Xij (t) : 
+
+t ∈ [0 , τ ]} (i = 1 , . . . , m and j = 1 , . . . , J ). Instead of directly solving (3), we maximize 
+
+n−1ℓn(β, Λ) + ξn ˜ψmJ (β, Λ) = n−1
+
+> n
+
+X
+
+> i=1
+
+log 
+
+Z ∞
+
+> 0
+
+n
+
+ziΛ′(Yi)eβTXi(Yi)
+
+o∆i
+
+exp 
+
+
+
+−zi
+
+Z Yi
+
+> 0
+
+eβTXi(s)dΛ( s)
+
+
+
+f (zi)dz i
+
+
+
++ ξn(mJ )−1
+
+> m
+
+X
+
+> i=1
+> J
+
+X
+
+> j=1
+
+wi
+
+h
+
+(1 − δij ) log S( ˜Yi| ˜Xi) + δij log 
+
+n
+
+1 − S( ˜Yi| ˜Xi)
+
+oi 
+
+,
+
+(4) where 
+
+S( ˜Yi| ˜Xi) = 
+
+Z ∞
+
+> 0
+
+exp 
+
+
+
+−˜zi
+
+Z ˜Yi
+
+> 0
+
+eβT ˜Xi(s)dΛ( s)
+
+
+
+f (˜ zi)d˜zi, for i = 1 , . . . , m, 
+
+with ˜ zi being the frailty variable associated with the generated sample ( ˜Yi, ˜Xi). The objective function in (4) is the weighted log-likelihood function arising from a mixture of right-censored and current status data. 92.3 Estimation Procedure 
+
+We adopt the NPMLE approach by treating Λ as a step function with nonnegative jumps at 
+
+t1 < t 2 < · · · < t L, which are the uniques values of Yi (i = 1 , . . . , n ) and ˜Yi (i = 1 , . . . , m ). For l = 1 , . . . , L , let λl denote the jump size of Λ at time tl. Then the objective function in (4) becomes 
+
+n−1
+
+> n
+
+X
+
+> i=1
+
+log 
+
+"Z ∞
+
+> 0
+
+n
+
+ziΛ{Yi}eβTXi(Yi)
+
+o∆i
+
+exp 
+
+
+
+− X
+
+> l:tl≤Yi
+
+ziλleβTXil 
+
+
+
+f (zi)dz i
+
+#
+
++ξn(mJ )−1
+
+> m
+
+X
+
+> i=1
+> J
+
+X
+
+> j=1
+
+wi log 
+
+"Z ∞
+
+> 0
+
+
+
+exp 
+
+
+
+− X 
+
+> l:tl≤˜Yi
+
+˜ziλleβT ˜Xil 
+
+1−δij 
+
+×
+
+
+
+1 − exp 
+
+
+
+− X 
+
+> l:tl≤˜Yi
+
+˜ziλleβT ˜Xil 
+
+δij 
+
+f (˜ zi)d˜zi
+
+#
+
+,
+
+(5) where Λ {t} denotes the jump size of Λ at time t, Xil = Xi(tl), and ˜Xil = ˜Xi(tl). To address the computational challenges posed by the current status data, we introduce in-dependent Poisson random variables Wijl (i = 1 , . . . , m ; j = 1 , . . . , J ; l = 1 , . . . , L ) with means ˜ ziλleβT ˜Xil . It is easy to see that given the frailty variable ˜ zi, the likelihood arising from the current status data ( ˜Yij , δ ij , ˜Xij ) is equivalent to the likelihood of the event 
+
+Vij =
+
+P  
+
+> l:tl≤˜Yi
+
+Wijl > 0 if δij = 1 ,
+
+P  
+
+> l:tl≤˜Yi
+
+Wijl = 0 if δij = 0 ,
+
+for i = 1 , . . . , m and j = 1 , . . . , J . Thus, maximizing the objective function in (5) is equivalent to maximizing the weighted log-likelihood arising from the right-censored data (Yi, ∆i, Xi) ( i = 1 , . . . , n ) and the events Vij (i = 1 , . . . , m and j = 1 , . . . , J ). We develop an EM algorithm to maximize the equivalent objective function based on the right-censored data and Poisson variables, treating the frailty variables zi (i = 1 , . . . , n ) and ˜zi (i = 1 , . . . , m ), and the Poisson variables Wijl (i = 1 , . . . , m ; j = 1 , . . . , J ; l = 1 , . . . , L )as the missing data. The complete-data weighted log-likelihood is 10 n−1
+
+> n
+
+X
+
+> i=1
+
+
+
+∆i
+
+log zi + log Λ {Yi} + βTXi(Yi) − X
+
+> l:tl≤Yi
+
+ziλleβTXil + log f (zi)
+
+
+
++ ξn(mJ )−1
+
+> m
+
+X
+
+> i=1
+> J
+
+X
+
+> j=1
+
+wi
+
+X 
+
+> l:tl≤˜Yi
+
+
+
+−˜ziλleβT ˜Xil + Wijl 
+
+n
+
+log ˜ zi + log λl + βT ˜Xil 
+
+o
+
+− log( Wijl !) 
+
+
+
++ ξnm−1
+
+> m
+
+X
+
+> i=1
+
+wi log f (˜ zi).
+
+Let ˜E(·) denote the conditional expectation given the observed data. In the E-step, we only need to evaluate ˜E(zi), ˜E(˜ zi) and ˜E( ¯Wil ), where ¯Wil = J−1 PJj=1 Wijl . The conditional density of zi given the observed data is proportional to z∆i 
+
+> i
+
+exp( − P 
+
+> l:tl≤Yi
+
+ziλleβTXil )f (zi), while the conditional density of ˜ zi given the observed data is proportional to 
+
+
+
+exp 
+
+
+
+− X 
+
+> l:tl≤˜Yi
+
+˜ziλleβT ˜Xil 
+
+ ˇS( ˜Yi| ˜Xi)
+
+×
+
+
+
+1 − exp 
+
+
+
+− X 
+
+> l:tl≤˜Yi
+
+˜ziλleβT ˜Xil 
+
+1− ˇS( ˜Yi| ˜Xi)
+
+f (˜ zi).
+
+By direct calculation, the conditional expectation of Wijl given the observed data and ˜ zi is 
+
+E(Wijl |Vij , ˜zi) = δij ˜ziλleβT ˜Xil 
+
+1 − exp 
+
+
+
+− P   
+
+> l′:tl′≤˜Yi
+
+˜ziλl′ eβT ˜Xil ′
+
+.
+
+Given the approximation 1 − ˇS( ˜Yi| ˜Xi) ≈ J−1 PJj=1 δij , we obtain 
+
+E( ¯Wil |Vij , ˜zi) ≈
+
+1 − ˇS( ˜Yi| ˜Xi) ˜ziλleβT ˜Xil 
+
+1 − exp 
+
+
+
+− P   
+
+> l′:tl′≤˜Yi
+
+˜ziλl′ eβT ˜Xil ′
+
+,
+
+which no longer depends on J or δij . We use Gauss–Laguerre quadratures to approximate all integrals over zi or ˜ zi.Define the functions 
+
+s(0) (t, β) = n−1
+
+> n
+
+X
+
+> i=1
+
+I(t ≤ Yi) ˜E(zi)eβTXi(t) + ξnm−1
+
+> m
+
+X
+
+> i=1
+
+wiI(t ≤ ˜Yi) ˜E(˜ zi)eβT ˜Xi(t),s(1) (t, β) = n−1
+
+> n
+
+X
+
+> i=1
+
+I(t ≤ Yi) ˜E(zi)eβTXi(t)Xi(t) + ξnm−1
+
+> m
+
+X
+
+> i=1
+
+wiI(t ≤ ˜Yi) ˜E(˜ zi)eβT ˜Xi(t) ˜Xi(t).
+
+In the M-step, we first update λl (l = 1 , . . . , L ) by 
+
+λl = n−1 Pni=1 ∆iI(Yi = tl) + ξnm−1 Pmi=1 wiI(tl ≤ ˜Yi) ˜E( ¯Wil )
+
+s(0) (tl, β) .
+
+11 Then, we solve the following equation for β using the one-step Newton–Raphson method: 
+
+n−1
+
+> n
+
+X
+
+> i=1
+
+∆i
+
+
+
+Xi(Yi) − s(1) (Yi, β)
+
+s(0) (Yi, β)
+
+
+
++ ξnm−1
+
+> m
+
+X
+
+> i=1
+
+X 
+
+> l:tl≤˜Yi
+
+wi ˜E( ¯Wil )
+
+
+
+˜Xil − s(1) (tl, β)
+
+s(0) (tl, β)
+
+
+
+= 0.
+
+We set the initial value of β to 0 and the initial value of each λl to 1 /L . We iterate between the E- and M-steps until the sum of the L2-norm difference in the β estimator and the maximum difference in the λl estimators ( l = 1 , . . . , L ) between successive iterations is smaller than 10 −6.Our EM algorithm has several advantages. First, the high-dimensional parameters λl
+
+are updated explicitly during the M-step, eliminating the need for inverting large matri-ces. Second, the algorithm uses only the mean of δij (j = 1 , . . . , J ), which is eventually transformed back to 1 − ˇS( ˜Yi| ˜Xi). Thus, J serves only as an intermediate computational parameter, and its value does not need to be specified explicitly throughout the algorithm. Finally, the observed-data weighted likelihood is guaranteed to increase at each iteration, as established in Web Appendix D. Given the estimators ( ˆβ, ˆΛ), we estimate the survival function for the target study by ˆS(t|X) = S(t|X; ˆβ, ˆΛ) = exp 
+
+
+
+−G
+
+Z t
+
+> 0
+
+eˆβTX(s)dˆΛ( s)
+
+ 
+
+.
+
+Then, we can perform various predictions for the target population based on ˆS(t|X). 
+
+## 2.4 Asymptotic Theory 
+
+In Web Appendix A, we establish the convergence rate of the proposed predictor ˆS(t|X). Our theoretical results show that, when the source predictors are sufficiently accurate, POTL achieves a faster convergence rate for ˆS(t|X) than the target-only method. More-over, we provide an explicit expression for the tuning parameter ξn that guarantees the optimal convergence rate of ˆS(t|X). In practice, standard data-driven procedures such as 12 cross-validation can be used to select ξn to achieve good prediction performance in finite samples. 
+
+# 3 Simulation Studies 
+
+We conduct extensive simulation studies to evaluate the performance of the proposed POTL method. For the target study, we set the sample size to n = 100 and the study duration to 
+
+τ = 2. We consider two independent covariates for the target population: X1 ∼ Ber(0 .5) and X2 ∼ Unif(0 , 1). The failure time is generated from the Cox regression model: Λ( t|X1, X 2) = Λ( t) exp( β1X1 + β2X2), (6) with Λ( t) = log(1 + 0 .5t), β1 = 0 .5, and β2 = −0.5. The censoring time is generated from min {Unif(1 .5, 4) , τ }, resulting in a censoring rate of about 50%. We consider one source study with the sample size of N = 1000 and the study duration of τs = 5. The covariates are generated in the same way as in the target study. We consider the following five scenarios, each with a distinct source model: 
+
+• SC1: The source model is identical to model (6). 
+
+• SC2: The source model follows model (6) with Λ 0(t) = 0 .4t.
+
+• SC3: The source model follows model (6) with ( β1, β 2) = (0 .7, −0.7) and Λ 0(t) = 0 .4t.
+
+• SC4: The source model is a proportional odds model: Λ( t|X1, X 2) = log 1 + 0 .5t exp(0 .5X1 − 0.5X2) .
+
+• SC5: The source model is an accelerated failure time model: log T = −0.5X1 + 0 .5X2 + W + N (0 , 0.25) ,
+
+13 where W is a random variable with survival function SW (w) = (1 + 0 .5ew)−1.In SC1–SC3, the source model is a Cox model whose parameter values may differ from those of the target model (6). In SC4, the source model differs from model (6) in type but remains within the class of transformation models, whereas in SC5, it falls outside this class. Despite the differences in model type in SC4 and SC5, the target and source studies have similar survival functions, as shown in Web Figure 1. We generate the censoring time from min {Unif(3 .5, 7) , τ s}, yielding an average censoring rate of approximately 25% in all scenarios. To obtain the source predictor ˇS(t|X1, X 2), we fit a Cox model in SC1–SC3 and a transformation model with logarithmic transformation G(x) = r−1 log(1 + rx ) in SC4–SC5 using the source data. The optimal value of r for the transformation function 
+
+G(x) is determined via the Akaike Information Criterion (AIC). The target data is modeled similarly, although the target model is always a Cox model. The optimal value of the tuning parameter ξn is selected through 5-fold cross-validation. We compare the performance of our POTL method with several existing methods: the target-only method, the TransCox method developed by Li et al. (2023), the CoxTL method developed by Lu et al. (2025), and pooled analysis using both the target and source data. Since CoxTL includes the stratified Cox model as a special case when its tuning parameters are fixed at certain values, we do not separately compare with the stratified Cox model. Following recommendations in Li et al. (2023) and Lu et al. (2025), the tuning parameters in TransCox and CoxTL are selected using the Bayesian Information Criterion (BIC) and 5-fold cross-validation, respectively. Although TransCox and CoxTL are restricted to the Cox model while the other methods accommodate more flexible transformation models, our simulation design ensures a fair comparison across all five scenarios. Even in SC4 and SC5, where the source model is truly non-Cox, it can still be well approximated by the Cox 14 model. The evaluation is conducted using the following metrics on a large validation set con-sisting of nv = 10,000 samples generated from the target population: 
+
+• L2D: The L2-distance between ˆS(t|X) and S0(t|X) over [0 , τ ]. 
+
+• Dτ : The absolute difference between ˆS(τ |X) and S0(τ |X). 
+
+• C-index (Uno et al. 2011). 
+
+• IBS: The integrated Brier score (Graf et al. 1999) over [0 , τ ]. 
+
+• RMST: The error in the estimated restricted mean survival time, defined as 
+
+Pnv 
+
+> i=1
+
+∆i ˆH(Yi)−1|Yi − ˆTi|
+
+Pnv 
+
+> i=1
+
+∆i ˆH(Yi)−1 ,
+
+where ˆH(·) is the Kaplan–Merier estimator of the censoring distribution, and ˆTi is the ith subject’s estimated restricted mean survival time. For the C-index, a larger value indicates better performance, whereas for all other metrics, smaller values indicate better performance. The last three metrics incorporate inverse probability of censoring weighting, which is unnecessary for the validation sets in this section, as they do not contain any censored subjects. However, this weighting becomes important when applying these metrics to the real data in the subsequent section. Table 1 presents the simulation results for all methods across all scenarios, based on 1000 replicates. CoxTL and pooled analysis are expected to be optimal, as they leverage individual-level source data. The performance of our POTL method is typically comparable to and sometimes even better than those two methods, especially in terms of the L 2Dand D τ metrics. Moreover, POTL consistently outperforms the target-only and TransCox methods across all five scenarios, with both lower median prediction errors and smaller 15 median absolute deviations of the prediction error. These results highlight the superiority of our method in both prediction accuracy and data privacy protection compared to existing methods. Covariate shift often arises in practice due to heterogeneity in demographic and clinical characteristics (e.g., age and disease stage) across studies. We conduct additional simula-tion studies to evaluate the performance of all five methods when covariate shift is present between the target and source data, as well as between the training and validation data. Specifically, in separate simulations we generate the covariate X2 from Beta(1 , 2) for the source data only or for the validation data only while keeping all other settings unchanged. The simulation results are presented in Web Tables 1 and 2. The conclusions remain unchanged, demonstrating that POTL is robust to covariate shift. Finally, we consider another common situation where the covariate sets differ between the target and source studies. For the target population, we generate four independent covariates: X1 ∼ Ber(0 .5) and X2, X 3, X 4 ∼ Unif(0 , 1), and consider an expanded Cox model: Λ( t|X1, X 2, X 3, X 4) = Λ( t) exp( β1X1 + β2X2 + β3X3 + β4X4),
+
+where Λ( t) = log(1 + 0 .5t), and ( β1, β 2, β 3, β 4) = (0 .5, −0.5, −0.5, 0.5). For the source population, we generate only X1 ∼ Ber(0 .5) and X2 ∼ Unif(0 , 1), and we consider the same source models as in SC1–SC5. For the POTL and target-only methods, we include all available covariates in the target and source models. For TransCox, CoxTL, and pooled analysis, which require the same set of covariates between the target and source studies, we include only X1 and X2 in the models. As shown in Web Table 3, POTL generally performs best across all five scenarios, particularly in SC4 and SC5 where the target and source studies have different model types. These results further demonstrate the broad 16 Table 1: Simulation results for all methods based on various metrics. Median among 1000 replicates is reported, with median absolute deviation shown in parentheses. SC Metric POTL Target-only TransCox CoxTL Pooled 1 L2D 0.037 (0.017) 0.079 (0.027) 0.063 (0.028) 0.039 (0.031) 0.021 (0.007) Dτ 0.024 (0.018) 0.065 (0.029) 0.049 (0.029) 0.031 (0.025) 0.017 (0.008) C-index 0.581 (0.004) 0.577 (0.009) 0.581 (0.004) 0.580 (0.005) 0.581 (0.003) IBS 0.191 (0.002) 0.193 (0.003) 0.192 (0.002) 0.191 (0.002) 0.190 (0.001) RMST 0.650 (0.007) 0.652 (0.015) 0.650 (0.013) 0.651 (0.008) 0.651 (0.005) 2 L2D 0.046 (0.015) 0.079 (0.027) 0.063 (0.028) 0.045 (0.022) 0.035 (0.008) Dτ 0.045 (0.023) 0.065 (0.029) 0.048 (0.030) 0.051 (0.023) 0.045 (0.014) C-index 0.581 (0.004) 0.577 (0.009) 0.580 (0.004) 0.580 (0.005) 0.581 (0.003) IBS 0.191 (0.002) 0.193 (0.003) 0.192 (0.002) 0.191 (0.002) 0.190 (0.001) RMST 0.651 (0.007) 0.652 (0.015) 0.651 (0.013) 0.652 (0.008) 0.653 (0.005) 3 L2D 0.057 (0.017) 0.079 (0.027) 0.065 (0.023) 0.057 (0.021) 0.049 (0.009) Dτ 0.052 (0.020) 0.065 (0.029) 0.050 (0.023) 0.055 (0.020) 0.052 (0.010) C-index 0.580 (0.005) 0.577 (0.009) 0.580 (0.005) 0.580 (0.005) 0.581 (0.003) IBS 0.192 (0.002) 0.193 (0.003) 0.192 (0.002) 0.192 (0.002) 0.191 (0.001) RMST 0.649 (0.008) 0.652 (0.015) 0.648 (0.013) 0.649 (0.008) 0.648 (0.005) 4 L2D 0.052 (0.029) 0.084 (0.030) 0.066 (0.023) 0.049 (0.025) 0.054 (0.026) Dτ 0.040 (0.028) 0.070 (0.032) 0.050 (0.025) 0.041 (0.022) 0.064 (0.036) C-index 0.580 (0.005) 0.577 (0.009) 0.580 (0.005) 0.580 (0.005) 0.581 (0.003) IBS 0.191 (0.002) 0.193 (0.003) 0.192 (0.002) 0.191 (0.002) 0.190 (0.001) RMST 0.651 (0.009) 0.652 (0.015) 0.653 (0.013) 0.655 (0.009) 0.654 (0.006) 5 L2D 0.053 (0.027) 0.084 (0.030) 0.064 (0.024) 0.050 (0.023) 0.058 (0.028) Dτ 0.043 (0.029) 0.070 (0.032) 0.050 (0.023) 0.043 (0.020) 0.063 (0.038) C-index 0.580 (0.005) 0.577 (0.009) 0.580 (0.005) 0.580 (0.005) 0.581 (0.004) IBS 0.191 (0.002) 0.193 (0.003) 0.192 (0.002) 0.191 (0.002) 0.190 (0.001) RMST 0.653 (0.009) 0.652 (0.015) 0.653 (0.013) 0.657 (0.009) 0.656 (0.006) 17 applicability of our method to real-world problems. 
+
+# 4 Application 
+
+We apply the proposed method to breast cancer data from the TCGA–BRCA and METABRIC studies. The TCGA–BRCA study, which collected tumor samples from 1,096 patients, is designated as the target study, while the METABRIC study, comprising 2,509 patients, serves as the source study. Data from both studies are publicly available at https:// gdac.broadinstitute.org/ (TCGA-BRCA) and https://www.cbioportal.org/study/ summary?id=brca_metabric (METABRIC). The primary outcome of interest is overall survival. Clinical variables assessed in both studies include age at diagnosis, number of positive lymph nodes examined, tumor stage, histological type, estrogen receptor (ER) status, progesterone receptor (PR) status, and human epidermal growth factor receptor 2 (HER2) status. We dichotomize tumor stages into early stage (stages 0, I, and II) versus advanced stage (stages III and IV), and we dichotomize histological types of breast cancer into invasive ductal carcinoma (IDC) versus others. In addition, we perform principal com-ponent analysis on mRNA expression data and include the first 10 principal components as genetic variables. After removing patients with missing lymph node and ER/PR/HER2 information, there remain 762 patients in the target study and 1,393 patients in the source study. The event rate was approximately 10% in the target study and 56% in the source study. Median follow-up times were approximately 2.4 years for the target study and 9.8 years for the source study, with maximum follow-up times of around 18.1 years in the target study and 29.3 years in the source study. Figure 1 displays the Kaplan–Meier estimators for survival time distributions in the two studies. Although overall survival is generally poorer 18 0 5 10 15 20 25 30 
+
+> 0.0  0.2  0.4  0.6  0.8  1.0
+> Time (years) Survival Probability
+> TCGA −BRCA METABRIC
+
+Figure 1: Kaplan–Meier estimators for survival time distributions of the TCGA–BRCA and METABRIC studies. in the source study compared to the target study, the similarities in survival probability during the early and late stages of the target study period support the use of transfer learning methods to improve prediction accuracy for the target population. The clinical characteristics of patients in both studies are summarized in Web Table 4, which shows broadly similar clinical profiles, with a slight shift in the distribution of tumor stage. We assess the performance of POTL, target-only analysis, TransCox, CoxTL, and pooled analysis using the metrics C-index, IBS, and RMST described in Section 3. For POTL, target-only, and pooled methods, the optimal transformation models are selected based on AIC, resulting in optimal r values of 1.5, 0.1, and 0.1 for the target, source, and combined data, respectively. However, the AIC value does not vary substantially as 
+
+r increases from 0 to 1.5, suggesting that fitting a Cox model to each dataset is generally 19 Table 2: Prediction performance of all methods in the real data application. Median among 20 replicates is reported, with median absolute deviation shown in parentheses. Metric POTL Target-only TransCox CoxTL Pooled C-index 0.741 (0.047) 0.699 (0.051) 0.730 (0.032) 0.747 (0.032) 0.729 (0.037) IBS 0.210 (0.084) 0.218 (0.074) 0.212 (0.080) 0.192 (0.076) 0.193 (0.079) RMST 4.998 (0.933) 5.603 (1.264) 5.446 (1.094) 4.923 (0.929) 5.042 (1.171) sufficient. The target data are randomly divided into training and validation sets at a 7:3 ratio, and the entire evaluation procedure is repeated 20 times. All tuning parameters are selected in the same way as described in Section 3. Results from all methods across these 20 replicates are presented in Table 2. As expected, CoxTL achieves the best performance in all three metrics, since it benefits from the use of individual-level source data. Although POTL does not use individual-level source data, it performs as well as CoxTL and out-performs all other methods. This demonstrates the accuracy and efficiency of POTL for survival prediction compared to existing methods. Finally, we estimate survival probabilities for new patients from the target popula-tion. We consider two new patients: one with an early-stage tumor and the other with an advanced-stage tumor, while keeping all other covariates fixed at their median values in the target study. Figure 2 illustrates the predicted survival curves for these patients using various methods. Across all methods, the early-stage patient consistently demonstrates better predicted survival outcomes than the advanced-stage patient. This result is con-sistent with the well-established association between advanced tumor stage and increased mortality risk (Edge & Compton 2010). 20 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0         
+
+> 0510 15 20
+> Time (years) Survival Probability
+> Early Stage
+> 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+> 0510 15 20
+> Time (years) Survival Probability
+> Advanced Stage
+> POTL Target −only TransCox CoxTL Pooled
+
+Figure 2: Predicted survival probabilities for future patients in the TCGA–BRCA study with different tumor stages. All other covariates are fixed at the median values among the current TCGA–BRCA patients. 
+
+# 5 Discussion 
+
+In this article, we introduce a novel, prediction-driven transfer learning approach for sur-vival analysis, which leverages predictive knowledge from source studies to enhance survival prediction in the target study. Our approach stands out from existing methods by rely-ing on a less stringent similarity assumption and accommodating various types of source predictors, without the need to model source distributions or share individual-level source data. We provide theoretical guarantees by showing that the optimal convergence rate of our proposed estimator is faster than the target-only rate when the L2-distance between the target and pooled source survival functions is sufficiently small and the convergence rate of the pooled source predictor is not too slow. Our approach has shown satisfactory performance in both the simulation studies and the real data application. 21 In Section 4, we used a source study (i.e., METABRIC) with available individual-level data to enable direct comparison with CoxTL and pooled analysis, both of which require access to individual-level source data. However, our approach is broadly applicable to privacy-sensitive data sources that do not permit sharing of individual-level information, such as large biobanks, electronic health records, and major cohort studies. Furthermore, online risk calculators are increasingly used in clinical and research settings. These tools typically estimate 5- or 10-year risk of certain disease using models developed from one or more large cohorts. Examples include the widely used FRAX tool for estimating fracture risk, the National Cancer Institute’s Breast Cancer Risk Assessment Tool (Gail model), and the American Heart Association’s recently developed PREVENT calculator for estimating cardiovascular disease risk. Our approach can be used to transfer risk estimates from such online calculators, thereby leveraging information from large external cohorts to improve prediction performance in target studies with limited sample sizes. Our approach assumes that all K source studies contain useful predictive knowledge, which may not be the case as K becomes large. It is therefore worthwhile to develop methods for selecting informative source studies. One straightforward data-driven method is to evaluate the L2-distance between the target-only survival predictor and each source predictor ˇSk(t|X) ( k = 1 , . . . , K ). Source predictors with distances from the target-only predictor below a certain threshold can be selected for transfer learning. Alternatively, transferable source studies can be identified through cross-validation, akin to the source detection algorithm proposed by Tian & Feng (2023). Currently, our transfer learning procedure employs a pooled source predictor across all 
+
+K source studies. This might not be optimal, as the source studies might provide different survival predictors due to heterogeneity in their populations. Inspired by recent work by 22 Xiong et al. (2023) and Zhan et al. (2024) on linear regression models, we may consider a source-mixing structure for the target population. That is, the survival prediction of the target population is approximately a mixture of predictions from the K source populations. For each subject in the target population, we can identify the most relevant source pop-ulation and transfer knowledge from only the matched source predictor, rather than from all source predictors. This approach is particularly meaningful for cancer studies, where the target population may encompass latent demographic or biological subpopulations, necessitating precise transfer learning to optimize survival prediction performance. 
+
+# Acknowledgments 
+
+This research was supported by the Hong Kong Research Grant Council grant 27303624 and research funds from the University of Hong Kong. 
+
+## SUPPLEMENTARY MATERIAL 
+
+We provide Web Appendices, Tables, and Figures referenced in Sections 2–4. 
+
+# References 
+
+All of Us Research Program Investigators (2019), ‘The “All of Us” Research Program’, New England Journal of Medicine 381 (7), 668–676. ARIC Investigators (1989), ‘The Atherosclerosis Risk in Communities (ARIC) Study: de-sign and objectives’, American journal of epidemiology 129 (4), 687–702. Bastani, H. (2021), ‘Predicting with proxies: Transfer learning in high dimension’, Man-agement Science 67 (5), 2964–2984. 23 Curtis, C., Shah, S. P., Chin, S.-F., Turashvili, G., Rueda, O. M., Dunning, M. J., Speed, D., Lynch, A. G., Samarajiwa, S., Yuan, Y. et al. (2012), ‘The genomic and transcriptomic architecture of 2,000 breast tumours reveals novel subgroups’, Nature 
+
+486 (7403), 346–352. Edge, S. B. & Compton, C. C. (2010), ‘The american joint committee on cancer: the 7th edition of the ajcc cancer staging manual and the future of tnm’, Annals of surgical oncology 17 (6), 1471–1474. Graf, E., Schmoor, C., Sauerbrei, W. & Schumacher, M. (1999), ‘Assessment and compar-ison of prognostic classification schemes for survival data’, Statistics in medicine 18 (17-18), 2529–2545. Gu, T., Han, Y. & Duan, R. (2024), ‘Robust angle-based transfer learning in high di-mensions’, Journal of the Royal Statistical Society Series B: Statistical Methodology 
+
+p. qkae111. He, B., Liu, H., Zhang, X. & Huang, J. (2024), ‘Representation transfer learning for semi-parametric regression’, arXiv preprint arXiv:2406.13197 .Li, S., Cai, T. T. & Li, H. (2022), ‘Transfer learning for high-dimensional linear regression: Prediction, estimation and minimax optimality’, Journal of the Royal Statistical Society Series B: Statistical Methodology 84 (1), 149–173. Li, S., Zhang, L., Cai, T. T. & Li, H. (2024), ‘Estimation and inference for high-dimensional generalized linear models with knowledge transfer’, Journal of the American Statistical Association 119 (546), 1274–1285. Li, Y., Wang, L., Wang, J., Ye, J. & Reddy, C. K. (2016), Transfer learning for survival 24 analysis via efficient l2, 1-norm regularized Cox regression, in ‘2016 IEEE 16th Interna-tional Conference on Data Mining (ICDM)’, IEEE, pp. 231–240. Li, Z., Shen, Y. & Ning, J. (2023), ‘Accommodating time-varying heterogeneity in risk estimation under the Cox model: A transfer learning approach’, Journal of the American Statistical Association 118 (544), 2276–2287. Lin, H. & Reimherr, M. (2022), ‘On hypothesis transfer learning of functional linear mod-els’, arXiv preprint arXiv:2206.04277 .Lu, Y., Gu, T. & Duan, R. (2025), ‘Adaptive transfer learning for time-to-event modeling with applications in disease risk assessment’, medRxiv pp. 2025–01. Sudlow, C., Gallacher, J., Allen, N., Beral, V., Burton, P., Danesh, J., Downey, P., Elliott, P., Green, J., Landray, M. et al. (2015), ‘Uk biobank: an open access resource for identifying the causes of a wide range of complex diseases of middle and old age’, PLoS medicine 12 (3), e1001779. The Cancer Genome Atlas Network (2012), ‘Comprehensive molecular portraits of human breast tumours’, Nature 490 (7418), 61–70. Tian, Y. & Feng, Y. (2023), ‘Transfer learning under high-dimensional generalized linear models’, Journal of the American Statistical Association 118 (544), 2684–2697. Tian, Y., Gu, Y. & Feng, Y. (2023), ‘Learning from similar linear representations: Adap-tivity, minimaxity, and robustness’, arXiv preprint arXiv:2303.17765 .Uno, H., Cai, T., Pencina, M. J., D’Agostino, R. B. & Wei, L.-J. (2011), ‘On the c-statistics for evaluating overall adequacy of risk prediction procedures with censored survival data’, 
+
+Statistics in medicine 30 (10), 1105–1117. 25 Writing Group for the Women’s Health Initiative Investigators et al. (2002), ‘Risks and benefits of estrogen plus progestin in healthy postmenopausal women: principal results from the Women’s Health Initiative randomized controlled trial’, Jama 288 (3), 321–333. Xie, M., Hu, T. & Zhou, J. (2024), ‘Transfer learning under the Cox model with interval-censored data’, Statistical Analysis and Data Mining: The ASA Data Science Journal 
+
+17 (2), e11680. Xiong, X., Guo, Z. & Cai, T. (2023), ‘Distributionally robust transfer learning’, arXiv preprint arXiv:2309.06534 .Zeng, D. & Lin, D. Y. (2007), ‘Maximum likelihood estimation in semiparametric regression models with censored data’, Journal of the Royal Statistical Society Series B: Statistical Methodology 69 (4), 507–564. Zhan, K., Xiong, X., Guo, Z., Cai, T. & Liu, M. (2024), ‘Transfer learning targeting mixed population: A distributional robust perspective’, arXiv preprint arXiv:2407.20073 .Zhuang, F., Qi, Z., Duan, K., Xi, D., Zhu, Y., Zhu, H., Xiong, H. & He, Q. (2020), ‘A comprehensive survey on transfer learning’, Proceedings of the IEEE 109 (1), 43–76. 26

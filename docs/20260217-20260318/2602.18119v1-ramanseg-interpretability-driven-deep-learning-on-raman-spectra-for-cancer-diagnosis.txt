@@ -1,0 +1,237 @@
+Title: RamanSeg: Interpretability-driven Deep Learning on Raman Spectra for Cancer Diagnosis
+
+URL Source: https://arxiv.org/pdf/2602.18119v1
+
+Published Time: Mon, 23 Feb 2026 01:31:12 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+> Proceedings of Machine Learning Research XXX, 2026
+
+# RamanSeg: Interpretability-driven Deep Learning on Raman Spectra for Cancer Diagnosis 
+
+Chris Tomy ∗
+
+Department of Computer Science and Technology, University of Cambridge, Cambridge, UK 
+
+Mo Vali 
+
+Department of Physics, University of Cambridge, Cambridge, UK 
+
+David Pertzborn, Tammam Alamatouri, Anna M¨ uhlig, Orlando Guntinas-Lichius 
+
+Department of Otorhinolaryngology, Jena University Hospital, Jena, Germany 
+
+Anna Xylander 
+
+Section Pathology of the Institute of Forensic Medicine, Jena University Hospital, Jena, Germany 
+
+Eric Michele Fantuzzi, Matteo Negro, Francesco Crisafi 
+
+Cambridge Raman Imaging Srl, Milan, Italy 
+
+Pietro Lio, Tiago Azevedo †
+
+Department of Computer Science and Technology, University of Cambridge, Cambridge, UK 
+
+# Abstract 
+
+Histopathology, the current gold standard for cancer diagnosis, involves the manual examination of tissue samples after chemical staining, a time-consuming process requiring expert analysis. Raman spectroscopy is an alternative, stain-free method of extracting information from samples. Using nnU-Net, we trained a segmentation model on a novel dataset of spatial Raman spectra aligned with tumour annotations, achieving a mean foreground Dice score of 80.9%, surpassing previous work. Furthermore, we propose a novel, interpretable, prototype-based architecture called RamanSeg . RamanSeg classifies pixels based on discovered regions of the training set, generating a segmentation mask. Two variants of RamanSeg allow a trade-off between interpretability and performance: one with prototype projection and another projection-free version. The projection-free RamanSeg outperformed a U-Net baseline with a mean foreground Dice score of 67.3%, offering a meaningful improvement over a black-box training approach. 
+
+Keywords: histopathology, Raman spectroscopy, segmentation, interpretability, deep learning 
+
+# 1. Introduction 
+
+To combat cancer, diagnosis is a critical first step in treatment. Histopathology, the examination of tissue samples, is currently the gold standard for diagnosis (Aljehani et al., 2023). To assist inspection, a chemical stain is applied, for example, the hematoxylin and eosin (H&E) stain (Chan, 2014). This is time-consuming. As a stain-free alternative, Raman spectroscopy directly provides molecular information by measuring scat-tered laser light from a tissue sample. While this spectral data is difficult to use directly, we could train deep learning models via a supervised training setup. Hence, this work utilizes a novel dataset from the EU-funded CHARM project (CHARM), composed of spatial Raman data along with tumour annotations. Previous work (Hollon et al., 2020) investigated the performance of a dataset composed of two peaks of the Raman spectrum; for this work, we train over a newer dataset with 21 peaks spread over the C-H stretching region of the Raman spectrum.     
+
+> ∗ct678@cantab.ac.uk
+> †tiago.azevedo@cst.cam.ac.uk
+> ©2026 C. Tomy et al .
+> arXiv:2602.18119v1 [eess.IV] 20 Feb 2026 RamanSeg
+
+We adapted two existing convolutional neural network (CNN) architectures: U-Net (Ronneberger et al., 2015) and ProtoPNet (Chen et al., 2018). Firstly, we applied the nnU-Net framework to establish a strong baseline, improving on initial results with hand-written U-Net and UNet Transformer models (Hatamizadeh et al., 2022). Our nnU-Net model achieved a mean foreground Dice score of 80.9%, in contrast to a score of 72% on the previous two-peak dataset. Secondly, we developed a novel approach called RamanSeg .RamanSeg is an adaptation of the ProtoSeg architecture (Sacha et al., 2023), which is itself an adaptation of the ProtoPNet architecture (Chen et al., 2018). Notably, we alter the objective function, introducing an activation overlap loss , making it more computationally efficient to train. Additionally, our RamanSeg approach has two variants: one that includes a step called prototype projection , and one that does not, representing a meaningful difference in performance and interpretability. Overall, we make the following contributions: 
+
+• The first successful application of a segmentation model to spatial Raman data across the entire C-H stretching region. Our model achieved a mean foreground Dice score of 80.9%. 
+
+• An empirical demonstration that architectures with a latent bottleneck (like prototype-based architec-tures) have the capability to generate high-quality segmentation masks. 
+
+• RamanSeg , an adaptation of the ProtoSeg architecture, with an efficient, novel objective function and training process, exploring the potential for interpretable segmentation models on spectral data collected for cancer diagnosis. 
+
+# 2. Related Work 
+
+Early work by Mahadevan-Jansen and Richards-Kortum (1996) investigated the application of Raman spec-troscopy for tissue samples. Specifically, they demonstrated that the intensities of peaks in the Raman spectrum can be used to distinguish between normal, precancerous, and cancerous tissue samples. Their research focused on the fingerprint region of the Raman spectrum, approximately between 300 to 1900 cm −1.More recent work has investigated using the stretching region, approximately 2800 to 3100 cm −1. For example, Heuke et al. (2016) used the stretching region as part of their analysis of head and neck squamous cell carcinoma. Hollon et al. (2020) looked at two notable peaks within the stretching region, 2850 and 2950 cm −1: peaks known to indicate the presence of lipids and cellular regions respectively. Previous work internal to the CHARM group involved training a segmentation model using a dataset of the same two peaks, over head and neck tissue samples. This model achieved a Dice score of 72%, and represents a useful comparison point to judge our work, which instead leverages the full range of the stretching region. The ability to interpret models is often a requirement for clinical deployment. Traditionally, post-hoc interpretability techniques have been used to understand CNNs. Some techniques include saliency maps (Rudin, 2018) or Gradient-weighted Class Activation Mappings (Selvaraju et al., 2020). A new paradigm of prototype-based model architectures has emerged with Chen et al. (2018)’s work. The Pro-totypical Part Network (ProtoPNet) classifies inputs based on prototypes learned from the training set. Given a trained ProtoPNet, the model takes an input x, maps it to a convolutional output f (x) = z, and computes distances || ˜z − pj || between latent patches ˜z and prototypes pj . These distances are inverted to represent similarity and are used to generate the final classification probabilities. Sacha et al. (2023) extend this idea to an architecture that generates segmentation masks, called ProtoSeg .Our work brings together ideas from early research into spectroscopic-based techniques for cancer diag-nosis, as well as this recent work making deep convolutional models interpretable. 
+
+# 3. Method 
+
+3.1. Experimental setup Hyperspectral dataset Tissue samples of 10 patients with Squamous Cell Carcinoma (SCC) were col-lected and preserved as Formalin-Fixed Paraffin-Embedded tissue (FFPE). Each FFPE sample is then sliced 
+
+> 2RamanSeg
+
+into thin sections, which are mounted on glass slides for Raman imaging and H&E staining; in total, we used 32 samples. In the context of the EU-funded CHARM project (CHARM), we used a stimulated Raman microscopy (SRS) system (Crisafi et al., 2023) designed to overcome the challenges of existing commercial SRS systems, which often limit detection to one or two frequencies at a time. This microscope features an all-fiber, dual-wavelength, self-synchronized laser with a detection unit based on a multi-channel amplifier. This setup enables broadband SRS in the C-H stretching region, allowing for the simultaneous acquisition of up to 38 channels in 400ns. For each sample, the microscope hardware collected 21 channels of Raman data in the C-H stretching re-gion, with each channel corresponding to a different wavenumber within the range 2802 to 3094 cm −1. Hence, we effectively have a vector of 21 Raman intensities for each pixel in the image, forming our main training input: (N, C, H, W ). Additionally, the full dataset includes 24 channels made up of: 21 of the captured Raman peaks, a transmission channel representing light intensities, a Two-Photon Excitation Fluorescence 
+
+(TPEF) channel, and a Second Harmonic Generation (SHG) channel. TPEF is based on the absorption of two photons by a molecule, which excites it to a higher energy state (So et al., 2000). SHG relies on the effect where two photons of the same frequency combine to produce a photon of double the frequency, useful for probing collagen structures in human tissue (Han et al., 2005). Normalization was performed by scaling values between the 5th and 95th percentiles into a [0 , 1] range for Raman channels, and between 1st and 99th percentiles for TPEF and SHG channels. Values outside the percentile range were mapped to zero or one as appropriate. Furthermore, we run k-means clustering on the H&E image to identify foreground pixels. Then, the mean spectral profile of foreground pixels is applied column-wise to correct for intensity drifts during optical collection. Pathologist annotations were provided in QuPath (Bankhead et al., 2017), which we exported. These included multiple classes, but we chose to train over two classes, with tumorous or necrotic regions mapped to the foreground class and all other tissue classes designated as background. This was because of an imbalance of classes present in the annotations, making the binary setup more effective than k-class training. In summary, the data we used includes three key components: (1) the multi-channel, spatial Raman spec-tra of tissue samples, collected using Raman spectroscopy, (2) the H&E stained images of the corresponding samples, and (3) the tumour annotations (from pathologists) which segment the input. Figure 1 shows these three sources for a sample from the dataset. 
+
+(a) Raman channel (b) H&E staining (c) Annotated staining Figure 1: From left-to-right: (a) Raman intensities of approximately 2910 cm −1 for a single sample, (b) the H&E stained image of the same sample, and (c) the H&E stained image overlaid with tumor annotations from pathologists. 
+
+Training Models were either written in PyTorch, or using the nnU-Net library (Isensee et al., 2021). All training occurred on an NVIDIA L4 GPU, and for our final train, validation, and test splits we used 19 
+
+> 3RamanSeg
+
+training samples, 8 validation samples, and 5 test samples. To avoid data leakage, we grouped together samples from the same patient to be in the same split. The U-Net (Ronneberger et al., 2015) architecture was implemented in PyTorch as a baseline. This featured four downsampling layers, and we trained with a 512 × 512 patch size. Our U-Net was trained with Dice loss, using the AdamW optimizer (Loshchilov and Hutter, 2017), a learning rate of 0.0001 and weight decay of 0.001 . We used data augmentation: random horizontal flips of patches. We also utilized the nnU-Net framework, selecting a Residual Encoder-based U-Net architecture. It featured seven downsampling stages and the framework chose a 576 × 448 patch size. nnU-Net used a combination of Dice loss and cross-entropy loss, with an SGD optimizer, Nesterov momentum set to 0.99, and a learning rate of 0.0001 . Notably, we used nnU-Net to train five folds, with segmentation masks generated as an ensemble of the models. 
+
+3.2. RamanSeg 
+
+Figure 2: The architecture of RamanSeg. The model consists of convolutional layers, producing latent feature maps which are passed to the prototype layer to generate similarity before probability maps. Finally, the probability map is upsampled to the original input size. (Diagram adapted from ProtoPNet (Chen et al., 2018).) While the original ProtoSeg architecture by Sacha et al. (2023) is an effective approach to prototype-based segmentation, we introduced a number of changes to the architecture and training process, leading to the development of RamanSeg, visualized in Figure 2. 
+
+3.2.1. Bottleneck hypothesis 
+
+Similar to ProtoSeg (Sacha et al., 2023), RamanSeg takes the latent prototype similarity map of shape 
+
+Hd ×Wd ×M (for M prototypes), passes each point through a fully connected layer, and outputs Hd ×Wd ×C
+
+probabilities for each class. Finally, it takes this map of per-point class probabilities and upscales it to the original input size H × W , simply through bilinear interpolation. This means it does not have a decoder: it relies on the “quality” of the latent probability map to produce a segmentation mask. 
+
+> 4RamanSeg
+
+Tumour segmentation masks can be fine-grained, so to verify if this architecture is viable for our dataset, we devised an experiment: assuming the best possible bottleneck, compute the Dice score between that upsampled bottleneck and ground truth mask. Specifically, we downsampled the ground truth mask to a smaller size (representing the perfect Hd × Wd bottleneck), before upsampling it to the original size H × W
+
+with bilinear interpolation. The results are in Table 1, showing the average dice score for different bottleneck sizes. While the bottleneck size does impact performance, we generally see high Dice scores, demonstrating that the prototype-based architecture is not fundamentally flawed on our dataset. Table 1: Average dice scores for different bottleneck sizes. The original patch size is 512 × 512. 
+
+Feature Map Size Mean Dice 
+
+512 × 512 (Baseline) 1.0000 32 × 32 0.9804 16 × 16 0.9581 8 × 8 0.9113 4 × 4 0.8356 
+
+3.2.2. Activation overlap loss 
+
+ProtoSeg (Sacha et al., 2023) includes a penalty term in the objective function that incentivizes prototypes to be diverse, but their formulation of this diversity loss is computationally expensive. The authors use the Kullback-Leibler divergence to measure the difference between distributions of prototype activations, but we instead formulate an alternative penalty term, called the activation overlap loss .Firstly, the forward pass through the model computes a similarity map S of shape ( Hd, W d, M ), where 
+
+M is the number of prototypes; let S′ be the flattened similarity map, i.e. ( Hd · Wd, M ). Each class has some associated prototypes (in our binary case, foreground and background), let the similarity map for prototypes of class c be denoted as S′
+
+> c
+
+. The key part in computing our activation overlap loss is the pairwise dot product between the similarity vectors (after flattening) for each class; the activation overlap loss term LA is shown in Equation (1). 
+
+L(c) 
+
+> A
+
+=
+
+P  
+
+> i̸=j
+
+S′(i) 
+
+> c
+
+· S′(j)
+
+> c
+
+ K
+
+> 2
+
+ LA = 1
+
+C
+
+X
+
+> c
+
+L(c) 
+
+> A
+
+(1) This makes computation fast as pairwise dot products are simpler than pairwise KL-divergence on “prototype-class-image distance vectors” (Sacha et al., 2023). This leads to RamanSeg’s overall objective function in Equation (2): a combination of cross-entropy, the activation overlap penalty, and an L1 penalty. 
+
+L = αL CE + βL A + γL L1 (2) 
+
+3.2.3. Model & training choices 
+
+To enrich the model with additional capacity, we include a series of two-dimensional convolutions after the prototype layer, with Spatial Dropout (Tompson et al., 2015) at dropout probability p = 0 .35 between them. To improve training stability, we adapt the Xavier initialization scheme (Glorot and Bengio, 2010) to prototype vectors. For a prototype vector of shape ( D, H P , W P ), values are drawn from the uniform distribution defined in Equation (3). 
+
+b = 1
+
+√D · HP · WP
+
+p ∼ U (−b, b )D×HP ×WP (3) Selecting hyperparameters is also particularly important for this architecture, for example, the number of prototypes M to use. Prior work on prototype-based architectures suggest using 10 prototypes per 
+
+> 5RamanSeg
+
+class (Chen et al., 2018; Sacha et al., 2023), but we hypothesized more prototypes could be effective, given the per-pixel binary classification setup. Fixing one variant of the RamanSeg architecture, we performed a hyperparameter search over the number of prototypes, within the range [20 , 200]. Figure 3 demonstrates that increasing the number of prototypes per class can offer better performance on our dataset. Leveraging Optuna (Akiba et al., 2019) for a wider hyperparameter search, our final run in Section 4 used 15 prototypes per class. 
+
+Figure 3: Performance when only varying the number of prototypes. 
+
+3.2.4. RamanSeg without projection 
+
+As an alternative training approach, we propose projection-free RamanSeg , which foregoes the prototype projection step discussed in previous prototype-based architectures (Chen et al., 2018; Sacha et al., 2023). We make further changes to the architecture under this projection-free variant: increasing the prototypes per class to 60, reducing the number of channels in the add-on convolutional layers (to 128), and increasing the dropout probability to 0.5. Furthermore, there are two changes we consider particularly important (1) using a combined cross-entropy loss and Dice loss objective function, and (2) increasing the spatial size of the prototypes from 1 × 1 to 3 × 3. We elaborate on these choices below. The standard RamanSeg training computes losses between the downsampled ground truth mask and latent probability map. (Note that the latent probability map, the “bottleneck”, is directly upsampled to generate the segmentation mask — there is no learnable decoder.) Hence, cross-entropy loss is critical to ensure the per-pixel correctness in the latent map. However, we found empirically that the combined loss performs better in training projection-free RamanSeg. Secondly, we increased the spatial size of the prototypes to represent more complex features of the input space. Hence, prototypes in projection-free RamanSeg have (64 , 3, 3) — no longer 64-dimensional vectors. By not projecting prototypes to their nearest representative region from the training set, we allow such richer representations. However, this makes prototypes more abstract, weakening the usual interpretability 
+
+> 6RamanSeg
+
+guarantees from inspecting similarity scores (which would otherwise correspond to similarity for specific prototypical regions). 
+
+# 4. Results 
+
+The mean and standard deviation Dice scores of the trained models on the holdout dataset is presented in Table 2. Given the medical context, we also compute the per-pixel sensitivity and specificity of the models. The nnU-Net model outperforms other models, achieving a mean Dice score of 80.9%. Even with our challenging dataset, Isensee et al. (2024)’s claim that their approach is a “recipe” for strong performance, appears to hold. However, the nnU-Net model faces some interpretability challenges, outlined in Section 4.1. On the other hand, projection-free RamanSeg achieves a mean Dice score of 67.3%, outperforming the baseline U-Net model. While omitting the projection step somewhat reduces interpretability, the bottleneck approach still provides greater interpretability than traditional models like U-Net, delivering a practical architecture that balances interpretability and performance. Table 2: Results of our trained models on the holdout set. 
+
+Model Dice ( ± std) Sensitivity ( ± std) Specificity ( ± std) 
+
+U-Net 66.7 ± 15.4 81.5 ± 23.6 90.9 ± 5.5 UNet Transformer 69.8 ± 10.9 79.9 ± 18.1 92.5 ± 3.9 nnU-Net 80.9 ± 10.4 83.5 ± 14.5 95.9 ± 2.8 
+
+RamanSeg 60.5 ± 11.7 95.9 ± 3.4 79.1 ± 4.9 Projection-free RamanSeg 67.3 ± 8.2 70.3 ± 17.5 93.3 ± 5.5 
+
+4.1. Interpretability analysis 
+
+In the following sections, we investigate the differences in interpretability between the two model paradigms: the traditional CNN model via nnU-Net, compared to our prototype-based architecture, RamanSeg. 
+
+4.1.1. nnU-Net interpretability analysis 
+
+One of the behaviours we identified was the presence of consistent false positives when classifying regions that contain epithelial structures such as squamous epithelium. Focusing on a single patch of a sample with false positive predictions, we used the Captum library (Kokhlikyan et al., 2020) to apply popular post-hoc interpretability techniques. Starting with Layer Grad-CAM (Selvaraju et al., 2020), we computed attributions for a pixel in a false positive region (e.g., at coordinates (150,150)) with respect to the final 2D convolutional layer in the encoder. The attributions were computed for each of the five models trained by nnU-Net and then averaged. While the individual attribution maps for each fold show noticeable disagreement (see Figure 4), hinting that the 5-fold split may be suboptimal for the available data, the averaged heatmap provides another explanation. As shown in Figure 5( a), the model’s confusion stems from its focus on the nearby tumorous region, suggesting that spatial proximity to the tumor is a primary cause for misclassifying adjacent epithelial tissue. This behaviour was consistent across different points in the false positive region. To determine which input channels were most influential in this misclassification, we applied two further techniques. First, using Integrated Gradients (Sundararajan et al., 2017), we computed the contribution of each of the 24 input channels to the prediction. By summing the absolute attribution values spatially for each channel, we obtained a contribution vector c ∈ R24 . The results in Figure 6( a) highlight channel 21, a transmission channel intended for morphological context, as highly influential. Secondly, we used Feature Ablation by masking the entire epithelial region for each channel and measuring the resulting change in the 
+
+> 7RamanSeg
+
+Figure 4: Layer Grad-CAM attribution heatmaps for each of the five cross-validation models. Lightly coloured regions indicate positive contributions to the model’s prediction that the red pixel at (150,150) is tumorous. 
+
+(a) Relative to pixel (150,150). (b) Relative to pixel (250,100). Figure 5: Averaged attribution heatmaps for two different pixels in the false positive region. The model consistently focuses on the nearby ground truth tumor area as an explanation for its incorrect prediction. model’s output for a target pixel. This confirmed the Integrated Gradients finding: Figure 6( b) shows that channel 21, along with channel 7, provided significant positive evidence for the tumor class, contrary to the expectation that epithelial regions should provide negative evidence. Visual inspection of the identified channels appears to corroborate this analysis, as we noticed the epithe-lial and tumorous regions are nearly indistinguishable, particularly in channel 21. Squamous Cell Carcinoma is known for high morphological similarity between tumorous and healthy epithelial regions (Mahadevan-Jansen and Richards-Kortum, 1996). This suggests the model’s confusion is rooted in the input data, where the spectral channels may be missing key morphological information needed to differentiate these similar tissue types. 
+
+4.1.2. RamanSeg interpretability analysis 
+
+The first step is to check if prototypes correspond to the classes they aim to represent. Following the algorithm to identify the bounding region for a given prototype described by (Chen et al., 2018), we index into the corresponding segmentation mask, and compute the proportion of each class present in that section. These proportions are visualized in Figure 7. Given that there are far more tumorous regions in the prototypes 
+
+> 8RamanSeg
+
+(a) Sum of absolute Integrated Gradient attribu-tions for each channel on the ensemble model. 
+
+(b) Mean attributions from Feature Ablation on the epithelium region. Figure 6: Both Integrated Gradients (a) and Feature Ablation (b) point to channel 21 as a key contributor to the false positive prediction. 
+
+Figure 7: Class proportions in prototype regions. intended to represent tumour (the last fifteen prototypes), the prototypes learned by our training process must be meaningful. Another property we verify is the diversity of the prototypes. The activation overlap loss we propose in Section 3.2.2 should encourage prototypes to be diverse. By plotting the inertia of k-means clustering fits for increasing k, we can observe how useful additional clusters are in capturing the data. Figure 8 displays this result: given the steepness of the curve for the first fifteen fits, we can conclude that the majority of the 
+
+> 9RamanSeg
+
+Figure 8: Inertia for each cluster fit k, along x-axis. prototypes are diverse, representing different regions. The activation overlap loss successfully encouraged prototype diversity. Returning to the false positives triggered by healthy epithelium regions, while we could investigate in-dividual similarity scores to understand why the model made such a prediction, there is a simpler method. Observing the types of prototypes learned from Figure 7, it is clear that the training process has not included prototype(s) for squamous epithelium regions, which are important non-tumorous structures. 
+
+# 5. Conclusion and future work 
+
+This paper demonstrates the efficacy of using multi-channel Raman spectroscopy data for the semantic segmentation of cancerous tissue. Our primary model, an nnU-Net ensemble, achieved a Dice score of 80.9% on the holdout set, setting the state-of-the-art performance on the hyperspectral dataset. We investigated the model’s primary failure mode — confusion between tumorous and epithelial tissue — using post-hoc interpretability methods. Integrated Gradients revealed this confusion was largely driven by misleading morphological similarities in the transmission channel, highlighting the utility of such techniques for model debugging. To create a more inherently interpretable model, we proposed RamanSeg, a novel prototype-based architecture. A projection-free variant outperformed a baseline U-Net with a Dice score of 67.3%. RamanSeg supported a straightforward way to understand the false-positive failure mode: checking the class proportions of the regions of the learned prototypes. 
+
+# Acknowledgments 
+
+This work was supported by EU HORIZON EUROPE research projects TROPHY (101047137) and CHARM (101058004). It was also supported by the German Cancer Aid project ARBOR (Deutsche Krebshilfe Grant No. 70116061, 70116281) and Federal Ministry of Research, Technology and Space project HyperTUM (BMFTR No. 16SV9564). 
+
+> 10 RamanSeg
+
+# References 
+
+Takuya Akiba, Shotaro Sano, Toshihiko Yanase, Takeru Ohta, and Masanori Koyama. Optuna: A next-generation hyperparameter optimization framework. In Proceedings of the 25th ACM SIGKDD interna-tional conference on knowledge discovery & data mining , pages 2623–2631, 2019. Mohammad Raja Aljehani, Fouad Hamed Alamri, Mohanad Emad K Elyas, Ahmed Salem Almohammadi, Abdulaziz Saud Awad Alanazi, and Mohammed Abdullah Alharbi. The importance of histopathological evaluation in cancer diagnosis and treatment. International journal of health sciences , 7(S1):3614–3623, January 2023. Peter Bankhead, Maurice B Loughrey, Jos´ e A Fern´ andez, Yvonne Dombrowski, Darragh G McArt, Philip D Dunne, Stephen McQuaid, Ronan T Gray, Liam J Murray, Helen G Coleman, et al. Qupath: Open source software for digital pathology image analysis. Scientific reports , 7(1):1–7, 2017. John K C Chan. The wonderful colors of the hematoxylin-eosin stain in diagnostic surgical pathology. 
+
+International Journal of Surgical Pathology , 22(1):12–32, February 2014. ISSN 1066-8969. doi: 10.1177/ 1066896913517939. URL https://doi.org/10.1177/1066896913517939 . Epub 2014 Jan 9. CHARM. CHARM European Industrial Consortium. URL https://charm-eic.eu/ . Accessed: 2024-11-04. Chaofan Chen et al. This looks like that: deep learning for interpretable image recognition. In Neural Information Processing Systems , 2018. Francesco Crisafi, Benedetta Talone, Andrea Ragni, Gabriele Di Noia, Mujeeb Rahman, Jing He, Jeremiah Marcellino, Goutam Kar, Yarjan Samad, Boyang Mao, Renzo Vanna, Franziska Hoffmann, Orlando Guntinas-Lichius, Silvia Ghislanzoni, Italia Bongarzone, Sze Yun Set, Andrea C. Ferrari, Giulio Cerullo, and Matteo Negro. Plug-and-play stimulated raman microscopy system for broadband coherent vibrational imaging. In 2023 Conference on Lasers and Electro-Optics Europe & European Quantum Electronics Con-ference (CLEO/Europe-EQEC) , page 1–1. IEEE, June 2023. doi: 10.1109/cleo/europe-eqec57999.2023. 10231815. URL http://dx.doi.org/10.1109/CLEO/Europe-EQEC57999.2023.10231815 .Xavier Glorot and Yoshua Bengio. Understanding the difficulty of training deep feedforward neural networks. In Proceedings of the thirteenth international conference on artificial intelligence and statistics , pages 249– 256. JMLR Workshop and Conference Proceedings, 2010. Meng Han, G¨ unter Giese, and Josef F Bille. Second harmonic generation imaging of collagen fibrils in cornea and sclera. Optics express , 13(15):5791–5797, 2005. Ali Hatamizadeh, Yucheng Tang, Vishwesh Nath, Dong Yang, Andriy Myronenko, Bennett Landman, Hol-ger R Roth, and Daguang Xu. Unetr: Transformers for 3d medical image segmentation. In Proceedings of the IEEE/CVF winter conference on applications of computer vision , pages 574–584, 2022. Sandro Heuke, Olga Chernavskaia, Thomas Bocklitz, Fisseha Bekele Legesse, Tobias Meyer, Denis Akimov, Olaf Dirsch, G¨ unther Ernst, Ferdinand von Eggeling, Iver Petersen, Orlando Guntinas–Lichius, Michael Schmitt, and J¨ urgen Popp. Multimodal nonlinear microscopy of head and neck carcinoma — toward surgery assisting frozen section analysis. Head & Neck , 38(10):1545–1552, 2016. doi: https://doi.org/10. 1002/hed.24477. URL https://onlinelibrary.wiley.com/doi/abs/10.1002/hed.24477 .Todd C. Hollon, Balaji Pandian, Arjun R. Adapa, Esteban Urias, Akshay V. Save, Siri Sahib S. Khalsa, Daniel G. Eichberg, Randy S. D’Amico, Zia U. Farooq, Spencer Lewis, Petros D. Petridis, Tamara Marie, Ashish H. Shah, Hugh J. L. Garton, Cormac O. Maher, Jason A. Heth, Erin L. McKean, Stephen E. Sul-livan, Shawn L. Hervey-Jumper, Parag G. Patil, B. Gregory Thompson, Oren Sagher, Guy M. McKhann, Ricardo J. Komotar, Michael E. Ivan, Matija Snuderl, Marc L. Otten, Timothy D. Johnson, Michael B. Sisti, Jeffrey N. Bruce, Karin M. Muraszko, Jay Trautman, Christian W. Freudiger, Peter Canoll, Honglak 
+
+> 11 RamanSeg
+
+Lee, Sandra Camelo-Piragua, and Daniel A. Orringer. Near real-time intraoperative brain tumor diagnosis using stimulated raman histology and deep neural networks. Nature Medicine , 26(1):52–58, 2020. ISSN 1546-170X. doi: 10.1038/s41591-019-0715-9. URL https://doi.org/10.1038/s41591-019-0715-9 .Fabian Isensee, Paul F Jaeger, Simon AA Kohl, Jens Petersen, and Klaus H Maier-Hein. nnu-net: aself-configuring method for deep learning-based biomedical image segmentation. Nature methods , 18(2): 203–211, 2021. Fabian Isensee, Tassilo Wald, Constantin Ulrich, Michael Baumgartner, Saikat Roy, Klaus Maier-Hein, and Paul F Jaeger. nnu-net revisited: A call for rigorous validation in 3d medical image segmentation. In 
+
+International Conference on Medical Image Computing and Computer-Assisted Intervention , pages 488– 498. Springer, 2024. Narine Kokhlikyan, Vivek Miglani, Miguel Martin, Edward Wang, Bilal Alsallakh, Jonathan Reynolds, Alexander Melnikov, Natalia Kliushkina, Carlos Araya, Siqi Yan, et al. Captum: A unified and generic model interpretability library for pytorch. arXiv preprint arXiv:2009.07896 , 2020. Ilya Loshchilov and Frank Hutter. Decoupled weight decay regularization. arXiv preprint arXiv:1711.05101 ,2017. Anita Mahadevan-Jansen and Rebecca R Richards-Kortum. Raman spectroscopy for the detection of cancers and precancers. Journal of biomedical optics , 1(1):31–70, 1996. Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: Convolutional networks for biomedical image segmentation, 2015. URL https://arxiv.org/abs/1505.04597 .Cynthia Rudin. Stop explaining black box machine learning models for high stakes decisions and use inter-pretable models instead. Nature Machine Intelligence , 1:206–215, 2018. Mikolaj Sacha, Dawid Rymarczyk, Lukasz Struski, Jacek Tabor, and Bartosz Zieli´ nski. Protoseg: Inter-pretable semantic segmentation with prototypical parts. In Proceedings of the IEEE/CVF Winter Con-ference on Applications of Computer Vision , pages 1481–1492, 2023. Ramprasaath R Selvaraju, Michael Cogswell, Abhishek Das, Ramakrishna Vedantam, Devi Parikh, and Dhruv Batra. Grad-cam: visual explanations from deep networks via gradient-based localization. Inter-national journal of computer vision , 128:336–359, 2020. Peter TC So, Chen Y Dong, Barry R Masters, and Keith M Berland. Two-photon excitation fluorescence microscopy. Annual review of biomedical engineering , 2(1):399–429, 2000. Mukund Sundararajan, Ankur Taly, and Qiqi Yan. Axiomatic attribution for deep networks. In International conference on machine learning , pages 3319–3328. PMLR, 2017. Jonathan Tompson, Ross Goroshin, Arjun Jain, Yann LeCun, and Christoph Bregler. Efficient object localization using convolutional networks. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 648–656, 2015.

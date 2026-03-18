@@ -1,0 +1,184 @@
+Title: Longitudinal Risk Prediction in Mammography with Privileged History Distillation
+
+URL Source: https://arxiv.org/pdf/2603.15814v1
+
+Published Time: Wed, 18 Mar 2026 00:15:35 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# Longitudinal Risk Prediction in Mammography with Privileged History Distillation 
+
+## Banafsheh Karimian 1 , Alexis Guichemerre 1 , Soufiane Belharbi 1 ,Natacha Gillet 1 , Luke McCaffrey 2 , Mohammadhadi Shateri 1 ,Eric Granger 1,
+
+1 LIVIA, ILLS, Systems Engineering Dept., ETS Montreal, Canada 
+
+2 Goodman Cancer Institute, Dept. of Oncology, McGill University, Canada 
+
+Abstract 
+
+Breast cancer remains a leading cause of cancer-related mortality world-wide. Longitudinal mammography risk prediction models improve multi-year breast cancer risk prediction based on prior screening exams. How-ever, in real-world clinical practice, longitudinal histories are often in-complete, irregular, or unavailable due to missed screenings, first-time ex-aminations, heterogeneous acquisition schedules, or archival constraints. The absence of prior exams degrades the performance of longitudinal risk models and limits their practical applicability. While substantial longi-tudinal history is available during training, prior exams are commonly absent at test time. In this paper, we address missing history at inference time and propose a longitudinal risk prediction method that uses mam-mography history as privileged information during training and distills its prognostic value into a student model that only requires the current exam at inference time. The key idea is a privileged multi-teacher dis-tillation scheme with horizon-specific teachers: each teacher is trained on the full longitudinal history to specialize in one prediction horizon, while the student receives only a reconstructed history derived from the current exam. This allows the student to inherit horizon-dependent longi-tudinal risk cues without requiring prior screening exams at deployment. Our new Privileged History Distillation (PHD) method is validated on a large longitudinal mammography dataset with multi-year cancer out-comes, CSAW-CC, comparing full-history and no-history baselines to their distilled counterparts. Using time-dependent AUC across horizons, our privileged history distillation method markedly improves the performance of long-horizon prediction over no-history models and is comparable to that of full-history models, while using only the current exam at inference time. Code: https://github.com/BanafshehKarimian/PHD 
+
+Keywords: Mammography, Risk of Cancer, Longitudinal Modeling, Multi-Teacher Knowledge Distillation. 
+
+1
+
+> arXiv:2603.15814v1 [cs.LG] 16 Mar 2026
+
+# 1 Introduction 
+
+Breast cancer is one of the most common cancers worldwide and remains a major cause of cancer-related mortality [1, 5, 19, 4]. Detecting breast cancer at earlier, asymptomatic stages through screening is strongly associated with improved prognosis and reduced mortality [3]. Mammography remains the pri-mary imaging modality for breast cancer screening due to its relatively low cost, wide accessibility, and established clinical utility compared with other modalities such as MRI, ultrasound, or tissue-based diagnostic procedures (e.g., pathology examinations) [18, 10, 14]. Consequently, accurate prediction of future cancer risk from mammograms is an important component of effective early screen-ing strategies. Recent deep learning approaches [9, 11, 13, 17] have improved performance in both immediate and long-term risk prediction compared with traditional statistical methods [8]. Longitudinal imaging history plays an important role in clinical risk assess-ment, since changes observed across successive screening exams, including the appearance or progression of subtle findings, provide valuable information about disease development. However, most state-of-the-art deep learning approaches for cancer risk prediction based on mammograms only analyze a single screening examination, and do not use longitudinal data during training [21]. More re-cent longitudinal models (LoMaR [6] and VMRA [16]) use prior mammograms during training and inference to capture temporal evolution in breast tissue and achieve improved predictive performance compared with single-exam methods. Despite their promising performance, longitudinal mammography models typically require prior screening exams at inference time. In real-world clinical settings, however, longitudinal history is often incomplete [12] or unavailable due to irregular screening attendance, first-time examinations, or imaging per-formed across multiple institutions. Consequently, a patient’s medical record may only contain a single recent mammogram, even though longitudinal mod-els are trained assuming access to mammograms from multiple prior exams. The absence of historical context at test time can substantially degrade performance [6]. As shown in Fig. 1, both LoMaR and VMRA achieve a high level of per-formance when a longer and consistent screening history is available. Masking prior exams at test time leads to a clear degradation in long-horizon predictive accuracy, highlighting their dependence on longitudinal context and limiting applicability when only the current mammogram is available. This gap between models trained without longitudinal data and models that require it at inference time motivates approaches that can exploit historical information during training, while remaining accurate when prior exams are unavailable at deployment. We address this by introducing Privileged History Distillation (PHD), a longitudinal training method that transfers temporal risk signals from full-history data to a student model operating on reconstructed history. Specifically, we use multiple horizon-specific teacher branches on com-plete screening sequences to learn specialized long-term risk representations per future year, and distill their predictions into a student model that receives only the current mammogram and its reconstructed history from the current exam. 2As a result, the student learns horizon-aware longitudinal risk patterns without requiring prior exams at test time, bridging the gap between no-history inference and full-history training paradigms. 
+
+# 2 Related Work 
+
+Early deep learning approaches for mammography-based risk prediction typ-ically analyze a single screening examination. Mirai [21], predicts multi-year breast cancer risk directly from screening mammograms and achieves strong predictive performance. However, such single-exam models do not use longitu-dinal imaging history, thus have limited performance in long-horizon risk pre-diction [6]. To address this limitation, subsequent work introduced longitudinal mammography risk prediction models that explicitly use prior screening exams. LoMaR (Longitudinal Mammogram Risk) [6] is designed to use an arbitrary number of previous screening visits and model temporal progression in mam-mographic appearance. Each mammogram is processed using a shared image encoder, and multi-view features are aggregated within each visit to form visit-level embeddings. These embeddings are then modeled as a temporal sequence using a transformer-based visit aggregator to capture longitudinal evolution across screening years, followed by an additive hazard module for multi-year risk prediction. More recent work has explored alternative temporal modeling strategies. VMRA-MaR [16] introduces a recurrent longitudinal framework based on a Vision-Mamba RNN to model temporal dependencies across screening exams. Instead of positional encoding and global attention, VMRA updates recurrent hidden states across visits to capture imaging progression over time. Despite their strong performance, existing longitudinal models rely on the availability of prior exams at inference time. LoMaR has shown that predictive performance decreases as fewer historical exams are available, with no-history settings ap-proaching the performance of single-exam models. This highlights the strong dependence of longitudinal risk prediction on historical context and the need 
+
+Figure 1: Partial AUC at 10% FPR (pAUC@10%) for LoMaR and VMRA at 4- and 5-year horizons as a function of available screening history. 3Figure 2: Proposed PHD method for longitudinal risk prediction in mammog-raphy. Visit embeddings are extracted from each exam (mammogram), and missing historical embeddings are predicted from the current exam. The gener-ated sequence is aggregated by a longitudinal model and passed to an additive hazard layer for multi-year risk prediction, with a frozen true-history multi-teacher pathway providing per-horizon distillation. for methods that remain effective when prior exams are missing. 
+
+# 3 Proposed Privileged History Distillation Method 
+
+Let us consider longitudinal mammography risk prediction under missing his-tory at inference. ITV , where V could be Right/Left CC/MLO views of the standard bilateral views of a mammogram and T ∈ { 0, −1, . . . , −Th} denotes the screening year relative to the current exam. During training, a subject may have access to a sequence of exams across multiple years. Standard longitudi-nal risk models aggregate this full sequence to predict multi-year cancer risk. However, at inference time, only the current exam I0 
+
+> V
+
+may be available, thus we assume prior exams are missing during inference. Our objective is to learn a model that uses the full longitudinal history during training while producing accurate risk predictions from I0 
+
+> V
+
+alone at inference. The overall framework of the proposed PHD method is illustrated in Fig-ure 2. Following [6, 16], each screening exam is encoded into a visit embedding, yielding a sequence corresponding to the available history. To use prior exams only as privileged information during training, PHD learns a history predic-tion module that distills each exam embedding and predicts missing historical 4embeddings from the current one. The resulting sequence, composed of the cur-rent embedding and predicted history, is aggregated by a longitudinal encoder to produce a temporal representation for risk prediction. To preserve temporal risk information from full-history training data, PHD uses a shared-parameter teacher–student training scheme. To preserve temporal risk information from full-history training data, PHD adopts a horizon-specific multi-teacher distilla-tion scheme. For each prediction horizon k, a dedicated teacher expert is trained using the true longitudinal history sequence and optimized only for that hori-zon, to be used during student training. In parallel, the student branch operates on the reconstructed history sequence derived from the current exam. The stu-dent is supervised by the corresponding horizon-specific teacher through logit distillation, enabling transfer of longitudinal information into missing-history setting. 
+
+Image and Exam Representation Learning: To obtain embeddings repre-senting each exam year, PHD uses the Mirai[21] image encoder, denoted as fϕ(·),and keeps it frozen during training. Each mammographic view ITV , is processed to obtain view-level features, zTV = fϕ(ITV ). View-level features within each visit are aggregated using the Mirai view transformer to produce a compact visit em-bedding. This yields a sequence of yearly representations {x0, x−1, ..., x−Th },where each xT summarizes all available views for screening year T .
+
+Historical Embedding Distillation: Given the visit embeddings, PHD in-troduces a distillation module that predicts historical representations from the current exam embedding. Specifically, it learns a mapping: fψ : x0 → ˆxt, t ∈{− 1, ..., −Th}, which reconstructs embeddings, {ˆx−1, ..., ˆx−Th }, corresponding to prior screening years. This module helps the model to infer longitudinal con-text even when historical exams are missing. To train the distillation module, PHD uses a mean squared error (MSE) feature distillation loss: 
+
+Lfeature KD = 1
+
+T
+
+X
+
+> t∈{− 1,−2,−3,−4}
+
+xt − ˆxt 22 . (1) 
+
+Longitudinal Aggregation and Risk Prediction: The proposed PHD framework is agnostic to the specific longitudinal aggregation architecture and can be combined with any backbone that produces a unified temporal rep-resentation from a sequence of visit embeddings. Given the selected history sequence {x0, ˜x−1, . . . , ˜x−Th }, the longitudinal encoder Aθ (·) will produce a compact history representation qT = Aθ
+
+ {x0, ˜x−1, . . . , ˜x−Th }. Risk prediction is performed using an additive hazard survival head, as commonly adopted in mammography risk modeling. The aggregated representation is mapped to a baseline risk term and horizon-specific non-negative hazard increments 
+
+Hk(qT ) = σ+
+
+ w⊤ 
+
+> k
+
+qT + bk
+
+, with activation function of σ+ and cumulative risk 5up to horizon k:
+
+P (tcancer ≤ k | qT ) = B(qT ) + 
+
+> k−1
+
+X
+
+> i=0
+
+Hi(qT ). (2) Training relies on a horizon-wise weighted binary cross-entropy loss. Let y ∈{0, 1, −1}K denote labels with unknown entries masked by mk = ⊮[yk̸ = −1] ,and let wk be the positive class weight for horizon k. With predicted probabil-ities ˆpk, the supervised Re-weighted Cross Entropy (RCE) loss [7] is: 
+
+LRCE = 1
+
+P 
+
+> k
+
+mk
+
+X
+
+> k
+
+mk[−wk yk log ˆ pk − (1 − yk) log(1 − ˆpk)] . (3) 
+
+Per-Horizon Logit Distillation: Multi-horizon risk prediction is typically formulated as a multi-task problem, which can lead to optimization trade-offs across horizons and reduced accuracy for individual time points [20]. PHD there-fore trains separate uni-task teacher experts, each optimized for a single hori-zon using full-history input, which empirically yields stronger horizon-specific performance. For each prediction horizon k, the corresponding frozen teacher expert processes the true history sequence {x0, x−1, . . . , x−Th } using the same longitudinal aggregation and additive hazard architecture to produce teacher logits ztea  
+
+> k
+
+. In parallel, the student pathway operates on the generated (recon-structed) history sequence and produces logits zstu  
+
+> k
+
+. PHD applies a per-horizon logit distillation loss based on KL divergence: 
+
+Llogit KD = 1
+
+P 
+
+> k∈K
+
+mk
+
+X
+
+> k∈K
+
+mk KL  σ(ztea  
+
+> k
+
+) ∥ σ(zstu  
+
+> k
+
+) , (4) where K denotes the set of prediction years, mk is the label-validity mask, and 
+
+σ(·) denotes the sigmoid function converting logits to risk probabilities. Each teacher expert supervises only their corresponding horizon, providing stronger and more specialized guidance than multi-task teachers. This horizon-aligned supervision enables accurate long-horizon risk estimation even when only cur-rent or reconstructed history is available at inference. The total loss is as follows: 
+
+Ltotal = LRCE + λlLlogit KD , (5) where λl is a coefficient, defining the importance of the distillation loss. 
+
+# 4 Experimental Validation 
+
+Experimental Methodology: The proposed PHD method is evaluated on the CSAW-CC (Karolinska case–control) dataset [15], the same longitudinal mammography cohort used in LoMaR and VMRA to ensure reproducibility and fair comparison. CSAW-CC is derived from the Cohort of Screen-Aged Women (CSAW) [2] and contains longitudinal screening mammograms with 6exam dates. Each examination includes the standard four views. The dataset has 19,328 screening exams from 7,353 individuals, with 1,413 associated with a future breast cancer diagnosis, enabling multi-year longitudinal risk modeling. Since CSAW-CC does not provide an official test split, we follow prior work and perform patient-level random splits to prevent data leakage (80% for train-ing, 20% for testing, with 25% of the training for validation). To obtain stable estimates, we repeat the splitting procedure 10 times and report the average performance. For validation, the LoMaR [6] protocol was adopted. It samples a single exam per patient in the test set to avoid horizon bias. Sampling is repeated 100 times, and the results are averaged. Hyperparameters for the longitudinal backbone follow the settings reported in LoMaR and VMRA. PHD introduces an addi-tional hyperparameter, λl, which is tuned on the validation set. Models are trained using Adam with an initial learning rate of 10 −3 and cosine scheduling. Training is performed for up to 30 epochs with early stopping after 5 epochs without validation improvement. For the fψ0→t (·), 3 fully connected layers were used with dropout of 0.1 and ReLU activation function. 
+
+Results and Discussion: Table 1 reports performance across history avail-ability settings. As expected, longitudinal models perform best with full history (#H=4 ), while removing history ( #H=0 ) degrades 4–5 year prediction, show-ing the importance of temporal context. LoMaR+PHD and VMRA+PHD sub-stantially mitigate this loss despite using no true history at inference. Relative to LoMaR #H=0 and VMRA #H=0 , the distilled models consistently im-prove long-horizon Full AUC and pAUC (5-year: LoMaR+PHD 0.829 →0.853 /
+
+0.711 →0.752 ; VMRA+PHD 0.829 →0.855 / 0.710 →0.757 ), matching or exceed-ing full-history models. Statistical tests show no significant pAUC differences Table 1: Mean ±std AUC and pAUC@10% for 1–5 year risk prediction on CSAW-CC across folds. #H shows the number of prior exams at inference. 
+
+Met. Model #H 1y 2y 3y 4y 5y Full AUC LoMaR (MICCAI,24) 4 0.914 ±0.023 0.865 ±0.020 0.851 ±0.017 0.841 ±0.019 0.851 ±0.016 
+
+VMRA (MICCAI,25) 4 0.920 ±0.019 0.868 ±0.020 0.851 ±0.017 0.842 ±0.017 0.851 ±0.017 
+
+Mirai 0 0.924 ±0.020 0.872 ±0.016 0.853 ±0.015 0.837 ±0.014 0.829 ±0.015 
+
+LoMaR (MICCAI,24) 0 0.922 ±0.020 0.873 ±0.016 0.853 ±0.015 0.837 ±0.014 0.829 ±0.015 
+
+VMRA (MICCAI,25) 0 0.922 ±0.020 0.872 ±0.017 0.853 ±0.016 0.836 ±0.015 0.829 ±0.015 
+
+LoMaR+PHD 0 0.913 ±0.022 0.865 ±0.019 0.852 ±0.016 0.845 ±0.015 0.853 ±0.015 
+
+VMRA+PHD 0 0.920 ±0.018 0.869 ±0.018 0.852 ±0.016 0.847 ±0.015 0.855 ±0.017 
+
+> pAUC
+
+LoMaR (MICCAI,24) 4 0.817 ±0.023 0.749 ±0.020 0.738 ±0.018 0.731 ±0.018 0.740 ±0.018 
+
+VMRA (MICCAI,25) 4 0.822 ±0.020 0.752 ±0.020 0.736 ±0.018 0.728 ±0.019 0.745 ±0.021 
+
+Mirai 0 0.824 ±0.023 0.753 ±0.019 0.735 ±0.018 0.715 ±0.018 0.711 ±0.021 
+
+LoMaR (MICCAI,24) 0 0.824 ±0.023 0.754 ±0.019 0.735 ±0.018 0.715 ±0.018 0.711 ±0.020 
+
+VMRA (MICCAI,25) 0 0.823 ±0.023 0.752 ±0.019 0.734 ±0.018 0.714 ±0.019 0.710 ±0.021 
+
+LoMaR+PHD 0 0.810 ±0.031 0.744 ±0.024 0.734 ±0.015 0.735 ±0.020 0.752 ±0.019 
+
+VMRA+PHD 0 0.818 ±0.020 0.749 ±0.017 0.733 ±0.017 0.734 ±0.017 0.757 ±0.018 
+
+7Figure 3: a) Ablation studies showing that multi-teacher supervision (Student (5 teacher)) yields the strongest gains, particularly at the 5-year horizon, b) Comparing ROC curves for VMRA and LoMaR under varying history avail-ability and the proposed distilled-history model. Although VMRA and LoMaR performance increases with more prior exams, VMRA+PHD and LoMaR+PHD achieves the strongest sensitivity in the low-FPR despite operating without his-tory, matching or exceeding the full-history model. at years 1–3 (VMRA p = 0 .7, 0.7, 0.7; LoMaR p = 0 .3, 0.4, 0.9), but significant gains at longer horizons (VMRA p = 0 .03 , 8×10 −5; LoMaR p = 0 .04 , 3×10 −4). Figure 3 (b) compares VMRA and LoMaR under different history availabil-ity settings and highlights the low false-positive regime. Although VMRA and LoMaR with full history ( #H=4 ) is a strong baseline, the proposed model (VMRA+PHD and LoMaR+PHD, #H=0+ ) operates without any prior ex-ams at inference time and still achieves the best operating characteristics where screening systems are typically used. In particular, across low false-positive rates, the VMRA+PHD and LoMaR+PHD curve lies above all other vari-ants, including the full-history model, indicating higher sensitivity at the same FPR. This dominance in the low-FPR region is consistent with the pAUC im-provements and suggests that the distilled-history pathway learns to inject risk-relevant longitudinal context into the single-exam setting. Ablation results (Figure 3 (a)) further clarify the contribution of PHD. Re-moving distillation (Student (no KD)) yields only marginal improvement over the base longitudinal model at both horizons. Using only a single full-horizon teacher provides moderate gains, while multi-teacher distillation (Student (5 teacher)) achieves the strongest performance, particularly at the 5-year hori-zon. For VMRA, pAUC increases from 0.745 (base) to 0.757 with five teachers, and for LoMaR from 0.740 to 0.752. Improvements at 4 years are smaller but consistent. These trends indicate that horizon-specific supervision contributes complementary temporal information, and that aggregating multiple teachers is important for transferring long-horizon risk structure into the student. 
+
+# 5 Conclusion 
+
+This paper introduces a privileged-history longitudinal method for breast cancer risk prediction under missing prior exams. The proposed PHD method transfers 8temporal information to reconstruct previous history, and then distills horizon-specific teachers into a student operating on the current exam only, combin-ing history reconstruction with horizon-aware distillation. On the CSAW-CC dataset, PHD improves long-horizon prediction over no-history baselines and approaches full-history performance, especially in low false-positive regions. Re-sults indicate that longitudinal risk information can be effectively distilled into single-exam inference, enabling practical multi-year risk prediction when prior screening exams are unavailable. 9References 
+
+[1] Bray, F., Laversanne, M., Sung, H., Ferlay, J., Siegel, R.L., Soerjomataram, I., Jemal, A.: Global cancer statistics 2022: GLOBOCAN estimates of incidence and mortality worldwide for 36 cancers in 185 countries. CA Cancer J. Clin. 74 (3), 229–263 (May 2024) [2] Dembrower, K., Lindholm, P., Strand, F.: A multi-million mammogra-phy image dataset and population-based screening cohort for the training and evaluation of deep neural networks—the cohort of screen-aged women (csaw). Journal of Digital Imaging 33 (2), 408–413 (Sep 2019) [3] Ginsburg, O., Yip, C., Brooks, A., Cabanes, A., Caleffi, M., Dunstan Yat-aco, J.A., Gyawali, B., McCormack, V., McLaughlin de Anderson, M., Mehrotra, R., Mohar, A., Murillo, R., Pace, L.E., Paskett, E.D., Romanoff, A., Rositch, A.F., Scheel, J.R., Schneidman, M., Unger-Saldaña, K., Van-derpuye, V., Wu, T., Yuma, S., Dvaladze, A., Duggan, C., Anderson, B.O.: Breast cancer early detection: A phased approach to implementation. Can-cer 126 (S10), 2379–2393 (Apr 2020) [4] Grasso, A., Altomare, V., Fiorini, G., Zompanti, A., Pennazza, G., Santon-ico, M.: Innovative methodologies for the early detection of breast cancer: A review categorized by target biological samples. Biosensors 15 (4), 257 (Apr 2025) [5] Hakama, M., Coleman, M.P., Alexe, D.M., Auvinen, A.: Cancer screening: evidence and practice in europe 2008. Eur. J. Cancer 44 (10), 1404–1413 (Jul 2008) [6] Karaman, B.K., Dodelzon, K., Akar, G.B., Sabuncu, M.R.: Longitudinal mammogram risk prediction. In: International Conference on Medical Im-age Computing and Computer-Assisted Intervention. pp. 437–446. Springer (2024) [7] Karaman, B.K., Mormino, E.C., Sabuncu, M.R.: Machine learning based multi-modal prediction of future decline toward alzheimer’s disease: An empirical study. PLOS ONE 17 (11), e0277322 (Nov 2022) [8] Kim, G., Bahl, M.: Assessing risk of breast cancer: A review of risk pre-diction models. J. Breast Imaging 3(2), 144–155 (Mar 2021) [9] Kim, H., Lim, J., Kim, H.G., Lim, Y., Seo, B.K., Bae, M.S.: Deep learning analysis of mammography for breast cancer risk prediction in asian women. Diagnostics (Basel) 13 (13), 2247 (Jul 2023) [10] Lauby-Secretan, B., Scoccianti, C., Loomis, D., Benbrahim-Tallaa, L., Bou-vard, V., Bianchini, F., Straif, K.: Breast-cancer screening — viewpoint of the iarc working group. New England Journal of Medicine 372 (24), 2353–2358 (Jun 2015) 10 [11] Mendes, J., Oliveira, B., Araújo, C., Galrão, J., Mota, A.M., Garcia, N.C., Matela, N.: Deep learning in breast cancer risk prediction: a re-view of recent applications in full-field digital mammography. Front. Oncol. 
+
+15 (1656842), 1656842 (Sep 2025) [12] Reece, J.C., Neal, E.F.G., Nguyen, P., McIntosh, J.G., Emery, J.D.: De-layed or failure to follow-up abnormal breast cancer screening mammo-grams in primary care: a systematic review. BMC Cancer 21 (1) (Apr 2021) [13] Santeramo, R., Damiani, C., Wei, J., Montana, G., Brentnall, A.R.: Are better AI algorithms for breast cancer detection also better at predicting risk? a paired case-control study. Breast Cancer Res. 26 (1), 25 (Feb 2024) [14] Smith, R.A.: Expert group: Iarc handbooks of cancer prevention. vol.7: Breast cancer screening. lyon, france: Iarc; 2002. 248pp.: Isbn 92 832 3007 8. Breast Cancer Research 5(4) (Aug 2003) [15] Strand, F.: Csaw-cc (mammography) – a dataset for ai research to improve screening, diagnostics and prognostics of breast cancer (2022) [16] Sun, Z., Thrun, S., Kampffmeyer, M.: Vmra-mar: An asymmetry-aware temporal framework for longitudinal breast cancer risk prediction. In: International Conference on Medical Image Computing and Computer-Assisted Intervention. pp. 660–669. Springer (2025) [17] Thrun, S., Hansen, S., Sun, Z., Blum, N., Salahuddin, S.A., Wickstrøm, K., Wetzer, E., Jenssen, R., Stille, M., Kampffmeyer, M.: Reconsidering explicit longitudinal mammography alignment for enhanced breast cancer risk prediction. In: International Conference on Medical Image Computing and Computer-Assisted Intervention. pp. 495–505. Springer (2025) [18] Wilkinson, A.N., Mainprize, J.G., Yaffe, M.J., Robinson, J., Cordeiro, E., Look Hong, N.J., Williams, P., Moideen, N., Renaud, J., Seely, J.M., Rush-ton, M.: Cost-effectiveness of breast cancer screening using digital mam-mography in canada. JAMA Netw. Open 8(1), e2452821 (Jan 2025) [19] Wilkinson, L., Gathani, T.: Understanding breast cancer as a global health concern. Br. J. Radiol. 95 (1130), 20211033 (Feb 2022) [20] Xin, D., Ghorbani, B., Gilmer, J., Garg, A., Firat, O.: Do current multi-task optimization methods in deep learning even help? Advances in neural information processing systems 35 , 13597–13609 (2022) [21] Yala, A., Mikhael, P.G., Strand, F., Lin, G., Smith, K., Wan, Y.L., Lamb, L., Hughes, K., Lehman, C., Barzilay, R.: Toward robust mammography-based models for breast cancer risk. Sci. Transl. Med. 13 (578), eaba4373 (Jan 2021) 11

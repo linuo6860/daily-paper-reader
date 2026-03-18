@@ -1,0 +1,285 @@
+Title: Context-aware Skin Cancer Epithelial Cell Classification with Scalable Graph Transformers
+
+URL Source: https://arxiv.org/pdf/2602.15783v1
+
+Published Time: Wed, 18 Feb 2026 02:10:56 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# Context-aware Skin Cancer Epithelial Cell Classification with Scalable Graph Transformers 
+
+Lucas Sanc´ er´ e1,2,3,4, No´ emie Moreau 2,3,4, and Katarzyna Bozek 2,3,4 
+
+> 1
+
+Faculty of Mathematics and Natural Sciences, University of Cologne, Cologne, North Rhine-Westphalia, Germany  
+
+> 2
+
+Institute for Biomedical Informatics, Faculty of Medicine and University Hospital Cologne, University of Cologne, Cologne, North Rhine-Westphalia, Germany  
+
+> 3
+
+Center for Molecular Medicine Cologne (CMMC), Faculty of Medicine and University Hospital Cologne, University of Cologne, Cologne, North Rhine-Westphalia, Germany  
+
+> 4
+
+Excellence Cluster on Cellular Stress Responses in Aging-Associated Diseases (CECAD), University of Cologne, Cologne, North Rhine-Westphalia, Germany 
+
+lsancere@uni-koeln.de, k.bozek@uni-koeln.de 
+
+Abstract. Whole-slide images (WSIs) from cancer patients contain rich informa-tion that can be used for medical diagnosis or to follow treatment progress. To auto-mate their analysis, numerous deep learning methods based on convolutional neural networks and Vision Transformers have been developed and have achieved strong performance in segmentation and classification tasks. However, due to the large size and complex cellular organization of WSIs, these models rely on patch-based representations, losing vital tissue-level context. We propose using scalable Graph Transformers on a full-WSI cell graph for classification. We evaluate this methodol-ogy on a challenging task: the classification of healthy versus tumor epithelial cells in cutaneous squamous cell carcinoma (cSCC), where both cell types exhibit very similar morphologies and are therefore difficult to differentiate for image-based ap-proaches. We first compared image-based and graph-based methods on a single WSI. Graph Transformer models SGFormer and DIFFormer achieved balanced accuracies of 85 .2±1.5 ( ± standard error) and 85 .1±2.5 in 3-fold cross-validation, respectively, whereas the best image-based method reached 81 .2±3.0. By evaluating several node feature configurations, we found that the most informative representation combined morphological and texture features as well as the cell classes of non-epithelial cells, highlighting the importance of the surrounding cellular context. We then extended our work to train on several WSIs from several patients. To address the compu-tational constraints of image-based models, we extracted four 2560 × 2560 pixel patches from each image and converted them into graphs. In this setting, DIF-Former achieved a balanced accuracy of 83 .6 ± 1.9 (3-fold cross-validation), while the state-of-the-art image-based model CellViT256 reached 78 .1 ± 0.5. DIFFormer training was also substantially faster, requiring only 32 minutes for one single cross-validation fold compared with approximately 5 days for CellViT256. Overall, these results suggest that graph-based approaches constitute a promising alternative to traditional computer vision methods for object classification tasks, such as cell clas-sification. 
+
+# Introduction 
+
+Hematoxylin and Eosin (H&E) staining [1] is widely used in pathology and serves as a standard staining method for tissue examination. The resulting scans, called Whole-Slide Images (WSIs), are high-resolution digital images of entire tissue sec-tions captured from microscope slide. Deep learning has substantially advanced WSI analysis, primarily through convolutional neural networks (CNNs) [2,3] and  
+
+> arXiv:2602.15783v1 [cs.CV] 17 Feb 2026 2Sanc´ er´ e et al.
+
+more recently Transformer models [4,5,6]. Due to the large size of WSIs, their auto-mated processing requires first splitting the image into smaller patches, extracting features from the patches, before aggregating them for prediction or segmentation of the entire slide. This approach enables analysis of the large images, however does not allow the models to capture the tissue structure as a whole as each patch contains only a small area of the image. To explicit tissue spatial organization, recent approaches represent WSIs as graphs, where nodes correspond to image regions and edges encode spatial re-lationships. Different graph neural networks architecture were applied to such graphs for survival outcome prediction [7,8,9,10]. Notably, Graph Transformers models were used for lung, breast and kidney cancer WSI classification based on individual patches [11,12,13]. These models demonstrate the effectiveness of graph representations and GNNs for WSI analysis. While graphs are powerful models for representing WSIs, graphs that are based on patches rather than individual cells do not capture the detailed tissue composition and cellular interactions within it. Graph representation in which nodes correspond to individual cells or nuclei and edges link cells based on spatial proximity or feature similarity is a rich and detailed model of a tissue sample. HistoCartography toolkit [14] was designed to build such cell graphs but is limited to individual patches of the full WSI. Such graphs were used for cell classification, through node classification with GNNs and notably Graph Transformers, however using only patch-level context [15,16,17]. Similarly, hierarchical graphs including cell representations from WSI patches were developed for tissue segmentation, cancer grading and breast cancer classification [18,19,20]. In these approaches nodes represent individual cells enabling biologically meaningful modeling, nonetheless, graphs remain restricted to local patches and do not capture entire WSIs. Achieving tissue-level representation and analysis with graphs requires incorporating all cells within a WSI and developing GNNs and their training strategies capable of operating at this scale. Classical GNNs rely on localized message passing, which limits their ability to capture long-range dependencies and restricts their scalability to large graphs. Graph Transformer models [21,22,23] enable to address this challenge with global attention across nodes while leveraging efficient attention mechanisms. However, the quadratic complexity of the attention mechanism with regard to the input tokens, makes training on large graphs impossible. To overcome this issue new ar-chitectures of scalable Graph Transformers with linear complexity were developed such as Nystr¨ omformer [24] and more recently NodeFormer [25], DIFFormer [26] and Simplified Graph Transformers (SGFormer) [27]. These models were used for node classification on large-graph benchmark such as ogbn-proteins [28], Amazon-M2 [29] or pokec [30]. Training such models on cell-level WSI graphs could signifi-cantly improve node classification accuracy over traditional patch-based methods. In this work we propose a graph-based approach for tumor cell classification in cutaneous squamous cell carcinoma (cSCC), the second most common non-melanoma skin cancer worldwide [31,32]. Previous work showed that distinguish-ing between healthy and tumor epithelial cells in the cSCC is challenging using classical patch-based segmentation methods. The morphologies of these cells are very similar and only a broader tissue-level context capturing cell spatial orga-nization allows to correctly classify them in these two types [33]. We tackle the Context-aware classification with Graph Transformers 3
+
+challenge of discriminating between healthy and tumor epithelial cells by building large WSI graph and training scalable Graph Transformers with linear complexity. We use a previously published dataset of cSCC WSIs [33] and construct graphs at two different levels, WSI and patch and term these approaches “WSI-Graph” and “TILE-Graphs” to compare GNNs and image-based models on epithelial cell classification. We first asses the performance of GNN models on WSI-Graph and found the best combination of node features. We then evaluated image-based and graph-based approach on a several patient configuration with TILE-Graphs. To the best of our knowledge this work is the first to: 
+
+• Encode a full WSI at a single cell level as a graph to generate node classification predictions, 
+
+• Apply graphs to improve classification of epithelial cells as healthy or tumor in the cSCC skin cancer, 
+
+• Compare graph-based and image-based methods on the same underlying data represented as images and corresponding graph structures. 
+
+# Methods 
+
+From WSI images to cell graphs 
+
+To apply a GNN for the classification of healthy versus tumor epithelial cells, we converted a WSI of cSCC into a structured graph representation. In this graph, each node corresponds to a cell nucleus and encodes morphological and texture fea-tures, as well as the associated cell class. Edges connect neighboring cells, thereby capturing their spatial relationships. To obtain these nuclei and their initial labels, we used cSCC Hovernet [33], a model previously developed for cell segmentation and classification. cSCC Hov-ernet detects, segments and then categorizes cells into five types: granulocytes, plasma cells, lymphocytes, stromal cells, and epithelial cells (without distinguish-ing between healthy and tumoral cells). Using tumor regions annotated by an expert pathologist, we refined this classification by splitting epithelial cells into two subclasses: tumor epithelial and healthy epithelial. Specifically, epithelial cells located inside annotated tumor regions were relabeled as tumor epithelial, whereas epithelial cells outside these regions were relabeled as healthy epithelial. Impor-tantly, not all cells within a tumor region are tumor cells; only those previously identified as epithelial are reassigned as tumor epithelial. As a result, each cell of the entire WSI is categorized into one of the six classes: granulocytes, plasma cells, lymphocytes, stromal cells, tumor epithelial and healthy epithelial. Based on the cell segmentation and classification, we represent a WSI as a graph, where each detected cell nucleus forms a node. Each node i ∈ { 1, . . . , N }
+
+among all N nodes is associated with a feature vector hi = [ fi ∥ ci] ∈ Rl+6 where 
+
+fi ∈ Rl encodes l morphological and texture features, and ci ∈ { 0, 1}6 denotes the cell class encoded as a one-hot vector. We built the undirected, node-attributed graph G = ( H, A), where H ∈ RN ×(l+6) is the feature matrix concatenation of each feature vector hi, and where A = [ Aij ] ∈ RN ×N is the adjacency matrix. [Aij ] = 1 if there exits an edge connecting node i and node j, otherwise, [ Aij ] = 0. We define a threshold distance r0 and note dEij the Euclidean distance between the centroids of the cell nuclei in the WSI corresponding to nodes i and j in G.4 Sanc´ er´ e et al. 
+
+If dEij < r 0, then there is an edge between i and j and [ Aij ] = 1. The resulting graph is shown in Figure 1a . The simplification and splitting steps are described in the following sections. 
+
+Graph simplification 
+
+We simplify the graph by first removing all nodes corresponding to cell nuclei that were detected by cSCC Hovernet but not classified (because of lower confidence). In addition, nodes of epithelial cells with no degree are more likely to be miss-classified, as epithelial cells are forming a compact group in the tissue. The nodes corresponding to these cells are also removed. The graph is subsequently used for binary node classification, where nodes representing epithelial cells are classified as either tumor or healthy. Not all nodes are considered equally during training and inference. In particular, nodes located in the local neighborhood of tumor and healthy epithelial cells are expected to have a greater influence on the classification through message passing than nodes that are further away. To both reduce the computational complexity of the graph during training and simplify its structure —thereby limiting the number of contributing nodes in the aggregation of latent features during graph convolution— we remove nodes that are away from epithelial cells by a given number of graph edges. We define nodes corresponding to tumor or healthy epithelial cells as anchor nodes around which the graph will be simplified. We retain all nodes that lie within a geodesic distance dG (number of edges in a shortest path connecting 2 nodes) of at most k from at least one anchor node. We define k-max-hops as the maximum allowed geodesic distance between a cell and its nearest anchor node. We define the class indicator matrix C ∈ { 0, 1}N ×6 where the i-th row ci ∈ { 0, 1}6 encodes the class of node i. To specify which class is an anchor, we introduce a binary class-selection vector s ∈ { 0, 1}6 where sp = 1 indicates that class p is selected as an anchor class. For each node i ∈ { 1, . . . , N } we define the anchor indicator vector a ∈ { 0, 1}N as: 
+
+ai =
+
+(
+
+1, if ( Cs)i > 00, otherwise The anchor indicator ai equals 1 if and only if node i belongs to a class selected by s (here tumor and healthy epithelial). We finally introduce the node mask 
+
+mk ∈ { 0, 1}N define as: 
+
+mki = 1 ⇐⇒ min    
+
+> j:aj=1
+
+dG(i, j ) ≤ k, ∀i ∈ { 1, . . . , N }
+
+dG is computable for any pairs of nodes, but interestingly, by using the properties of the powers of the adjacency matrix one doesn’t need to directly compute distances. Indeed Aqij is the number of walks of lengths q from node i to node j. From this we can deduce dG(i, j ) as the smallest non negative q such as Aqij > 0. Another definition of m is: 
+
+mki =
+
+(1, if 
+
+h Pkq=0 Aq
+
+
+
+a
+
+i
+
+> i
+
+> 00, otherwise ∀i ∈ { 1, . . . , N }
+
+After simplification of G we obtain the induced subgraph G(k) = ( H(k), A(k))with the induced adjacency matrix A(k) ∈ RN ×N and masked features matrix Context-aware classification with Graph Transformers 5
+
+H(k) ∈ RN ×(l+6) given by: 
+
+M(k) = diag( mk), A(k) = M(k)AM (k), H(k) = M(k)H (1) 
+
+Implementation details of WSI-Graph 
+
+From a WSI of cSCC skin cancer with annotated tumor regions we built and then simplified a graph of this tissue as described in previous sections. We also split the simplified graph into 100 non-overlapping subgraphs of similar sizes. To build the subgraphs we ran K-means algorithm on the large graph nodes’ coordinates features to form K spatial clusters. We used these subgraphs to evaluate GNN’s performance on node binary classification task. The process of graph building is depicted in Figure 1a where each node is colored according to its cell class, and spatially located using nucleus centroid coordinates. Figure 1b shows the graph edges. The threshold distance for edges is r0 = 50 pixels corresponding to 
+
+r0 ≈ 11 .5 μm. This threshold ensures that neighboring nuclei within cells that are likely to interact or form structures together are connected by an edge, while not forming connections between nuclei that are far apart. A comprehensive description of WSI-Graph before and after simplification is shown in Figure 1c . The 22 node features represent morphology attributes of the nucleus (7 features), the texture of the nucleus (7 features), a one-hot encoded vector of the nucleus class (6 features) and the nucleus centroid coordinates (2 features). The morphology features are: area, perimeter, eccentricity, solidity, ma-jor axis length, minor axis length and extent. The texture features are: roughness, contrast, dissimilarity, homogeneity, entropy, angular second moment and disper-sion. Finally, we represent each class label as a one-hot encoded vector ci ∈ { 0, 1}6,where exactly one element equals 1, indicating the class membership, and all re-maining elements are equal to 0. 
+
+Implementation details of TILE-Graphs 
+
+We collected 93 WSIs from 84 patients with cSCC skin cancer for which tumor regions were annotated by two experts (each expert having a subset of the data to annotate). These WSIs are a subset of already published TumSeg dataset [33], where the 93 WSIs kept here contain both tumor and healthy epithelial tissue. Contrary to TumSeg where the images were downsampled, the collected WSI are at 40x magnification. To generate TILE-Graphs we extracted two 2560x2560 pixels patches fully inside the annotated tumor regions and two 2560x2560 pixels patches containing healthy epithelial cells from each of the WSIs. We then built one graph per patch. Figure 2a shows the generation of 3 graphs from the dataset. Contrary to WSI-Graph dataset we did not simplify the graphs as they are smaller and all their complexity will be needed for classification. We kept the same threshold distance to generate edges as for WSI-Graph dataset: r0 = 50 pixels corresponding to r0 ≈ 11 .5 μm. A comprehensive description of TILE-Graphs is shown in Figure 2b . The node features are the same as in WSI-Graph. 
+
+Graph Transformer with linear complexity 
+
+In this work we perform binary classification of graph nodes as tumor or healthy epithelial cells. Standard Transformer graph neural networks represent state of art 6 Sanc´ er´ e et al. 
+
+Fig. 1: Description of WSI-Graph. (a) Steps to generate WSI-Graph. First a WSI from cSCC patient is segmented using SCC Hovernet and tumor regions are annotated by an expert to refine segmentation. From this segmentation map we build a graph, simplify it around anchor nodes and optionally split it with K-means on centroid coordinate features. (b) Zooming into the graph, edges generated with threshold distance r0 =50 pixels corresponding to r0 ≈ 11 .5 μm are shown. (c) Number of edges, nodes, node features and instances of given cell classes before and after simplification (here k = 3 max-hops simplification). Context-aware classification with Graph Transformers 7
+
+Fig. 2: Description of TILE-Graphs. (a) Steps to generate TILE-Graphs. First, patches from cSCC patient sample extracted from tumor epithelial and healthy epithelial regions are segmented using SCC Hovernet. Then from these segmentation maps 372 graphs are built. (b) TILE-Graphs dataset statistics. It includes 372 patches from 93 samples from 84 patients. The resulting 372 graphs are then split keeping graphs of the same patients in the same split during cross-validation. 8 Sanc´ er´ e et al. 
+
+and are efficient in node classification [21,22,23], but are computationally intensive due to the quadratic complexity of the attention mechanism relative to number of nodes. This restricts their practical application to small graphs (e.g., on the order of hundreds of nodes) [23]. In our work we evaluated NodeFormer [25], DIFFormer [26] and SGFormer models [27] - Graph Transformers with linear computational complexity w.r.t num-ber of nodes. In NodeFormer, the original softmax attention is approximated using stochastic kernel approximation, reducing the complexity to O(n). In DIFFormer, the exponential function in the softmax attention is replaced by its first-order Tay-lor expansion. This new attention layer can be efficiently computed using linear complexity thanks to re-ordering the matrix product. SGFormer is composed of a one-layer global attention and a shallow GNN network. Contrary to all-pair at-tention that incurs O(n2) complexity, this simple global attention allows for O(n)complexity. In contrast to original implementation of these models, we developed an alternative training strategy which is described in the following sections. 
+
+Context-aware graph neural network classification of epithelial cells 
+
+We evaluated state of the art GNNs and Graph Transformers with linear com-plexity for large graphs on k = 3 max-hops simplified graph G(3) for epithelial node classification. Prior to training, continuous node features were standardized using z-score normalization computed from training set nodes and applied to both training and test sets. To prevent label leakage, the cell class features of epithe-lial nodes targeted for prediction were masked during training. Although the cell class feature was masked for epithelial nodes themselves, it remained available for neighboring nodes. Consequently, the graph neural network incorporates biologi-cally meaningful contextual information, including neighboring cell class features, through message passing. The resulting epithelial node embeddings therefore de-pend on both intrinsic cellular features and features propagated from neighboring cells, enabling predictions based on the composition and spatial organization of the local tissue microenvironment. In general form, node embeddings were computed as: 
+
+H(3)(l+1) = Φ (l) 
+
+
+
+H(3)(l), A(3)
+
+(2) where, H(3)(l) ∈ RN ×dl denotes node embeddings at layer l of G(3) , A(3) ∈
+
+RN ×N is the adjacency matrix of G(3) , and Φ (l) (·) represents the architecture-specific propagation operator. All architectures were adapted to binary node classification by replacing the output layer with a single linear unit producing one logit and corresponding prob-ability per node: 
+
+zi = w⊤hi + b
+
+ˆyi = σ(zi) = 11 + e−zi
+
+where hi ∈ Rd denotes the learned embedding of node i, w ∈ Rd and b ∈ R are learnable parameters shared across nodes, zi ∈ R is the predicted logit, ˆ yi ∈ (0 , 1) is the predicted probability, and σ(·) denotes the sigmoid function. Model parameters Context-aware classification with Graph Transformers 9
+
+were optimized using binary cross-entropy loss computed exclusively over epithelial nodes: 
+
+L = − X
+
+> i∈Vepi
+
+[yi log(ˆ yi) + (1 − yi) log(1 − ˆyi)] (3) where yi ∈ { 0, 1} denotes the ground-truth label of node i and Vepi ⊆ V
+
+denotes the set of epithelial nodes. Finally, all model parameters were optimized using Adam algorithm [34] to minimize L, with Adam parameters depending on model chosen. Finally, to evaluate model performance on binary node classification we ran 3-folds cross-validation using 2 folds for training and 1 for testing. We trained for 200 epochs on one 80GB A100 NVIDIA GPU (Ampere micro-architecture) per model, without early stopping nor hyperparameter search. To train on WSI-Graph, SGFormer, NodeFormer, and DIFFormer used the hyperparameter configuration from their respective training on the large graph ogbn-proteins [28]. To train on TILE-Graph, these 3 models used the hyperparameter configuration from their respective training on the medium graph Cora [35]. We applied the default hyper-parameters in all other GNNs as in [36]. 
+
+Image-based approaches for epithelial cell classification 
+
+To compare GNNs’ performance with image-based models, we created WSI-Graph baseline dataset consisting on the WSI used to build the graph and its segmenta-tions and annotations. This dataset contained over 36,000 segmented patches of 256x256 pixels. We trained CellViT256 model for 200 epochs on one 80GB A100 NVIDIA GPU to segment and classify epithelial cells as tumor or healthy. We trained Hovernet for 2 distinct steps [37] of 50 epochs on two 80GB A100 NVIDIA GPUs following original implementation. Prior to training on baseline dataset, CellViT256 model was originally pretrained on 104 million 256 ×256px histolog-ical image patches from The Cancer Genome Atlas (TCGA) and Hovernet was originally pretrained on ImageNet [38] and the resulting weights were taken as ini-tialization. We did not apply early stopping and used by default hyperparameter sets. We either trained the models on all the WSI patches or on patches containing at least 90% of epithelial cells. Keeping only detected cells, we calculated balanced accuracy on epithelial cell classification on 3-fold cross validation. We also generated TILE-Graphs baseline dataset. It consists on 37,200 anno-tated patches generated from the 370 patches used to build the graphs of TILE-Graphs. We evaluated image-based models on TILE-Graphs baseline dataset fol-lowing the same strategy as for WSI-Graph baseline dataset. 
+
+# Experiments and Results 
+
+Healthy epithelial cells (also called non-neoplastic epithelial) and tumor epithe-lial (neoplastic epithelial) have very similar morphologies and are challenging to discriminate in cSCC WSIs. In practice, pathologists rely primarily on the global tissue architecture, overall composition, and on the surrounding cells to differen-tiate healthy from tumor regions. In this context, state of the art image-based model are performing poorly in classifying both cell types [33] as they process in-dividual patches separately and lack information on the broader tissue structure. 10 Sanc´ er´ e et al. 
+
+Both convolutional network inspired models, such as Hovernet [37] or Transformer based model such as CellViT [39] have a limited input tile size they can process for training or inference that fits into GPU memory. These tiles represent only a small portion of the whole-slide image and therefore fail to preserve the broader tissue context, leading to reduced performance. 
+
+Comparison of graph-based and image-based approaches for epithelial cell classification 
+
+We compared the performance of linear-complexity Graph Transformers on large graphs, i.e SGFormer [27], NodeFormer [25], and DIFFormer [26] with that of conventional GNNs that can also scale to large graphs within a reasonable com-putational budget, including GCN [7], GAT [40], SGC [41], SGC-MLP [36], and SIGN [42]. To ensure consistency across models and reproducibility, we adapted all architectures to the binary node classification by replacing the final output layer with a single output unit producing one logit per node. We evaluated binary node classification performance of GNNs following 2 distinct strategies. First, consistent with common practice [27,25,26] we randomly sampled all nodes from k = 3 max-hops simplified WSI-Graph (WSI-Graph (3) ) into 3 folds and applied the 3 folds cross-validation described previously. In this standard transductive evaluation protocol, randomly selected test nodes are often adjacent to training nodes, allowing their representations to be influenced by training data through neighborhood aggregation during message passing. This can lead to overly optimistic performance estimates when the goal is to assess generalization to in-dependent or disjoint graph regions, in particular in biological tissues where cells of the same type are often grouped togehter. To overcome this bias, we used 100 subgraphs originating from WSI-Graph (3) 
+
+split and sample them into 3 folds. Each subgraph consists of non-overlapping nodes and edges from WSI-Graph (3) . We ran 3-folds cross-validation and predicted all healthy epithelial and tumor cell classes in the test set in each run. This way testing on subgraphs instead of random nodes from one single large graph allows for an unbiased evaluation. The resulting balanced accuracy and standard error from both evaluations are shown in Table 1 . Following previous findings on large graphs, SGFormer and DIFFormer are the best performing models. We observed that state-of-the-art image-based models show lower accuracy compared to SGFormer and DIFFormer on the same dataset when represented in an alternative modality. Indeed, SGFormer and DIFFormer respectively yielded in 85.2 ± 1.5 and 85.1 ± 2.5 balanced accuracy ( ± standard error) whereas best tested state of the art image-based approach CellViT256 yielded in 81.2 ± 3.0 balanced accuracy. We were unable to train CellViT-SAM-B model as, even with mixed-precision training, it could not fit into the memory of an 80GB A100 NVIDIA GPU with an acceptable batch size. Results are listed in Table 2 . Interestingly, SGFormer was previously known as outperforming all GNNs of Table 2 in node classification task [27], because common evaluation strategy is done under random nodes evaluation protocol. With subgraphs protocol evaluation, the performance is very similar to DIFFormer. Context-aware classification with Graph Transformers 11                                                                           
+
+> Method Subgraphs Random Nodes
+> DIFFormer 85.2 ±1.5 91.1 ±0.1 SGFormer 85.1 ±2.5 94.9 ±0.2
+> SIGN 80.5 ±2.8 84.8 ±0.6 GAT 80.4 ±1.0 73.3 ±2.0 SGCMLP 80.4 ±2.7 79.3 ±0.4 NodeFormer 79.0 ±0.5 85.0 ±1.4 SGC 76.8 ±2.2 66.8 ±3.1 GCN 70.4 ±2.0 84.6 ±1.5
+> Table 1: Comparison of GNN models on binary epithelial node classification performance on simplified WSI-Graph. Balanced accuracy (%) is reported as mean
+> ±standard error over 3-fold cross-validation under subgraph-based and random node evaluation protocols and k= 3 max-hops simplification for the graph ( WSI-Graph (3) ).
+> Method Training set 3-fold crossval
+> Hovernet all patches 73.7 ±1.4 epithelial only 79.3 ±2.3 CellViT256 all patches 76.5 ±1.9 epithelial only 81.2 ±3.0
+> CellViT-SAM-B all patches OOM epithelial only OOM
+> Table 2: Comparison of image-based models on binary epithelial cell classifi-cation performance on WSI images Balanced accuracy (%) is reported as mean ±
+> standard error over 3-fold cross-validation for different methods and training set config-urations, using image-based representations..
+
+WSI-Graph node features ablation 
+
+We conducted a feature ablation study on WSI-Graph (3) to evaluate the impact of node features on binary node classification performance. We evaluated SGFormer performance using the evaluation protocols described previously. Always keeping the nucleus coordinates as node features, we evaluate performance with different node features combinations. Z-score normalization was computed on the training set and applied to the test set using the same normalization parameters. In this feature ablation study, we evaluate the impact of such normalization on the per-formance. The results are reported in Table 3 and show that removing any type of features and normalization leads to the poorest performance, highlighting their crucial contribution to model generalization. 
+
+WSI-Graph simplifications and impact on performance 
+
+To evaluate the impact of graph simplification of WSI-Graph on binary node clas-sification performance, we progressively restricted the graph connectivity by lim-iting the maximum number of hops between nodes. This simplification reduces long-range connections and constrains information propagation during message passing. We evaluated SGFormer performance using the evaluation protocols de-scribed previously. 12 Sanc´ er´ e et al. 
+
+Node Features z-score norm Subgraphs Random Nodes 
+
+morphology no 67.8 ± 3.6 92.6 ± 0.3 morphology yes 79.6 ± 2.4 94.0 ± 0.5 morphology & texture no 70.6 ± 9.0 94.0 ± 0.9 morphology & texture yes 84.2 ± 1.6 94.3 ± 0.6 morphology & cell class no 73.6 ± 3.7 93.7 ± 0.5 morphology & cell class yes 84.0 ± 2.8 94.5 ± 0.4 morphology & texture & cell class no 71.4 ± 8.4 92.8 ± 1.1 morphology & texture & cell class yes 85.1 ± 2.5 94.9 ± 0.2 Table 3: Impact of node features on binary node classification performance on simplified WSI-Graph. Balanced accuracy (%) is reported as mean ± standard error over 3-fold cross-validation for different node features under subgraph and random node evaluation protocols with SGFormer model and WSI-Graph (3) .
+
+Graph Simplifications Subgraphs Random Nodes 
+
+No simplification 82.2 ± 2.9 94.6 ± 0.1 50 max-hops 83.3 ± 3.3 94.9 ± 0.4 10 max-hops 86.6 ± 2.2 95.0 ± 0.2 5 max-hops 82.5 ± 1.9 94.6 ± 0.5 4 max-hops 82.1 ± 4.3 95.0 ± 0.4 3 max-hops 85.1 ± 2.5 94.9 ± 0.2 2 max-hops 81.8 ± 0.8 95.4 ± 0.3 
+
+1 max-hops 81.1 ± 3.9 94.7 ± 0.6 
+
+Table 4: Impact of graph simplification on binary node classification perfor-mance on simplified WSI-Graph. Balanced accuracy (%) is reported as mean ±
+
+standard error over 3-fold cross-validation for different maximum hop thresholds under subgraph and random node evaluation protocols with SGFormer model. 
+
+As shown in Table 4 , graph simplification has a noticeable impact on per-formance under the subgraph-based evaluation protocol. The best balanced ac-curacy is achieved with a 10-hop simplification (86 .6 ± 2.2), while both more re-strictive configurations (1–2 max-hops) and the absence of simplification result in lower performance. This suggests that an intermediate level of connectivity pro-vides sufficient contextual information for accurate classification while avoiding the propagation of less relevant signals. In contrast, performance under random node splits remains largely stable across all simplification levels. These results highlight that local graph structure contains most of the useful information for node clas-sification, and that moderate graph simplification can improve robustness while reducing graph complexity. A max-hops simplification with k = 3 provides a good compromise between graph sparsity and model performance; therefore, this simplification was adopted throughout this work. Context-aware classification with Graph Transformers 13                               
+
+> Method 3-fold crossval
+> CellViT256 78.1 ±0.5 DIFFormer 83.6 ±1.9
+> NodeFormer 69.4 ±3.3 SGCMLP 66.4 ±1.1 SIGN 66.3 ±1.0 SGC 63.8 ±1.2 GCN 61.9 ±0.9 GAT 61.6 ±1.4 SGFormer 61.0 ±0.8
+> Table 5: Comparison of graph-based and image-based models on binary ep-ithelial cell classification performance on TILE-Graphs and baseline dataset.
+> Balanced accuracy (%) is reported as mean ±standard error over 3-fold cross-validation for different methods and training set configurations.
+
+Comparison of graph-based and image-based approaches on multiple patients dataset 
+
+We previously compared the performance of GNN models and state of the art image-based model for epithelial cell and node classification using a large graph derived from a WSI of a single patient. Evaluating CellViT on complete WSIs from different patients is computationally prohibitive and thus prevented a systematic training and evaluation on an entire WSIs dataset. We therefore devised another approach to enable the evaluation of our approach across a larger number of pa-tients. Following this goal we used TILE-Graphs and its baseline counterpart to evaluate both CellViT256 and GNNs in the same 3-fold cross validation fashion as previously described. Samples from same patients were distributed into the same fold, and all models were tested using the same splits. Our results show that DIFFormer outperforms vision Transformer CellViT256 on the binary classification of epithelial cells as healthy or tumor ( Table 5 ). DIF-Former model resulted in classification with 83.6 ± 1.9 balanced accuracy on 3 fold cross-validation and CellViT256 with 78.1 ± 0.5 balanced accuracy with the same folds. Interestingly, SGFormer performed poorly on smaller graphs, even with adjusted hyperparameters. Indeed, its very light Graph Transformer architecture probably resulted in attention focused on very few nodes, and in the case of smaller graphs, these nodes are not representative enough of the overall graph structure. 
+
+# Discussion 
+
+WSIs of cancer samples contain rich information for medical diagnosis and for gaining insights into tumor biology. These images contain thousands to million of cells of different types whose automated segmentation and classification can help practitioners in comprehensive assessment of sample. Due to the large size of WSIs segmentation models are trained on small image patches. Within small patches, the discrimination between healthy and tumor epithelial is difficult as healthy epithelial cells and tumor epithelial cells have very similar morphologies. For this reason, pathologists rely on the global tissue architecture, overall composition, and on the 14 Sanc´ er´ e et al. 
+
+surrounding cells to differentiate healthy tissue from tumor regions. To address this limitation of the WSI segmentation models, we explored, the use of GNNs, for incorporation of broader tissue context to differentiate healthy epithelial from tumor epithelial cells. We showed that scalable Graph Transformer architectures outperform image-based approaches on this task. In this work we show that creating graphs from medical images, where each node represent a single cell, and using scalable Graph Transformers for cell classifi-cation outperforms the image-based approaches. We started by evaluating several graph-based methods and image-based models on the same annotated WSI. Graph Transformer models SGFormer and DIFFormer resulted in 85.2 ± 1.5 and 85.1 ±
+
+2.5 balanced accuracy, respectively ( ± standard error) on 3 fold cross-validation whereas best tested state of the art image-based approach CellViT256 resulted in 81.2 ± 3.0 balanced accuracy. To further evaluate both graph-based and image-based models on several patients, we collected TILE-Graphs dataset. This dataset is composed of 372 patches from 93 WSIs of 84 different patients. The patches are converted into smaller graphs and used to train GNNs. Importantly, a graph-based approach, DIFFormer model, showed a classification performance of 83.6 ±
+
+1.9 balanced accuracy on while state of the art image-based approach CellViT256 reached 78.1 ± 0.5 balanced accuracy. The higher accuracy of graph models in clas-sifying the two cell types suggests that broader tissue context, encoded in graphs is important for this task. In addition to performance, a very important advantage of graph based models is their lower computational cost. Graph representation of tissues is computa-tionally lighter compared to raw images and can be manipulated with ease. On the TILE-Graphs image baseline dataset, training CellViT256 required approxi-mately five days to complete a single run of 3-fold cross-validation on a 80GB A100 NVIDIA GPU but only 31 min 59 s for graph architecture such as DIFFormer. Graph-based approaches for cell classification represents therefore a powerful and efficient way for WSI analysis compared to traditional computer vision methods. In the present study, tissue was represented as a simple undirected graph in which nodes were associated with handcrafted morphological and spatial features. Future approaches could leverage pretrained foundation models for cancer whole-slide images, such as VOLTA [43] to derive informative learned representations of cellular phenotypes and incorporate them as node attributes. Furthermore, more expressive graph formalisms, including multi-graphs or hypergraphs, could be explored to capture higher-order and multi-relational interactions between cells through alternative edge or hyperedge construction strategies. Context-aware classification with Graph Transformers 15 
+
+# Data availability 
+
+A Zenodo repository containing WSI-Graph and TILE-Graphs datasets as well as its image baseline datasets counterparts will be openly available at the latest at publication date of this paper in a peer-reviewed journal. 
+
+# Code availability 
+
+The github repository linked to this project will be openly available at the latest at publication date of this paper in a peer-reviewed journal. 
+
+# Competing Interest 
+
+Authors declare no conflicts of interests. 
+
+# Author Contributions 
+
+Conceptualization : Lucas Sanc´ er´ e, No´ emie Moreau, Katarzyna Bozek. 
+
+Data Curation : Lucas Sanc´ er´ e. 
+
+Formal Analysis : Lucas Sanc´ er´ e. 
+
+Funding Acquisition : Katarzyna Bozek. 
+
+Investigation : Lucas Sanc´ er´ e. 
+
+Methodology : Lucas Sanc´ er´ e. 
+
+Project Administration : Lucas Sanc´ er´ e, No´ emie Moreau, Katarzyna Bozek. 
+
+Resources : Lucas Sanc´ er´ e. 
+
+Software : Lucas Sanc´ er´ e. 
+
+Supervision : No´ emie Moreau, Katarzyna Bozek. 
+
+Validation : Lucas Sanc´ er´ e. 
+
+Visualization : Lucas Sanc´ er´ e. 
+
+Writing – Original Draft Preparation : Lucas Sanc´ er´ e, No´ emie Moreau, Katarzyna Bozek. 
+
+Writing – Review & Editing : Lucas Sanc´ er´ e, No´ emie Moreau, Katarzyna Bozek. 
+
+# References 
+
+1. Wittekind, D. H. Traditional staining for routine diagnostic pathology including the role of tannic acid. 1. value and limitations of the hematoxylin-eosin stain. Biotechnic & Histochemistry 78 , 261 – 270 (2003). 2. Coudray, N. et al. Classification and mutation prediction from non-small cell lung cancer histopathology images using deep learning. Nat. Med. 24 , 1559–1567 (2018). 3. Campanella, G. et al. Clinical-grade computational pathology using weakly super-vised deep learning on whole slide images. Nat. Med. 25 , 1301–1309 (2019). 4. Shao, Z. et al. TransMIL: Transformer based correlated multiple instance learning for whole slide image classification (2021). 2106.00908 .5. Chaurasia, A. K., Harris, H. C., Toohey, P. W. & Hewitt, A. W. A generalised vision transformer-based self-supervised model for diagnosing and grading prostate cancer using histological images. Prostate Cancer Prostatic Dis. 28 , 918–926 (2025). 16 Sanc´ er´ e et al. 6. Pisula, J. I. & Bozek, K. Efficient WSI classification with sequence reduction and transformers pretrained on text. Sci. Rep. 15 , 5612 (2025). 7. Kipf, T. N. & Welling, M. Semi-supervised classification with graph convolutional networks. In International Conference on Learning Representations (2017). URL 
+
+https://openreview.net/forum?id=SJU4ayYgl .8. Chen, R. J. et al. Whole slide images are 2D point clouds: Context-aware sur-vival prediction using patch-based graph convolutional networks. In Medical Image Computing and Computer Assisted Intervention – MICCAI 2021 , Lecture Notes in Computer Science, 339–349 (Springer International Publishing, Cham, 2021). 9. Liu, P., Ji, L., Ye, F. & Fu, B. GraphLSurv: A scalable survival prediction network with adaptive and sparse structure learning for histopathological whole-slide images. 
+
+Comput. Methods Programs Biomed. 231 , 107433 (2023). 10. Zhao, L. et al. CoADS: Cross attention based dual-space graph network for sur-vival prediction of lung cancer using whole slide images. Comput. Methods Programs Biomed. 236 , 107559 (2023). 11. Zheng, Y. et al. A graph-transformer for whole slide image classification. IEEE Trans. Med. Imaging 41 , 3003–3015 (2022). 12. Shi, Z., Zhang, J., Kong, J. & Wang, F. Integrative Graph-Transformer Framework for Histopathology Whole Slide Image Representation and Classification . In pro-ceedings of Medical Image Computing and Computer Assisted Intervention – MICCAI 2024 , vol. LNCS 15011 (Springer Nature Switzerland, 2024). 13. Ramanathan, V., Pati, P., McNeil, M. & Martel, A. L. Ensemble of Prior-guided Expert Graph Models for Survival Prediction in Digital Pathology . In proceedings of Medical Image Computing and Computer Assisted Intervention – MICCAI 2024 ,vol. LNCS 15005 (Springer Nature Switzerland, 2024). 14. Jaume, G., Pati, P., Anklin, V., Foncubierta, A. & Gabrani, M. Histocartography: A toolkit for graph analytics in digital pathology. In Atzori, M. et al. (eds.) Proceedings of the MICCAI Workshop on Computational Pathology , vol. 156 of Proceedings of Machine Learning Research , 117–128 (PMLR, 2021). URL https://proceedings. mlr.press/v156/jaume21a.html .15. Lou, W. et al. Structure embedded nucleus classification for histopathology images (2023). 2302.11416 .16. Hassan, T. et al. Nucleus classification in histology images using message passing network. Med. Image Anal. 79 , 102480 (2022). 17. Lou, W., Li, G., Wan, X. & Li, H. Cell graph transformer for nuclei classification. 
+
+Proc. Conf. AAAI Artif. Intell. 38 , 3873–3881 (2024). 18. Javed, S. et al. Cellular community detection for tissue phenotyping in colorectal cancer histology images. Med. Image Anal. 63 , 101696 (2020). 19. Zhou, Y. et al. CGC-Net: Cell Graph Convolutional Network for Grading of Colorec-tal Cancer Histology Images . In 2019 IEEE/CVF International Conference on Com-puter Vision Workshop (ICCVW) , 388–398 (IEEE Computer Society, Los Alamitos, CA, USA, 2019). URL https://doi.ieeecomputersociety.org/10.1109/ICCVW. 2019.00050 .20. Pati, P. et al. Hierarchical graph representations in digital pathology. Med. Image Anal. 75 , 102264 (2022). 21. Kim, J. et al. Pure transformers are powerful graph learners. In Proceedings of the 36th International Conference on Neural Information Processing Systems , NIPS ’22 (Curran Associates Inc., Red Hook, NY, USA, 2022). 22. Ying, C. et al. Do transformers really perform bad for graph representation? In 
+
+Proceedings of the 35th International Conference on Neural Information Processing Systems , NIPS ’21 (Curran Associates Inc., Red Hook, NY, USA, 2021). 23. Ramp´ aˇ sek, L. et al. Recipe for a general, powerful, scalable graph transformer. In 
+
+Proceedings of the 36th International Conference on Neural Information Processing Systems , NIPS ’22 (Curran Associates Inc., Red Hook, NY, USA, 2022). 24. Xiong, Y. et al. Nystr¨ omformer: A nyst¨ om-based algorithm for approximating self-attention. Proc. Conf. AAAI Artif. Intell. 35 , 14138–14148 (2021). Context-aware classification with Graph Transformers 17 25. Wu, Q., Zhao, W., Li, Z., Wipf, D. & Yan, J. Nodeformer: A scalable graph struc-ture learning transformer for node classification. In Advances in Neural Information Processing Systems (NeurIPS) (2022). 26. Wu, Q. et al. Difformer: Scalable (graph) transformers induced by energy constrained diffusion. In International Conference on Learning Representations (ICLR) (2023). 27. Wu, Q. et al. Sgformer: Simplifying and empowering transformers for large-graph representations. In Advances in Neural Information Processing Systems (NeurIPS) 
+
+(2023). 28. Hu, W. et al. Open graph benchmark: datasets for machine learning on graphs. In 
+
+Proceedings of the 34th International Conference on Neural Information Processing Systems , NIPS ’20 (Curran Associates Inc., Red Hook, NY, USA, 2020). 29. Jin, W. et al. Amazon-m2: a multilingual multi-locale shopping session dataset for recommendation and text generation. In Proceedings of the 37th International Con-ference on Neural Information Processing Systems , NIPS ’23 (Curran Associates Inc., Red Hook, NY, USA, 2023). 30. Lubos Takac, M. Z. Data analysis in public social networks (2012). URL https: //api.semanticscholar.org/CorpusID:18659578 .31. Guo, A., Liu, X., Li, H., Cheng, W. & Song, Y. The global, regional, national burden of cutaneous squamous cell carcinoma (1990–2019) and predictions to 2035. Eur. J. Cancer Care (Engl.) 2023 , 1–8 (2023). 32. JY, H., Y, H. & ML, R. Squamous cell skin cancer. StatPearls. Treasure Island (FL): StatPearls Publishing (2024). 33. Sanc´ er´ e, L. et al. Histo-Miner: Deep learning based tissue features extraction pipeline from H&E whole slide images of cutaneous squamous cell carcinoma. PLoS Comput. Biol. 22 , e1013907 (2026). 34. Kingma, D. P. & Ba, J. Adam: A method for stochastic optimization. CoRR 
+
+abs/1412.6980 (2014). 35. Sen, P. et al. Collective classification in network data. AI Magazine 29 , 93–106 (2008). 36. Wu, Q. et al. Sgformer: Simplifying and empowering transformers for large-graph representations. https://github.com/qitianwu/SGFormer/tree/ 3578e101c701491ce068bf26a9b029d2134903be (2023). GitHub repository, commit 3578e10. 37. Graham, S. et al. Hover-net: Simultaneous segmentation and classification of nuclei in multi-tissue histology images. Medical image analysis 58 , 101563 (2018). 38. Deng, J. et al. ImageNet: A large-scale hierarchical image database. In 2009 IEEE Conference on Computer Vision and Pattern Recognition (IEEE, 2009). 39. H¨ orst, F. et al. Cellvit: Vision transformers for precise cell segmentation and classi-fication. Medical image analysis 94 , 103143 (2023). 40. Veliˇ ckovi´ c, P. et al. Graph attention networks. In International Conference on Learn-ing Representations (2018). URL https://openreview.net/forum?id=rJXMpikCZ .41. Wu, F. et al. Simplifying graph convolutional networks. In Chaudhuri, K. & Salakhut-dinov, R. (eds.) Proceedings of the 36th International Conference on Machine Learn-ing , vol. 97 of Proceedings of Machine Learning Research , 6861–6871 (PMLR, 2019). URL https://proceedings.mlr.press/v97/wu19e.html .42. Frasca, F. et al. SIGN: Scalable inception graph neural networks (2020). 2004.11198 .43. Nakhli, R. et al. VOLTA: an environment-aware contrastive cell representation learn-ing for histopathology. Nat. Commun. 15 , 3942 (2024).

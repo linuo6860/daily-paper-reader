@@ -1,0 +1,186 @@
+Title: LGD-Net: Latent-Guided Dual-Stream Network for HER2 Scoring with Task-Specific Domain Knowledge
+
+URL Source: https://arxiv.org/pdf/2602.17793v1
+
+Published Time: Mon, 23 Feb 2026 01:05:36 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# LGD-Net: Latent-Guided Dual-Stream Network for HER2 Scoring with Task-Specific Domain Knowledge 
+
+Peide Zhu a,1 , Linbin Lu b,1 , Zhiqin Chen a, Xiong Chen b, ∗
+
+> aSchool of Mathematics and Statistics, Fujian Normal University, Fuzhou, 350117, China
+> bDepartment of Oncology, Mengchao Hepatobiliary Hospital of Fujian Medical University, Fuzhou, 350117, China
+
+Abstract 
+
+It is a critical task to evalaute HER2 expression level accurately for breast cancer evaluation and targeted treatment therapy selection. However, the standard multi-step Immunohistochemistry (IHC) staining is resource-intensive, expensive, and time-consuming, which is also often unavailable in many areas. Consequently, predicting HER2 levels directly from H&E slides has emerged as a potential alternative solution. It has been shown to be effective to use virtual IHC images from H&E images for automatic HER2 scoring. However, the pixel-level virtual staining methods are computation-ally expensive and prone to reconstruction artifacts that can propagate diag-nostic errors. To address these limitations, we propose the Latent-Guided Dual-Stream Network (LGD-Net) , a novel framework that employes cross-modal feature hallucination instead of explicit pixel-level image gener-ation. LGD-Net learns to map morphological H&E features directly to the molecular latent space, guided by a teacher IHC encoder during training. To ensure the hallucinated features capture clinically relevant phenotypes, we explicitly regularize the model training with task-specific domain knowl-edge, specifically nuclei distribution and membrane staining intensity, via lightweight auxiliary regularization tasks. Extensive experiments on the pub-lic BCI dataset demonstrate that LGD-Net achieves state-of-the-art perfor-mance, significantly outperforming baseline methods while enabling efficient inference using single-modality H&E inputs. 
+
+Keywords: HER2 Scoring, Feature Hallucination, Domain Knowledge 
+
+> ∗Corresponding Author
+> 1Equal contribution
+> arXiv:2602.17793v1 [cs.CV] 19 Feb 2026
+
+Regularization 
+
+1. Introduction 
+
+Breast cancer is one of the most frequently diagnosed malignancy, impos-ing a significant burden on public health systems [1]. HER2 (Human Epi-dermal Growth Factor Receptor 2) has been widely adopted as a fundamen-tal biomarker for guiding therapeutic strategies. The accurate assessment of HER2 expression level (categorized as 0, 1+, 2+, or 3+) is required to identify patients eligible for targeted therapies[2, 3]. The standard clinical workflow typically consists of an initial morphological examination using H&E (Hema-toxylin and Eosin) staining, followed by specific molecular testing via IHC (Immunohistochemistry) [4]. This multi-step process is resource-intensive, expensive, and time-consuming. Furthermore, in many developing regions, IHC infrastructure is often inaccessible. In addition, the subjective interpre-tation of staining intensity can lead to substantial inter-rator variability [5]. Consequently, developing tools that are capable of HER2 scoring automati-cally directly from H&E slides has become a critical research objective. The rapid advancement of deep learning-based methods has enabled the extraction of complex patterns from histopathological images. Early studies on HER2 scoring directly from H&E images by training deep neural net-works like Convolutional Neural Networks (CNNs) to identify morphological correlates of protein expression [6, 7]. Although these unimodal approaches established a baseline, they often struggle to distinguish between intermedi-ate HER2 scores (e.g., distinguishing 1+ from 2+), as H&E staining primar-ily visualizes tissue structure rather than specific molecular signals [8]. To bridge this information gap, the field has increasingly turned toward virtual staining techniques. These methods typically employ generative models such as Generative Adversarial Networks (GANs) to translate H&E images into synthetic IHC images, effectively creating a proxy modality for downstream classification [9]. For instance, Liu et al. [10] introduced the BCI dataset and proposed a pyramid-based Pix2Pix model to generate registered IHC pairs. More recently, Qin et al. [11] developed a dynamic reconstruction framework that synthesizes missing modalities to improve classification robustness. Although these generative approaches have demonstrated the superier performance over unimodal approaches, they rely on pixel-level virtual stain-ing and thus are posed with two major challenges. First, the objective of im-age translation often diverges from the objective of diagnosis. The generation 2models trained to minimize pixel-wise reconstruction error or adversarial loss have to learn how to reconstruct details like the high-frequency patterns that are irrelevant to HER2 scoring, such as stromal texture, red blood cells, and background noise. This results in computational inefficiency and instability during both training and inference. Second, the virtual staining models are prone to generating artifacts or hallucinations in the image space when faced with domain shifts [12, 13]. If a model generates a false positive membrane staining pattern to satisfy the discriminator, the downstream classifier can produce an incorrect diagnosis due to it. To address these challenges, we introduce a novel method for HER2 ex-pression scoring that avoids explicit image generation in this work. We hy-pothesize that it is not the image of the IHC stain that is required for clas-sification, but rather the molecular semantics encoded within it. Therefore, we propose the Latent-Guided Dual-Stream Network (LGD-Net) , a framework that replaces pixel-level translation with feature hallucination . In-stead of reconstructing a visually interpretable IHC image, LGD-Net learns a mapping from morphological H&E features to a molecular latent space, guided by a teacher network tht encodes the IHC image to the latent space during training. This approach elliminates the need for the decoder for vir-tual IHC image generation, focusing the model’s capacity on discriminative biomarker features rather than textural reconstruction. To ensure the hallucinated features remain biologically meaningful, we regualize the the latent space feature generation with the domain knowledge. Specifically, we design lightweight auxiliary tasks that force the latent fea-tures to be predictive of nuclei distribution and membrane staining intensity. This ensures that the learned representation is not just a statistical approx-imation of the teacher network, but explicitly encodes the structural and molecular cues essential for HER2 scoring. The primary contributions of this paper are as follows: 
+
+• We propose a cross-modal feature hallucination framework that effec-tively bridges the gap between H&E morphology and IHC molecular information, eliminating the computational overhead and artifact risks associated with pixel-level image generation. 
+
+• We introduce a domain-knowledge regualization mechanism that en-forces physical constraints, specifically, the nuclei density and mem-brane intensity, on the latent features, improving the model’s sensitiv-ity to subtle HER2 expression differences. 3Student Encoder 
+
+> Teacher Encoder
+> Attention Fusion
+> Nuclei Decoder Membrane Decoder
+> Feature Hallucinator
+> Distillation Loss
+> Classifier
+> Nuclei
+> Loss
+> Membrane Loss
+
+Training Phase 
+
+Inference Phase  
+
+> Classification Loss
+> Student Encoder
+> Feature Hallucinator
+> Attention Fusion Classifier
+
+Figure 1: Overview of the proposed LGD-Net framework. 
+
+• We conduct extensive experiments on the public BCI dataset, demon-strating that LGD-Net outperforms both unimodal baselines and re-cent state-of-the-art generative methods [10, 11], while requiring only standard H&E images during inference. 
+
+2. Methodology 
+
+We propose the Latent-Guided Dual-Stream Network (LGD-Net) ,a framework designed for HER2 expression level scoring from H&E images. Unlike prevailing virtual staining approaches that depend on computation-intensive pixel-level translation [10, 11], LGD-Net employs a feature hallu-cination strategy. This approach enables the inference of missing IHC se-mantics directly within the latent space without generating the actual visual images, constrained by task-specific pathological priors. 
+
+2.1. Problem Formulation and Framework Overview 
+
+Formally, let D = {(xiHE , x iIHC , y i)}Ni=1 represent a set of registered H&E and IHC paired patchs from the BCI cohort [10], where xHE , x IHC ∈ RH×W ×3
+
+are 3-channel RGB images with the height H and width W pixels, and y ∈{0, 1+ , 2+ , 3+ } denotes the HER2 expression score. Our objective is to learn 4a predictive model that, during inference , accepts only a single H&E input 
+
+xHE while leveraging the latent molecular information of the absent IHC modality to predict y.As depicted in Fig. 1, LGD-Net comprises three major components: (1) a 
+
+Dual-Stream Encoding Module structured in a Teacher-Student config-uration; (2) a Latent Feature Hallucinator that maps morphological fea-tures to pseudo-molecular representations; and (3) a Domain-Knowledge REgularization module that enforces biological consistency through auxil-iary regularization tasks. 
+
+2.2. Cross-Modal Feature Hallucination 
+
+Diverging from conventional image-to-image translation, we perform cross-modal synthesis exclusively within the high-level feature space. In this way, in stead of generating high-frequency artifacts, we focus on the model’s ca-pacity on discriminative biomarkers. 
+
+2.2.1. Dual-Stream Encoders 
+
+We adopt a parallel encoder architecture: a Student Encoder ES process-ing H&E inputs and a Teacher Encoder ET processing IHC inputs. Leveraging the feature extraction protocol from [11], we obtain the latent representa-tions: 
+
+zHE = ES (xHE ), zIHC = ET (xIHC ) (1) where z ∈ RC×h×w denotes the spatial feature maps. During training, ET
+
+provides the target distribution for molecular feature learning; critically, it is discarded during the inference phase, requiring only H&E input. 
+
+2.2.2. Latent Mapping 
+
+To bridge the domain gap between the H&E and IHC modalities, we introduce the Feature Hallucinator M. This module learns a non-linear transformation to project H&E features into a “hallucinated” IHC latent space: 
+
+ˆzIHC = M(zHE ) (2) The primary objective is to align ˆzIHC structurally and semantically with the authentic IHC features zIHC without pixel reconstruction. 52.3. Domain Knowledge-constrained Training via Auxiliary Tasks 
+
+Minimizing statistical discrepancy between latent vectors is insufficient to guarantee that the hallucinated features capture clinically relevant phe-notypes. The characterization of nuclei distribution and membrane staining intensity is critical for accurate HER2 assessment. Therefore, we propose to internalize these biological constraints into the latent representation via two lightweight auxiliary decoders. 
+
+2.3.1. Nuclei Density Regularization 
+
+To ensure ˆzIHC retains accurate structural information, we incorporate a Nuclei Decoder Dnuc . Ground truth density maps Kgt are generated from the Hematoxylin channel of the training images using color deconvolution and Gaussian filtering [14]. The decoder estimates this distribution as: 
+
+ˆK = Dnuc (ˆ zIHC ) (3) By minimizing the reconstruction error between ˆK and Kgt , we constrain the latent features to encode precise cellular localization. 
+
+2.3.2. Membrane Intensity Regularization 
+
+Given that HER2 scoring is principally defined by the completeness of membrane staining (DAB signal), we employ a Membrane Decoder Dmem 
+
+to predict membrane activation. The ground truth mask Mgt is derived via adaptive thresholding of the DAB channel in the HED color space [14]. The predicted mask is formulated as: 
+
+ˆM = Dmem (ˆ zIHC ) (4) These auxiliary tasks ensure that ˆzIHC is not merely an abstract vector but explicitly encodes the biological semantics required for the diagnostic task. 
+
+2.4. Dynamic Fusion and Classification 
+
+For the final prediction, we integrate the morphological features zHE with the hallucinated molecular features ˆzIHC . To account for potential variations in the reliability of the hallucinated features, we implement the modality-sensitive feature attention-based fusion mechanism. We concatenate the feature maps and compute a spatial-channel attention map A via shared MLP layers: 
+
+zf used = Concat (zHE , ˆzIHC ) · A (zHE , ˆzIHC ) (5) 6The fused representation is then fed into a classifier C to compute the prob-ability distribution over HER2 expression levels: 
+
+ˆy = C(zf used ) (6) 
+
+2.5. Loss Functions and Optimization 
+
+To train the proposed model, we design a composite function to collabo-ratively optimize the classification performance while enforcing cross-modal alignment and biological consistency, specifically with the following training objectives: 1. Classification Loss ( Lcls ): We utilize a Cross-Entropy loss: 
+
+Lcls = − X
+
+> c
+
+yc log(ˆ yc) (7) 2. Feature Distillation Loss ( Ldist ): To align the hallucinated and real IHC features, we minimize the cosine distance, prioritizing semantic direction over magnitude: 
+
+Ldist = 1 − ˆzIHC · zIHC 
+
+∥ˆzIHC ∥2∥zIHC ∥2
+
+(8) 3. Auxiliary Biological Losses ( Lbio ): These losses enforce the domain knowledge constraints. We apply Mean Squared Error (MSE) for nuclei density regression and Dice Loss for membrane segmentation: 
+
+Lnuc = ∥ ˆK − Kgt ∥22, Lmem = 1 − Dice ( ˆM , M gt ) (9) The total optimization objective is then formulated as: 
+
+Ltotal = Lcls + λdLdist + λnLnuc + λmLmem (10) where λd, λ n, λ m are hyperparameters balancing feature alignment and bio-logical regularization. Upon completion of training, the auxiliary decoders are removed, resulting in a streamlined inference architecture that requires only H&E input. 7Figure 2: Examples of paired H&E-IHC images with different HER2 expression levels (0, 1+, 2+, 3+ from left to right). 
+
+3. Experimental Setup 
+
+3.1. Dataset 
+
+We conducted experiments to validate the LGD-Net on the BCI Dataset 
+
+[10], a large publicly available cohort for HER2 assessment. The dataset comprises 4,873 pairs of H&E and IHC patches ( 1024 × 1024 pixels) derived from strictly spatially registered whole slide images with the HER2 expression level annotations ranging from negative (0) to strongly positive (3+). We use the official training and test sets (3896:977 images) for training and testing. To generate ground truth supervision for the auxiliary tasks, we employed the deterministic image processing pipeline described in [14]. Specifically, nuclei density maps ( Kgt ) were generated by applying color deconvolution to extract the hematoxylin channel, followed by Gaussian filtering. Membrane staining masks ( Mgt ) were derived via adaptive thresholding of the DAB channel in the Haematoxylin-Eosin-DAB (HED) color space. 
+
+3.2. Implementation Details 
+
+We implemented the propsoed framework in PyTorch. The model was trained on a server with 256GB memory and two NVIDIA RTX 3090 GPU. We utilized ResNet-50 [15], initialized with ImageNet weights, as the back-bone for both the Student and Teacher encoders. Input images were resized to 512 × 512 pixels to optimize the trade-off between computational effi-ciency and fine-grained feature retention. To generate the fake IHC images for baselines, we trained the generator with an H800 GPU. We conduct model training was performed in an end-to-end manner using the AdamW optimizer ( β1 = 0 .9, β 2 = 0 .999 , weight decay= 1e − 4). We 8initialized the learning rate at 1e − 4 and applied a cosine annealing schedule over 50 epochs. The loss weighting factors were empirically set to λd =10 .0, λn = 5 .0, and λm = 5 .0 to prioritize feature alignment and biological regularization. 
+
+3.3. Evaluation Metrics 
+
+We report the Accuracy (Acc) and Macro-averaged F1-score (F1) to assess classification performance, with the latter being particularly critical given the inherent class imbalance. Additionally, we also report the Cohen’s Kappa (κ) to quantify the agreement between model predictions and ground-truth annotations. 
+
+4. Results and Analysis 
+
+4.1. Comparison with State-of-the-Art Methods 
+
+To validate the efficacy of LGD-Net, we compared it against the following categories of baseline approaches that cover most HER2 prediction methods: 1. Unimodal Baseline: A standard ResNet-50 trained exclusively on single modality ( H&E images or IHC images only). 2. Dual-modal Baselines: For this category of baselines, we consider three settings. The first is image concat , which takes both the paired H&E image and IHC image as the input to the convolutional layer. The second is feature level concat with attention which encoder the H&E image and the IHC image separately, and apply attention on the concated features. The third is the Feature-Level Fusion , where we use the Bidirectional Cross-Modal Reconstruction framework [11], which represents the current state-of-the-art. 
+
+> Table 1: Quantitative comparison on the BCI testing set..
+
+Method Acc(%, ↑) F1 ( ↑) κ ( ↑)H&E Unimodal 82.29 0.7935 0.7543 IHC Unimodal 89.46 0.8906 0.8642 ImageConcat ( H&E + real IHC ) 90.99 0.8929 0.8724 FeatureConcat ( H&E + real IHC) 93.76 0.9429 0.9208 FeatureFusion (H&E + real IHC) 94.37 0.9375 0.9190 
+
+LGD-Net (Ours) (H&E) 95.60 0.9644 0.9453 
+
+9As reported in Table 1, the H&E-Only baseline yields suboptimal per-formance (82.29%), confirming that morphological features alone are insuffi-cient to resolve ambiguous HER2 classes. The IHC-only baseline outperforms H&E baseline as expected since the IHC images directly contain the visual features of the HER2 expression. The dual-modal methods improve accuracy by synthesizing the H&E and IHC information. We can also observe that the feature-based methods including the attention on the concatenated features and the advanced feature fusion can further improve the performance. No-tably, LGD-Net surpasses the previous state-of-the-art method by 1.23% in accuracy, 0.0269 in Macro-F1 and 0.0263 in Kappa. This performance gain corroborates our hypothesis that feature hallucination , constrained by in-ternalized domain knowledge, captures diagnostic semantics more effectively than pixel-level features. 
+
+4.2. Ablation Study 
+
+We conducted a comprehensive ablation study to investigate the con-tribution of each component within LGD-Net. The results are detailed in Table 2. 
+
+> Table 2: Ablation study of key components: Feature Hallucination (Halluc.), Attention Fusion (Attn.), and Domain Knowledge Internalization (Bio-Reg).
+
+Variant Halluc. Attn. Bio-Reg Acc (%) F1 κ
+
+A (Baseline) ✗ ✗ ✗ 82.29 0.7935 0.7543 B (Feat. Align) ✓ Concat ✗ 92.53 0.9120 0.8914 C (Dynamic) ✓ ✓ ✗ 93.35 0.9344 0.8884 D (w/ Nuclei) ✓ ✓ Nuclei 94.27 0.9498 0.9239 E (w/ Memb.) ✓ ✓ Memb. 94.78 0.9522 0.9281 
+
+F (Full) ✓ ✓ Both 95.60 0.9644 0.9453 Efficacy of Feature Hallucination: Simply introducing the feature hallucination module (Variant B) results in a substantial performance im-provement over the baseline (+10.24% in accuracy, 0.1371 in κ). This in-dicates that the student encoder and the feature hallucinator successfully learns to approximate the molecular feature distribution of the Teacher. 
+
+Impact of Domain Knowledge: The integration of biological con-straints further enhances robustness. Specifically, membrane intensity reg-ularization (Variant E) yields slightly heigher improvement than nuclei reg-ularization (Variant D). This aligns with clinical guidelines, which identify 10 membrane staining completeness as the primary determinant for distinguish-ing HER2 scores [14]. The combination of both constraints (Variant F) achieves the highest performance, demonstrating that structural (nuclei) and molecular (membrane) cues provide complementary diagnostic information. 
+
+5. Conclusion 
+
+In this paper, we presented the Latent-Guided Dual-Stream Net-work (LGD-Net) , a novel framework for accurate HER2 scoring directly from H&E stained images. To address the inherent limitation of H&E images of the lack of molecular information required to distinguish HER2 represen-tation levels, we proposed to integrate feature-level hallucination instead of pixel-level virtual staining. The proposed approach demonstrates that by hallucinating molecular features in the latent space and constraining them with task-specific domain knowledge, including the nuclei density and mem-brane staining intensity, LGD-Net effectively recovers diagnostic signals lost in standard morphological stains. Comprehensive experiments on the BCI dataset validate the effective-ness of our method. LGD-Net achieved a significant performance gain over the unimodal H&E baseline (improving accuracy from 82.29% to 95.60% ) and outperformed state-of-the-art dual-modal fusion methods. Further-more, by eliminating the computationally expensive image decoder during inference, LGD-Net offers a highly efficient solution suitable for large-scale clinical screening. 
+
+References 
+
+[1] H. Sung, J. Ferlay, R. L. Siegel, M. Laversanne, I. Soerjomataram, A. Je-mal, F. Bray, Global cancer statistics 2020: Globocan estimates of in-cidence and mortality worldwide for 36 cancers in 185 countries, CA: a cancer journal for clinicians 71 (3) (2021) 209–249. [2] A. G. Waks, E. P. Winer, Breast cancer treatment: a review, Jama 321 (3) (2019) 288–300. [3] A. C. Wolff, M. E. H. Hammond, K. H. Allison, B. E. Harvey, P. B. Mangu, J. M. Bartlett, M. Bilous, I. O. Ellis, P. Fitzgibbons, W. Hanna, 11 et al., Human epidermal growth factor receptor 2 testing in breast can-cer: American society of clinical oncology/college of american patholo-gists clinical practice guideline focused update, Archives of pathology & laboratory medicine 142 (11) (2018) 1364–1382. [4] S. Ahn, J. W. Woo, K. Lee, S. Y. Park, Her2 status in breast can-cer: changes in guidelines and complicating factors for interpretation, Journal of pathology and translational medicine 54 (1) (2020) 34–44. [5] C. Karakas, H. Tyburski, B. M. Turner, X. Wang, L. M. Schiffhauer, H. Katerji, D. G. Hicks, H. Zhang, Interobserver and interantibody reproducibility of her2 immunohistochemical scoring in an enriched her2-low–expressing breast cancer cohort, American Journal of Clini-cal Pathology 159 (5) (2023) 484–491. [6] S. Farahmand, A. I. Fernandez, F. S. Ahmed, D. L. Rimm, J. H. Chuang, E. Reisenbichler, K. Zarringhalam, Deep learning trained on hematoxylin and eosin tumor region of interest predicts her2 status and trastuzumab treatment response in her2+ breast cancer, Modern Pathol-ogy 35 (1) (2022) 44–51. [7] S. A. Rasmussen, V. J. Taylor, A. P. Surette, P. J. Barnes, G. C. Bethune, Using deep learning to predict final her2 status in invasive breast cancers that are equivocal (2+) by immunohistochemistry, Ap-plied Immunohistochemistry & Molecular Morphology 30 (10) (2022) 668–673. [8] N. Brieu, N. Triltsch, P. Wortmann, D. Winter, S. Saran, M. Rebelatto, G. Schmidt, Auxiliary cyclegan-guided task-aware domain translation from duplex to monoplex ihc images, in: 2025 IEEE 22nd International Symposium on Biomedical Imaging (ISBI), IEEE, 2025, pp. 1–5. [9] B. Bai, X. Yang, Y. Li, Y. Zhang, N. Pillar, A. Ozcan, Deep learning-enabled virtual histological staining of biological samples, Light: Science & Applications 12 (1) (2023) 57. [10] S. Liu, C. Zhu, F. Xu, X. Jia, Z. Shi, M. Jin, Bci: Breast cancer im-munohistochemical image generation through pyramid pix2pix, in: Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition, 2022, pp. 1815–1824. 12 [11] J. Qin, W. Yang, Y. Su, Y. Zhu, W. Li, Y. Pan, C. Pan, H. Qi, Her2 expression prediction with flexible multi-modal inputs via dynamic bidi-rectional reconstruction, in: Proceedings of the 33rd ACM International Conference on Multimedia, 2025, pp. 2036–2043. [12] J. P. Cohen, M. Luck, S. Honari, Distribution matching losses can hal-lucinate features in medical image translation, in: International confer-ence on medical image computing and computer-assisted intervention, Springer, 2018, pp. 529–536. [13] J. Vasiljević, Z. Nisar, F. Feuerhake, C. Wemmert, T. Lampert, Cy-clegan for virtual stain transfer: Is seeing really believing?, Artificial Intelligence in Medicine 133 (2022) 102420. [14] Q. Peng, W. Lin, Y. Hu, A. Bao, C. Lian, W. Wei, M. Yue, J. Liu, L. Yu, L. Wang, Advancing h&e-to-ihc virtual staining with task-specific do-main knowledge for her2 scoring, in: International Conference on Med-ical Image Computing and Computer-Assisted Intervention, Springer, 2024, pp. 3–13. [15] K. He, X. Zhang, S. Ren, J. Sun, Deep residual learning for image recognition, in: Proceedings of the IEEE conference on computer vision and pattern recognition, 2016, pp. 770–778. 13

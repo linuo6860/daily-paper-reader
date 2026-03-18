@@ -1,0 +1,382 @@
+Title: Automated Histopathology Report Generation via Pyramidal Feature Extraction and the UNI Foundation Model
+
+URL Source: https://arxiv.org/pdf/2602.16422v1
+
+Published Time: Thu, 19 Feb 2026 01:54:11 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# Automated Histopathology Report Generation via Pyramidal Feature Extraction and the UNI Foundation Model 
+
+## Ahmet Halici ∗1, Ece Tu˘ gba Cebeci ∗1, Musa Balci ∗1, Mustafa Çini 1, and Serkan Sökmen 11ViseurAI 
+
+> ∗
+
+## These authors contributed equally to this work 
+
+# Abstract 
+
+Generating diagnostic text from histopathology whole-slide images (WSIs) is challenging due to the gigapixel scale of the input and the requirement for precise, domain-specific language. We propose a hierarchical vision–language frame-work that combines a frozen pathology foundation model with a Transformer decoder for report generation. To make WSI processing tractable, we perform multi-resolution pyramidal patch selection (downsampling factors 23 to 26) and remove background and artifacts using Laplacian-variance and HSV-based criteria. Patch features are extracted with the UNI Vision Transformer and projected to a 6-layer Transformer decoder that generates diagnostic text via cross-attention. To better represent biomedical terminology, we tokenize the output us-ing BioGPT. Finally, we add a retrieval-based verification step that compares generated reports with a reference corpus us-ing Sentence-BERT embeddings; if a high-similarity match is found, the generated report is replaced with the retrieved ground-truth reference to improve reliability. 
+
+# 1 Introduction 
+
+Histopathological examination remains the clinical reference standard for cancer diagnosis, requiring expert pathologists to interpret complex morphological patterns across cellular, tissue, and architectural levels [ 1]. While the digitization of pathology has enabled discriminative deep learning for tasks such as tumor classification and segmentation [ 2 , 3], recent work has increasingly explored generative models for produc-ing textual outputs from images. Automated Histopathology Report Generation (AHRG) extends slide-level prediction by synthesizing coherent, clinically appropriate natural-language descriptions directly from whole-slide images (WSIs). A central difficulty in AHRG is the disparity between the scale of the visual input and the semantic density of the textual output. A single WSI often exceeds 10 10 pixels, rendering standard vision–language architectures—typically designed for natural images at 224 × 224 resolution—computationally intractable. Traditional Multiple Instance Learning (MIL) methods [ 13 , 14 ] effectively aggregate features for slide-level prediction but often lack the fine-grained spatial grounding required for descriptive text generation. Recent advancements have attempted to bridge this gap through two primary avenues: domain-specific foundation models and Multimodal Large Language Models (MLLMs). Foundation models like UNI [ 4] and H-optimus-1 [ 23 ] pro-vide robust, self-supervised feature representations, yet they lack inherent text generation capabilities. Conversely, MLLMs such as WSI-LLaVA [ 25 ] and ChatEXAONEPath [ 27 ] adapt general-purpose LLMs to pathology through instruction tuning. However, these end-to-end systems face significant hurdles: they are computationally expensive to train, often require mas-sive token pruning that risks discarding rare diagnostic features, and are prone to hallucinations—plausible but factually incor-rect statements [8, 28]. In this work, we present a modular, hierarchical vision– language framework that emphasizes computational efficiency and diagnostic reliability. Rather than training an end-to-end MLLM, we pair a frozen pathology encoder with a lightweight, domain-adapted decoder. Our main contributions are: 1. We propose a hierarchical pyramidal scanning strategy (downsampling 23 to 26) that follows a coarse-to-fine workflow and uses simple, interpretable filters to prior-itize tissue regions while suppressing background and common artifacts. 2. We integrate the UNI encoder [ 4] as a frozen feature extractor and train a lightweight Transformer decoder on top of its 1024-dimensional visual tokens, avoiding end-to-end retraining of the visual backbone. 3. We use the BioGPT tokenizer [ 22 ] to better represent biomedical terminology and reduce vocabulary mismatch during decoding. 4. We add a retrieval-based verification step that compares generated reports with a reference corpus using Sentence-BERT embeddings, replacing high-similarity matches with retrieved ground-truth references to improve output reliability. 1
+
+> arXiv:2602.16422v1 [eess.IV] 18 Feb 2026
+
+# 2 Related Work 
+
+Computational pathology has expanded from primarily dis-criminative tasks toward generative settings that require trans-lating visual evidence into structured text. This section re-views pathology foundation models, histopathology-specific MLLMs, and verification strategies for reducing unsupported generation. 
+
+## 2.1 Pathology Foundation Models 
+
+Transfer learning from natural images (e.g., ImageNet-pretrained ResNet) has increasingly been complemented by domain-specific self-supervised learning (SSL). Pathol-ogy foundation models are trained on large collections of histopathology patches to learn transferable tissue representa-tions. Chen et al. [ 4] introduced UNI, a ViT-Large model dis-tilled via DINOv2 from over 100 million tissue patches, which improves performance across multiple downstream tasks rela-tive to supervised baselines. H-optimus-1 [ 23 ] further scales SSL to slide-level corpora to capture broad morphological variability. While these models provide strong visual repre-sentations, they are feature extractors and therefore require a separate decoding component to produce diagnostic text. 
+
+## 2.2 Generative Vision-Language Architectures 
+
+Generating text from WSIs requires solving the “semantic gap” between pixel-level features and high-level diagnostic concepts. Early approaches relied on captioning models adapted from natural image domains, often yielding generic descriptions [17]. The current state of the art leverages Multimodal Large Lan-guage Models (MLLMs). Quilt-1M [ 24 ] facilitated this shift by curating a dataset of over 1 million image–text pairs from educational videos and social media, enabling the training of models such as Quilt-LLaVA. WSI-LLaVA [ 25 ] addresses the computational bottleneck of processing gigapixel images through dynamic token pruning, retaining only diagnostically relevant patches to fit within the context window of a LLaMA-based decoder. HistGen [ 26 ] proposes a dual-stream architec-ture that separately aggregates local-region details and global WSI context, allowing the decoder to attend to both cellular atypia and tissue architecture. In contrast to these end-to-end models, our work adopts a modular design and focuses on efficient patch selection and reliable decoding. 
+
+## 2.3 Hallucination and Verification Mechanisms 
+
+A critical barrier to clinical adoption is hallucination, where generative models invent features not present in the image. This risk is exacerbated in pathology, where a single incorrect word (e.g., “malignant” vs. “benign”) has severe consequences. Recent works have begun to address this through architectural constraints and verification loops. ReinPath [28] employs Re-inforcement Learning from Human Feedback (RLHF) with a semantic reward system to penalize non-factual generation. ChatEXAONEPath [ 27 ] utilizes Retrieval-Augmented Gen-eration (RAG) to ground model responses in retrieved text-book knowledge or similar historical cases. Similarly, the AQuA framework [ 29 ] demonstrates that statistical anomaly detection can flag realistic-looking hallucinations in generative tasks. Our approach aligns with this trend by incorporating a retrieval-based verification step using Sentence-BERT, provid-ing a scalable method to estimate report confidence without the complexity of RLHF training. 
+
+# 3 Methodology 
+
+We propose a comprehensive pipeline for automated histopathology report generation that bridges the gap between gigapixel visual data and coherent text generation. The system consists of three sequential modules: (1) a hierarchical pyra-midal patch selection and feature extraction mechanism using the UNI foundation model; (2) a custom Transformer decoder trained to translate visual features into diagnostic text; and (3) a post-processing verification stage. 
+
+## 3.1 Pyramidal Patch Selection 
+
+Processing entire gigapixel WSIs at full resolution is computa-tionally prohibitive. We implement a coarse-to-fine pyramidal scanning strategy that processes WSI pyramid levels in de-scending order ( ℓ ∈ { 6, 5, 4, 3}), where level 0 represents the base resolution at 40 × magnification [3, 15]. Each WSI W comprises a hierarchy of levels with progres-sively downsampled resolutions: 
+
+Hℓ = H0
+
+2ℓ , Wℓ = W0
+
+2ℓ (1) where H0 and W0 are the base resolution dimensions. This hierarchical approach allows the system to capture both broad architectural patterns at low magnification and fine cellular details at higher resolution. 
+
+3.1.1 Tissue Segmentation 
+
+For each pyramid level ℓ, we generate a thumbnail image and compute a binary tissue mask using HSV color space thresholding. We classify a pixel at position (x, y ) as tissue if: 
+
+Mℓ(x, y ) = 
+
+(
+
+1 if S(x, y ) > τ S ∧ V (x, y ) > τ V
+
+0 otherwise (2) where τS = 20 and τV = 30 are empirically determined thresholds that effectively separate H&E-stained tissue from background glass [36]. 2The raw binary mask is refined using morphological oper-ations (opening followed by closing with a 5 × 5 structuring element) to remove noise and consolidate tissue regions: 
+
+Mrefined  
+
+> ℓ
+
+= (( Mℓ ⊖ K ) ⊕ K ⊕ K ) ⊖ K (3) where ⊖ and ⊕ denote morphological erosion and dilation, respectively. 
+
+3.1.2 Patch Candidate Generation 
+
+Candidate patches of size 256 × 256 pixels are identified on a regular grid with stride s = 256 pixels (non-overlapping tiling). A candidate patch is retained only if its tissue coverage exceeds a minimum threshold: 
+
+P 
+
+> i,j
+
+Mxc,y c (i, j )256 2 > 0.1 (4) where Mxc,y c is the mask region corresponding to the patch at coordinates (xc, y c).
+
+## 3.2 Quality-Aware Patch Filtering 
+
+To ensure only diagnostically informative patches proceed to feature extraction, we implement multi-criteria quality filter-ing. 
+
+3.2.1 Focus Quality via Laplacian Variance 
+
+We evaluate focus quality using the variance of the Laplacian operator [ 37 ], which measures edge sharpness. For a grayscale patch G derived from RGB patch P, the Laplacian is approxi-mated using convolution with kernel: 
+
+KLap =
+
+0 1 01 −4 10 1 0
+
+ (5) The focus measure is the variance of the Laplacian response: 
+
+f (P) = Var (∇2G) = 1
+
+|Ω|
+
+X
+
+> (x,y )∈Ω
+
+
+
+∇2G(x, y ) − ∇ 2G
+
+2
+
+(6) where Ω denotes all pixel coordinates in the patch. Patches with f (P) < 40 are rejected as out-of-focus. 
+
+3.2.2 Exposure and Artifact Filtering 
+
+We analyze the HSV Value and Saturation channels to detect improper exposure. Computing mean Value μV and mean Saturation μS , we reject patches if: 
+
+μV /∈ [40 , 245] or μS < 12 (7) Additionally, we detect artifacts by computing the fraction of dark pixels (grayscale intensity < 30 ): 
+
+ρdark = 1
+
+|Ω|
+
+X
+
+> (x,y )∈Ω
+
+⊮ [Pgray (x, y ) < 30] (8) Patches with ρdark > 0.2 are rejected as likely containing dust, pen marks, or other contamination [38]. 
+
+3.2.3 Multi-Level Sampling 
+
+After quality filtering across all pyramid levels, we impose a maximum budget of Nmax = 2500 patches per WSI. If the total number of valid patches exceeds this budget, we perform stratified random sampling proportional to the number of valid patches at each level: 
+
+N sample  
+
+> ℓ
+
+= min 
+
+
+
+N valid  
+
+> ℓ
+
+,
+
+
+
+Nmax · N valid 
+
+> ℓ
+
+P 
+
+> k
+
+N valid 
+
+> k
+
+ 
+
+(9) This ensures representation across multiple magnifications. 
+
+## 3.3 Foundation Model Feature Extraction 
+
+3.3.1 UNI Vision Transformer Architecture 
+
+We utilize the UNI (Universal Pathology) foundation model [ 4]as our frozen visual encoder. UNI is a Vision Transformer (ViT-Large/16) pre-trained on over 100 million histopathology patches using DINOv2 self-supervised learning [39]. The ViT-Large architecture decomposes each 256 × 256 
+
+RGB patch into 16 × 16 = 256 non-overlapping tokens of size 
+
+16 × 16 pixels. Each token is flattened and linearly projected to model dimension dmodel = 1024 . A special classification token 
+
+[CLS ] is prepended, and learnable positional embeddings are added to preserve spatial relationships. 
+
+3.3.2 Self-Attention and Encoding 
+
+The encoder consists of 24 transformer layers, each applying multi-head self-attention followed by a feed-forward network. For head h, the attention mechanism computes: Attention h(Z) = softmax 
+
+ QhK⊤
+
+> h
+
+√dk
+
+
+
+Vh (10) where Qh = ZW (h) 
+
+> Q
+
+, Kh = ZW (h) 
+
+> K
+
+, Vh = ZW (h) 
+
+> V
+
+are query, key, and value projections with head dimension dk =64 [30]. The outputs of all 16 attention heads are concatenated and projected. After 24 layers with residual connections and layer normalization, the final [CLS ] token embedding serves as the patch-level feature vector f ∈ R1024 .
+
+3.3.3 Frozen Encoder Strategy 
+
+A critical design decision is keeping the UNI encoder frozen (all 307M parameters fixed) during decoder training. This eliminates gradient computation through the encoder, reducing GPU memory requirements from approximately 16 GB to 4 GB while retaining the robust morphological representations learned from over 100 million patches. The frozen encoder 3also enables a modular workflow in which patch-level features are pre-computed once and cached as HDF5 files, decoupling feature extraction from decoder training. 
+
+3.3.4 Feature Storage 
+
+For each WSI with N selected patches, we extract a feature matrix: 
+
+F = [ f1, f2, . . . , fN ]⊤ ∈ RN ×1024 (11) where fi = UNI frozen (Pi).Table 1: Pipeline configuration and hyperparameters for patch selection and feature extraction.                               
+
+> Stage Parameter Value
+> Pyramid Scanning Levels processed {6,5,4,3}
+> Patch size 256 ×256 px Stride 256 px Tissue threshold >10%
+> Quality Filtering Laplacian var. >40
+> Value range [40 ,245]
+> Saturation thr. >12
+> Dark pixel frac. <20%
+> Max patches/WSI 2500 Feature Extraction Model UNI (ViT-L/16) Pre-training data 100M+ patches Feature dim. 1024 Encoder params. 307M (frozen) Batch size 128
+
+## 3.4 Transformer Decoder Architecture 
+
+The core generation module is a custom 6-layer Transformer decoder [ 30 ] that conditions text generation on the extracted visual features. Unlike standard encoder-decoder architectures where both components are jointly trained, our design keeps the UNI encoder frozen and trains only the decoder along with a lightweight projection layer. This modular approach signifi-cantly reduces computational requirements while leveraging the robust representations learned by the foundation model. 
+
+3.4.1 Input Representation and Feature Projection 
+
+The visual features extracted from WSI patches form the mem-ory input for the decoder. Given a feature matrix F ∈ RN ×1024 
+
+from N selected patches, we first apply a linear projection layer to map these features into the decoder’s embedding space: 
+
+M = FW p + bp (12) where Wp ∈ R1024 ×1024 and bp ∈ R1024 are learnable param-eters. The projected features M ∈ RN ×1024 serve as the visual memory that the decoder attends to during text generation. Since WSIs yield variable numbers of valid patches, we employ a memory key padding mask to handle sequences of different lengths within a batch. This mask ensures that the cross-attention mechanism ignores padded positions, allowing the model to process WSIs with varying tissue content without introducing noise from padding tokens. 
+
+3.4.2 Token Embedding and Positional Encoding 
+
+For text representation, we employ the BioGPT tokenizer [ 22 ], which is specifically optimized for biomedical vocabulary. This choice reduces token fragmentation commonly observed with generic tokenizers when processing domain-specific ter-minology such as histological grades, cellular descriptions, and diagnostic phrases. Input tokens are mapped to dense vectors through a learn-able embedding layer E ∈ RV ×1024 , where V denotes the vocabulary size. To inject sequential information, we add sinusoidal positional encodings [ 30 ] to the token embeddings: 
+
+P E (pos, 2i) = sin 
+
+ pos 
+
+10000 2i/d 
+
+
+
+(13) 
+
+P E (pos, 2i+1) = cos 
+
+ pos 
+
+10000 2i/d 
+
+
+
+(14) where pos represents the position index and i denotes the dimension index. This encoding scheme enables the model to capture the sequential nature of diagnostic text without introducing additional learnable parameters. 
+
+3.4.3 Decoder Layer Configuration 
+
+Each decoder layer comprises three sub-modules: masked multi-head self-attention, multi-head cross-attention, and a position-wise feed-forward network [ 30 ]. The architec-ture employs 8 attention heads with a model dimension of 
+
+dmodel = 1024 and a feed-forward dimension of df f = 2048 .Dropout [ 34 ] with probability 0.1 is applied after each sub-layer for regularization. The masked self-attention mechanism enforces autoregres-sive generation by applying a causal mask that prevents each position from attending to subsequent positions: Mask ij =
+
+(
+
+0 if i ≥ j
+
+−∞ if i < j (15) This ensures that the prediction for position t depends only on the known outputs at positions less than t.The cross-attention module enables each generating token to attend to the entire set of visual patch features, follow-ing the encoder-decoder attention mechanism introduced for sequence-to-sequence tasks [ 30 ] and later adapted for image captioning [ 35 ]. For a query token at position t, the attention weights over visual memory are computed as: 
+
+αt = softmax 
+
+ qtK⊤
+
+√dk
+
+
+
+(16) 4where qt is the query vector derived from the text representa-tion, and K contains the key vectors projected from the visual memory M. This mechanism allows the decoder to dynami-cally focus on relevant image regions when generating each diagnostic term. 
+
+3.4.4 Training Objective and Optimization 
+
+The decoder is trained using teacher forcing [ 32 ], where the ground-truth tokens are provided as input during training. The model learns to predict the next token ti+1 given the previous tokens t1, . . . , t i and the visual features F. We minimize the cross-entropy loss over the vocabulary: 
+
+L = −
+
+> L
+
+X
+
+> i=1
+
+log P (ti|t1, . . . , t i−1, F) (17) where L denotes the sequence length. Padding tokens are excluded from the loss computation to prevent the model from learning trivial predictions. All decoder parameters are initialized using Xavier uniform initialization [ 31 ] to maintain stable gradient flow during early training. We employ the AdamW optimizer [ 33 ] with a two-phase learning rate schedule: a warmup phase of 10 epochs at 5 × 10 −5, followed by decay to a base rate of 5 × 10 −6.The output layer projects the final hidden states to vocabulary logits, from which the next token probability distribution is obtained via softmax. Table 2: Decoder hyperparameters. 
+
+Parameter Value 
+
+Number of layers 6Attention heads 8Model dimension ( dmodel ) 1024 Feed-forward dimension ( df f ) 2048 Dropout rate 0.1 Maximum sequence length 64 Vocabulary size 42,384 (BioGPT) Optimizer AdamW Warmup epochs 10 Warmup learning rate 5 × 10 −5
+
+Base learning rate 5 × 10 −6
+
+Batch size 64 Total epochs 350 
+
+## 3.5 Retrieval-Based Post-Processing 
+
+To mitigate the risk of hallucination, we incorporate a similarity-based correction module. After generating a report, the system encodes the text using a Sentence-BERT model (all-MiniLM-L6-v2) to produce a 384-dimensional semantic embedding. This embedding is compared against a database of ground-truth reports from the training set via cosine similarity. If the cosine similarity between the generated report and the nearest reference exceeds a confidence threshold ( τ = 0 .85 ), the system replaces the generated report with the matched ground-truth report, leveraging the assumption that a high-similarity match indicates a reliable reference exists in the training corpus. Reports falling below this threshold are re-tained as original generations, as they may represent valid but less common diagnostic patterns not well-represented in the reference database. 
+
+# 4 Experimental Setup 
+
+## 4.1 Implementation Details 
+
+The pipeline is implemented in PyTorch 2.0. Feature extraction and training were conducted on Azure ML infrastructure with GPU acceleration. The decoder was trained for 350 epochs with a batch size of 64. We utilized the AdamW optimizer with a learning rate schedule comprising a 10-epoch warmup (peaking at 5×10 −5)followed by a decay to a base rate of 5 × 10 −6. The sequence length was capped at 64 tokens to align with the typical length of diagnostic summaries. 
+
+## 4.2 Dataset and Evaluation 
+
+Experiments were conducted on the REG 2025 Grand Chal-lenge dataset, which comprises 10,494 WSI-report pairs col-lected from five institutions across Korea, Turkey, India, Japan, and Germany. The dataset spans seven organ systems (breast, bladder, cervix, colon, lung, prostate, and stomach) with re-ports standardized according to College of American Pathol-ogists (CAP) guidelines. The data was divided into 8,494 training samples and two test sets of 1,000 samples each. Eval-uation was performed using the composite scoring function described in Section 5, with strict patient-level separation to prevent data leakage. 
+
+# 5 Evaluation Metrics 
+
+The REG 2025 Grand Challenge employs a composite scoring function specifically designed for pathology report generation, developed in consultation with clinical experts to balance tex-tual fidelity with diagnostic relevance. The ranking score Srank 
+
+integrates four complementary metrics: 
+
+Srank = 0 .15 × (SROUGE + SBLEU ) + 0 .4 × SKEY + 0 .3 × SEMB 
+
+(18) The individual components capture distinct aspects of re-port quality. ROUGE (Recall-Oriented Understudy for Gist-ing Evaluation) and BLEU (Bilingual Evaluation Understudy) 5quantify n-gram overlap between generated and reference re-ports, providing a measure of lexical precision. However, in medical contexts, these surface-level metrics alone prove insufficient, as clinically equivalent statements may employ substantially different vocabulary. The keyword score SKEY addresses this limitation by com-puting Jaccard similarity between extracted clinical keyword sets: 
+
+SKEY = |Kgen ∩ Kref ||Kgen ∪ Kref | (19) where Kgen and Kref denote keyword sets extracted from gen-erated and reference reports, respectively. This metric specifi-cally targets the preservation of diagnostically significant ter-minology such as disease names, grading descriptors, and anatomical locations. The embedding score SEMB captures semantic equivalence through cosine similarity of sentence embeddings produced by a pre-trained language model: 
+
+SEMB = egen · eref 
+
+∥egen ∥∥ eref ∥ (20) The weight distribution reflects clinical priorities: keyword matching receives the highest coefficient (0.4), emphasizing accurate capture of diagnostic terminology over stylistic simi-larity. Semantic embedding similarity (0.3) acknowledges that pathologically equivalent descriptions may vary in phrasing. Traditional NLG metrics contribute a combined weight of 0.15, serving primarily to penalize gross departures from reference language patterns. 
+
+# 6 Results 
+
+Our framework was evaluated on the REG 2025 Grand Chal-lenge. Table 3 presents the Test Phase 2 performance compari-son among participating teams. Our submission (MedInsight-ViseurAI) achieved a ranking score of 0.8093, placing 8th among 24 teams and within 4.7% of the top-performing method. 
+
+## 6.1 Qualitative Analysis 
+
+To provide insight into the model’s behavior across diverse organ systems and diagnostic categories, Table 4 presents rep-resentative examples of generated reports alongside their cor-responding ground-truth references. Each row shows the WSI identifier, the model’s output ( Generated ), and the clinician-authored reference ( Ground Truth ). Several patterns emerge from the qualitative examples. Cases such as PIT_01_00004_01 (invasive breast car-cinoma), PIT_01_04573_01 (colonic inflammation), and PIT_01_05088_01 (lung squamous cell carcinoma) demon-strate exact or near-exact match with ground-truth reports, confirming the model’s ability to correctly identify organ sites, Table 3: REG 2025 Challenge Test Phase 2 Leaderboard (Top 10). Teams are ranked by the composite score defined in Equation 18. 
+
+Rank Team Score 
+
+1 IMAGINE Lab 0.8494 2 ICGI 0.8472 3 ICL_PathReport 0.8415 4 nw 0.8282 5 PathX 0.8237 6 TrustPath 0.8127 7 FPathX 0.8115 
+
+8 MedInsight-ViseurAI (Ours) 0.8093 
+
+9 ADCT 0.8040 10 katherlab 0.7960 biopsy procedures, and primary diagnoses for common patho-logical entities. However, more complex cases reveal characteristic fail-ure modes. For PIT_01_00005_01, the model generates a diagnosis of invasive ductal carcinoma with grading details, whereas the ground truth specifies ductal carcinoma in situ with architectural subtype and necrosis descriptors—illustrating the challenge of distinguishing invasive from in-situ lesions and generating multi-attribute descriptions. Similarly, for PIT_01_06231_02, the model correctly identifies acinar ade-nocarcinoma but assigns a Gleason score of 6 (3+3) instead of the correct 7 (3+4), demonstrating that fine-grained grading distinctions remain challenging. Minor discrepancies in biopsy procedure terminology (e.g., “colposcopic” vs. “punch” for PIT_01_03513_01; “endoscopic motome” vs. “sono-guided core” for PIT_01_00575_01) are also observed, though these typically do not affect the diagnostic conclusion. Since ground-truth labels were not provided for the full test set, detailed per-category performance analysis was not possible. However, the overall qualitative examination con-firmed that the model consistently produces outputs in the ex-pected canonical format of [Organ], [biopsy type]; [diagnosis] , representing a significant advantage of the encoder-decoder architecture over large language model ap-proaches that may occasionally generate extraneous text or deviate from standardized reporting templates. The retrieval-based post-processing module provided an additional verification mechanism by comparing generated re-ports against the training corpus using Sentence-BERT embed-dings. Reports exceeding the similarity threshold ( τ = 0 .85 )were replaced with the matched ground-truth references, lever-aging the assumption that a high-similarity match indicates a reliable reference exists; those below the threshold were re-tained as original generations, potentially representing valid but less common diagnostic patterns not well-represented in the reference database. 6Table 4: Qualitative comparison of generated reports versus ground-truth references across multiple organ systems. Generated reports are produced by our model; ground truth reports are clinician-authored references.           
+
+> Slide ID Generated Report Ground Truth
+> PIT_01_00005_01 Breast, sono-guided core biopsy; 1. Ductal carci-noma of no special type, grade II (Tubule formation: 3, Nuclear grade: 2, Mitoses: 1) 2. Ductal carcinoma in situ Breast, core-needle biopsy; 1. Ductal carcinoma in situ – Type: Solid – Nuclear grade: High – Necrosis: Present (Comedo-type) 2. Microcalcification PIT_01_00004_01 Breast, core-needle biopsy; Invasive carcinoma of no special type, grade II (Tubule formation: 3, Nuclear grade: 2, Mitoses: 1) Breast, core-needle biopsy; Invasive carcinoma of no special type, grade II (Tubule formation: 3, Nuclear grade: 2, Mitoses: 1) PIT_01_00575_01 Breast, endoscopic motome biopsy; Fibrocystic tu-mor favor change Breast, sono-guided core biopsy; Fibrocystic change PIT_01_06231_02 Prostate, biopsy; Acinar adenocarcinoma, Gleason’s score 6 (3+3), grade group 1, tumor volume: 90% Prostate, biopsy; Acinar adenocarcinoma, Gleason’s score 7 (3+4), grade group 2 (Gleason pattern 4: 10%), tumor volume: 90% PIT_01_03513_01 Uterine cervix, colposcopic biopsy; Low-grade squa-mous intraepithelial lesion (LSIL; CIN 1) Uterine cervix, punch biopsy; Low-grade squamous intraepithelial lesion (LSIL; CIN 1) PIT_01_04573_01 Colon, colonoscopic biopsy; Chronic nonspecific inflammation Colon, colonoscopic biopsy; Chronic nonspecific inflammation PIT_01_05088_01 Lung, biopsy; Squamous cell carcinoma Lung, biopsy; Squamous cell carcinoma
+
+# 7 Discussion 
+
+The modular architecture combining a frozen foundation model encoder with a lightweight domain-adapted decoder offers several practical advantages. By keeping the UNI en-coder frozen, we preserve robust visual representations learned through large-scale self-supervised pre-training while substan-tially reducing computational requirements. Training only the 6-layer decoder required significantly fewer GPU-hours compared to end-to-end fine-tuning of vision-language models that typically exceed billions of parameters, enabling iterative experimentation within resource-constrained research environ-ments. A notable advantage of the encoder-decoder design over autoregressive large language models is the structural consis-tency of generated outputs. Unlike LLMs that sample from probability distributions at each generation step and may pro-duce hallucinated content or formatting artifacts, our decoder employs deterministic generation that consistently adheres to learned report templates. Throughout our experiments, we observed virtually no instances of format violations or out-of-domain text generation, which would be problematic for clinical deployment where reports must conform to standard-ized structures. The BioGPT tokenizer’s domain-specific vocabulary proved advantageous for pathology terminology. Generic tokenizers frequently fragment medical terms into subword units that disrupt semantic coherence, whereas a tokenizer pre-trained on biomedical corpora reduces effective sequence length for pathological terms, facilitating more robust associations be-tween visual features and complete diagnostic phrases. The systematic errors observed in complex grading schemas reveal opportunities for architectural improvements. Diag-noses requiring simultaneous specification of multiple semi-independent attributes create a combinatorial space that may be sparsely sampled in training data. Structured prediction heads that explicitly model attribute dependencies, or auxiliary classification objectives for individual grading components, could provide stronger supervisory signals for rare combina-tions. The strong performance on regularly structured grading systems such as Gleason scoring, despite their apparent com-plexity, likely reflects their higher prevalence in the training distribution and more consistent linguistic templates. Our competitive ranking despite architectural simplicity sug-gests that careful attention to training procedures—including warmup scheduling and domain-specific tokenization— combined with post-processing verification can partially com-pensate for reduced model capacity compared to larger multi-modal language models. Several limitations warrant acknowledgment. The absence of ground-truth labels for the test set precludes quantitative per-category error analysis. The retrieval-based correction mechanism, while providing a safety net against obvious er-rors, may inadvertently suppress valid rare diagnoses not well-represented in the training corpus. Additionally, evaluation on a single challenge dataset limits generalizability assessment, as the REG 2025 data derives from specific institutional contexts that may not transfer to other settings. Finally, the current framework generates only diagnostic summary components; complete clinical reports include additional elements such as 7gross descriptions and ancillary test recommendations that require separate modeling approaches. 
+
+# 8 Conclusion 
+
+We presented a modular vision-language framework for auto-mated histopathology report generation that addresses com-putational efficiency without sacrificing diagnostic accuracy. The hierarchical pyramidal scanning strategy enables tractable processing of gigapixel WSIs while preserving diagnostically relevant tissue regions. Integration of the frozen UNI founda-tion model with a lightweight Transformer decoder, trained using BioGPT tokenization, produces structurally consistent reports that adhere to clinical formatting conventions. Evaluation on the REG 2025 Grand Challenge yielded a ranking score of 0.8093 in Test Phase 2, placing our method 8th among 24 international teams. Qualitative analysis re-vealed robust performance in organ identification, procedure classification, and primary disease recognition, with degra-dation observed primarily in complex multi-attribute grading schemas characteristic of underrepresented diagnostic cate-gories. The architectural choices prioritizing efficiency and con-sistency demonstrate that competitive automated report gen-eration is achievable without the substantial computational investment required for end-to-end multimodal large language model training. Future work will explore structured prediction approaches for complex grading schemas and validation across diverse institutional datasets. 
+
+# Acknowledgments 
+
+We thank the organizers of the REG 2025 Grand Challenge for providing the evaluation infrastructure and benchmark dataset. Computational resources were provided by Microsoft Azure Machine Learning. This work was conducted at ViseurAI. 
+
+# References 
+
+[1] Niazi, M.K.K., Parwani, A.V., and Gurcan, M.N. (2019). Digital pathology and artificial intelligence. The Lancet Oncology , 20(5), e253–e261. [2] Bera, K., Schalper, K.A., Rimm, D.L., Velcheti, V., and Madabhushi, A. (2019). Artificial intelligence in digi-tal pathology—new tools for diagnosis and precision oncology. Nature Reviews Clinical Oncology , 16(11), 703–715. [3] Campanella, G., et al. (2019). Clinical-grade computa-tional pathology using weakly supervised deep learning on whole slide images. Nature Medicine , 25(8), 1301– 1309. [4] Chen, R.J., et al. (2024). Towards a general-purpose foundation model for computational pathology. Nature Medicine , 30, 850–862. [5] Lu, M.Y., et al. (2024). A visual-language foundation model for pathology image analysis using medical Twit-ter. Nature Medicine , 30, 863–874. [6] Vinyals, O., Toshev, A., Bengio, S., and Erhan, D. (2015). Show and tell: A neural image caption generator. CVPR ,3156–3164. [7] Anderson, P., et al. (2018). Bottom-up and top-down attention for image captioning and visual question an-swering. CVPR , 6077–6086. [8] Liu, G., et al. (2019). Clinically accurate chest X-ray report generation. Machine Learning for Healthcare , 249– 269. [9] Liu, H., et al. (2024). Visual instruction tuning. NeurIPS ,36. [10] Alayrac, J.B., et al. (2022). Flamingo: A visual language model for few-shot learning. NeurIPS , 35, 23716–23736. [11] Li, C., et al. (2024). LLaVA-Med: Training a large language-and-vision assistant for biomedicine in one day. 
+
+NeurIPS , 36. [12] Litjens, G., et al. (2017). A survey on deep learning in medical image analysis. Medical Image Analysis , 42, 60– 88. [13] Ilse, M., Tomczak, J., and Welling, M. (2018). Attention-based deep multiple instance learning. ICML , 2127– 2136. [14] Lu, M.Y., et al. (2021). Data-efficient and weakly super-vised computational pathology on whole-slide images. 
+
+Nature Biomedical Engineering , 5(6), 555–570. [15] Chen, R.J., et al. (2022). Scaling vision transformers to gigapixel images via hierarchical self-supervised learn-ing. CVPR , 16144–16155. [16] Vorontsov, E., et al. (2024). Virchow: A million-slide digital pathology foundation model. arXiv preprint arXiv:2309.07778 .[17] Jing, B., Xie, P., and Xing, E. (2018). On the automatic generation of medical imaging reports. ACL , 2577–2586. [18] Chen, Z., et al. (2020). Generating radiology reports via memory-driven transformer. EMNLP , 1439–1449. [19] Li, Y., et al. (2018). Hybrid retrieval-generation re-inforced agent for medical image report generation. 
+
+NeurIPS , 31. 8[20] Huang, Z., et al. (2023). A visual-language foundation model for pathology image analysis using medical Twit-ter. Nature Medicine , 29(9), 2307–2316. [21] Jaegle, A., et al. (2021). Perceiver: General perception with iterative attention. ICML , 4651–4664. [22] Luo, R., et al. (2022). BioGPT: Generative pre-trained transformer for biomedical text generation and mining. 
+
+Briefings in Bioinformatics , 23(6), bbac409. [23] Bioptimus (2025). H-optimus-1. Available at: 
+
+https://huggingface.co/bioptimus/ H-optimus-1 .[24] Ikezogwo, W., et al. (2024). Quilt-1M: One Million Image-Text Pairs for Histopathology. NeurIPS .[25] Liang, Y., Lyu, X., Ding, M., Chen, W., Zhang, J., Ren, Y., He, X., Wu, S., Yang, S., Wang, X., Xing, X., and Shen, L. (2024). WSI-LLaVA: A Multimodal Large Lan-guage Model for Whole Slide Image. arXiv preprint arXiv:2412.02141 .[26] Zuo, Y., et al. (2024). HistGen: Histopathology Report Generation via Local-Global Feature Encoding. MICCAI .[27] Baek, S., et al. (2025). ChatEXAONEPath: An Expert-level Multimodal Large Language Model for Histopathol-ogy. arXiv preprint arXiv:2504.13023 .[28] Zhang, L., et al. (2026). ReinPath: A Multimodal Re-inforcement Learning Approach for Pathology. arXiv preprint arXiv:2601.14757 .[29] Shao, Z., et al. (2025). AQuA: A robust and scalable framework for hallucination detection in virtual tissue staining. Nature Communications .[30] Vaswani, A., et al. (2017). Attention is all you need. 
+
+NeurIPS , 30. [31] Glorot, X. and Bengio, Y. (2010). Understanding the difficulty of training deep feedforward neural networks. 
+
+AISTATS , 249–256. [32] Williams, R.J. and Zipser, D. (1989). A learning algo-rithm for continually running fully recurrent neural net-works. Neural Computation , 1(2), 270–280. [33] Loshchilov, I. and Hutter, F. (2019). Decoupled weight decay regularization. ICLR .[34] Srivastava, N., et al. (2014). Dropout: A simple way to prevent neural networks from overfitting. JMLR , 15(1), 1929–1958. [35] Xu, K., et al. (2015). Show, attend and tell: Neural image caption generation with visual attention. ICML , 2048– 2057. [36] Macenko, M., et al. (2009). A method for normalizing his-tology slides for quantitative analysis. ISBI , 1107–1110. [37] Pertuz, S., Puig, D., and Garcia, M.A. (2013). Analysis of focus measure operators for shape-from-focus. Pattern Recognition , 46(5), 1415–1432. [38] Kothari, S., et al. (2013). Removing out-of-focus blur in whole-slide digital pathology images. Journal of Pathol-ogy Informatics , 4, 22. [39] Oquab, M., et al. (2023). DINOv2: Learning ro-bust visual features without supervision. arXiv preprint arXiv:2304.07193 .9

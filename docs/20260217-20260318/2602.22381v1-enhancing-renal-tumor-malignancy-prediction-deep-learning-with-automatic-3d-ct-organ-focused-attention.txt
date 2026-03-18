@@ -1,0 +1,192 @@
+Title: Enhancing Renal Tumor Malignancy Prediction: Deep Learning with Automatic 3D CT Organ Focused Attention
+
+URL Source: https://arxiv.org/pdf/2602.22381v1
+
+Published Time: Fri, 27 Feb 2026 01:08:45 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+## ENHANCING RENAL TUMOR MALIGNANCY PREDICTION: DEEP LEARNING WITH AUTOMATIC 3D CT ORGAN FOCUSED ATTENTION 
+
+## Zhengkang Fan 1,3 Chengkun Sun 1 Russell Terry 2 Jie Xu 1 Longin Jan Latecki 31Department of Health Outcomes & Biomedical Informatics, University of Florida, Gainesville, FL, USA 
+
+> 2
+
+## Department of Urology, University of Florida, Gainesville, FL, USA 
+
+> 3
+
+## Department of Computer & Information Sciences, Temple University, Philadelphia, PA, USA 
+
+ABSTRACT 
+
+Accurate prediction of malignancy in renal tumors is cru-cial for informing clinical decisions and optimizing treatment strategies. However, existing imaging modalities lack the necessary accuracy to reliably predict malignancy before sur-gical intervention. While deep learning has shown promise in malignancy prediction using 3D CT images, traditional ap-proaches often rely on manual segmentation to isolate the tu-mor region and reduce noise, which enhances predictive per-formance. Manual segmentation, however, is labor-intensive, costly, and dependent on expert knowledge. In this study, a deep learning framework was developed utilizing an Organ Focused Attention (OFA) loss function to modify the atten-tion of image patches so that organ patches attend only to other organ patches. Hence, no segmentation of 3D renal CT images is required at deployment time for malignancy pre-diction. The proposed framework achieved an AUC of 0.685 and an F1-score of 0.872 on a private dataset from the UF In-tegrated Data Repository (IDR), and an AUC of 0.760 and an F1-score of 0.852 on the publicly available KiTS21 dataset. These results surpass the performance of conventional models that rely on segmentation-based cropping for noise reduction, demonstrating the framework’s ability to enhance predictive accuracy without explicit segmentation input. The findings suggest that this approach offers a more efficient and reliable method for malignancy prediction, thereby enhancing clinical decision-making in renal cancer diagnosis. 
+
+Index Terms — Renal Cancer, Malignancy Prediction, CT scans, Deep Learning, Automatic Segmentation 
+
+1. INTRODUCTION 
+
+Kidney cancer has long been a significant health concern, with its impact intensifying over recent years. In the United States, it is estimated that in 2025, approximately 80,980 new cases of kidney and renal pelvic cancer will be diagnosed, and approximately 14,510 individuals will succumb to this disease.[1] Accurate prediction of malignancy in renal tumors plays a pivotal role in enhancing patient survival rates. When kidney cancer is identified at a localized stage, the 5-year rel-ative survival rate is notably higher.[2] This underscores the critical need for advances in diagnostic methods to facilitate prompt and accurate identification of renal malignancies. Deep learning has substantially advanced AI-driven diag-nostic methodologies in medical imaging, with segmentation playing a critical role in preprocessing by reducing noise and improving model robustness.[3, 4] Automated segmentation approaches such as SAM-AutoMed show strong potential for optimizing analysis,[5] while 3D U-Net–based meth-ods and AI frameworks that integrate segmentation with subtype prediction have significantly improved renal cancer diagnostics.[6] Architectures like LACPANet further enhance subtype differentiation by combining lesion segmentation with temporal analysis across multi-phase CT scans.[7] De-spite these advances, high-quality segmentation labels remain scarce and costly due to their dependence on expert annota-tion, limiting the transferability of segmentation-dependent models across institutions.[6, 8] This challenge highlights the need for robust, adaptable frameworks capable of function-ing with weakly labeled or fully automated segmentation to ensure broader real-world applicability. To address these challenges, we propose Automatic 3D CT Organ-Focused Attention (OFA), a novel framework that eliminates the need for manual segmentation during predic-tion, thereby reducing the labor-intensive annotation process. At its core, OFA introduces a new Organ-Focused Attention loss, which enables a 3D Vision Transformer (ViT) [9] to re-strict image patch attention exclusively to organ regions. This allows the model to effectively concentrate on clinically rele-vant structures without explicit segmentation input, achieving superior performance compared to methods that depend on pre-segmented images during inference. Beyond improving early cancer diagnosis and patient outcomes, OFA establishes a transferable learning paradigm for segmentation, enhancing downstream task performance and delivering results compa-rable to segmentation-based approaches. By removing the dependency on segmentation at deployment, our framework broadens clinical applicability and streamlines workflow effi-ciency for healthcare professionals. 
+
+> arXiv:2602.22381v1 [cs.CV] 25 Feb 2026 3D Renal CT image
+> 3D Renal Segmentation
+> Patch tokens
+> Class token
+
+Training 
+
+Prediction 3D Vision Transformer 
+
+> Self attention blocks
+
+... ...        
+
+> Classification
+> Head
+> Malignancy
+> Prediction
+> Organ Patch
+> attention matrix
+> Self -attention
+> Matrix
+> SoftMax SoftMax SoftMax
+> SoftMax
+> OFA Loss OFA Loss OFA Loss
+
++ +
+
+> Classification Loss
+> OFA Total Loss
+
++
+
++
+
+> Self -attention
+> Matrix
+> Self -attention
+> Matrix
+
+Fig. 1 . Overview of the 3D Organ-Focused Attention (OFA) framework 
+
+2. METHOD 
+
+The overall architecture of our framework, incorporating Organ-Focused Attention (OFA) loss, is illustrated in Fig 1. In the training phase, both segmentation data and CT images are required. The Organ Patch Attention Matrix is derived from the segmentation, while the attention matrix is obtained from the selected self-attention layer. The Organ-Focused Attention (OFA) Loss is then computed and incorporated into the classification loss through a weighted summation. This approach ensures that the model effectively learns to focus on relevant organ regions during training. However, once the model is trained, segmentation is no longer required as an input, and the model operates solely on CT images. The core concept of this methodology is to leverage OFA to guide the self-attention mechanism, ensuring greater focus on organ patches while minimizing attention to background regions. The computation of OFA involves three fundamen-tal steps: 1. Organ Patch Attention Matrix: A 3D renal segmentation mask is passed through the Organ Patch Atten-tion Module to derive an organ patch attention matrix, which highlights relevant anatomical regions. 2.Organ-Focused Attention Loss: The organ patch attention matrix is com-bined with the self-attention matrix from the 3D ViT to compute the Organ-Focused Attention Loss, ensuring that attention is concentrated on organ-specific patches. 3.Final Loss: The Organ-Focused Loss from selected layers of inter-est is summed with the classification loss to obtain the final total loss for optimization. 
+
+2.1. Organ Patch Attention Matrix 
+
+Given a 3D medical image of dimensions D × H × W , we partition it into N 3D patches of uniform size to be utilized in our 3D Vision Transformer (ViT). For binary segmentation, a patch containing a renal segmentation region is designated as an organ patch. Our training strategy aims to enhance the attention values among organ patches while minimizing at-tention to non-organ patches. To achieve this, we introduce a loss function that directs the attention of a given patch Pi ex-clusively toward other organ patches Pj To formalize this ap-proach, we define an Organ Patch Attention Matrix (OPAM), denoted as M , which is a binary N × N matrix. Each row 
+
+mi of M contains ones in positions corresponding to patches that intersect the same object mask as patch i. Mathemati-cally, mij = 1 if patches Pi and Pj overlap with the same organ mask, and mij = 0 otherwise. 
+
+2.2. Organ-Focused Attention Loss 
+
+To compute the Organ-Focused Attention (OFA) Loss, we require both the Organ Patch Attention Matrix ( M ) and the Self-attention Matrix ( A) derived from the attention layer of the 3D Vision Transformer (ViT). First, a row-wise SoftMax operation is applied to M , yielding M ′= softmax( M ), This is needed, since the final step in the computation of A was row-wise SoftMax. The OFA loss is then formulated using the Mean Squared Error (MSE) between A and M ′, As shown in Equation 1, which encourages the self-attention mechanism to prioritize organ-related patches while minimizing focus on background regions. This loss function enhances the model’s ability to concentrate on relevant anatomical structures and suppress irrelevant contextual information. 
+
+LOFA == 1
+
+N 2
+
+> N
+
+X
+
+> i=1
+> N
+
+X
+
+> j=1
+
+(Softmax( M )ij − Aij )2 (1) 
+
+2.3. Final Loss 
+
+The OFA loss can be incorporated into multiple layers within the self-attention mechanism, and various configurations will be systematically examined in the experimental section. To ensure that the model effectively learns both the classifica-tion task and the organ-focused attention task without an im-balance favoring one over the other, we introduce a weighting parameter, α, as a hyperparameter. This parameter regulates the contribution of each task during training, preventing ex-cessive bias toward a single objective. The final loss function is formulated as follows: 
+
+LFinal = LClassification + α · L OFA (2) 
+
+3. EXPERIMENTAL RESULTS AND DISCUSSION 3.1. Datasets 
+
+We utilized two complementary datasets for evaluation. First, the UF Health Renal CT dataset was curated from 370 pre-surgical abdominal CT scans sourced from the UF Health In-tegrated Data Repository (IDR), comprising 326 malignant (88.1%) and 44 benign (11.9%) cases confirmed by pathol-ogy. The scans were volumetric ( D × 512 × 512 ), and given the lack of manual labels, pseudo-segmentation masks were generated using a pretrained nnU-Net model on KiTS23.[10, 11] Second, we incorporated the publicly available KiTS21 dataset of 300 renal CT scans with expert-annotated segmen-tation masks,[12] which includes 275 malignant (91.7%) and 25 benign (8.3%) tumors. This dataset was used both for benchmarking against prior work on renal tumor malignancy prediction,[13] and for validating the generalizability of our framework. 
+
+3.2. Experiment details 
+
+We partitioned the dataset into training, validation, and test sets (70:10:20) using stratified sampling to balance the num-ber of malignant tumor CT scans and the total number of im-ages per case. All CT scans were resampled to an isotropic voxel spacing of 1 × 1 × 1 mm 3 and resized to 96 × 96 × 96 
+
+Table 1 . Quantitative comparison on tumor malignancy classification on the UF Health Renal CT dataset                      
+
+> Method AUC Precision Recall F1-score
+> 3D ViT[9] 0.598 0.843 0.733 0.773 3D ViT + PW[14] 0.650 0.855 0.560 0.634 3D ViT + PW + SBC[6] 0.677 0.884 0.613 0.680
+> 3D ViT + PW + OFA (Ours) 0.685 0.880 0.867 0.872
+> Note. PW = Pretrained weight; SBC = Segmentation-based Cropping; OFA = Organ-Focused Attention.
+
+voxels for model input. Preprocessing included intensity nor-malization, random flipping, and intensity augmentations to improve robustness. Model development was performed in PyTorch using 3D Vision Transformers (ViT) with 12 self-attention layers and 12 attention heads. We also investigated transfer learning with UNETR [14], pretrained on 3D brain CT images, as a domain adaptation strategy to improve generalization. All models were trained with the Adam optimizer (learning rate 
+
+1 × 10 −5, batch size 32) for 50 epochs. For evaluation, we report the area under the ROC curve (AUC) as the primary metric, complemented by F1-score, Precision, and Recall. Thresholds were selected based on Youden’s index to ensure balanced sensitivity and specificity. 
+
+3.3. Results 
+
+3.3.1. UF Health Renal CT dataset 
+
+Table 1 presents a quantitative comparison on tumor type classification of the proposed method against the conven-tional image segmentation-based cropping approach in the UF Health Renal CT dataset. The results indicate that pre-training the model on a different domain enhances the per-formance of the 3D Vision Transformer (ViT), improving the area under the receiver operating characteristic (ROC) curve (AUC) from 0.598 to 0.650. This finding suggests that knowledge transfer from the brain imaging domain can contribute to performance improvements in renal tumor diagnosis. Additionally, the segmentation-based cropping method, which focuses on region-specific areas to reduce re-dundant background information, achieved an AUC of 0.677. When compared to this conventional approach, the proposed framework demonstrated superior performance, achieving an AUC of 0.685. Notably, the proposed method does not re-quire explicit segmentation input during the prediction phase, highlighting its effectiveness and practical advantages over traditional segmentation-based preprocessing techniques. 
+
+3.3.2. KiTS21 
+
+To compare the proposed approach with state-of-the-art (SOTA) methods on a publicly available renal imaging dataset, experiments were conducted on the KiTS21 dataset for the same renal malignancy prediction task using 3D CT images and a 3D CNN model.[13] Table 2 presents the results obtained with the 3D Vision Transformer (ViT), in-Table 2 . Quantitative comparison on tumor malignancy classification on KiTS21                          
+
+> Method AUC Precision Recall F1-score
+> 3D CNN[13] 0.601 0.958 0.582 0.724 3D ViT[9] 0.578 0.882 0.667 0.741 3D ViT + PW[14] 0.633 0.893 0.767 0.813 3D ViT + PW + SBC[6] 0.720 0.905 0.850 0.871 3D ViT + PW + OFA (Ours) 0.760 0.921 0.817 0.852
+> Note. PW = Pretrained weight; SBC = Segmentation-based Cropping; OFA = Organ-Focused Attention.
+
+Table 3 . Self-attention layer selection comparison                 
+
+> Method AUC Precision Recall F1-score
+> OFA First 0.633 0.871 0.480 0.554 OFA First + Last 0.650 0.902 0.453 0.520
+> OFA First + Middle + Last 0.685 0.880 0.867 0.872
+
+corporating both a pretrained module and the traditional segmentation-based cropping method, alongside the pro-posed Organ-Focused Attention (OFA) framework. The experimental results indicate that incorporating seg-mentation information significantly enhances the model’s performance in downstream tasks. A simple segmentation-based cropping approach improves the model’s AUC from 0.633 to 0.72, high-lighting the effectiveness of using seg-mentation for refining the input region. However, the pro-posed framework does not achieve the highest F1 score, primarily due to class imbalance, which influences the precision-recall trade-off in imbalanced classification set-tings. Notably, our approach further enhances predictive performance, achieving an AUC of 0.76, surpassing the con-ventional segmentation-based cropping method (0.72 AUC). This result indicates that the framework effectively improves model performance without requiring explicit segmentation input. 
+
+3.3.3. Ablation Study 
+
+Table 3 present the results of evaluating different Organ-Focused Attention (OFA) loss configurations across various self-attention layers using the UF Health Renal CT dataset. For the placement of OFA loss, three configurations were tested: (1) applying it only to the first self-attention layer, (2) incorporating it in both the first and last layers, and (3) dis-tributing it across the first, middle, and last layers. The results indicate that the third configuration, where the OFA loss was applied at multiple layers, achieved the highest performance with an AUC of 0.685 and an F1-score of 0.872. Additionally, the impact of different α values was ex-plored to determine the most effective balance between clas-sification loss and OFA loss. α values of 900, 1000, and 1100 were tested as result shown in Tables 4, Although an 
+
+α of 1100 resulted in the highest AUC of 0.697, an α of 1000 provided more stable performance, achieving an F1-score of 0.872. These findings suggest that while a higher 
+
+α may slightly improve AUC, a balanced setting of α = 1000 ensures more consistent model performance across different evaluation metrics 
+
+Table 4 . α value comparison                    
+
+> Method AUC Precision Recall F1-score
+> α= 900 0.672 0.865 0.640 0.703
+> α= 1000 0.685 0.880 0.867 0.872
+> α= 1100 0.697 0.904 0.520 0.590
+
+3.3.4. Qualitative performance 
+
+Fig 2 presents a heatmap comparison of CT image slices from the UF Health and KiTS21 test datasets, contrasting the baseline pure 3D ViT model with the 3D ViT enhanced by OFA. The overall attention heatmaps are derived using rollout attention,[15] while the ground truth kidney segmen-tation boundaries are delineated by red contours. It is evident that the incorporation of OFA directs a greater proportion of attention toward the target organ, simultaneously diminishing focus on background regions, thereby enabling the model to more effectively concentrate on the anatomically relevant structures. KiTS21 UF Health   
+
+> OFA OFA Baseline Baseline
+
+Fig. 2 . Visualization of the attention heatmaps on UF Health and KiTS21. 
+
+4. CONCLUSION 
+
+This study introduces an Organ-Focused Attention module that enables 3D Vision Transformers to learn segmentation patterns during training, allowing the model to automatically focus on the target organ during prediction without requiring explicit segmentation input. The proposed approach demon-strated superior performance on both the private UF Health Renal CT dataset and the publicly available KiTS21 dataset, outperforming state-of-the-art methods, including traditional segmentation-based cropping techniques. By removing the need for manual segmentation, this efficient framework can support clinicians in renal tumor diagnosis and early detec-tion, ultimately improving patient outcomes. 5. COMPLIANCE WITH ETHICAL STANDARDS 
+
+This study was conducted using data obtained from the UF Health IDR under IRB approval [IRB202100401]. 
+
+6. ACKNOWLEDGMENTS 
+
+No funding was received for conducting this study. The au-thors have no relevant financial or non-financial interests to disclose. 
+
+7. REFERENCES 
+
+[1] National Cancer Institute, “Seer cancer stat facts: Kidney and renal pelvis cancer,” https://seer. cancer.gov/statfacts/html/kidrp.html ,2025, Accessed July 15, 2025. [2] Kidney Cancer Association, “Fast facts about kidney cancer,” https://www.kidneycancer. org/essentials/fast-facts/ , 2025, Ac-cessed July 15, 2025. [3] A. M. Sharafaddini, K. K. Esfahani, and N. Mansouri, “Deep learning approaches to detect breast cancer: acomprehensive review,” Multimedia Tools and Appli-cations , 2024. [4] Y. Xu, R. Quan, W. Xu, Y. Huang, X. Chen, and F. Liu, “Advances in medical image segmentation: A compre-hensive review of traditional, deep learning and hybrid approaches,” Bioengineering , vol. 11, no. 10, pp. 1034, 2024. [5] J. Sun, K. Chen, Z. He, S. Ren, X. He, X. Liu, and C. Peng, “Medical image analysis using improved sam-med2d: segmentation and classification perspectives,” 
+
+BMC Medical Imaging , vol. 24, no. 1, pp. 241, 2024. [6] J. Liu, O. Yildirim, O. Akin, and Y. Tian, “Ai-driven robust kidney and renal mass segmentation and classifi-cation on 3d ct images,” Bioengineering , vol. 10, no. 1, pp. 116, 2023. [7] K. H. Uhm, S. W. Jung, S. H. Hong, and S. J. Ko, “Lesion-aware cross-phase attention network for renal tumor subtype classification on multi-phase ct scans,” 
+
+Computers in Biology and Medicine , vol. 178, pp. 108746, 2024. [8] T. Zhao, Z. Sun, Y. Guo, Y. Sun, Y. Zhang, and X. Wang, “Automatic renal mass segmentation and classification on ct images based on 3d u-net and resnet algorithms,” 
+
+Frontiers in Oncology , vol. 13, pp. 1169922, 2023. [9] A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weis-senborn, X. Zhai, T. Unterthiner, M. Dehghani, M. Minderer, G. Heigold, S. Gelly, J. Uszkoreit, and N. Houlsby, “An image is worth 16×16 words: Trans-formers for image recognition at scale,” in International Conference on Learning Representations (ICLR) , 2021. [10] Fabian Isensee, Paul F. Jaeger, Simon A. A. Kohl, Jens Petersen, and Klaus H. Maier-Hein, “nnu-net: A self-configuring method for deep learning-based biomedical image segmentation,” Nature Methods , vol. 18, no. 2, pp. 203–211, 2021. [11] Nicholas Heller, Fabian Isensee, Rohit Tejpaul, Austin Wood, Nikolaos Papanikolopoulos, and Christian Weight, “2023 kidney and kidney tumor segmentation challenge,” Zenodo, 2023, Published April 18, 2023; dataset for KiTS23 challenge. [12] Nicholas Heller, Fabian Isensee, Daria Trofimova, Rohit Tejpaul, Zhenwei Zhao, Haoran Chen, Lin Wang, An-drei Golts, Dmitry Khapun, Daniel Shats, et al., “The kits21 challenge: Automatic segmentation of kidneys, renal tumors, and renal cysts in corticomedullary-phase ct,” arXiv preprint arXiv:2307.01984 , 2023. [13] Jie Xu, Xing He, Wei Shao, Jiang Bian, and Russell Terry, “Classification of benign and malignant renal tu-mors based on ct scans and clinical data using machine learning methods,” Informatics , vol. 10, no. 3, pp. 55, 2023. [14] Ali Hatamizadeh, Yucheng Tang, Vishwesh Nath, Dong Yang, Andriy Myronenko, Bennett Landman, Holger Roth, and Daguang Xu, “Unetr: Transformers for 3d medical image segmentation,” 2021. [15] Samira Abnar and Willem Zuidema, “Quantify-ing attention flow in transformers,” arXiv preprint arXiv:2005.00928 , 2020.

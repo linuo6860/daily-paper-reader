@@ -6,85 +6,72 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-03-18
-- 运行时间：2026-03-18 20:25:25 UTC
+- 最新运行日期：2026-03-19
+- 运行时间：2026-03-19 20:12:29 UTC
 - 运行状态：成功
-- 本次总论文数：21
-- 精读区：10
+- 本次总论文数：17
+- 精读区：6
 - 速读区：11
 
 ### 今日简报（AI）
-今日深度解析 21 篇 AI 医疗前沿，重点突破生存分析异质性建模与空间转录组基因筛选。
-满分论文提出的可解释 M-Learner 框架为生存分析提供了新范式，空间变量基因的无分布筛选显著提升了分析稳健性。
-建议关注 LLM 辅助诊断及多尺度病理大模型，把握 AI 驱动精准医疗的最新趋势。
-- 详情：[/202603/18/README](/202603/18/README)
+今日精选17篇前沿论文，重点攻克多模态生存风险预测与术后癌症监测难题。
+HGP-
+- 详情：[/202603/19/README](/202603/19/README)
 
 ### 精读区论文标签
-1. [Modeling Heterogeneous Mediation Effects in Survival Analysis via an Interpretable M-Learner Framework](/202603/18/2603.13464v1-modeling-heterogeneous-mediation-effects-in-survival-analysis-via-an-interpretable-m-learner-framework)  
+1. [HGP-Mamba: Integrating Histology and Generated Protein Features for Mamba-based Multimodal Survival Risk Prediction](/202603/19/2603.16421v2-hgp-mamba-integrating-histology-and-generated-protein-features-for-mamba-based-multimodal-survival-risk-prediction)  
    标签：评分：10.0/10、query:bio-ca
-   evidence：临床试验中替代生物标志物性能的生存分析
-2. [Distribution-free screening of spatially variable genes in spatial transcriptomics](/202603/18/2603.09061v1-distribution-free-screening-of-spatially-variable-genes-in-spatial-transcriptomics)  
+   evidence：整合组织学和蛋白质特征的多模态生存风险预测
+2. [Bivariate deconvolution for cancer detection after surgery](/202603/19/2603.17864v1-bivariate-deconvolution-for-cancer-detection-after-surgery)  
+   标签：评分：10.0/10、query:bio-ca
+   evidence：通过ctDNA进行癌症复发标志物发现
+3. [A Comprehensive Benchmark of Histopathology Foundation Models for Kidney Digital Pathology Images](/202603/19/2603.15967v2-a-comprehensive-benchmark-of-histopathology-foundation-models-for-kidney-digital-pathology-images)  
    标签：评分：9.0/10、query:bio-ca
-   evidence：筛选空间变量基因的生物信息学方法
-3. [Leveraging whole slide difficulty in Multiple Instance Learning to improve prostate cancer grading](/202603/18/2603.09953v1-leveraging-whole-slide-difficulty-in-multiple-instance-learning-to-improve-prostate-cancer-grading)  
-   标签：评分：9.0/10、query:bio-ca
-   evidence：用于前列腺癌分级的多实例学习
-4. [Evidential learning driven Breast Tumor Segmentation with Stage-divided Vision-Language Interaction](/202603/18/2603.11206v1-evidential-learning-driven-breast-tumor-segmentation-with-stage-divided-vision-language-interaction)  
-   标签：评分：9.0/10、query:bio-ca
-   evidence：用于乳腺癌MRI肿瘤分割的深度学习方法
-5. [Multimodal classification of Radiation-Induced Contrast Enhancements and tumor recurrence using deep learning](/202603/18/2603.11827v1-multimodal-classification-of-radiation-induced-contrast-enhancements-and-tumor-recurrence-using-deep-learning)  
-   标签：评分：9.0/10、query:bio-ca
-   evidence：用于肿瘤复发分类的深度学习
-6. [Diffusion-Based Feature Denoising and Using NNMF for Robust Brain Tumor Classification](/202603/18/2603.13182v1-diffusion-based-feature-denoising-and-using-nnmf-for-robust-brain-tumor-classification)  
-   标签：评分：9.0/10、query:bio-ca
-   evidence：用于脑肿瘤分类的深度学习和非负矩阵分解
-7. [Brain Tumor Classification from 3D MRI Using Persistent Homology and Betti Features: A Topological Data Analysis Approach on BraTS2020](/202603/18/2603.13771v1-brain-tumor-classification-from-3d-mri-using-persistent-homology-and-betti-features-a-topological-data-analysis-approach-on-brats2020)  
-   标签：评分：9.0/10、query:bio-ca
-   evidence：用于脑肿瘤分类的拓扑数据分析
-8. [Domain Adaptation Without the Compute Burden for Efficient Whole Slide Image Analysis](/202603/18/2603.15774v1-domain-adaptation-without-the-compute-burden-for-efficient-whole-slide-image-analysis)  
-   标签：评分：9.0/10、query:bio-ca
-   evidence：用于肿瘤分类的高效全切片图像分析
-9. [A Comprehensive Benchmark of Histopathology Foundation Models for Kidney Histopathology](/202603/18/2603.15967v1-a-comprehensive-benchmark-of-histopathology-foundation-models-for-kidney-histopathology)  
-   标签：评分：9.0/10、query:bio-ca
-   evidence：用于癌症和肾脏预后的组织病理学基础模型
-10. [Synergizing Deep Learning and Biological Heuristics for Extreme Long-Tail White Blood Cell Classification](/202603/18/2603.16249v1-synergizing-deep-learning-and-biological-heuristics-for-extreme-long-tail-white-blood-cell-classification)  
-   标签：评分：9.0/10、query:bio-ca
-   evidence：用于白血病筛查中白细胞分类的深度学习
+   evidence：用于癌症诊断和预后的组织病理学基础模型
+4. [Enabling clinical use of foundation models in histopathology](/202603/19/2602.22347v1-enabling-clinical-use-of-foundation-models-in-histopathology)  
+   标签：评分：8.0/10、query:bio-ca
+   evidence：用于组织病理学和生物学相关特征的深度学习系统
+5. [SNPgen: Phenotype-Supervised Genotype Representation and Synthetic Data Generation via Latent Diffusion](/202603/19/2603.10873v1-snpgen-phenotype-supervised-genotype-representation-and-synthetic-data-generation-via-latent-diffusion)  
+   标签：评分：8.0/10、query:bio-ca
+   evidence：用于基因型生成的生物信息学方法
+6. [ELISA: An Interpretable Hybrid Generative AI Agent for Expression-Grounded Discovery in Single-Cell Genomics](/202603/19/2603.11872v2-elisa-an-interpretable-hybrid-generative-ai-agent-for-expression-grounded-discovery-in-single-cell-genomics)  
+   标签：评分：8.0/10、query:bio-ca
+   evidence：用于单细胞基因组学表达发现的AI智能体
 
 ### 速读区论文标签
-1. [XMorph: Explainable Brain Tumor Analysis Via LLM-Assisted Hybrid Deep Intelligence](/202603/18/2602.21178v1-xmorph-explainable-brain-tumor-analysis-via-llm-assisted-hybrid-deep-intelligence)  
+1. [GrapHist: Graph Self-Supervised Learning for Histopathology](/202603/19/2603.00143v1-graphist-graph-self-supervised-learning-for-histopathology)  
    标签：评分：8.0/10、query:bio-ca
-   evidence：用于脑肿瘤分类的可解释深度学习框架
-2. [CARE: A Molecular-Guided Foundation Model with Adaptive Region Modeling for Whole Slide Image Analysis](/202603/18/2602.21637v1-care-a-molecular-guided-foundation-model-with-adaptive-region-modeling-for-whole-slide-image-analysis)  
+   evidence：用于组织病理学图像分析的图自监督学习
+2. [Pretty Good Measurement for Radiomics: A Quantum-Inspired Multi-Class Classifier for Lung Cancer Subtyping and Prostate Cancer Risk Stratification](/202603/19/2603.00223v1-pretty-good-measurement-for-radiomics-a-quantum-inspired-multi-class-classifier-for-lung-cancer-subtyping-and-prostate-cancer-risk-stratification)  
    标签：评分：8.0/10、query:bio-ca
-   evidence：分子引导的病理学基础模型
-3. [Mixed Magnification Aggregation for Generalizable Region-Level Representations in Computational Pathology](/202603/18/2602.22176v1-mixed-magnification-aggregation-for-generalizable-region-level-representations-in-computational-pathology)  
+   evidence：用于肺癌和前列腺癌亚型分类的量子启发分类器
+3. [Hierarchical Classification for Improved Histopathology Image Analysis](/202603/19/2603.00504v1-hierarchical-classification-for-improved-histopathology-image-analysis)  
    标签：评分：8.0/10、query:bio-ca
-   evidence：计算病理学全切片图像表征
-4. [Multi-Dimensional Spectral Geometry of Biological Knowledge in Single-Cell Transformer Representations](/202603/18/2602.22247v1-multi-dimensional-spectral-geometry-of-biological-knowledge-in-single-cell-transformer-representations)  
+   evidence：用于癌症组织病理学图像分类的分层深度学习
+4. [Act Like a Pathologist: Tissue-Aware Whole Slide Image Reasoning](/202603/19/2603.00667v1-act-like-a-pathologist-tissue-aware-whole-slide-image-reasoning)  
    标签：评分：8.0/10、query:bio-ca
-   evidence：单细胞Transformer模型的生物信息学分析
-5. [PathoScribe: Transforming Pathology Data into a Living Library with a Unified LLM-Driven Framework for Semantic Retrieval and Clinical Integration](/202603/18/2603.08935v2-pathoscribe-transforming-pathology-data-into-a-living-library-with-a-unified-llm-driven-framework-for-semantic-retrieval-and-clinical-integration)  
+   evidence：组织感知的全切片图像推理
+5. [Discovery of a Hematopoietic Manifold in scGPT Yields a Method for Extracting Performant Algorithms from Biological Foundation Model Internals](/202603/19/2603.10261v1-discovery-of-a-hematopoietic-manifold-in-scgpt-yields-a-method-for-extracting-performant-algorithms-from-biological-foundation-model-internals)  
    标签：评分：7.0/10、query:bio-ca
-   evidence：用于病理学和癌症护理的 LLM 框架
-6. [A Guideline-Aware AI Agent for Zero-Shot Target Volume Auto-Delineation](/202603/18/2603.09448v1-a-guideline-aware-ai-agent-for-zero-shot-target-volume-auto-delineation)  
+   evidence：从单细胞基础模型中提取生物算法
+6. [Survival Meets Classification: A Novel Framework for Early Risk Prediction Models of Chronic Diseases](/202603/19/2603.11598v1-survival-meets-classification-a-novel-framework-for-early-risk-prediction-models-of-chronic-diseases)  
    标签：评分：7.0/10、query:bio-ca
-   evidence：深度学习用于食管癌放疗靶区勾画
-7. [Causal Survival Analysis in Platform Trials with Non-Concurrent Controls](/202603/18/2603.10989v1-causal-survival-analysis-in-platform-trials-with-non-concurrent-controls)  
+   evidence：将生存分析与分类技术结合用于疾病风险预测
+7. [Developing Foundation Models for Universal Segmentation from 3D Whole-Body Positron Emission Tomography](/202603/19/2603.11627v1-developing-foundation-models-for-universal-segmentation-from-3d-whole-body-positron-emission-tomography)  
    标签：评分：7.0/10、query:bio-ca
-   evidence：临床试验的因果生存分析框架
-8. [A Standardized Framework For Evaluating Gene Expression Generative Models](/202603/18/2603.11244v1-a-standardized-framework-for-evaluating-gene-expression-generative-models)  
+   evidence：用于3D PET图像通用分割的基础模型
+8. [Probabilistic Joint and Individual Variation Explained (ProJIVE) for Data Integration](/202603/19/2603.12351v1-probabilistic-joint-and-individual-variation-explained-projive-for-data-integration)  
    标签：评分：7.0/10、query:bio-ca
-   evidence：单细胞基因表达生成模型的评估框架
-9. [Quantifying Memorization and Privacy Risks in Genomic Language Models](/202603/18/2603.08913v1-quantifying-memorization-and-privacy-risks-in-genomic-language-models)  
+   evidence：基因组学与多组学的数据整合
+9. [Spatial self-supervised Peak Learning and correlation-based Evaluation of peak picking in Mass Spectrometry Imaging](/202603/19/2603.10487v1-spatial-self-supervised-peak-learning-and-correlation-based-evaluation-of-peak-picking-in-mass-spectrometry-imaging)  
    标签：评分：6.0/10、query:bio-ca
-   evidence：基因组语言模型与生物信息学隐私
-10. [PathoScribe: Transforming Pathology Data into a Living Library with a Unified LLM-Driven Framework for Semantic Retrieval and Clinical Integration](/202603/18/2603.08935v1-pathoscribe-transforming-pathology-data-into-a-living-library-with-a-unified-llm-driven-framework-for-semantic-retrieval-and-clinical-integration)  
+   evidence：组织质谱成像的自监督峰学习
+10. [Bayesian Design and Analysis of Precision Trials with Partial Borrowing](/202603/19/2603.10830v1-bayesian-design-and-analysis-of-precision-trials-with-partial-borrowing)  
    标签：评分：6.0/10、query:bio-ca
-   evidence：用于癌症护理中病理数据检索的 LLM 驱动框架
-11. [VIVID-Med: LLM-Supervised Structured Pretraining for Deployable Medical ViTs](/202603/18/2603.09109v2-vivid-med-llm-supervised-structured-pretraining-for-deployable-medical-vits)  
+   evidence：胃癌精准医学试验
+11. [Novel Architecture of RPA In Oral Cancer Lesion Detection](/202603/19/2603.10928v1-novel-architecture-of-rpa-in-oral-cancer-lesion-detection)  
    标签：评分：6.0/10、query:bio-ca
-   evidence：大语言模型监督的医学视觉Transformer预训练
+   evidence：使用RPA进行口腔癌病变检测
 
 
 <div class="dpr-home-promo-card">

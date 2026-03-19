@@ -1,0 +1,728 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-19T20:07:00.361065+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 35,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 48,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2603.16421v2",
+      "title": "HGP-Mamba: Integrating Histology and Generated Protein Features for Mamba-based Multimodal Survival Risk Prediction",
+      "abstract": "Recent advances in multimodal learning have significantly improved cancer survival risk prediction. However, the joint prognostic potential of protein markers and histopathology images remains underexplored, largely due to the high cost and limited availability of protein expression profiling. To address this challenge, we propose HGP-Mamba, a Mamba-based multimodal framework that efficiently integrates histological with generated protein features for survival risk prediction. Specifically, we introduce a protein feature extractor (PFE) that leverages pretrained foundation models to derive high-throughput protein embeddings directly from Whole Slide Images (WSIs), enabling data-efficient incorporation of molecular information. Together with histology embeddings that capture morphological patterns, we further introduce the Local Interaction-aware Mamba (LiAM) for fine-grained feature interaction and the Global Interaction-enhanced Mamba (GiEM) to promote holistic modality fusion at the slide level, thus capture complex cross-modal dependencies. Experiments on four public cancer datasets demonstrate that HGP-Mamba achieves state-of-the-art performance while maintaining superior computational efficiency compared with existing methods. Our source code is publicly available at https://github.com/Daijing-ai/HGP-Mamba.git.",
+      "authors": [
+        "Jing Dai",
+        "Chen Wu",
+        "Ming Wu",
+        "Qibin Zhang",
+        "Zexi Wu",
+        "Jingdong Zhang",
+        "Hongming Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-17T11:57:49+00:00",
+      "link": "https://arxiv.org/pdf/2603.16421v2",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Multimodal survival risk prediction integrating histology and protein features",
+      "llm_evidence_cn": "整合组织学和蛋白质特征的多模态生存风险预测",
+      "llm_evidence": "整合组织学和蛋白质特征的多模态生存风险预测",
+      "canonical_evidence": "整合组织学和蛋白质特征的多模态生存风险预测",
+      "llm_tldr_en": "HGP-Mamba integrates histology and generated protein features for efficient cancer survival risk prediction.",
+      "llm_tldr_cn": "HGP-Mamba 整合组织学与生成的蛋白质特征，实现高效的癌症生存风险预测。",
+      "llm_tldr": "HGP-Mamba 整合组织学与生成的蛋白质特征，实现高效的癌症生存风险预测。",
+      "llm_tags": [
+        "query:bio-ca:composite"
+      ],
+      "matched_query_tag": "query:bio-ca:composite",
+      "matched_query_text": "Papers central to 追踪癌症生物信息学新方法，重点关注多组学整合、生物标志物发现、预后预测及机器学习分析。, especially work that connects or combines: biomarker; survival analysis; machine learning; multi-omics; bioinformatics; cancer; Deep learning methods for cancer data analysis; Machine learning studies for prognosis prediction and biomarker discovery in cancer; Multi omics integration approaches in cancer analysis; Novel bioinformatics methods and models for cancer research.",
+      "matched_requirement_id": "req-composite-bio-ca",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.17864v1",
+      "title": "Bivariate deconvolution for cancer detection after surgery",
+      "abstract": "Detection of minimal residual disease (MRD) in cancer patients after surgery can provide an early marker for disease recurrence and guide subsequent treatment decisions. Accurate and sensitive estimation of tumour burden after cancer surgery may be obtained through liq- uid biopsies, measuring circulating tumour DNA (ctDNA) using, for example, mutation-based Variant Allele Frequency (VAF) values. However, to be applicable to all patients this ei- ther requires tumour-informed, patient-specific mutation panels or sensitive, tumour-agnostic genome-wide measurements. We propose a solution that accounts for patient-specific charac- teristics in genome-wide screens. For that, we introduce a bivariate deconvolution model to estimate tumour proportion from circulating cell-free DNA (cfDNA) methylation profiles of patients before and after surgery. The observations are modelled as a convolution of two bivariate latent variables, corresponding to tumour and background signals, mixed by the tumour proportion at each measurement. This bivariate approach links pre- and post-surgery measurements improving estimation of the tumour proportion after surgery, when the tumour signal is potentially very weak, or absent. We approximate likelihood of the convolution through a discretisation of the bivariate density for each latent variable into a two-dimensional grid for each pair of observations which allows for fast maximum likelihood estimation. We evaluate the predictive performance of the estimated post-surgery tumour proportions based on cfDNA methylation against available mutation-based VAF values in one-year recurrence-free survival.",
+      "authors": [
+        "Nuria Senar",
+        "Stavros Makrodimitris",
+        "Michel H. Hof",
+        "Cornelis Verhoef",
+        "Saskia M. Wilting",
+        "Mark A. van de Wiel"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME"
+      ],
+      "published": "2026-03-18T15:52:28+00:00",
+      "link": "https://arxiv.org/pdf/2603.17864v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Biomarker discovery for cancer recurrence via ctDNA",
+      "llm_evidence_cn": "通过ctDNA进行癌症复发标志物发现",
+      "llm_evidence": "通过ctDNA进行癌症复发标志物发现",
+      "canonical_evidence": "通过ctDNA进行癌症复发标志物发现",
+      "llm_tldr_en": "A bivariate deconvolution model for detecting minimal residual disease and predicting cancer recurrence.",
+      "llm_tldr_cn": "一种用于检测微小残留病灶并预测癌症复发的二元解卷积模型。",
+      "llm_tldr": "一种用于检测微小残留病灶并预测癌症复发的二元解卷积模型。",
+      "llm_tags": [
+        "query:bio-ca:composite"
+      ],
+      "matched_query_tag": "query:bio-ca:composite",
+      "matched_query_text": "Papers central to 追踪癌症生物信息学新方法，重点关注多组学整合、生物标志物发现、预后预测及机器学习分析。, especially work that connects or combines: biomarker; survival analysis; machine learning; multi-omics; bioinformatics; cancer; Deep learning methods for cancer data analysis; Machine learning studies for prognosis prediction and biomarker discovery in cancer; Multi omics integration approaches in cancer analysis; Novel bioinformatics methods and models for cancer research.",
+      "matched_requirement_id": "req-composite-bio-ca",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.15967v2",
+      "title": "A Comprehensive Benchmark of Histopathology Foundation Models for Kidney Digital Pathology Images",
+      "abstract": "Histopathology foundation models (HFMs), pretrained on large-scale cancer datasets, have advanced computational pathology. However, their applicability to non-cancerous chronic kidney disease remains underexplored, despite coexistence of renal pathology with malignancies such as renal cell and urothelial carcinoma. We systematically evaluate 11 publicly available HFMs across 11 kidney-specific downstream tasks spanning multiple stains (PAS, H&E, PASM, and IHC), spatial scales (tile and slide-level), task types (classification, regression, and copy detection), and clinical objectives, including detection, diagnosis, and prognosis. Tile-level performance is assessed using repeated stratified group cross-validation, while slide-level tasks are evaluated using repeated nested stratified cross-validation. Statistical significance is examined using Friedman test followed by pairwise Wilcoxon signed-rank testing with Holm-Bonferroni correction and compact letter display visualization. To promote reproducibility, we release an open-source Python package, kidney-hfm-eval, available at https://pypi.org/project/kidney-hfm-eval/ , that reproduces the evaluation pipelines. Results show moderate to strong performance on tasks driven by coarse meso-scale renal morphology, including diagnostic classification and detection of prominent structural alterations. In contrast, performance consistently declines for tasks requiring fine-grained microstructural discrimination, complex biological phenotypes, or slide-level prognostic inference, largely independent of stain type. Overall, current HFMs appear to encode predominantly static meso-scale representations and may have limited capacity to capture subtle renal pathology or prognosis-related signals. Our results highlight the need for kidney-specific, multi-stain, and multimodal foundation models to support clinically reliable decision-making in nephrology.",
+      "authors": [
+        "Harishwar Reddy Kasireddy",
+        "Patricio S. La Rosa",
+        "Akshita Gupta",
+        "Anindya S. Paul",
+        "Jamie L. Fermin",
+        "William L. Clapp",
+        "Meryl A. Waldman",
+        "Tarek M. El-Ashkar",
+        "Sanjay Jain",
+        "Luis Rodrigues",
+        "Kuang Yu Jen",
+        "Avi Z. Rosenberg",
+        "Michael T. Eadon",
+        "Jeffrey B. Hodgin",
+        "Pinaki Sarder"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-16T22:37:43+00:00",
+      "link": "https://arxiv.org/pdf/2603.15967v2",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "histopathology foundation models for cancer diagnosis and prognosis",
+      "llm_evidence_cn": "用于癌症诊断和预后的组织病理学基础模型",
+      "llm_evidence": "用于癌症诊断和预后的组织病理学基础模型",
+      "canonical_evidence": "用于癌症诊断和预后的组织病理学基础模型",
+      "llm_tldr_en": "Benchmarks histopathology foundation models across multiple clinical tasks including cancer diagnosis and prognosis.",
+      "llm_tldr_cn": "在包括癌症诊断和预后在内的多个临床任务上对组织病理学基础模型进行基准测试。",
+      "llm_tldr": "在包括癌症诊断和预后在内的多个临床任务上对组织病理学基础模型进行基准测试。",
+      "llm_tags": [
+        "query:bio-ca:composite"
+      ],
+      "matched_query_tag": "query:bio-ca:composite",
+      "matched_query_text": "Papers central to 追踪癌症生物信息学新方法，重点关注多组学整合、生物标志物发现、预后预测及机器学习分析。, especially work that connects or combines: biomarker; survival analysis; machine learning; multi-omics; bioinformatics; cancer; Deep learning methods for cancer data analysis; Machine learning studies for prognosis prediction and biomarker discovery in cancer; Multi omics integration approaches in cancer analysis; Novel bioinformatics methods and models for cancer research.",
+      "matched_requirement_id": "req-composite-bio-ca",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.10873v1",
+      "title": "SNPgen: Phenotype-Supervised Genotype Representation and Synthetic Data Generation via Latent Diffusion",
+      "abstract": "Polygenic risk scores and other genomic analyses require large individual-level genotype datasets, yet strict data access restrictions impede sharing. Synthetic genotype generation offers a privacy-preserving alternative, but most existing methods operate unconditionally, producing samples without phenotype alignment, or rely on unsupervised compression, creating a gap between statistical fidelity and downstream task utility. We present SNPgen, a two-stage conditional latent diffusion framework for generating phenotype-supervised synthetic genotypes. SNPgen combines GWAS-guided variant selection (1,024-2,048 trait-associated SNPs) with a variational autoencoder for genotype compression and a latent diffusion model conditioned on binary disease labels via classifier-free guidance. Evaluated on 458,724 UK Biobank individuals across four complex diseases (coronary artery disease, breast cancer, type 1 and type 2 diabetes), models trained on synthetic data matched real-data predictive performance in a train-on-synthetic, test-on-real protocol, approaching genome-wide PRS methods that use $2$-$6\\times$ more variants. Privacy analysis confirmed zero identical matches, near-random membership inference (AUC $\\approx 0.50$), preserved linkage disequilibrium structure, and high allele frequency correlation ($r \\geq 0.95$) with source data. A controlled simulation with known causal effects verified faithful recovery of the imposed genetic association structure.",
+      "authors": [
+        "Andrea Lampis",
+        "Michela Carlotta Massi",
+        "Nicola Pirastu",
+        "Francesca Ieva",
+        "Matteo Matteucci",
+        "Emanuele Di Angelantonio"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.GN"
+      ],
+      "published": "2026-03-11T15:23:37+00:00",
+      "link": "https://arxiv.org/pdf/2603.10873v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Bioinformatics method for genotype generation",
+      "llm_evidence_cn": "用于基因型生成的生物信息学方法",
+      "llm_evidence": "用于基因型生成的生物信息学方法",
+      "canonical_evidence": "用于基因型生成的生物信息学方法",
+      "llm_tldr_en": "Generates phenotype-supervised synthetic genotypes to support genomic analysis and privacy.",
+      "llm_tldr_cn": "生成表型监督的合成基因型，以支持基因组分析并保护隐私。",
+      "llm_tldr": "生成表型监督的合成基因型，以支持基因组分析并保护隐私。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Novel bioinformatics methods and models for cancer research",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.11872v2",
+      "title": "ELISA: An Interpretable Hybrid Generative AI Agent for Expression-Grounded Discovery in Single-Cell Genomics",
+      "abstract": "Translating single-cell RNA sequencing (scRNA-seq) data into mechanistic biological hypotheses remains a critical bottleneck, as agentic AI systems lack direct access to transcriptomic representations while expression foundation models remain opaque to natural language. Here we introduce ELISA (Embedding-Linked Interactive Single-cell Agent), an interpretable framework that unifies scGPT expression embeddings with BioBERT-based semantic retrieval and LLM-mediated interpretation for interactive single-cell discovery. An automatic query classifier routes inputs to gene marker scoring, semantic matching, or reciprocal rank fusion pipelines depending on whether the query is a gene signature, natural language concept, or mixture of both. Integrated analytical modules perform pathway activity scoringacross 60+ gene sets, ligand--receptor interaction prediction using 280+ curated pairs, condition-aware comparative analysis, and cell-type proportion estimation all operating directly on embedded data without access to the original count matrix. Benchmarked across six diverse scRNA-seq datasets spanning inflammatory lung disease, pediatric and adult cancers, organoid models, healthy tissue, and neurodevelopment, ELISA significantly outperforms CellWhisperer in cell type retrieval (combined permutation test, $p < 0.001$), with particularly large gains on gene-signature queries (Cohen's $d = 5.98$ for MRR). ELISA replicates published biological findings (mean composite score 0.90) with near-perfect pathway alignment and theme coverage (0.98 each), and generates candidate hypotheses through grounded LLM reasoning, bridging the gap between transcriptomic data exploration and biological discovery. Code available at: https://github.com/omaruno/ELISA-An-AI-Agent-for-Expression-Grounded-Discovery-in-Single-Cell-Genomics.git (If you use ELISA in your research, please cite this work).",
+      "authors": [
+        "Omar Coser"
+      ],
+      "primary_category": "q-bio.GN",
+      "categories": [
+        "q-bio.GN",
+        "cs.AI"
+      ],
+      "published": "2026-03-12T12:46:22+00:00",
+      "link": "https://arxiv.org/pdf/2603.11872v2",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "AI agent for expression-grounded discovery in single-cell genomics",
+      "llm_evidence_cn": "用于单细胞基因组学表达发现的AI智能体",
+      "llm_evidence": "用于单细胞基因组学表达发现的AI智能体",
+      "canonical_evidence": "用于单细胞基因组学表达发现的AI智能体",
+      "llm_tldr_en": "ELISA is an interpretable AI agent for interactive single-cell discovery and gene marker scoring.",
+      "llm_tldr_cn": "ELISA是一个用于交互式单细胞发现和基因标记评分的可解释AI智能体。",
+      "llm_tldr": "ELISA是一个用于交互式单细胞发现和基因标记评分的可解释AI智能体。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Novel bioinformatics methods and models for cancer research",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2602.22347v1",
+      "title": "Enabling clinical use of foundation models in histopathology",
+      "abstract": "Foundation models in histopathology are expected to facilitate the development of high-performing and generalisable deep learning systems. However, current models capture not only biologically relevant features, but also pre-analytic and scanner-specific variation that bias the predictions of task-specific models trained from the foundation model features. Here we show that introducing novel robustness losses during training of downstream task-specific models reduces sensitivity to technical variability. A purpose-designed comprehensive experimentation setup with 27,042 WSIs from 6155 patients is used to train thousands of models from the features of eight popular foundation models for computational pathology. In addition to a substantial improvement in robustness, we observe that prediction accuracy improves by focusing on biologically relevant features. Our approach successfully mitigates robustness issues of foundation models for computational pathology without retraining the foundation models themselves, enabling development of robust computational pathology models applicable to real-world data in routine clinical practice.",
+      "authors": [
+        "Audun L. Henriksen",
+        "Ole-Johan Skrede",
+        "Lisa van der Schee",
+        "Enric Domingo",
+        "Sepp De Raedt",
+        "Ilyá Kostolomov",
+        "Jennifer Hay",
+        "Karolina Cyll",
+        "Wanja Kildal",
+        "Joakim Kalsnes",
+        "Robert W. Williams",
+        "Manohar Pradhan",
+        "John Arne Nesheim",
+        "Hanne A. Askautrud",
+        "Maria X. Isaksen",
+        "Karmele Saez de Gordoa",
+        "Miriam Cuatrecasas",
+        "Joanne Edwards",
+        "TransSCOT group",
+        "Arild Nesbakken",
+        "Neil A. Shepherd",
+        "Ian Tomlinson",
+        "Daniel-Christoph Wagner",
+        "Rachel S. Kerr",
+        "Tarjei Sveinsgjerd Hveem",
+        "Knut Liestøl",
+        "Yoshiaki Nakamura",
+        "Marco Novelli",
+        "Masaaki Miyo",
+        "Sebastian Foersch",
+        "David N. Church",
+        "Miangela M. Lacle",
+        "David J. Kerr",
+        "Andreas Kleppe"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-02-25T19:13:11+00:00",
+      "link": "https://arxiv.org/pdf/2602.22347v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Deep learning systems for histopathology and biologically relevant features",
+      "llm_evidence_cn": "用于组织病理学和生物学相关特征的深度学习系统",
+      "llm_evidence": "用于组织病理学和生物学相关特征的深度学习系统",
+      "canonical_evidence": "用于组织病理学和生物学相关特征的深度学习系统",
+      "llm_tldr_en": "Introduces robustness losses to improve foundation models in computational pathology against technical variability.",
+      "llm_tldr_cn": "引入鲁棒性损失，提高计算病理学基础模型对抗技术变异的能力。",
+      "llm_tldr": "引入鲁棒性损失，提高计算病理学基础模型对抗技术变异的能力。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2602.22347v1"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.00143v1",
+      "title": "GrapHist: Graph Self-Supervised Learning for Histopathology",
+      "abstract": "Self-supervised vision models have achieved notable success in digital pathology. However, their domain-agnostic transformer architectures are not originally designed to account for fundamental biological elements of histopathology images, namely cells and their complex interactions. In this work, we hypothesize that a biologically-informed modeling of tissues as cell graphs offers a more efficient representation learning. Thus, we introduce GrapHist, a novel graph-based self-supervised learning framework for histopathology, which learns generalizable and structurally-informed embeddings that enable diverse downstream tasks. GrapHist integrates masked autoencoders and heterophilic graph neural networks that are explicitly designed to capture the heterogeneity of tumor microenvironments. We pre-train GrapHist on a large collection of 11 million cell graphs derived from breast tissues and evaluate its transferability across in- and out-of-domain benchmarks. Our results show that GrapHist achieves competitive performance compared to its vision-based counterparts in slide-, region-, and cell-level tasks, while requiring four times fewer parameters. It also drastically outperforms fully-supervised graph models on cancer subtyping tasks. Finally, we also release five graph-based digital pathology datasets used in our study at https://huggingface.co/ogutsevda/datasets , establishing the first large-scale graph benchmark in this field. Our code is available at https://github.com/ogutsevda/graphist .",
+      "authors": [
+        "Sevda Öğüt",
+        "Cédric Vincent-Cuaz",
+        "Natalia Dubljevic",
+        "Carlos Hurtado",
+        "Vaishnavi Subramanian",
+        "Pascal Frossard",
+        "Dorina Thanou"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-02-24T12:11:49+00:00",
+      "link": "https://arxiv.org/pdf/2603.00143v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Graph self-supervised learning for histopathology image analysis",
+      "llm_evidence_cn": "用于组织病理学图像分析的图自监督学习",
+      "llm_evidence": "用于组织病理学图像分析的图自监督学习",
+      "canonical_evidence": "用于组织病理学图像分析的图自监督学习",
+      "llm_tldr_en": "Introduces GrapHist, a biologically-informed graph representation learning framework for digital pathology.",
+      "llm_tldr_cn": "引入了GrapHist，这是一个用于数字病理学的生物信息图表示学习框架。",
+      "llm_tldr": "引入了GrapHist，这是一个用于数字病理学的生物信息图表示学习框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Novel bioinformatics methods and models for cancer research",
+      "matched_requirement_id": "req-10",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.00143v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.10261v1",
+      "title": "Discovery of a Hematopoietic Manifold in scGPT Yields a Method for Extracting Performant Algorithms from Biological Foundation Model Internals",
+      "abstract": "We report the discovery and extraction of a compact hematopoietic algorithm from the single-cell foundation model scGPT, to our knowledge the first biologically useful, competitive algorithm extracted from a foundation model via mechanistic interpretability. We show that scGPT internally encodes a compact hematopoietic manifold with significant developmental branch structure, validated on a strict non-overlap Tabula Sapiens external panel and confirmed via frozen-head zero-shot transfer to an independent multi-donor immune panel. To isolate this geometry, we introduce a general three-stage extraction method consisting of direct operator export from frozen attention weights, a lightweight learned adaptor, and a task-specific readout, producing a standalone algorithm without target-dataset retraining. In 88-split donor-holdout benchmarks against scVI, Palantir, DPT, CellTypist, PCA, and raw-expression baselines, the extracted algorithm achieves the strongest pseudotime-depth ordering and leads on key subtype endpoints (CD4/CD8 AUROC 0.867, mono/macro AUROC 0.951). Compared to standard probing of frozen scGPT embeddings with a 3-layer MLP, the extracted head is BH-significantly better on 6/8 classification endpoints while completing a full 12-split evaluation campaign 34.5x faster with approximately 1000x fewer trainable parameters. The exported operator compresses from three pooled attention heads to a single head without statistically significant loss, and further to a rank-64 surrogate. Mechanistic interpretability of the compact operator reveals a concentrated four-factor core explaining 66.2% of ablation impact, with factors resolving into explicit T/lymphoid, B/plasma, granulocytic, and monocyte/macrophage gene programs. A supplementary second-manifold validation (intercellular communication geometry) confirms that the extraction method generalizes beyond hematopoiesis.",
+      "authors": [
+        "Ihor Kendiukhov"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.CB",
+        "q-bio.GN"
+      ],
+      "published": "2026-03-10T22:44:12+00:00",
+      "link": "https://arxiv.org/pdf/2603.10261v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Extracting biological algorithms from single-cell foundation models",
+      "llm_evidence_cn": "从单细胞基础模型中提取生物算法",
+      "llm_evidence": "从单细胞基础模型中提取生物算法",
+      "canonical_evidence": "从单细胞基础模型中提取生物算法",
+      "llm_tldr_en": "A method to extract performant biological algorithms from the internals of the scGPT foundation model.",
+      "llm_tldr_cn": "一种从 scGPT 基础模型内部提取高性能生物算法的方法。",
+      "llm_tldr": "一种从 scGPT 基础模型内部提取高性能生物算法的方法。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Novel bioinformatics methods and models for cancer research",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.10487v1",
+      "title": "Spatial self-supervised Peak Learning and correlation-based Evaluation of peak picking in Mass Spectrometry Imaging",
+      "abstract": "Mass spectrometry imaging (MSI) enables label-free visualization of molecular distributions across tissue samples but generates large and complex datasets that require effective peak picking to reduce data size while preserving meaningful biological information. Existing peak picking approaches perform inconsistently across heterogeneous datasets, and their evaluation is often limited to synthetic data or manually selected ion images that do not fully represent real-world challenges in MSI. To address these limitations, we propose an autoencoder-based spatial self-supervised peak learning neural network that selects spatially structured peaks by learning an attention mask leveraging both spatial and spectral information. We further introduce an evaluation procedure based on expert-annotated segmentation masks, allowing a more representative and spatially grounded assessment of peak picking performance. We evaluate our approach on four diverse public MSI datasets using our proposed evaluation procedure. Our approach consistently outperforms state-of-the-art peak picking methods by selecting spatially structured peaks, thus demonstrating its efficacy. These results highlight the value of our spatial self-supervised network in comparison to contemporary state-of-the-art methods. The evaluation procedure can be readily applied to new MSI datasets, thereby providing a consistent and robust framework for the comparison of spatially structured peak picking methods across different datasets.",
+      "authors": [
+        "Philipp Weigand",
+        "Nikolas Ebert",
+        "Shad A. Mohammed",
+        "Denis Abu Sammour",
+        "Carsten Hopf",
+        "Oliver Wasenmüller"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-11T07:21:47+00:00",
+      "link": "https://arxiv.org/pdf/2603.10487v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Self-supervised peak learning for mass spectrometry imaging in tissues",
+      "llm_evidence_cn": "组织质谱成像的自监督峰学习",
+      "llm_evidence": "组织质谱成像的自监督峰学习",
+      "canonical_evidence": "组织质谱成像的自监督峰学习",
+      "llm_tldr_en": "A self-supervised neural network for improved peak picking in complex mass spectrometry imaging data.",
+      "llm_tldr_cn": "一种用于改进复杂质谱成像数据中峰提取的自监督神经网络。",
+      "llm_tldr": "一种用于改进复杂质谱成像数据中峰提取的自监督神经网络。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "bioinformatics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.00223v1",
+      "title": "Pretty Good Measurement for Radiomics: A Quantum-Inspired Multi-Class Classifier for Lung Cancer Subtyping and Prostate Cancer Risk Stratification",
+      "abstract": "We investigate a quantum-inspired approach to supervised multi-class classification based on the \\emph{Pretty Good Measurement} (PGM), viewed as an operator-valued decision rule derived from quantum state discrimination. The method associates each class with an encoded mixed state and performs classification through a single POVM construction, thus providing a genuinely multi-class strategy without reduction to pairwise or one-vs-rest schemes. In this perspective, classification is reformulated as the discrimination of a finite ensemble of class-dependent density operators, with performance governed by the geometry induced by the encoding map and by the overlap structure among classes. To assess the practical scope of this framework, we apply the PGM-based classifier to two biomedical radiomics case studies: histopathological subtyping of non-small-cell lung carcinoma (NSCLC) and prostate cancer (PCa) risk stratification. The evaluation is conducted under protocols aligned with previously reported radiomics studies, enabling direct comparison with established classical baselines. The results show that the PGM-based classifier is consistently competitive and, in several settings, improves upon standard methods. In particular, the method performs especially well in the NSCLC binary and three-class tasks, while remaining competitive in the four-class case, where increased class overlap yields a more demanding discrimination geometry. In the PCa study, the PGM classifier remains close to the strongest ensemble baseline and exhibits clinically relevant sensitivity--specificity trade-offs across feature-selection scenarios.",
+      "authors": [
+        "Giuseppe Sergioli",
+        "Carlo Cuccu",
+        "Giovanni Pasini",
+        "Alessandro Stefano",
+        "Giorgio Russo",
+        "Andrés Camilo Granda Arango",
+        "Roberto Giuntini"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "quant-ph"
+      ],
+      "published": "2026-02-27T18:58:10+00:00",
+      "link": "https://arxiv.org/pdf/2603.00223v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Quantum-inspired classifier for lung and prostate cancer subtyping",
+      "llm_evidence_cn": "用于肺癌和前列腺癌亚型分类的量子启发分类器",
+      "llm_evidence": "用于肺癌和前列腺癌亚型分类的量子启发分类器",
+      "canonical_evidence": "用于肺癌和前列腺癌亚型分类的量子启发分类器",
+      "llm_tldr_en": "A quantum-inspired multi-class classifier for cancer subtyping and risk stratification in radiomics.",
+      "llm_tldr_cn": "一种量子启发的影像组学多类分类器，用于癌症亚型分析和风险分层。",
+      "llm_tldr": "一种量子启发的影像组学多类分类器，用于癌症亚型分析和风险分层。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.00223v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.11598v1",
+      "title": "Survival Meets Classification: A Novel Framework for Early Risk Prediction Models of Chronic Diseases",
+      "abstract": "Chronic diseases are long-lasting conditions that require lifelong medical attention. Using big EMR data, we have developed early disease risk prediction models for five common chronic diseases: diabetes, hypertension, CKD, COPD, and chronic ischemic heart disease. In this study, we present a novel approach for disease risk models by integrating survival analysis with classification techniques. Traditional models for predicting the risk of chronic diseases predominantly focus on either survival analysis or classification independently. In this paper, we show survival analysis methods can be re-engineered to enable them to do classification efficiently and effectively, thereby making them a comprehensive tool for developing disease risk surveillance models. The results of our experiments on real-world big EMR data show that the performance of survival models in terms of accuracy, F1 score, and AUROC is comparable to or better than that of prior state-of-the-art models like LightGBM and XGBoost. Lastly, the proposed survival models use a novel methodology to generate explanations, which have been clinically validated by a panel of three expert physicians.",
+      "authors": [
+        "Shaheer Ahmad Khan",
+        "Muhammad Usamah Shahid",
+        "Muddassar Farooq"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-03-12T06:40:28+00:00",
+      "link": "https://arxiv.org/pdf/2603.11598v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "integrating survival analysis with classification for disease risk prediction",
+      "llm_evidence_cn": "将生存分析与分类技术结合用于疾病风险预测",
+      "llm_evidence": "将生存分析与分类技术结合用于疾病风险预测",
+      "canonical_evidence": "将生存分析与分类技术结合用于疾病风险预测",
+      "llm_tldr_en": "A novel framework integrating survival analysis and classification for early chronic disease risk prediction.",
+      "llm_tldr_cn": "一种结合生存分析与分类技术的新型慢性病早期风险预测框架。",
+      "llm_tldr": "一种结合生存分析与分类技术的新型慢性病早期风险预测框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "survival analysis",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.10830v1",
+      "title": "Bayesian Design and Analysis of Precision Trials with Partial Borrowing",
+      "abstract": "With the advancement of precision medicine there is an increasing need for design and analysis methods in clinical trials with the objective of investigating effect heterogeneity and estimating subgroup effects. As this requires precise estimation of interaction effects, borrowing information from external data sources including retrospective studies and early phase clinical trials to enrich the trial in sparse subgroups is pertinent. Motivated by a trial in gastric cancer we consider a practical design and analysis framework for borrowing from external data sources that only partially inform the inference. As the analysis model we propose an individually weighted model where the external data are weighted based on their fit with the target population based on the distribution of a set of covariates. In a simulation study we assess the performance of the model under various scenarios and make comparisons to dynamic borrowing. In addition, we provide a Bayesian design framework where design priors are extracted from the external data to determine decision boundaries and sample sizes. The design procedure is demonstrated within the context of our motivating example.",
+      "authors": [
+        "Shirin Golchi",
+        "Satoshi Morita"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME",
+        "stat.AP"
+      ],
+      "published": "2026-03-11T14:37:36+00:00",
+      "link": "https://arxiv.org/pdf/2603.10830v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Precision medicine trials in gastric cancer",
+      "llm_evidence_cn": "胃癌精准医学试验",
+      "llm_evidence": "胃癌精准医学试验",
+      "canonical_evidence": "胃癌精准医学试验",
+      "llm_tldr_en": "A Bayesian framework for precision medicine trials, demonstrated with gastric cancer data.",
+      "llm_tldr_cn": "一种用于精准医学试验的贝叶斯框架，并在胃癌数据上进行了演示。",
+      "llm_tldr": "一种用于精准医学试验的贝叶斯框架，并在胃癌数据上进行了演示。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "cancer",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.00504v1",
+      "title": "Hierarchical Classification for Improved Histopathology Image Analysis",
+      "abstract": "Whole-slide image analysis is essential for diagnostic tasks in pathology, yet existing deep learning methods primarily rely on flat classification, ignoring hierarchical relationships among class labels. In this study, we propose HiClass, a hierarchical classification framework for improved histopathology image analysis, that enhances both coarse-grained and fine-grained WSI classification. Built based upon a multiple instance learning approach, HiClass extends it by introducing bidirectional feature integration that facilitates information exchange between coarse-grained and fine-grained feature representations, effectively learning hierarchical features. Moreover, we introduce tailored loss functions, including hierarchical consistency loss, intra- and inter-class distance loss, and group-wise cross-entropy loss, to further optimize hierarchical learning. We assess the performance of HiClass on a gastric biopsy dataset with 4 coarse-grained and 14 fine-grained classes, achieving superior classification performance for both coarse-grained classification and fine-grained classification. These results demonstrate the effectiveness of HiClass in improving WSI classification by capturing coarse-grained and fine-grained histopathological characteristics.",
+      "authors": [
+        "Keunho Byeon",
+        "Jinsol Song",
+        "Seong Min Hong",
+        "Yosep Chong",
+        "Jin Tae Kwak"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-02-28T07:01:04+00:00",
+      "link": "https://arxiv.org/pdf/2603.00504v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Hierarchical deep learning for histopathology image classification in cancer",
+      "llm_evidence_cn": "用于癌症组织病理学图像分类的分层深度学习",
+      "llm_evidence": "用于癌症组织病理学图像分类的分层深度学习",
+      "canonical_evidence": "用于癌症组织病理学图像分类的分层深度学习",
+      "llm_tldr_en": "A hierarchical classification framework that improves whole-slide image analysis in digital pathology.",
+      "llm_tldr_cn": "一种改进数字病理学中全切片图像分析的分层分类框架。",
+      "llm_tldr": "一种改进数字病理学中全切片图像分析的分层分类框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.00504v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.11627v1",
+      "title": "Developing Foundation Models for Universal Segmentation from 3D Whole-Body Positron Emission Tomography",
+      "abstract": "Positron emission tomography (PET) is a key nuclear medicine imaging modality that visualizes radiotracer distributions to quantify in vivo physiological and metabolic processes, playing an irreplaceable role in disease management. Despite its clinical importance, the development of deep learning models for quantitative PET image analysis remains severely limited, driven by both the inherent segmentation challenge from PET's paucity of anatomical contrast and the high costs of data acquisition and annotation. To bridge this gap, we develop generalist foundational models for universal segmentation from 3D whole-body PET imaging. We first build the largest and most comprehensive PET dataset to date, comprising 11041 3D whole-body PET scans with 59831 segmentation masks for model development. Based on this dataset, we present SegAnyPET, an innovative foundational model with general-purpose applicability to diverse segmentation tasks. Built on a 3D architecture with a prompt engineering strategy for mask generation, SegAnyPET enables universal and scalable organ and lesion segmentation, supports efficient human correction with minimal effort, and enables a clinical human-in-the-loop workflow. Extensive evaluations on multi-center, multi-tracer, multi-disease datasets demonstrate that SegAnyPET achieves strong zero-shot performance across a wide range of segmentation tasks, highlighting its potential to advance the clinical applications of molecular imaging.",
+      "authors": [
+        "Yichi Zhang",
+        "Le Xue",
+        "Wenbo Zhang",
+        "Lanlan Li",
+        "Feiyang Xiao",
+        "Yuchen Liu",
+        "Xiaohui Zhang",
+        "Hongwei Zhang",
+        "Shuqi Wang",
+        "Gang Feng",
+        "Liling Peng",
+        "Xin Gao",
+        "Yuanfan Xu",
+        "Yuan Qi",
+        "Kuangyu Shi",
+        "Hong Zhang",
+        "Yuan Cheng",
+        "Mei Tian",
+        "Zixin Hu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-12T07:41:28+00:00",
+      "link": "https://arxiv.org/pdf/2603.11627v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "foundation models for universal segmentation from 3D PET imaging",
+      "llm_evidence_cn": "用于3D PET图像通用分割的基础模型",
+      "llm_evidence": "用于3D PET图像通用分割的基础模型",
+      "canonical_evidence": "用于3D PET图像通用分割的基础模型",
+      "llm_tldr_en": "Generalist foundation models for universal segmentation in 3D whole-body PET imaging.",
+      "llm_tldr_cn": "用于3D全身PET成像通用分割的通用基础模型。",
+      "llm_tldr": "用于3D全身PET成像通用分割的通用基础模型。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.10928v1",
+      "title": "Novel Architecture of RPA In Oral Cancer Lesion Detection",
+      "abstract": "Accurate and early detection of oral cancer lesions is crucial for effective diagnosis and treatment. This study evaluates two RPA implementations, OC-RPAv1 and OC-RPAv2, using a test set of 31 images. OC-RPAv1 processes one image per prediction in an average of 0.29 seconds, while OCRPAv2 employs a Singleton design pattern and batch processing, reducing prediction time to just 0.06 seconds per image. This represents a 60-100x efficiency improvement over standard RPA methods, showcasing that design patterns and batch processing can enhance scalability and reduce costs in oral cancer detection",
+      "authors": [
+        "Revana Magdy",
+        "Joy Naoum",
+        "Ali Hamdi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-11T16:12:27+00:00",
+      "link": "https://arxiv.org/pdf/2603.10928v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Oral cancer lesion detection using RPA",
+      "llm_evidence_cn": "使用RPA进行口腔癌病变检测",
+      "llm_evidence": "使用RPA进行口腔癌病变检测",
+      "canonical_evidence": "使用RPA进行口腔癌病变检测",
+      "llm_tldr_en": "Evaluates RPA implementations for faster and more efficient oral cancer lesion detection.",
+      "llm_tldr_cn": "评估了RPA实现在口腔癌病变检测中的效率提升。",
+      "llm_tldr": "评估了RPA实现在口腔癌病变检测中的效率提升。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "cancer",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.00667v1",
+      "title": "Act Like a Pathologist: Tissue-Aware Whole Slide Image Reasoning",
+      "abstract": "Computational pathology has advanced rapidly in recent years, driven by domain-specific image encoders and growing interest in using vision-language models to answer natural-language questions about diseases. Yet, the core problem behind pathology question-answering remains unsolved, considering that a gigapixel slide contains far more information than necessary for a given question. Pathologists naturally navigate tissue and morphology complexity by scanning broadly, and zooming in selectively according to the clinical questions. Current models, in contrast, rely on uniform patch sampling or broad attention maps, often attending equally to irrelevant regions while overlooking key visual evidence. In this work, we try to bring models closer to how humans actually examine slides. We propose a question-guided, tissue-aware, and coarse-to-fine retrieval framework, HistoSelect, that consists of two key components: a group sampler that identifies question-relevant tissue regions, followed by a patch selector that retrieves the most informative patches within those regions. By selecting only the most informative patches, our method becomes significantly more efficient: reducing visual token usage by 70% on average, while improving accuracy across three pathology QA tasks. Evaluated on 356,000 question-answer pairs, our approach outperforms existing methods and produces answers grounded in interpretable, pathologist-consistent regions. Our results suggest that bringing human-like search and attention patterns into WSI reasoning is a promising direction for building practical and reliable pathology VLMs.",
+      "authors": [
+        "Wentao Huang",
+        "Weimin Lyu",
+        "Peiliang Lou",
+        "Qingqiao Hu",
+        "Xiaoling Hu",
+        "Shahira Abousamra",
+        "Wenchao Han",
+        "Ruifeng Guo",
+        "Jiawei Zhou",
+        "Chao Chen",
+        "Chen Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-02-28T14:22:53+00:00",
+      "link": "https://arxiv.org/pdf/2603.00667v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "tissue-aware whole slide image reasoning",
+      "llm_evidence_cn": "组织感知的全切片图像推理",
+      "llm_evidence": "组织感知的全切片图像推理",
+      "canonical_evidence": "组织感知的全切片图像推理",
+      "llm_tldr_en": "Improves whole slide image analysis by mimicking how pathologists selectively zoom into relevant tissue regions.",
+      "llm_tldr_cn": "通过模拟病理学家选择性缩放相关组织区域的方式，改进了全切片图像分析。",
+      "llm_tldr": "通过模拟病理学家选择性缩放相关组织区域的方式，改进了全切片图像分析。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.00667v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.12351v1",
+      "title": "Probabilistic Joint and Individual Variation Explained (ProJIVE) for Data Integration",
+      "abstract": "Collecting multiple types of data on the same set of subjects is common in modern scientific applications including, genomics, metabolomics, and neuroimaging. Joint and Individual Variance Explained (JIVE) seeks a low-rank approximation of the joint variation between two or more sets of features captured on common subjects and isolates this variation from that unique to eachset of features. We develop an expectation-maximization (EM) algorithm to estimate a probabilistic model for the JIVE framework. The model extends probabilistic principal components analysis to multiple data sets. Our maximum likelihood approach simultaneously estimates joint and individual components, which can lead to greater accuracy compared to other methods. We apply ProJIVE to measures of brain morphometry and cognition in Alzheimer's disease. ProJIVE learns biologically meaningful courses of variation, and the joint morphometry and cognition subject scores are strongly related to more expensive existing biomarkers. Data used in preparation of this article were obtained from the Alzheimer's Disease Neuroimaging Initiative (ADNI) database. Code to reproduce the analysis is available on our GitHub page.",
+      "authors": [
+        "Raphiel J. Murden",
+        "Ganzhong Tian",
+        "Deqiang Qiu",
+        "Benajmin B. Risk"
+      ],
+      "primary_category": "stat.ML",
+      "categories": [
+        "stat.ML",
+        "cs.LG",
+        "q-bio.QM",
+        "stat.CO",
+        "stat.ME"
+      ],
+      "published": "2026-03-12T18:16:07+00:00",
+      "link": "https://arxiv.org/pdf/2603.12351v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Data integration for genomics and multi-omics",
+      "llm_evidence_cn": "基因组学与多组学的数据整合",
+      "llm_evidence": "基因组学与多组学的数据整合",
+      "canonical_evidence": "基因组学与多组学的数据整合",
+      "llm_tldr_en": "A probabilistic framework for integrating multiple data types like genomics and metabolomics.",
+      "llm_tldr_cn": "一种用于整合基因组学和代谢组学等多种数据类型的概率框架。",
+      "llm_tldr": "一种用于整合基因组学和代谢组学等多种数据类型的概率框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Multi omics integration approaches in cancer analysis",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

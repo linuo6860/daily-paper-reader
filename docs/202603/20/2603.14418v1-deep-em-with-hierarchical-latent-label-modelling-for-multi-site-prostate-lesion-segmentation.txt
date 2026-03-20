@@ -1,0 +1,369 @@
+Title: Deep EM with Hierarchical Latent Label Modelling for Multi-Site Prostate Lesion Segmentation
+
+URL Source: https://arxiv.org/pdf/2603.14418v1
+
+Published Time: Tue, 17 Mar 2026 04:47:55 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Deep EM with Hierarchical Latent Label Modelling for Multi-Site Prostate Lesion Segmentation 
+
+Wen Yan 1,∗, Yipei Wang 1, Shiqi Huang 1, Natasha Thorley 2, Mark Emberton 2;Vasilis Stavrinides 3,4, Yipeng Hu 1, Dean Barratt 1 
+
+> 1
+
+UCL Hawkes Institute; Department of Medical Physics and Biomedical Engineering, University College London, Gower St, London WC1E 6BT, London, U.K.  
+
+> 2
+
+Division of Surgery and Interventional Science, University College London, 10 Pond St, London NW3 2PS, U.K.  
+
+> 3
+
+Cancer Institute, Urology Department, UCL Hospital, University College London, 16-18 Westmoreland St, London W1G 8PH, U.K  
+
+> 4
+
+Radiology Department, Imperial College Healthcare, The Bays, S Wharf Rd, London W2 1NY, U.K. 
+
+wen-yan@ucl.ac.uk 
+
+Abstract. Label variability is a major challenge for prostate lesion seg-mentation. In multi-site datasets, annotations often reflect centre-specific contouring protocols, causing segmentation networks to overfit to local styles and generalise poorly to unseen sites in inference. We treat each ob-served annotation as a noisy observation of an underlying latent “clean” lesion mask, and propose a hierarchical expectation–maximisation (Hi-erEM) framework that alternates between: (i) inferring a voxel-wise pos-terior distribution over the latent mask, and (ii) training a CNN using this posterior as a soft target and estimate site-specific sensitivity and specificity under a hierarchical prior. This hierarchical prior decomposes label-quality into a global mean with site- and case-level deviations, re-ducing site-specific bias by penalising the likelihood term contributed only by site deviations. Experiments on three cohorts demonstrate that the proposed hierarchical EM framework enhances cross-site generalisa-tion compared to state-of-the-art methods. For pooled datasets evalua-tion, per-site mean DSC ranges from 29.50% to 39.69% across datasets; for leave-one-site-out generalisation, it ranges from 27.91% to 32.67%, yielding statistically significant improvements over comparison meth-ods ( p < 0.039 ). The method also produces interpretable per-site latent label-quality estimates (e.g., sensitivity α ∼ [31 .5% , 47 .3%] at specificity 
+
+β ≈ 0.99 ), supporting post-hoc analyses of cross-site annotation vari-ability. These results indicate that explicitly modelling site-dependent annotation can improve cross-site generalisation. Code is available via https://anonymous.4open.science/r/HierEM-F2D3/. 
+
+Keywords: Lesion segmentation · Hierarchical latent label · EM.  
+
+> arXiv:2603.14418v1 [cs.CV] 15 Mar 2026 2Wen Yan et al.
+
+## 1 Introduction 
+
+Multiparametric MRI (mpMRI), including T2-weighted (T2W), diffusion-weighted imaging (DWI), apparent diffusion coefficient (ADC) maps and contrast-enhanced (DCE) modalities, is widely used to assess suspected prostate cancer (PCa) [2]. Clinicians often contour lesions to guide treatment planning and follow-up. Au-tomated deep-learning methods aim to reduce this workload, yet it faces a signif-icantly high-variance ground truth challenge. This label variability is rooted in site-specific annotation protocols, the institutional style formed by local expert training and specific imaging protocols that influence how boundaries are per-ceived, which creates site-specific label bias. Inter-reader agreement for prostate lesion contours on mpMRI is only moderate, with reported Dice often around 
+
+∼ 0.4 [5,8]. The current paradigm creates a critical bottleneck: segmentation networks easily overfit to the local contouring style of the training sites. When deployed to a new institution, the model generalises poorly, as single-site training achieves only 4%–28% Dice on a held-out site [10]. By contrast, testing on within-site achieves around ∼ 20% ∼ 60% Dice [16,3,13,1] with different datasets. This gap can be alleviated via test-site finetuning or calibration. However, such meth-ods often lead to test-site-biased accuracy assessments. They force the model to match the local “observed” labels, which are themselves imperfect and biased. A truly multi-site training set (more than 10 sites) is expensive to curate for indi-vidual tasks that require coordination in labelling. PI-CAI is an example study with such a diverse collection of reference standards, but restricted to a pri-marily patient-level classification [12]. In many real-world applications, further finetuning or calibration at deployment may not be feasible or practical. While cross-site performance gaps may also stem from both imaging differences and label variation, pre-processing can partially mitigate the former. In this study, we focus on the impact of label-level variation. We propose a latent-label modelling approach to address cross-site annota-tion variability. Our model is inspired by the sensitivity/specificity formulation popularised by STAPLE [15]. STAPLE performs multi-annotator label fusion at inference time for a fixed image, jointly estimating each annotator’s sensitiv-ity and specificity under conditional-independence assumptions. Our setting and goal differ. We do not fuse multiple labels for the same case, as typically only one annotation is observed per case. Instead, we treat each site’s annotation as a site-dependent noisy observation of an unobserved latent “clean” lesion mask during training. This yields a STAPLE-like observation model embedded within a segmentation-learning framework, where label variability is decomposed into three components: (1) global population factors capturing lesion characteristics shared across sites; (2) site-specific effects modelling systematic offsets due to local contouring and imaging protocols; and (3) case-level variability capturing intrinsic ambiguity (e.g., small or low-contrast lesions) that affects all annotators regardless of protocol. In summary, we use site-specific sensitivity/specificity to represent these hierarchical label-quality parameters. Learning is performed with an EM procedure [6] that alternates between in-ferring the latent consensus mask and updating model parameters. In the E-step, Title Suppressed Due to Excessive Length 3
+
+we compute a voxel-wise posterior over the latent consensus mask by combining the network’s image-based prior with the annotation likelihood under the current model. In the M-step, we update the UNet using this posterior as soft targets, and re-estimate the site-/case-level label-quality parameters by maximising their marginal likelihood under a hierarchical prior. Iterating these steps reduces de-pendence on any single centre’s contouring style, yields calibrated probabilistic predictions, and provides interpretable sens/spec estimates that summarise site tendencies and case-level ambiguity—improving robustness when deploying to unseen sites without requiring additional site-specific fine-tuning. 
+
+## 2 Method 
+
+Let Ω denote the voxel space of an mpMRI volume. For each case k ∈ { 1, . . . , K }
+
+we observe an image Xk and a single binary lesion annotation Yk ∈ { 0, 1}Ω
+
+provided by one site sk ∈ { 1, . . . , S }. The (unobserved) latent “clean” lesion mask is Gk ∈ { 0, 1}Ω . Our goal is to learn a segmentation model that is robust to site-specific annotation protocol, while also estimating site-/case-level latent label-quality parameters.  
+
+> Fig. 1. Overview of proposed deep mixed EM framework with hierarchical latent label-quality parameters. The E-step infers a latent clean mask, and the M-step updates the segmentation network and latent label-quality parameters.
+
+segmentation network We model the latent consensus mask with an image-conditioned voxel-wise probability map predicted by the network: πk(x) ≜
+
+pθ (Gk(x) = 1 | Xk) = σ(fθ (Xk)x) , where x ∈ Ω is a voxel in mpMRI, fθ (·) is a neural network producing logits per voxel and σ(·) is the sigmoid. 
+
+2.1 Hierarchical site-case label variability model 
+
+We treat each institute as a distinct annotation protocol and model the observed label Yk(x) as a noisy observation of Gk(x). Conditioned on (Gk, s k), voxels are 4 Wen Yan et al. 
+
+assumed independent with site-case sensitivity and specificity: 
+
+p(Yk(x) = 1 | Gk(x) = 1) = αsk ,k , p(Yk(x) = 0 | Gk(x) = 0) = βsk ,k , ∀x ∈ Ωk.
+
+(1) To stabilise site-/case-level label-quality estimates, we use a logistic-normal hi-erarchical prior that partially pools sens/spec toward a global mean μα, μ β :logit (αs,k ) = μα + as + uk, logit (βs,k ) = μβ + bs + vk, (2) where (as, b s) capture persistent site-specific contouring behavior and (uk, v k)
+
+capture case difficulty. We place zero-mean Gaussian priors (equivalently, ℓ2
+
+penalties under MAP): as ∼ N (0 , σ 2
+
+> a
+
+), bs ∼ N (0 , σ 2 
+
+> b
+
+), uk ∼ N (0 , σ 2
+
+> u
+
+), vk ∼N (0 , σ 2 
+
+> v
+
+) For identifiability we constrain P 
+
+> s
+
+as = 0 and P 
+
+> s
+
+bs = 0 . We further calculate site-level sen/spec as ( σ(·) is sigmoid function): 
+
+αs = σ(μα + as), βs = σ(μβ + bs) (3) 
+
+EM learning with hierarchical sensitivity/specificity modelling We estimate segmentation network parameters θ and the latent label-quality pa-rameters ϕ = {μα, μ β , a 1: S , b 1: S , u 1: K , v 1: K } by maximizing the (regularized) marginal likelihood of {Yk} with latent {Gk}. We optimise a MAP objective via an EM procedure. 
+
+E-step: posterior of the latent mask. Given current (θ, ϕ ), the posterior factorizes over voxels: 
+
+qk(x) ≜ p(Gk(x) = 1 | Xk, Y k(x)) (4) 
+
+= πk(x) p(Yk(x) | Gk(x) = 1) 
+
+πk(x) p(Yk(x) | Gk(x) = 1) + (1 − πk(x)) p(Yk(x) | Gk(x) = 0) . (5) With the sens/spec model, the likelihood terms are 
+
+p(Y = 1 | G = 1) = αs,k , p(Y = 1 | G = 0) = 1 − βs,k , (6) 
+
+p(Y = 0 | G = 1) = 1 − αs,k , p(Y = 0 | G = 0) = βs,k . (7) 
+
+p(Y |G; α, β ) = 
+
+(
+
+αY (1 − α)1−Y , G = 1 ,
+
+(1 − β)Y β1−Y , G = 0 . (8) Thus qk(x) provides a soft consensus mask that fuses the image prior and the site-case sens/spec. 
+
+M-step (A): update segmentation network. We update segmentation backbone with θ by minimising a soft-label cross-entropy plus Dice loss: 
+
+Lseg (θ) = 
+
+> K
+
+X
+
+> k=1
+
+X
+
+> x∈Ω
+
+CE  qk(x), π k(x) −
+
+> K
+
+X
+
+> k=1
+
+Dice( qk(x), π k(x)) , (9) where CE( q, π ) = −q log π−(1 −q) log(1 −π) and Dice( q, π ) =        
+
+> P
+> x∈Ω2qk(x)·πk(x)
+> P
+> x∈Ωqk(x)+ P
+> x∈Ωπk(x)
+
+Title Suppressed Due to Excessive Length 5
+
+M-step (B): update hierarchical latent label-quality by aggregated expected counts. 
+
+Define expected per-case sufficient statistics: 
+
+T P k = X
+
+> x∈Ω
+
+qk(x) Yk(x), Pk = X
+
+> x∈Ω
+
+qk(x), (10) 
+
+T N k = X
+
+> x∈Ω
+
+(1 − qk(x)) (1 − Yk(x)) , Nk = X
+
+> x∈Ω
+
+(1 − qk(x)) . (11) Using posterior q to approximate latent Ground Truth G, the expected complete-data log-likelihood for latent label-quality parameters is: 
+
+Q(ϕ) = EG∼q
+
+ log p(Y |G; ϕ) (12) 
+
+= X
+
+> x∈Ω
+
+h
+
+1{Gk(x) = 1 }
+
+
+
+Yk(x) log αsk ,k +  1 − Yk(x) log  1 − αsk ,k 
+
+
+
++ 1{Gk = 0 }
+
+ 1 − Yk(x) log βsk ,k + Yk(x) log  1 − βsk ,k 
+
+i 
+
+(13) 
+
+=
+
+> K
+
+X
+
+> k=1
+
+h
+
+T P k log αsk ,k + ( Pk − T P k) log(1 − αsk ,k )+ T N k log βsk ,k + ( Nk − T N k) log(1 − βsk ,k )
+
+i
+
+, (14) with αs,k , β s,k defined by (2). We obtain a MAP estimate by maximising MLE and L2 penalisation on prior variables in ϕ:
+
+ϕ ← arg max  
+
+> ϕ
+
+Q(ϕ) − L 2
+
+> norm
+
+, (15) where L2 
+
+> norm
+
+= 12σ2
+
+> a
+
+P 
+
+> s
+
+a2 
+
+> s
+
++ 12σ2
+
+> b
+
+P 
+
+> s
+
+b2 
+
+> s
+
++ 12σ2
+
+> u
+
+P 
+
+> k
+
+u2 
+
+> k
+
++ 12σ2
+
+> v
+
+P 
+
+> k
+
+v2 
+
+> k
+
+subject to 
+
+P 
+
+> s
+
+as = 0 and P 
+
+> s
+
+bs = 0 . Because (15) depends on the data only via (T P k, P k,T N k, N k), it can be optimised efficiently with a few iterations of a second-order L-BFGS [7] over low-dimensional parameters. L2 penalty on the hierarchical la-tent variables in ϕ corresponds to a Gaussian prior and provides shrinkage that stabilises site/case quality estimates, prevents degenerate sens/spec values, and mitigates overfitting when annotations are sparse or noisy. 
+
+Training procedure We alternate the E-step (5) with M-steps (9) and (15) until convergence. We used 10 −4 learning-rate and Adam optimiser. In practice, we perform 5-epoch gradient steps for θ per EM iteration, and 5 optimiser steps for ϕ using the aggregated sufficient statistics in (14). Algorithm 1 summarises the procedure. To stabilise early optimisation, we add an auxiliary supervision in (9) using the ground-truth mask. The corresponding loss weight gradually decayed to zero over the first 5 epochs with a sigmoid ramping up strategy. 
+
+2.2 Uncertainty and interpretability 
+
+We quantify voxel-wise uncertainty using the predictive entropy of the segmen-tation probability map. The entropy at voxel i is Hi = −pi log( pi) − (1 −6 Wen Yan et al. 
+
+Algorithm 1 Hierarchical EM for multi-site lesion segmentation                                                                
+
+> Require: Images {Xk}, masks {Yk}, site labels {sk}
+> 1: Initialize network parameters θ; initialize ϕ(μα, μ βnear logit (0 .9) ,as=bs=uk=
+> vk= 0 )2: for EM iterations t= 1 , . . . , T do
+> 3: E-step: compute πk(x) = σ(fθ(Xk)x)and qk(x)via (5) 4: Compute (T P k, P k, T N k, N k)via (10)–(11) 5: M-step (A): update θby minimizing Lseg (θ)in (9) 6: M-step (B): update ϕby MAP optimization of (15) with constraints P
+> sas= 0 ,P
+> sbs= 0
+> 7: end for
+> 8: Output: network θand learned site-/case-level estimated parameters ϕ
+
+pi) log(1 − pi). Entropy is small when pi is close to 0 or 1 (confident predictions) and maximised at pi = 0 .5. To evaluate whether uncertainty aligns with segmen-tation errors, we construct a risk-coverage curve by ranking voxels by entropy and retaining the lowest-entropy fraction c ∈ [0 .5, 0.9] . For each c, we choose a threshold tc such that Sc = { i : Hi ≤ tc }, |Sc||Ω| = c, where Ω denotes the set of all voxels. We then compute the Dice score restricted to the retained set Sc,denoted Dice( Sc), and define risk as Risk( c) = 1 − Dice( Sc).
+
+## 3 Experiment 
+
+3.1 Datasets 
+
+We utilised datasets from S = 3 sites. Each site provides T2w, DWI high b, and ADC images, together with a single expert lesion contour annotated on T2w. Sites 1 is acquired at the anonymous institute , comprising 1201 mpMR scans, each with PIRADS ≥ 3 lesions. Site 2 is a public cohort [14], which includes 391 patients who have Likert ≥3 lesions. Site 3 is obtained from anonymous institute ,containing 1265 mpMRI scans with PIRADS ≥ 3 lesion contours. 
+
+Split A (Pooled mixture patient from multiple sites). We split each dataset by a 4:1:1 ratio, resulting in pooled mixed train, validation and per-patient level held-out sets. The held-out sets were only used for model evaluation. 
+
+Split B (Cross-site generalisation, LOSO). We perform leave-one-site-out evaluation across the 3 sites. For each fold, we hold out all cases from one site as test, and train on the remaining two sites. Within the training pool, we reserve 10% of cases (stratified by site) as validation for early stopping and hyperparameter tuning. 
+
+3.2 Baselines and evaluation metrics 
+
+Baselines In this study, to ensure a fair and transparent comparison across methods, we use UNet [11] with nnUNet–derived preprocessing and hyperparam-eters [4] as the segmentation backbone of the proposed and all other compared Title Suppressed Due to Excessive Length 7
+
+Table 1. In the pooled patient-level held-out setting, Sites 1-3 include 252, 87, 265 cases in the patient-level held-out set, respectively; In the LOSO setting, Sites 1-3 include 1201, 391 and 1265 cases in the site-level held-out set, respectively. ∗ denote HierEM is significantly better than other baselines p < 0.05 .                                                    
+
+> Methods Site 1 Site 2 Site 3 Dice(%) HD95(mm) Dice(%) HD95(mm) Dice(%) HD95(mm)
+> Split A: Pooled patient-level held-out split
+> UNet 38 .63 ±10 .41 17 .04 ±2.96 27 .47 ±9.62 ∗21 .25 ±4.50 33 .49 ±6.98 ∗22 .06 ±3.92
+> Bootstrap 38 .49 ±9.94 16 .97 ±3.14 26 .69 ±10 .59 ∗22 .29 ±5.12 ∗33 .14 ±7.05 ∗21 .41 ±5.84
+> Site-EM 36 .46 ±11 .72 ∗18 .41 ±7.07 ∗23 .74 ±9.73 ∗22 .99 ±5.52 ∗34 .62 ±6.15 21 .86 ±4.91
+> HierEM 39 .69 ±21 .88 16 .92 ±3.29 29 .50 ±9.13 20 .46 ±5.58 35 .60 ±7.85 21 .66 ±4.11
+> Split B: Leave-one-site-out (LOSO)
+> UNet 25 .50 ±7.33 ∗22 .10 ±4.65 ∗24 .66 ±5.29 ∗22 .46 ±3.15 ∗31 .20 ±9.80 ∗21 .05 ±5.64
+> Bootstrap 26 .34 ±12 .92 ∗21 .02 ±7.02 ∗21 .66 ±5.20 ∗22 .54 ±3.56 ∗31 .64 ±8.92 ∗22 .85 ±5.17
+> Site-EM 24 .00 ±18 .09 ∗23 .74 ±10 .79 ∗24 .92 ±13 .29 ∗21 .83 ±7.13 31 .90 ±13 .43 ∗22 .50 ±7.28
+> HierEM 28 .11 ±10 .21 20 .51 ±4.68 27 .91 ±10 .16 21 .12 ±5.83 32 .67 ±8.08 22 .82 ±2.50
+
+methods. We compare against: (i) UNet only; (ii) Label bootstrapping (soft self-training) [9]: We replaced the standard supervised loss with a bootstrapped self-training loss that combines the provided labels with the model’s own predic-tions as soft auxiliary targets: Lt+1  
+
+> bootstrap
+
+= (1 −λ)Lseg (ωt+1 , y )+ λLseg (ωt+1 , ω t),where ωt is the network prediction at t iteration and λ is ramping up hyperpa-rameter (max: 0.5). This encourages smoother decision boundaries and reduces sensitivity to annotation noise. (iii) Site-as-reader EM without hierarchy (inde-pendent αs, β s per site rather than using (2)). 
+
+Evaluation metrics for segmentation and uncertainty On each test fold and site, we report Dice and HD95 for segmentation results. For calibration and uncer-tainty metrics, we report selective segmentation (risk-coverage) curves based on predicted uncertainty (entropy of qk(x)). We compare methods using a paired 
+
+t-test on the same test cases within each held-out site. Multiple comparisons are controlled within each held-out site using Benjamini-Hochberg FDR at 5%. 
+
+## 4 Results 
+
+Table 1 reports cross-site performance using Dice and HD95. Under the pooled patient-level held-out split, all methods achieve moderate Dice (( ∼)27–40) while HierEM gives the best mean Dice on all three sites (Site 1: 39.69%, Site 2: 29.50%, Site 3: 35.60%) and comparable or slightly improved HD95 (e.g., Site 2: 20.46 vs 21.25 for Supervised). Bootstrap is broadly similar to Supervised on the pooled split. In the pooled held-out split, significance is not observed for every comparison, likely due to limited test-set size. In addition, pooled multi-site training improves baseline performance, so our method shows a smaller 8 Wen Yan et al.     
+
+> Fig. 2. Left: Risk-coverage curves on three sites dataset under LOSO experiments; Right: Estimated sensitivity of baselines and HierEM with spec ≃0.99 . Such high specificity is expected because lesions occupy only a small fraction of the image.
+
+margin in this setting. Under the more challenging LOSO evaluation, perfor-mance drops substantially for methods trained without explicit cross-site label variability modelling. Supervised Dice decreases to 25.50/24.66/33.09% across Sites 1–3, with a concurrent increase in boundary error (HD95 22–24 mm). In contrast, HierEM consistently improves generalisation, yielding higher Dice on Sites 1 and 2 (28.11 and 27.40 mm) with lower HD95 (20.51 and 20.31 nn), while remaining competitive on Site 3 (Dice 32.67%; HD95 22.82 mm). Overall, HierEM provides the most consistent cross-site performance, especially in the LOSO setting. Fig 2-left shows risk–coverage curves that assess uncertainty for selective segmentation. HierEM has lower risks than supervised UNet at a given coverage range for all three sites LOSO experiments, which indicates that the method’s uncertainty concentrates errors in the rejected region, enabling reliable abstention. In Figure 2-right, the HierEM achieved the highest sensitivity under the matched specificity ( ≃ 0.99 ) on all LOSO experiments. Since lesions occupy a small fraction of voxels, operating at high specificity is reasonable. The gap between pooled and LOSO highlights a strong domain shift: models that perform reasonable on pooled held-out testing degrade when the test site is unseen, suggesting that performance in pooled splits largely comes from learn-ing site-specific contouring biases rather than fully transferable latent “clean” lesion mask. HierEM narrows this gap, supporting the hypothesis that explicitly modelling site/case-dependent label noise helps separate site-specific annotation from image evidence. By inferring a soft latent consensus mask( q) and updating sens/spec, HierEM reduces the overfitting when moving to a new centre, which is reflected in both higher Dice and lower HD95 on unseen sites. 
+
+## 5 Conlusion 
+
+We present a Deep EM framework that treats each site’s lesion contour as a noisy observation of an underlying latent “clean” mask. The E-step aggregates site an-notations into a voxel-wise posterior over the latent mask; the M-step updates the Title Suppressed Due to Excessive Length 9
+
+network while jointly estimating site-specific sensitivity and specificity with hier-archical shrinkage to stabilise quality estimates under limited sites of data. This formulation disentangles latent label from site-dependent contouring style, im-proving robustness and generalisation in cross-site evaluation. Beyond accuracy gains, it provides interpretable, site-level diagnostics of annotation behaviour that can guide data curation and deployment. HierEM is compatible with dif-ferent backbone networks. Future work will extend the framework to multi-site, multi-annotator datasets and explore richer annotation-variability models in real clinical workflows. 
+
+Acknowledgments. This work is supported by the International Alliance for Cancer Early Detection, an alliance between Cancer Research UK [C28070/A30912; C73666/A31378; EDDAMC-2021/100011], Canary Center at Stanford Univer-sity, the University of Cambridge, OHSU Knight Cancer Institute, University College London and the University of Manchester. This work is also supported by the National Institute for Health Research (NIHR) University College London Hospitals (UCLH) Biomedical Research Centre (BRC). 
+
+## References 
+
+1. Fouladi, S., Darvizeh, F., Gianini, G., Di Meo, R., Di Palma, L., Damiani, E., Maiocchi, A., Fazzini, D., Alì, M.: Exploring unet-based models for prostate lesion segmentation from multi-sequence mri (t2w, adc, dwi). World Wide Web 29 (1), 4(2026) 2. Haider, M.A., Van Der Kwast, T.H., Tanguay, J., Evans, A.J., Hashmi, A.T., Lockwood, G., Trachtenberg, J.: Combined t2-weighted and diffusion-weighted mri for localization of prostate cancer. American journal of roentgenology 189 (2), 323– 328 (2007) 3. Hambarde, P., Talbar, S., Mahajan, A., Chavan, S., Thakur, M., Sable, N.: Prostate lesion segmentation in mr images using radiomics based deeply supervised u-net. Biocybernetics and Biomedical Engineering 40 (4), 1421–1435 (2020) 4. Isensee, F., Jaeger, P.F., Kohl, S.A., Petersen, J., Maier-Hein, K.H.: nnu-net: a self-configuring method for deep learning-based biomedical image segmentation. Nature methods 18 (2), 203–211 (2021) 5. Liechti, M.R., Muehlematter, U.J., Schneider, A.F., Eberli, D., Rupp, N.J., Hötker, A.M., Donati, O.F., Becker, A.S.: Manual prostate cancer segmentation in mri: interreader agreement and volumetric correlation with transperineal template core needle biopsy. European radiology 30 (9), 4806–4815 (2020) 6. Moon, T.K.: The expectation-maximization algorithm. IEEE Signal processing magazine 13 (6), 47–60 (1996) 7. Nocedal, J.: Updating quasi-newton matrices with limited storage. Mathematics of computation 35 (151), 773–782 (1980) 8. Piert, M., Shankar, P.R., Montgomery, J., Kunju, L.P., Rogers, V., Siddiqui, J., Rajendiran, T., Hearn, J., George, A., Shao, X., et al.: Accuracy of tumor segmen-tation from multi-parametric prostate mri and 18f-choline pet/ct for focal prostate cancer therapy applications. EJNMMI research 8(1), 23 (2018) 10 Wen Yan et al. 9. Reed, S., Lee, H., Anguelov, D., Szegedy, C., Erhan, D., Rabinovich, A.: Train-ing deep neural networks on noisy labels with bootstrapping. arXiv preprint arXiv:1412.6596 (2014) 10. Rodrigues, N.M., de Almeida, J.G., Castro Verde, A.S., Mascarenhas Gaivão, A., Bilreiro, C., Santiago, I., Ip, J., Belião, S., Moreno, R., Matos, C., Vanneschi, L., Tsiknakis, M., Marias, K., Regge, D., Silva, S., Papanikolaou, N., ProCAncer-I Consortium: Analysis of domain shift in whole prostate gland, zonal and lesions segmentation and detection, using multicentric retrospective data. Computers in Biology and Medicine p. 108216 (2024). https://doi.org/10.1016/j.compbiomed. 2024.108216 11. Ronneberger, O., Fischer, P., Brox, T.: U-net: Convolutional networks for biomedi-cal image segmentation. In: International Conference on Medical image computing and computer-assisted intervention. pp. 234–241. Springer (2015) 12. Saha, A., Bosma, J., Twilt, J., van Ginneken, B., Yakar, D., Elschot, M., Velt-man, J., Fütterer, J., de Rooij, M., et al.: Artificial intelligence and radiologists at prostate cancer detection in mri—the pi-cai challenge. In: Medical Imaging with Deep Learning, short paper track (2023) 13. Wang, W., Pan, B., Ai, Y., Li, G., Fu, Y., Liu, Y.: Paracm-pnet: A cnn-tokenized mlp combined parallel dual pyramid network for prostate and prostate cancer segmentation in mri. Computers in Biology and Medicine 170 , 107999 (2024) 14. Wang, Y., Gayo, I., Thorley, N., Ng, A., Yan, W., Barratt, D., Stavrinides, V., Emberton, M., Kasivisvanathan, V., Punwani, S., Hu, Y.: A derived promis data set (Jun 2025). https://doi.org/10.5281/zenodo.15683922, https://doi.org/ 10.5281/zenodo.15683922 15. Warfield, S.K., Zou, K.H., Wells, W.M.: Simultaneous truth and performance level estimation (staple): an algorithm for the validation of image segmentation. IEEE transactions on medical imaging 23 (7), 903–921 (2004) 16. Yan, W., Hu, Y., Yang, Q., Fu, Y., Syer, T., Min, Z., Punwani, S., Emberton, M., Barratt, D.C., Cho, C.C., et al.: A semi-supervised prototypical network for prostate lesion segmentation from multimodality mri. Physics in Medicine & Biol-ogy 70 (8), 085020 (2025)

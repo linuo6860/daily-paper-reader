@@ -1,0 +1,1253 @@
+Title: How important are the genes to explain the outcome - the asymmetric Shapley value as an honest importance metric for high-dimensional features
+
+URL Source: https://arxiv.org/pdf/2603.05317v1
+
+Published Time: Fri, 06 Mar 2026 02:13:33 GMT
+
+Number of Pages: 33
+
+Markdown Content:
+How important are the genes to explain the outcome - the asymmetric Shapley value as an honest importance metric for high-dimensional features 
+
+Mark A. van de Wiel 1*, Jeroen Goedhart 1, Martin Jullum 2, Kjersti Aas 21Dept of Epidemiology and Data Science, Amsterdam Public Health research institute, Amsterdam University Medical Centers, Amsterdam, The Netherlands 
+
+> 2
+
+Norwegian Computing Center, Oslo, Norway 
+
+Abstract 
+
+In clinical prediction settings the importance of a high-dimensional feature like ge-nomics is often assessed by evaluating the change in predictive performance when adding it to a set of traditional clinical variables. This approach is questionable, because it does not account for collinearity nor known directionality of dependencies between variables. We suggest to use asymmetric Shapley values as a more suitable alternative to quantify feature importance in the context of a mixed-dimensional prediction model. We focus on a setting that is particularly relevant in clinical prediction: disease state as a mediating variable for genomic effects, with additional confounders for which the direction of effects may be unknown. We derive efficient algorithms to compute local and global asymmetric Shapley values for this setting. The former are shown to be very useful for inference, whereas the latter provide interpretation by decomposing any predictive performance metric into contributions of the features. Throughout, we illus-trate our framework by a leading example: the prediction of progression-free survival for colorectal cancer patients. 
+
+Keywords: Prediction, regression, machine learning, high-dimensional, Shapley values 
+
+# 1 Introduction 
+
+In many clinical prediction settings, high-dimensional genomics data are combined with other, low-dimensional variables, such as disease state, age and gender. In such models, the additional predictive strength of the genes is often disappointingly small. This may lead to the premature conclusion that genomics is irrelevant for the disease. However, the approach to quantify importance by leaving out (groups of) variables and assessing the change in predictive strength has two important shortcomings. First, it does not account well for correlations. If the genomic variables are highly correlated to the other ones, the latter act as a buffer when removing the genomics from the model, leading to little decline in performance. Still, the two types of variables may be equally important for the outcome. In fact, in low-dimensional settings, plain regression deals with such collinearity by simply spreading the effect across the two variables. For general prediction models, the 
+
+> *Corresponding author: mark.vdwiel@amsterdamumc.nl
+
+1
+
+> arXiv:2603.05317v1 [stat.ML] 5 Mar 2026
+
+game theoretic Shapley values (Lundberg and Lee, 2017; Aas et al., 2021) provide a solution in a similar spirit: effects are spread out over correlated variables to explain the model’s predictions. Moreover, it allows quantifying importance of groups of variables, which is very useful in genomics settings (Jullum et al., 2021). While the literature on Shapley values for explaining predictive models is huge, fairly little attention is given to applications in genomics. Watson (2022) reviews some of these applications and pleas for the use of Shapley values in genomics. Throughout, we refer to any individual variable (e.g. ‘age’) or group of variables (e.g. ‘genes’) for which we wish to compute these Shapley values as ‘feature’, while reserving the term ‘variable’ for the individual components used in the prediction model. The Shapley value framework is flexible and can be used to provide either local or global feature importance. Local importance is specific for each individual and feature: it expresses, for example, how much an individual’s age contributes to the prediction of the individual’s survival. Such a concept is very natural for prediction models that allow for non-linear and interaction effects, as these cause the importance of a feature to be very dependent on its actual value. Hence, local Shapley values allow us to assess which features are important for whom. Global importance, on the other hand, is useful for comparing features across individuals. Global Shapley value explanations, here referred to as SAGE (Shapley Additive Global importancE; Covert et al., 2020) utilize a global performance metric like R2 or C-index to quantify feature importance across individuals. Note that the SAGE-R2 is equivalent to ‘lmg’ (Grömping, 2007), indicating that such a global metric is also relevant for (complex) regression models. Formally, both local and global Shapley values rely on the same game-theoretic foundation: they consider the output of the prediction model for many (by default all) subsets of features and contrasts subsets containing a feature with those that do not. The two versions of Shap-ley values only differ in what is quantified as the model’s output: either simply the prediction itself (local) or a predictive performance metric (global). Several estimators for Shapley val-ues have been proposed (Covert et al., 2021), which mostly differ in how they deal with the features which are not in the subset when computing a prediction. We focus on estimation of Shapley values by (conditional) marginalization, usually referred to as SHAP (SHapley Additive Predictions; Lundberg and Lee, 2017; Aas et al., 2021). We show this to be more suitable in our mixed-dimensional setting than an alternative estimator which is based on model refitting for subsets of features (Grömping, 2007; Williamson and Feng, 2020). Fur-ther discussion about the various estimators of Shapley values is deferred until its formal definition. The literature uses varying terminology for Shapley value based explanations. Table 1 summarizes the Shapley-related concepts we use here. A more extensive overview is provided by Covert et al. (2021). A second shortcoming of the aforementioned leave-one-feature-out approach is that causal-ity or temporal ordering is completely ignored. In a genomics setting it is particularly relevant to use ‘causally-aware’ feature importance metrics (Watson, 2022), as genomic aberrations are often conceived to be close to the root cause. This means that they may have indi-rect effects on the outcome via some of the other features. Throughout this manuscript we 2Shapley value ∗ Local feature importance (explaining individual prediction) SAGE Global feature importance (explaining model performance) Symmetric No directional effects Asymmetric Directional and undirectional effects SHAP Estimation by marginalizing over features not in the subset Refitting Estimation by refitting models on subsets of features Marginal approach SHAP assuming independence for marginalization Conditional approach SHAP using conditional expectation to account for dependence 
+
+> ∗Also used to denote the general concept
+
+Table 1: Concepts related to Shapley values. work with a simple graphical model, depicted in Figure 1, that we believe to be relevant for many diseases. Here, we use disease state D, e.g. derived from histological information, as a potential mediator of the effect of G (genes) on outcome Y . In addition, confounders 
+
+C need to be accounted for. G contains the high-dimensional genomics information such as gene expression profiles, plus possibly also a low-dimensional summary such as a con-sensus clustering based on these profiles, as in our motivational example. Note that D is distinguished from C by the ordering w.r.t. G. Our aim is to quantify the importance of G, D
+
+and C for outcome Y , accounting for the dependencies depicted in the graphical model. We propose asymmetric Shapley values (Frye et al., 2020) as a suitable solution for quantifying feature importance in our mixed-dimensional setting. To adapt the asymmetric Shapley val-ues to this setting, we develop several methodological and computational extensions to the original proposal. First, to quantify the importance of G, we extend the asymmetric Shapley value to its group version (Jullum et al., 2021), which provides a substantial computational shortcut. Second, as computation of Shapley values is known to be potentially very burdensome, we derive subset-based asymmetric Shapley weights, which enable more efficient computation than the ordering-based ones introduced in (Frye et al., 2020). Third, we develop a solution for applications with many features by presenting a novel approximation based on impor-tance sampling. Fourth, we develop an efficient approach for modelling conditional feature dependencies in our mixed dimensional setting, which is necessary for estimating condi-tional Shapley values. Following Frye et al. (2020), we use conditional SHAP instead of the more commonly employed marginal SHAP (see Table 1), since marginal SHAP ignores de-pendencies and is therefore inconsistent when features have directional relationships. Our suggested dependency modelling approach reduces the dimension of the high-dimensional genetic component, after which established low-dimensional dependency models for Shap-ley value computation (Olsen et al., 2024) can be used. Finally, to complete our framework, we develop two methods to perform inference using local Shapley values. This allows us to test the global importance of any of the features for the outcome of interest in the context of the trained model. 3Throughout the manuscript we motivate and illustrate the framework by a leading example: the prediction of progression-free survival for colorectal cancer patients. Our aim is to de-termine which features are most important for explaining this outcome while accounting for the aforementioned asymmetry between genes and disease state. For this, we illustrate how the decomposition property of SAGE for a performance metric like C-index renders it to be a well-interpretable global feature importance metric. Moreover, we provide inference based on local Shapley values to identify significant features. Finally, we show that asym-metric Shapley values better capture the mediating effect of disease state for genes than their symmetric counterparts do. 
+
+# 2 Motivating Data Example 
+
+Our motivating example is about prognosis of relapse-free survival ( Y ) for colorectal cancer patients using genomics data G alongside confounders C and disease state D. The data set (Mestres et al., 2024) contains data from N = 845 patients with 253 events, distributed across four tumor stage categories ( D). The genomics data G consists of a high-dimensional part: gene expression data G1 and a low-dimensional part: Consensus molecular subtype (CMS; G2). This is an established prognostic molecular clustering feature relating to path-ways, mutation rates, and metabolics. As detailed further, we will enrich G by another low-dimensional summary G3 which summarizes G1 in the context of D. The confounders C
+
+consist of gender ( C1), age ( C2) and left/right tumor site ( C3). More details about the data are given in the Section 9. Our graphical model for ordering {G1, G 2, G 3, C 1, C 2, C 3, D, Y } is depicted in Figure 1, with no additional ordering within modules: G = {G1, G 2, G 3} and C = {C1, C 2, C 3}. As this is a mixed-dimensional setting, it is wise to tailor the prediction model such that it handles the low-dimensional variables {G2, G 3, C 1, C 2, C 3, D } differently than the high-dimensional one, 
+
+G1. Several of such models are discussed by Goedhart et al. (2024) and will be considere here. Our goal is to provide interpretation to those models by quantifying the importance of 
+
+G, C1, C 2, C 3 and D for explaining the prediction of Y .
+
+# 3 Asymmetric group Shapley values 
+
+Our interest lies in quantifying the importance of features that are indexed by h = 1 , . . . , q .These features may consist of individual variables, indexed by j = 1 , . . . , p , or groups of those. For clarity we fix the index i for the individual, and let xh = xih = ( xij 1 , . . . , x ij h ), with 
+
+(j1, . . . , j h) denoting the indices of variables belonging to feature h. The realization of xh is denoted by x∗
+
+> h
+
+. Let H−h be the superset of all subsets of {1, . . . , H } not containing feature 
+
+h. Denote by S ∈ H −h the coalition, i.e. the feature indices for which their value is set at the realization, and its complement S′. Write x = Sqh=1 xh, xS = S 
+
+> h∈S
+
+xh, x∗S = S 
+
+> h∈S
+
+x∗
+
+> h
+
+, and 
+
+f (x) = f (x∗S , xS′ ) for the predicted value. Then, the symmetric (group) Shapley value for 4D Y
+
+C
+
+GFigure 1: Model for information flow for G: gene expression profile, C: confounders, D:disease state, Y : outcome. Right arrows depict unidirectional effects, bidirectional arrows depict correlations. Grey arrows indicate prediction, black arrows dependency between vari-ables. Modules may contain multiple features. feature h is defined as: 
+
+ϕh = X
+
+> S∈H −h
+
+w(S)
+
+
+
+ν(S ∪ { h}) − ν(S)
+
+
+
+, (1) with ν being a function measuring the contribution of coalition S in terms of predictions 
+
+f (x∗S , xS′ ). The definition of ν may be modified to one’s need. Several options will be discussed in the next section. We now modify (1) to allow for asymmetry: 
+
+ϕah = X
+
+> S∈H a
+> −h
+
+wah(S)
+
+
+
+ν(S ∪ { h}) − ν(S)
+
+
+
+, (2) with Ha 
+
+> −h
+
+⊂ H −h, containing only coalitions S for which both S and S ∪ { h} respect the asymmetry, meaning h2 ∈ S ⇒ h1 ∈ S when h1 → h2, and likewise for S ∪ { h}. Note that Frye et al. (2020) develop the asymmetric Shapley values differently. They start from the well-known equivalent formulation of symmetric Shapley values, which considers all H!
+
+orderings of the features and then adapt this formulation by only allowing orderings that respect the known partial orderings, such as G → D. Formulation (2) renders the same results as theirs when using appropriate coalition weights wah(S), as detailed below. We prefer (2) over the ordering-based formulation because the former is computationally much more efficient as the number of coalitions (subsets) is vastly outnumbered by the number of orderings. E.g. in the setting with one G, one D, r confounders C1, . . . , C r, and G → D,the number of allowed orderings equals (r + 2)! /2, while the number of allowed coalitions equals 2r ∗ 3. Their ratio equals 26 , 7.8 ∗ 10 4, 1.8 ∗ 10 9 for r = 5 , 10 , 15 , respectively. 54 Contribution function and estimation 
+
+To be able to compute ϕh and ϕah one needs to define the contribution function ν, for which the following three aspects need to be considered. First, global and local explanations require different ν’s. For local explanations, one would like to mimic the prediction with only a subset of the features present. For global explana-tions, one usually considers a performance metric ψf of the prediction model f , such as explained variation ( R2) or C-index. This global version, referred to as SAGE (Covert et al., 2020), then measures the improvement of the prediction when h is added to any of the coali-tions, across all (test) individuals. Both types of explanations will be explored here: global explanation allows an overall comparison between models and features, whereas a local explanation renders a more detailed picture. Moreover, we will connect the two by showing that local Shapley values accommodate post-hoc global inference. Second, the choice of method for estimating Shapley values impacts ν. The many ap-proaches are discussed in Covert et al. (2021). Here, we briefly discuss two popular classes of varieties: our method of choice, marginalization using SHAP (Lundberg and Lee, 2017; Aas et al., 2021), and an alternative based on model refitting. The former defines ν to be a conditional expectation: 
+
+ν(S) = E[f (x∗S , xS′ )|xS = x∗S ], (3) i.e. the expected value of the prediction function, with the expectation computed over all fea-tures h ∈ S ′. This definition extends trivially to its global counterpart by substituting f by a performance metric ψf . Shapley values based on refitting (Grömping, 2007; Williamson and Feng, 2020) use ν(S) = fS (x∗S ), with fS being the prediction model fitted on the coalition S.Both approaches have their pros and cons, and may, in some settings, render similar results (Lundberg and Lee, 2017; Reyero Lobo et al., 2025), while proven to be equivalent if all mod-els used are optimal (Covert et al., 2021). The refitting option may seem easier to implement as it only relies on fitting prediction models for the coalitions, but computing time may become excessive when the re-fitting itself is time-consuming. Further, we show that in settings for which (groups of) variables are encoded with different complexities in the prediction model 
+
+f (e.g. linear for high-dimensional variables and flexible for low-dimensional ones), refitting without changing the formulation of the submodels may render incorrect Shapley values. On the contrary, SHAP handles such mixed-complexity models well. Since such models are very useful for mixed-dimensional settings as in our motivational example (Goedhart et al., 2024), we focus on SHAP for computing asymmetric Shapley values. Third, the computation of ν by (3) relies on specifying a dependency model. Note that such dependencies are sometimes ignored, leading to so-called marginal Shapley values (as opposed to conditional ones; see discussions in Chen et al. (2020) and Aas et al. (2021)). We agree, however, with Frye et al. (2020) in that asymmetry is not well-compatible with marginal Shapley values: if one accounts for direction, one should also account for correlation. In addition, sparse models are often desirable for genomics applications. For such models, 6the computationally more efficient marginal Shapley values are not a good approximation of conditional ones (Chen et al., 2020). 
+
+# 5 Effect of asymmetry in the low-dimensional setting 
+
+While the focus in this manuscript is on high-dimensional applications, we briefly discuss the low-dimensional regression setting. This allows for a relatively simple comparison of symmetric and asymmetric Shapley values, both analytically and visually. Supplementary Sections B and C discuss the results in detail; here we summarize the main findings. First, we show that in a setting with only two variables, G and D, the analytical asymmetric Shapley value for G inherits the effect of D just as it does in standard mediation analysis. When a single confounder C (correlation ρ to both G and D) is added, analytical results are more complex, but we still observe a similar effect. Moreover, in such a setting G inherits more of the effect of C than D does, in particular when ρ is large. Second, we visualize the symmetric and asymmetric Shapley values for a simple four-variate ( G, D, C 1, C 2) simulation with D represented by a quadratic term in the outcome model, while the other terms are linear. Here, we assume G → D as in Figure 1. We also compute the global counterpart: SAGE-R2, which quantifies how much of the R2 is explained by each of the variables. Both the local and global Shapley values show a clear increase of the importance of G when we impose asymmetry. For example, G is twice as important as D when quantified by the asymmetric SAGE-R2, while being half as important when its symmetric counterpart is used. Finally, we show that in this setting the refitting version of Shapley values does not correctly transport the quadratic effect of D on G, whereas Shapley values based on conditional marginalization (see (3)) do. 
+
+# 6 Computation of asymmetric Shapley weights 
+
+When the number of features, which may represent both single variables and groups of variables, is not very small, we need an efficient method to compute the asymmetric Shap-ley weights wah(S) in (2). In analogy to the ordinary symmetric Shapley weights, wah(S) is computed by counting the number of allowed orderings that render coalition S and its com-plement S′. Let us first give a simple example. 
+
+Example . Consider the setting with three features only: {G, D, C }, with G → D. Allowed orderings are GDC, GCD, CGD , each with ordering weight 1/3 when applying uniform or-dering weights; the approach extends trivially to other ordering weights discussed by Frye et al. (2020). Then, for computing the asymmetric Shapley value of D (ϕaD) by (2), we have only two allowed coalitions that do not contain D: Ha 
+
+> −D
+
+= {{ G}, {G, C }} . Here, ∅ and 
+
+{C} are not members of Ha
+
+> −D
+
+, because adding D to either of these two would render an invalid coalition that contains D but not G. The weights of the two allowed coalitions are: 7waD({G}) = 1 /3 and waD({G, C }) = 2 /3, as D is preceded by G alone in one ordering, while it is preceded by both G and C in two orderings. Importantly, unlike in the symmetric setting, the asymmetric weights depend also on h, the feature of interest. For the symmetric setting, conventional Shapley weights for subsets S are derived from the number of orderings of q − 1 features (some consisting of multiple variables) that render coalition S. Note that feature h for which the Shapley value is computed is added last to the coalition S, so it does not contribute to the number of orderings. Hence, in a completely symmetric setting the number of orderings equals: |S| !( q − 1 − |S| )! . Combined with the q!
+
+weight in the definition of Shapley values based on orderings (Frye et al., 2020) this renders the well-known symmetric Shapley weights: 
+
+|S| !( q − 1 − |S| )! /q ! = 1
+
+q
+
+q − 1
+
+|S| 
+
+−1
+
+.
+
+We now follow the same reasoning for asymmetric Shapley weights wah(S). We derive those for ordering structures that are relevant for our type of application. Denote the number of allowed orderings in S by #S, and extend this definition to any set of features. Then, 
+
+wah(S) = #S#( H/(S ∪ { h})) #H ,
+
+as the features in S precede the others, and feature h is added last, so its position is fixed. In line with our graphical model in Figure 1, we assume that the graph for all coalitions S
+
+can be decomposed into modules of maximum three classes of features. Then, we compute the asymmetric Shapley weights recursively from the total number of orderings in modules 
+
+M = Mj , j = 1 , 2, 3; M = {Mj , M k}, (j, k ) = (1 , 2) , (1 , 3) , (2 , 3); and M = {M1, M 2, M 3}.Here, we may assume without loss of generalization that potential ordering constraints are always of the type Mj → Mk for j < k . The following expressions for the number of allowed orderings then suffice for computing wah(S) recursively in our modular setting: ( i ) M = Mj , Mj symmetric (only correlations): #M = # Mj = |Mj |!
+
+( ii ) M = Mj , Mj completely ordered: #M = # Mj = 1 .( iii ) M = {Mj , M k}, completely symmetric: #M = ( |Mj | + |Mk|)! 
+
+( iv ) M = {Mj , M k}, Mj → Mk: #M = # Mj #Mk
+
+( v ) M = {M1, M 2, M 3}, M1 → M2 → M3: #M = # M1#M2#M3
+
+( vi ) M = {M1, M 2, M 3}, M1 → M2, M 1 → M3: #M = # M1#M2#M3
+
+ |M2|+|M3||M2|
+
+
+
+(vii) M = {M1, M 2, M 3}, M1 → M2: #M1#M2#M3
+
+ |M1|+|M2|+|M3||M3|
+
+ orderings, 8with #Mj : the number of orderings within submodule Mj . The binomial coefficient in the latter result is the number of ways to distribute |M3| ‘blue balls’ among |M1| + |M2| + |M3|
+
+balls, once the ordering within each module has been fixed. 
+
+Example :Let H = {G1, G 2, D, C 1, C 2, C 3, C 4, C 5, C 6} and impose the ordering constraints G1 → G2,
+
+G = {G1, G 2} → D. Suppose we aim to compute wah(S) for h = C6 and coalition S =
+
+{G1, G 2, D, C 1, C 2, C 3}. First compute #S, using expression (vii) above with S = M =
+
+{M1, M 2, M 3} and M1 = {G1, G 2}, M 2 = {D}, M 3 = {C1, C 2, C 3}. Then, we have #M1 =1, #M2 = 1 , #M3 = 3! = 6 .. Moreover,  |M1|+|M2|+|M3||M3|
+
+ =  63
+
+ = 20 . Hence, #S = # M =6 ∗ 20 = 120 . Next we have: #( H/(S ∪ { C6})) = # {C4, C 5} = 2 and #H = 1!1!6! ∗  96
+
+ =60480 . Therefore, waC6 ({G1, G 2, D, C 1, C 2, C 3}) = 240 /60480 = 1 /252 .
+
+For the computation of ϕah these weights need to be combined with the contributions ν(S ∪ {h}} ) and ν(S), see (2). For such computations it is convenient to write ϕah = ϕa, + 
+
+> h
+
+− ϕa, − 
+
+> h
+
+,
+
+with ϕa, + 
+
+> h
+
+= P wah(S)ν(S ∪ h) and ϕa, − 
+
+> h
+
+= P wah(S)ν(S). Then, we show in Supplementary Section A that the asymmetric Shapley values for all feature groups and individuals are efficiently computed by adding the results of two matrix multiplications: one for the weights and positive contributions and one for the weights and negative contributions. When the number of possible coalition subsets becomes too large for complete enumeration, e.g. when the number of confounders in C is large, sampling these according to kernelSHAP weights (Lundberg and Lee, 2017; Aas et al., 2021) provides an efficient approximation for symmetric Shapley values. Here, the kernel weights are set such that they provide an exact solution when all subsets would be considered. These kernel weights are the same for all features. Unfortunately, due to loss of symmetry, this approach does not work for asym-metric Shapley values. However, the Supplementary Material provides a novel importance sampling scheme that implements efficient sampling of the coalition subsets with probabil-ities proportional to the the asymmetric Shapley weights wah(S). This enables numerical approximation of ϕah when the number of features is too large to allow enumerating all possi-ble coalitions S.
+
+# 7 Modeling dependencies for SHAP-based Shapley values 
+
+For computing SHAP-based (conditional) asymmetric Shapley values one needs to compute 
+
+ν(S) = E[f (x)|xS = x∗S ], which requires a model to compute dependencies between vari-ables that are part of S′ (hence not of S) and the ones in S. In our setting, this is particularly complex, because of the mix of high-dimensional variables and low-dimensional ones, in-cluding some of categorical (such as gender) or ordinal (disease state D) nature. Direct modelling of such dependencies would require careful regularization, which is very complex to model and tune well with such a mixed bag of variables. Instead, we opt to use summary scores of G1, the high-dimensional component of G, to make this process much easier and 9flexible. This allows to make use of all dependency models for estimating ν(S) in software modules such as shapr (Jullum et al., 2025). First, when modelling dependency, we simply replace G1 by k extracted components q(G1),obtained by principal component analysis or by any other feature extraction technique deemed suitable for the data at hand. The usual diagnostics may be performed to choose k. If G1 is in coalition S, then the dependency modeling of variables in S′ is performed conditional on the low-dimenional summary q(G1). If G1 is not in S, it needs to be generated for computing the expected prediction E[f (x)|xS = x∗S ]. For this, we opt to do so empirically by first sam-pling the components of q = q(G1) conditionally on the variables in S, and then replace the sampled q by G1,i ′ , where i′ = argmin i|| q(G1,i ) − q|| 2.Second, we compute a ‘ D-aware’ low-dimensional summary of G1, as the relationship be-tween G and mediator D is particularly important in our setting. Such a summary, denoted by qD(G1), may be obtained from any learner that predicts D from G1. We recommend to treat qD(G1) as any of the original features by adding it to the feature set, so that it is used for both prediction of Y and for the dependency model. This may decrease regularization-induced bias (Hahn et al., 2020) due to the more careful modeling of the effect of G1 via the two directed paths from G to Y (see Figure 1), which may benefit both the predictive performance and the dependency modelling. 
+
+# 8 Inference 
+
+Conditionally on the trained prediction model, local Shapley values ϕih of independent test individuals i = 1 , . . . , n ′ may be regarded as i.i.d. realizations of Φh: the Shapley value for feature h and a random test individual. As opposed to its global counterpart, local Shapley values provide multiple realizations of its random counterpart, Φh. This makes them a con-venient tool for global inference conditional on the trained model (Williamson et al., 2021; Watson et al., 2024). Note that such inference does not propagate the uncertainty of the trained model, which is a harder, model-specific task (Spadaccini et al., 2025). Marginal inference, which simply correlates Φh with test individual outcomes Y without ac-counting for the other features k̸ = h, is trivial, as standard statistical testing techniques can be used for this purpose. Here, we propose two alternative tests to evaluate the global impor-tance of feature h (e.g. G or D) that do account for the other features. First, when we wish to test feature h we use the decomposition property of Shapley values to write prediction fi
+
+for any test individual i as: 
+
+fi = ϕih + ϕi, −h = ϕh + X 
+
+> k̸=h
+
+ϕik . (4) This decomposition extends to a random test individual for which ϕi, −h is replaced by its random counterpart, Φ−h. Then, our global null-hypothesis is: 
+
+H0h : ( Y ⊥⊥ Φh|Φ−h). (5) 10 We discuss two approaches to test (5). First, when the test sample size is limited, the follow-ing semi-parametric approach may be appealing. Regress the test outcome Yi against ϕih 
+
+and (ϕik )k̸ =h. Then, compute the (partial) likelihood of this model and that of the null-model, which excludes ϕih . This creates likelihoods of two nested models, which may be tested using standard likelihood-ratio testing. Note that this approach is semi-parametric, as it does not assume any parametric relationship between the features and the outcome (the Shapley values encode such potentially very complex associations); it only parameterizes the like-lihood for the test outcomes as a linear function of ϕih and (ϕik )k̸ =h, which is reasonable given the decomposition property of the prediction (4). For this approach to be consistent with the learner, the learner should: a) be based on likelihood maximization (or, equivalently, cross-entropy minimization); and b) report Shapley values on the linear predictor scale, as these principles concur with the regression setting used for testing. Second, and more generically, we may make use of the conditional inference framework (Hothorn et al., 2006) to test (5) fully non-parametrically. Here, we propose a simple ap-proach based on matching. The decomposition of fi into ϕih and ϕi, −h is useful for this, as it allows us to straightforwardly apply matching to deal with the conditioning. In short, we propose to match neighboring values of ϕi, −h into pairs or blocks, and use block-wise permutation to test (5). The latter is available in the R-package coin for various types of out-comes. Similar to propensity score matching in causal inference, this approach is based on the rather reasonable assumption that the matching suffices to block the impact of potential dependency between Φh and Φ−h when associating the former with outcome Y . It does not require to model the conditional distribution of Φh given Φ−h and applies to any learner or Shapley value, irrespective of the scale of the latter. Of course, this may come at the price of lower power than for the semi-parametric approach above, if the assumptions behind the latter are fulfilled. The two tests will be illustrated on the data example. 
+
+# 9 Results 
+
+Below we illustrate our framework on the motivational example. We contrast the asymmetric Shapley and SAGE values to their symmetric counterparts and to the conventional ‘leave-one-feature-out’ approach. In addition, we show how SAGE decomposes the C-index to allow for easy interpretation. Moreover, we use Shapley values to infer global importance and to illustrate the mediation effect of the disease state D.
+
+## 9.1 Data: survival prognosis for colorectal cancer patients 
+
+As a data illustration we use the combined cohorts of colorectal cancer patients available as a single data set in the R-package mcsurvdata (Mestres et al., 2024). Our aim is to explain the prediction of relapse-free survival Y . Therefore, patients without survival response are removed from the data set. This renders a final data set of size N = 845 and 253 events. The distribution of number of patients across disease states is: 56 , 423 , 308 , 58 for tumor 11 stages I, II, III and IV, respectively. Hence, disease state D comprises of a four-level ordinal variable. Genomic information G consists of a high-dimensional component G1 and a low-dimensional one, G2. Here G1 contains gene expression values of the 500 most variable genes. Of note, results using all 21,292 genes were very similar. As we wish to enable efficient reproducibility of the results, we prefer to use this subset of 500 genes. G2 is a four category nominal variable that contains the consensus molecular subtype (CMS), which is an established molecular clustering based on gene expression. Hence, G2 is a pre-defined low-dimensional summary of the gene expression profile. We consider three confounders: 
+
+C1: gender; C2 : age; C3: tumor site (left/right). The models are trained on Ntrain = 676 
+
+patients and evaluated on Ntest = 169 patients. As discussed before, we augment the set of prediction variables by a disease state spe-cific summary of G1, qD(G1). For this, we apply a standard random forest (RF) to predict the multiclass outcome D using gene expression variables G1. The out-of-bag predicted disease state probabilities, with the first one removed for redundancy, then define a third, low-dimensional genomic variable: G3 = qD(G1). Here, the use of RF to obtain G3 aligns well with the tree-based dependency model ctree , which we opt to use when computing the contribution function ν(S) in (3) with shapr . All low-dimensional variables, including G3,are used for prediction and dependency modeling. These variables are considered as sepa-rate features for evaluating their importance. All 500 variables in G1 are used for prediction, whereas, as discussed before, we replace G1 by a summary q(G1) to characterize its depen-dencies with other variables for computing ν(S). For this, we use 10 principle components extracted from G1, defining q(G1). These explain about 50% of the variation; increasing the number of components to 20 did not qualitatively change the results. The importance of feature G1 is evaluated as a group. In addition, we also evaluate the importance of all gene-related variables G = {G1, G 2, G 3} together, which is conveniently accommodated by the additivity property of Shapley values. 
+
+## 9.2 Prediction models 
+
+Before explaining a model, we need to decide what model to focus on. For this, we compare the predictive performances of three models that are designed to handle mixed-complexity data: blockForest (Hornung and Wright, 2019), fusedTree (Goedhart et al., 2024) and 
+
+ridge0 , fitted by glmnet (Friedman et al., 2010). Here, blockForest is a random forest that tunes two sets of hyperparameters: one for the high-dimensional variable, i.e. G1, and one for the rest, representing the low-dimensional block. As such it can adapt to the differ-ent dimensions of the two blocks. The learner fusedTree builds a simple decision tree for the low-dimensional variables, thereby allowing for non-linearities and interactions for those variables. Next, the remaining variability in the leaves is modeled by fused ridge regression on G1. Hence, fusedTree prioritizes the low-dimensional variables and models the high-dimensional component with a simpler, regularized parametric model. Finally, ridge0 is a ridge regression which does not penalize the low-dimensional variables. Cross-validation was used for tuning the hyperparameters. 12 As performance metrics we use the C-index and time-dependent AUC (Heagerty et al., 2000) at t = 5 years, evaluated on the test set. Table 2 shows the results for the three models. We observe that blockForest performs best, with fusedTree being a close runner-up and the fully linear model ridge0 being inferior. Therefore, we mostly focus on blockForest when interpreting results. C-index tAUC 
+
+blockForest 0.754 0.789 
+
+fusedTree 0.747 0.777 
+
+ridge0 0.710 0.715 
+
+blockForest (reduced) 0.731 0.737 Table 2: Predictive performances 
+
+## 9.3 Feature importance 
+
+Let us first employ a traditional approach to evaluate the importance of G = {G1, G 2, G 3}
+
+for survival Y by comparing the predictive performance of blockForest with G left out (re-duced model) with that of the full model. The reduced model renders C-index: 0.731 and tAUC: 0.737. Hence, leaving out G from the prediction model results in only a very mod-est drop in performance, compared to 0.754 and 0.789 (see Table 2). Below, we will show that this perceived modest importance of G is misleading, in particular when we account for asymmetry. We assess the impact of accounting for asymmetry by evaluating feature importance globally on test individuals. For this, we compute the symmetric and asymmetric SAGE-C, obtained from (1) and (2), by using ν(S) = E[ψc-index (x)|xS = x∗S ], where ψc-index is the C-index. By construction, SAGE-C decomposes the performance of the full blockForest model into con-tributions of all features. Table 3 displays the results for both the symmetric and asymmetric SAGE. We also display the likelihood ratios and the p-values from the corresponding test described in Section 8, as blockForest satisfies the stated assumptions behind this test. Supplementary Table 8 shows the p-values from the conditional independence test. These show a similar pattern as those from the likelihood ratio test, although the former tend to be larger due to the nonparametric nature of the test. The effect of accounting for asymmetry is clear: G becomes relatively more important at the cost of the importance of D. The other two models, fusedTree and ridge0 , show similar be-havior (Supplementary Table 7). Moreover, the increased spread in the local Shapley values of G confirm the increased importance of G when accounting for asymmetry (Supplementary Figure 6). Splitting the contributions of G into that of the high-dimensional component G1 and the low-dimensional one, G2 + G3, illustrates the importance of adding the low-dimensional components, in particular for the asymmetric version. For this version, the joint Shapley 13 values of G2 and G3 have a significant association with the outcome of the test individuals, which is not the case for the symmetric version. G2 and G3 clearly benefit more from the asymmetry than G1 as they are less strongly regularized than G1 in the blockForest model. In addition, note that the confounders seem to contribute very little to the C-index for both versions. At first, this may be somewhat surprising for ‘Age’, as we study survival. This is likely due to the outcome being progression-free survival instead of overall survival. Despite its small impact on C-index, ‘Gender’ is weakly significant for the symmetric case. This is likely explained by the relative small variability of its Shapley values due to the binary nature of this variable. Sym Asym LLR Sym LLR Asym pSym pAsym 
+
+intercept 0.500 0.500 Genes ( G) 0.130 0.173 12.39 14.56 1.72e-05 2.12e-06 – G High (G1) 0.076 0.082 7.87 7.14 7.27e-05 1.57e-04 – G Low (G2 + G3) 0.053 0.091 2.28 4.91 0.102 7.39e-03 — CMS (G2) 0.028 0.043 1.59 2.17 0.075 0.037 — Pred D (G3) 0.025 0.048 0.43 2.36 0.356 0.030 Disease state ( D) 0.091 0.062 13.59 10.12 1.85e-07 6.84e-06 Gender ( C1) 0.010 0.008 2.02 0.97 0.045 0.163 Age ( C2) 0.021 0.010 0.57 0.57 0.286 0.285 Tumor site ( C3) 0.002 0.001 0.05 0.02 0.760 0.843 Total 0.754 0.754 Table 3: SAGE decomposition of C-index of blockForest model for symmetric and asym-metric version. Plus (partial) likelihood-ratio (log; LLR) and p-values based on the likelihood-ratio test using Shapley values on log cumulative hazard scale. 
+
+## 9.4 Mediation effect 
+
+Next, we study the effect of the mediation by disease state D on the local Shapley values of G, ϕG. For this, we plot the latter against the true values of D for test individuals. If 
+
+D would not mediate the effect, then we should not see a difference in the distributions of 
+
+ϕG. Figure 2 shows a small difference for the symmetric Shapley values and a much larger one for the asymmetric ones. The latter is also much more significant when tested using a Kruskal-Wallis rank test (p = 1.4e-3 vs p = 4.3e-9). The test being significant suggests that tumor stage is associated with changes in how the model relies on high-dimensional omics information in test/unseen patients. The median difference in ϕG between the asymmetric and symmetric version becomes more pronounced in stage III and IV patients. This suggests that reallocating part of the predictive contribution of tumor stage to the genes more strongly influences gene importance for pa-14 -0.5 0.0 0.5 1.0 Stage I Stage II Stage III Stage IV 
+
+## Stage  
+
+> φ GAsymmetric Symmetric
+
+Figure 2: Mediation effect. Shapley values for Genes G (y-axis) against true disease state 
+
+D (x-axis) for the asymmetric (left box) and symmetric (right box) version. tients with advanced disease. All-in-all, Figure 2 shows that the asymmetric Shapley values capture more of the mediation effect of D than their symmetric counterparts. 
+
+# 10 Implementation 
+
+Our methods have been implemented in R, building on the existing package shapr (Jullum et al., 2025). We added functions for: 1) efficient computation of the exact asymmetric weights; 2) approximation of these weights by the presented importance sampling algorithm; 3) replacement of the high-dimensional object G1 by a low-dimensional summary q(G1)
+
+for dependency modeling (while keeping G1 for predicting Y ); and 4) inference based on Shapley values. These functions are provided in the GeneSHAP github repository: https:// github.com/markvdwiel/GeneSHAP . This repository also contains the script for reproducing the data example. 
+
+# 11 Discussion 
+
+We adopted asymmetric Shapley values to quantify feature importance in a mixed-dimensional setting. We showed that a naive leave-one-feature-out approach does not provide a satis-15 factory solution for this setting. Alternatives that deal better with collinearity (Verdinelli and Wasserman, 2024) may alleviate the issue, but are not easily amended to deal with asym-metry, as they do not consider multiple subsets. Causally aware Shapley values (Heskes et al., 2020) do account for asymmetry, but have a different aim: quantifying the effect of an intervention. This is a very powerful framework, but it relies on causal knowledge about the bidirectional arcs in Figure 1. These arcs represent marginal correlations with confounders; for computing the effect of an intervention it is essential to know whether these are (merely) cyclic dependencies or caused by an unknown common confounder (Heskes et al., 2020). Such information is often lacking in clinical prediction settings and reality might be a mixture of the two. Another related framework is mediation analysis (Schuler et al., 2025). It has a somewhat different aim though: estimating the direct and indirect effects of G on Y . Again, the direction of the effects between G and confounders C needs to be specified for this. Therefore, these frameworks do not straightforwardly apply to our setting. This also implies a warning about our approach: one should not endow (asymmetric) Shapley values with a causal interpretation without further assumptions. Our proposed dependency modeling relies on standard dimension reduction techniques to represent the high-dimensional component. In the context of the data, these techniques can be evaluated by the usual tools, or as part of the dependency modeling in the context of Shapley values (Olsen et al., 2024). Our motivation for this simple solution for dependency modeling is two-fold. First, for computing conditional Shapley values, dependency modelling plays a more modest role than in other applications such as synthetic data generation or graphical models. Second, dimension reduction allows for easy use of the available de-pendency models in shapr (Jullum et al., 2025) without the need for further regularization. Nevertheless, it may be worthwhile to embed specialized dependency models as an alter-native into our framework. Candidates might be those used for synthetic data generation, such as arf (Watson et al., 2023), once its applicability to mixed-dimensional data has been demonstrated. Alternatively, one could opt to use different dependency models for repre-senting dependencies within the high-dimensional feature, across low-dimensional features and between the high-dimensional feature and the low-dimensional features to account for the differences in complexity. Another relevant extension is the quantification of feature importance for (many) gene mod-ules like pathways. For this, the challenges are to model dependencies between those modules, and also with the other variables, and to maintain the framework computationally feasible. Again, distinguishing the different feature sets to efficiently model and estimate dependencies may be useful for this purpose. We discussed two tests for inferring conditional independence of Shapley values from the outcome in a test set: a regression-based test and a non-parametric one. The former may be extended to allow for more interpretation. In particular, one may wish to test whether the Shapley values for the test set are robust (Joseph, 2019), implying the coefficients in the linear decomposition equal one. 16 Our application focuses on a clinical prediction problem using a high-dimensional genomics feature alongside several confounders and using disease state as a mediator. Our frame-work may be relevant to some genetics applications as well. In fact, SAGE-R2 can directly be used as an extension of estimators of the heritability index (Visscher et al., 2008; Veerman et al., 2019), a popular metric to quantify the importance of genetic variation for explaining phenotypic variation. Traditionally, linear mixed models are used to estimated heritability. Using SAGE-R2 in our framework extends this to non-linear models and to asymmetric set-tings to account for mediation. Moreover, as shown in the example, our framework allows decomposing the genetics contribution into one of the high-dimensional feature and one of low-dimensional summaries such as the popular polygenic risk score. Including these scores as features in the framework would shed light on the relevance of those in the context of explaining phenotypic variation by a given model. 17 A Supplement: Computing asymmetric Shapley weights 
+
+## A.1 Shapley weight matrix 
+
+First, note that asymmetric Shapley values (2) can be written as ϕah = ϕa, + 
+
+> h
+
+− ϕa, − 
+
+> h
+
+, a decom-position that is also used in Kolpaczki et al. (2024). Here, ϕa, + 
+
+> h
+
+= P 
+
+> S
+
+wah(S)ν(S ∪ h) and 
+
+ϕa, − 
+
+> h
+
+= P 
+
+> S
+
+wah(S)ν(S). Note here that, by construction, wah constitutes a discrete distribution over all possible S (hence not containing h) for ϕa, − 
+
+> h
+
+. Likewise over all possible S ∪ h for ϕa, + 
+
+> h
+
+.
+
+Note that, unlike for symmetric Shapley weights, wah(S) is specific for S and h.
+
+Example 
+
+Define Ha to be the superset of all coalitions that obey the order restrictions: Ha = S 
+
+> h∈H
+
+Ha
+
+> −h
+
+.Set wa, − 
+
+> h
+
+(S) = wah(S) if h / ∈ S and wa, − 
+
+> h
+
+(S) = 0 , otherwise. Then, for H = {G, D, C 1, C 2}
+
+and G → D, we have for W a, − =  wah(S) 
+
+> h∈H, S∈H a
+
+:
+
+W a, − = 112 
+
+
+
+∅ { G} { C1} { C2} { G, {G, {G, {C1, {G, D, {G, D, {G, C 1, {G, D, D} C1} C2} C2} C1} C2} C2} C1, C 2}
+
+G 6 0 2 2 0 0 0 2 0 0 0 0
+
+D 0 2 0 0 0 2 2 0 0 0 6 0
+
+C1 3 2 0 1 1 0 2 0 0 3 0 0
+
+C2 3 2 1 0 1 2 0 0 3 0 0 0
+
+
+
+.
+
+Similarly, let wa, + 
+
+> h
+
+(S) = wah(S/h ) if h ∈ S and wa, + 
+
+> h
+
+(S) = 0 , otherwise. Then, we have for 
+
+W a, + =  wa, + 
+
+> h
+
+(S) 
+
+> h∈H, S∈H a
+
+:
+
+W a, + = 112 
+
+
+
+∅ { G} { C1} { C2} { G, {G, {G, {C1, {G, D, {G, D, {G, C 1, {G, D, D} C1} C2} C2} C1} C2} C2} C1, C 2}
+
+G 0 6 0 0 0 2 2 0 0 0 2 0
+
+D 0 0 0 0 2 0 0 0 2 2 0 6
+
+C1 0 0 3 0 0 2 0 1 1 0 2 3
+
+C2 0 0 0 3 0 0 2 1 0 1 2 3
+
+
+
+.
+
+Finally, the vector of asymmetric Shapley values ϕa = ( ϕah)qh=1 is: 
+
+ϕa = ( W a, + − W a, −)vT ,
+
+with v = ( ν(S)) S∈H a .
+
+## A.2 Approximating asymmetric Shapley values 
+
+When the number of possible coalition subsets, equalling the number of columns in W a, −
+
+and W a, +, is large, exact computation of ϕah is infeasible. Therefore, we need to approximate it. Due to the asymmetry, it is not trivial to adapt kernelSHAP (Lundberg and Lee, 2017; Aas 18 et al., 2021) to our setting. Therefore, we resort to importance sampling as an alternative. First note that ϕ− 
+
+> h
+
+= Ewa,−
+
+> h
+
+[ν(S)] , with wa,− 
+
+> h
+
+: row h of W a, −. Likewise for ϕ+ 
+
+> h
+
+and W a, +. When exact enumeration of all subsets is infeasible, it is not straightforward to directly sample from 
+
+wa,− 
+
+> h
+
+and wa,+ 
+
+> h
+
+. Therefore, we propose the following importance sampler, which is based on 
+
+Eg(X) = Eg′ [ g(X)/g ′(X)X] for densities g and g′.
+
+Algorithm 
+
+1. ˜Q− = ˜Q+ = ˜ w = ˜ v = () . For b = 1 , . . . , B :
+
+(a) Sample a sequence of feature (groups) that respects the ordering restrictions (b) Sample a subset by dividing the sequence in two parts with the divisor placed uniformly at one of the (p + 1) potential locations. The set before the divisor defines the sampled coalition subset S(b).(c) Compute the importance sampling weight: 
+
+w(b) = 1
+
+p + 1 #S(b)#( H/S(b))#H ,
+
+with #S : the number of ordering-respecting sequences rendering subset S and 
+
+#H : the total number of ordering-respecting sequences. (d) Compute exact negative and positive Shapley weights for S(b) for all p features rendering vectors q(b)− and q(b)+ (corresponding to columns of Q− and Q+).
+
+(e) ˜Q− =
+
+ ˜Q−|q(b)−
+
+
+
+, ˜Q+ =
+
+ ˜Q+|q(b)+ 
+
+
+
+, ˜w =   ˜w|w(b)
+
+(f) ˜v =  ˜v|ν(S(b)) .
+
+2. The result of this procedure are two p × B matrices ˜Q+ and ˜Q−, and two vectors ˜w
+
+and ˜v of length B. The vector ˆϕa with p assymetric Shapley values is then given by: 
+
+ˆϕa =   ˜W ⊙ ( ˜Q+ − ˜Q−)˜vT ,
+
+where ˜W = 1Tp ˜w and ⊙ is the Hadamard product. 
+
+Notes 
+
+• Sampling sequences in step (a) that respect the ordering restrictions is relatively easy. E.g. when H = {G1, G 2, D, C 1, C 2, C 3, C 4, C 5, C 6} and G1, G 2 → D, we first permute all elements of H randomly to render sequence π. Then, determine the positions of 
+
+G1, G 2, D in π and replace the first two positions by {G1, G 2} (maintaining their order as it was in π) and the last by D, so that the order restriction is respected. 19 • For the importance sampling to be efficient, the weights w(b) should mimic the order of magnitude of the p elements of the true weights, q(b)− and q(b)+ . As for ordinary Shapley values, the latter tend to be large for very small or very large subsets. The uniform sampling of the divisor effectively samples such subsets, which is desirable. • Example. For H = {G, D, C 1, C 2}, S(b) = {G, D } and G → D we have importance sampling weight w(b) = 1 /5 ∗ (1 ∗ 2) /[4! /2] = 1 /30 , as all sequences in which D
+
+preceeds G are not allowed. In this small case, the importance sampling weights for all possible subsets S(b) can be enumerated: 
+
+w =
+
+
+
+∅ {G} { C1} { C2} { G, {G, {G, {C1, {G, D, {G, D, {G, C 1, {G, D, D} C1} C2} C2} C1} C2} C2} C1, C 2}
+
+w(b) 1/5 1 /10 1 /20 1 /20 1 /30 1 /15 1 /15 1 /30 1/20 1/20 1/10 1/5
+
+ .
+
+• It is straightforward to blend the importance sampling algorithm with exact Shapley weights, computed only for very small and very large subsets. This is computationally feasible as the number of very small and very large subsets is relatively small. Such blending may slightly improve the accuracy of the approximation. The importance sampling algorithm has been implemented and tested independently of the prediction model by setting ν(S) = 1 ∀S . Then, we have for the true values ϕa, − 
+
+> h
+
+=
+
+Ewa,−
+
+> h
+
+[ν(S)] = Ewa,−
+
+> h
+
+[1] = 1 , as wa,− and wa,− 
+
+> h
+
+constitute probability distributions. There-fore, we have to verify for all h whether ˆϕa, − 
+
+> h
+
+= ( ˜W ⊙ ˜Q−)[ h, ] ≈ 1, and likewise for ˆϕa, + 
+
+> h
+
+.Table 4 shows the accuracy of the approximation using B = 10 , 000 sampled subsets for the case with one G, one D, 12 confounders and G → D. We observe that all values are indeed close to 1. 
+
+G D C1 C2 C3 C4 C5 C6 C7 C8 C9 C10 C11 C12 
+
+ˆϕ+ 
+
+> h
+
+1.01 1.00 0.96 0.98 1.01 1.02 1.01 1.01 1.00 1.01 1.00 0.99 1.03 0.98 
+
+ˆϕ− 
+
+> h
+
+0.99 1.01 1.00 1.00 1.02 1.00 1.00 1.00 1.01 0.97 1.01 1.00 0.97 0.99 Table 4: Estimated asymmetric Shapley values for constant contribution function. Estimation based on importance sampling with B = 10 , 000 sampled subsets 20 B Supplement: Analytical results for low-dimensional toy examples 
+
+To gain intuition on the difference between symmetric and asymmetric Shapley values, we analytically derive exact expressions for two low-dimensional toy examples related to the application of interest. The first example (subsection B.1) only considers a single gene variable ( G) and a single disease status variable ( D), for which the expressions are tractable and intuitive. The second example (subsection B.2) also adds a single confounding variable (C) and therefore best resembles the application of interest. For the latter example, the expressions become complicated but we provide intuition by deriving limits and showing plots for several scenarios. All derived analytical expressions yield results identical to those obtained from the software implementation. Recall the Shapley value formula for feature h:
+
+ϕh = X
+
+> S⊆{ 1,...,q }\{ h}
+
+wS
+
+
+
+ν (S ∪ { h}) − ν (S)
+
+
+
+, (6) where we suppressed the observation index i. Here, S denotes the subset of features part of the coalition and we denote S′ the complement: the subset of features not part of the coali-tion. For symmetric Shapley values, all subsets are allowed, while for asymmetric Shapley values subsets that adhere to the causal structure are allowed. For instance, if feature G
+
+precedes D, then feature D can only be part of the coalition if G is present as well. The weights wS compute the number of orderings leading to subset S divided by the total number of orderings. Computing wS differs between symmetric and asymmetric Shapley values and is discussed in Section 5 of the main document. The value function ν (S) is computed by the partial dependence function 
+
+ν(S) = E[f (xS , xS′ )|xS = x∗S ],
+
+rendering the so-called conditional Shapley values (Aas et al., 2021) (either symmetric or asymmetric) by marginalizing the prediction function over the conditional distribution p (xS′ |xS ).Another commonly employed Shapley value is the marginal Shapley value (Lundberg and Lee, 2017) which assumes that features are independent: p (xS′ |xS ) = p (xS′ ). Note that the independence assumption breaks the relationship between the features, rendering iden-tical expressions for the symmetric and asymmetric versions of the marginal Shapley values (Frye et al., 2020). For comparison, we will show expressions for the (symmetric) marginal Shapley values as well. 
+
+## B.1 Two-dimensional toy example 
+
+Consider the following set-up 
+
+G ∼ N (0 , 1) 
+
+D = γG + δ, where δ ∼ N  0, σ 2
+
+> δ
+
+
+
+ˆf (G, D ) = β1G + β2D. 
+
+(7) 21 Here, G denotes a single gene variable, D a single disease status variable, and we assume we have an estimated model ˆf (G, D ). We further assume that G drives D according to the second line of (7), rendering the following conditional distribution: D|G ∼ N (γG, 1 − γ2).For simplicity of the expressions, we set σ2 
+
+> δ
+
+= 1 − γ2 to ensure Var (D) = 1 .For asymmetric Shapley values, we have to consider the value function contrasts ν ({G})−
+
+ν ({∅} ) with weight w = 1 for G, and ν ({G, D }) − ν ({G}) with w = 1 for D (as ν ({D}) is not allowed). For the symmetric Shapley values, we have to consider the value function contrasts 
+
+ν ({G}) − ν ({∅} ) with weight w = 1 /2 and ν ({G, D }) − ν ({D}) with w = 1 /2 for G and 
+
+ν ({D}) − ν ({∅} ) with w = 1 /2 and ν ({G, D }) − ν ({G}) with w = 1 /2 for D. Note that the value function computations are identical for the symmetric and asymmetric Shapley values; the only difference is which value function contrasts are allowed. We now show how to compute ν ({G}) after which the reader can verify the other value function computations: 
+
+ν ({G}) = 
+
+Z
+
+ˆf (G, D ) p (D|G) dD 
+
+=
+
+Z
+
+(β1G + β2D) N  γG, 1 − γ2 dD 
+
+= β1G + β2γG. 
+
+(8) Similarly to (8), we can compute all value functions which results in the Shapley values in Table 5. For comparison, we also show Shapley value expressions assuming independent variables. We leave it to the reader to verify that, for these marginal Shapley values, the choice between the symmetric or asymmetric version yields identical expressions. Table 5: Asymmetric, symmetric, and marginal Shapley values ( ϕ) for the toy example de-scribed by (7). 
+
+Variable Asymmetric Symmetric Marginal 
+
+G G (β1 + β2γ) β1G + γ 
+
+> 2
+
+(β2G − β1D) β1GD β2(D − γG ) β2D + γ 
+
+> 2
+
+(β1D − β2G) β2D
+
+From Table 5, we can see that the asymmetric Shapley value of G contains the main direct effect ( β1G) and the indirect effect through D (β2γG ). Hence, for this simple linear set-up, the asymmetric Shapley value is identical to the total effect obtained from a mediation analysis. Asymmetric Shapley values, however, are more general compared to mediation analysis by being model-agnostic; they allow for complicated nonlinearities and interactions. Furthermore, an arbitrary number of confounders can also be included. The symmetric Shapley values contain the main effects but also distribute their effect sizes across both G and D due to the correlation between these variables. Independent Shapley values equal the main effects of the variables as expressed by the model ˆf (G, D ).For all three types of Shapley values, summing the Shapley values across variables recovers the model predictions: ˆf (G, D ) = β1G + β2D, as expected. 22 B.2 Three-dimensional toy example 
+
+Consider the following set-up 
+
+G ∼ N (0 , 1) 
+
+D = γG + δ, where δ ∼ N  0, σ 2
+
+> δ
+
+
+
+C = ρ
+
+1 + γ (G + D) + ϵ, where ϵ ∼ N  0, σ 2
+
+> ϵ
+
+
+
+ˆf (G, D, C ) = β1G + β2D + β3C. 
+
+(9) Here, G again denotes a single gene variable, D a single disease status variable, C a single confounding variable, and ˆf (G, D, C ) denotes the estimated model. Set-up (9) therefore resembles the application of interest. We again assume that G drives D according to the second line of (9). Importantly, we do not assume that G and D drive C; the third line of (9) only ensures that C is correlated both with G and D with correlation strength ρ. We set σ2 
+
+> δ
+
+= 1 − γ2 and σ2 
+
+> ϵ
+
+= 1 − 2ρ2 
+
+> 1+ γ
+
+to ensure that Var (D) = Var (C) = 1 , again resulting in simpler expressions for the Shapley values. The joint density of (G, D, C ) equals 
+
+(G, D, C ) ∼ N 
+
+
+
+000
+
+ ,
+
+
+
+1 γ ργ 1 ρρ ρ 1
+
+ ,
+
+which can be used to compute all conditional distributions. For instance, we have 
+
+G|D, C ∼ N 
+
+γ − ρ2
+
+1 − ρ2 D + ρ(1 − γ)1 − ρ2 C, σ 2
+
+> G|D,C
+
+
+
+and 
+
+G, C |D ∼ N 
+
+ γD ρD 
+
+
+
+,
+
+ 1 − γ2 ρ(1 − γ)
+
+ρ(1 − γ) 1 − ρ2
+
+ 
+
+.
+
+For the asymmetric Shapley values, we compute the following value function contrasts. For G, we compute ν ({G})−ν ({∅} ) with weight w = 2 /3 and ν ({G, C })−ν ({C}) with w =1/3. For D, we compute ν ({G, D }) − ν ({G}) with w = 1 /3 and ν ({G, D, C }) − ν ({C, G })
+
+with w = 2 /3. For C, we compute ν ({C}) − ν ({∅} ) with w = 1 /3, ν ({G, C }) − ν ({G})
+
+with w = 1 /3, and ν ({G, D, C }) − ν ({G, D }) with w = 1 /3. Note that the subsets {D} and 
+
+{D, C } are not allowed when calculating asymmetric Shapley values. For the symmetric Shapley values, we compute the following value function contrasts. For G, we compute ν ({G}) − ν ({∅} ) with weight w = 1 /3, ν ({G, C }) − ν ({C}) with 
+
+w = 1 /6, ν ({G, D }) − ν ({D}) with weight w = 1 /6, and ν ({G, D, C }) − ν ({D, C }) with weight w = 1 /3. The value function contrasts for D and C are obtained similarly. Note that all subsets are allowed for symmetric Shapley values. 23 We illustrate how to compute two different value functions for (9). We first consider 
+
+v ({D}):
+
+ν ({D}) = 
+
+Z
+
+ˆf (G, D, C ) p (G, C |D) dGdC 
+
+=
+
+Z
+
+(β1G + β2D + β3C) N
+
+ γD ρD 
+
+
+
+,
+
+ 1 − γ2 ρ(1 − γ)
+
+ρ(1 − γ) 1 − ρ2
+
+ 
+
+dGdC 
+
+= β2D + β1γD + β3ρD. 
+
+(10) and then v ({D, C }):
+
+ν ({D, C }) = 
+
+Z
+
+ˆf (G, D, C ) p (G|D, C ) dG 
+
+=
+
+Z
+
+(β1G + β2D + β3C) N
+
+γ − ρ2
+
+1 − ρ2 D + ρ(1 − γ)1 − ρ2 C, σ 2
+
+> G|D,C
+
+
+
+dG 
+
+= β2D + β3C + β1
+
+γ − ρ2
+
+1 − ρ2 D + ρ(1 − γ)1 − ρ2 C
+
+
+
+.
+
+(11) For (9), we then have the following asymmetric Shapley values: 
+
+ϕaG = G
+
+
+
+β1 + 13
+
+
+
+2β2γ + 2 β3ρ + β2
+
+γ − ρ2
+
+1 − ρ2
+
+ 
+
++ C
+
+13ρ
+
+
+
+β2
+
+1 − γ
+
+1 − ρ2 − β1 − β2
+
+ 
+
+ϕaD = D
+
+
+
+β2 + 13
+
+β3ρ
+
+1 + γ
+
+
+
++ G
+
+3
+
+
+
+−β2γ − 2β2
+
+γ − ρ2
+
+1 − ρ2 − β3γρ 
+
+1 + γ
+
+
+
+− 2C
+
+3
+
+
+
+β2
+
+ρ(1 − γ)1 − ρ2
+
+
+
+ϕaC = C
+
+
+
+β3 + 13ρ(β1 + β2) + 13β2
+
+ρ(1 − γ)1 − ρ2
+
+
+
+− D
+
+3
+
+
+
+β3
+
+ρ
+
+1 + γ
+
+
+
++ G
+
+3
+
+
+
+β2
+
+ρ2(γ − 1) 1 − ρ2 − β3ρ − β3
+
+ρ
+
+1 + γ
+
+
+
+.
+
+The expressions for the exact asymmetric Shapley values are hard to interpret. Summing the asymmetric Shapley values across the variables renders the predictions: ˆf (G, D, C ) = 
+
+β1G + β2D + β3C, as expected. Note that, similarly to the two-dimensional example, the asymmetric Shapley value of G does not depend on D. In the limit ρ = 0 , i.e., the confounder (C) is independent of both the gene (G) and disease state (D) variable, the Shapley value expressions for G and D ( ϕaG and ϕaD) reduce to the asymmetric ones of the two-dimensional toy example (Table 5). In the limit γ = 1 , i.e., G completely determines D, we have the 24 following expressions: 
+
+ϕaG = G
+
+
+
+β1 + β2 + 2β3ρ
+
+3
+
+
+
+− C
+
+hρ
+
+3 (β1 + β2)
+
+i
+
+ϕaD = Dβ 2 − Gβ 2 = 0 
+
+ϕaC = C
+
+
+
+β3 + 13ρ(β1 + β2)
+
+
+
+− Gβ 3ρ
+
+3 .
+
+(12) from which one can see that, when 2Gβ 3 > C (β1 + β2), increasing correlation ρ increases the Shapley value for G.For completeness, we also show expressions for the symmetric Shapley values: 
+
+ϕsym  
+
+> G
+
+= G
+
+
+
+β1 + β2γ + β3ρ
+
+3 + β2
+
+6
+
+γ − ρ2
+
+1 − ρ2 + β3
+
+6
+
+ρ
+
+1 + γ
+
+
+
++D
+
+6
+
+ β3ρ
+
+1 + γ − β1γ − β3ρ − 2β1
+
+γ − ρ2
+
+1 − ρ2
+
+
+
++C
+
+6
+
+β2ρ(1 − γ)1 − ρ2 − β1ρ − β2ρ − 2β1
+
+ρ(1 − γ)1 − ρ2
+
+
+
+ϕsym  
+
+> D
+
+= D
+
+
+
+β2 + β1γ + β3ρ
+
+3 + β1
+
+6
+
+γ − ρ2
+
+1 − ρ2 + β3
+
+6
+
+ρ
+
+1 + γ
+
+
+
++G
+
+6
+
+ β3ρ
+
+1 + γ − β2γ − β3ρ − 2β2
+
+γ − ρ2
+
+1 − ρ2
+
+
+
++C
+
+6
+
+β1ρ(1 − γ)1 − ρ2 − β2ρ − β1ρ − 2β2
+
+ρ(1 − γ)1 − ρ2
+
+
+
+ϕsym  
+
+> C
+
+= C
+
+
+
+β3 + ρ(β1 + β2)3 + β1 + β2
+
+6
+
+ρ(1 − γ)1 − ρ2
+
+
+
++G
+
+6
+
+
+
+β2
+
+γ − ρ2
+
+1 − ρ2 − β2γ − β3ρ − 2β3
+
+ρ
+
+1 + γ
+
+
+
++D
+
+6
+
+
+
+β1
+
+γ − ρ2
+
+1 − ρ2 − β1γ − β3ρ − 2β3
+
+ρ
+
+1 + γ
+
+
+
+.
+
+Again, for ρ = 0 , the expressions for ϕsym  
+
+> G
+
+and ϕsym  
+
+> D
+
+reduce to the symmetric ones of the two-dimensional toy example. The marginal Shapley values are equal to the main effects as expressed by the model: ϕmarg  
+
+> G
+
+= β1G, ϕmarg  
+
+> D
+
+= β2D, and ϕmarg  
+
+> C
+
+= β3C.Figure 3 depicts difference between the asymmetric and symmetric Shapley values for (9). We plot the expressions for variables G (bottom panels) and D (top panels) for varying 25 ρ = 0 ρ = 0.35 ρ = 0.7               
+
+> D G
+> -2 -1 012-2 -1 012-2 -1 012-4 048-10 -5 0510
+
+Variable Value Shapley value 
+
+Asymmetric Symmetric Figure 3: Analytical Shapley values for variables G (bottom panels) and D (top panels) as a function of the variable values. Both the symmetric (black) and the asymmetric (orange) versions are depicted. Results are shown for varying correlation strengths ρ. Remaining parameter settings: β1 = β2 = 1 .0, β3 = 5 .0, and γ = 0 .8. The plot is produced using the R-package ggplot2 (Wickham, 2016). strengths of correlation ρ and with fixed parameters β1 = β2 = 1 .0, β3 = 5 .0, and γ = 0 .8.Variable values are simulated according to (9). Because γ = 0 .8, there is a clear difference in slope between the symmetric and asym-metric Shapley values. Variable G becomes more important in the asymmetric setting whereas D becomes less important. Increasing the correlation strength ρ increases the slopes, in particular for G, because β3 is set large relative to β1 and β2 as discussed in (12). Furthermore, increasing ρ also slightly increases the variability around the slope because the Shapley values will also depend on the comparative value instances of the variables G,
+
+D, and C.26 C Supplement: Simulation results for a low-dimensional setting 
+
+This section illustrates the feature importance metrics in a simple low-dimensional simulation setting. 
+
+## C.1 Simulation set-up 
+
+We show an example in line with the graphical model displayed in Figure 1, with: single gene 
+
+G, continuous disease state D, two confounders C1 and C2 and linear outcome Y .
+
+Y = α0 + α1G + α2C1 + α3C2 + α4D2 + ϵD = ( D0 + β1G + U )/√6
+
+C1 = ( C0 + 2 U )/√5.
+
+Here, the shared component U models correlation and we assumed D depends only on gene G and correlates only with C1. We apply the scaling to make sure that G, C 1, C 2 and D
+
+are on the same standard Gaussian scale. We set α0 = α2 = 0 , α 1 = α3 = 1 , α4 = β1 = 2 
+
+and generate: 
+
+ϵ, D 0, C 0, U, C 2, G ∼ N (0 , 1) ,
+
+implying correlations ρ(D, C 1) = 1 /√6 ∗ 2/√5 = 0 .37 .Therefore, D has a quadratic effect on Y , while G and C1 have a linear and C2 has no direct effect on Y . Although one could fit a regression with a quadratic term, we choose to fit a smooth spline to model the effect of D on Y to mimic the situation that we do not know how 
+
+D relates to Y . The model that includes this spline and linear terms for G, C 1, C 2 is fitted with mgcv ’s gam function Wood (2011), using default parameters. For computing Shapley values, we consider three options. First, marginal Shapley values, assuming independence between the variables. Second, conditional symmetric Shapley values, assuming Gaussian dependency between features, and finally asymmetric Shapley values, assuming G → D
+
+and Gaussian dependencies. 
+
+## C.2 Simulation results 
+
+Figure 4 shows the marginal symmetric, conditional symmetric and asymmetric Shapley values resulting from the simulation. First, observe that the marginal Shapley values reproduce the regression relationships, which is in line with the theory (Aas et al., 2021), but fail to account for indirect effects on Y
+
+that are due to the dependencies of C2 and G with D. Conditional Shapley values account for such effects, but the curvature for G is stronger for asymmetric (conditional) Shapley values, as G inherits more importance from D in that setting. The latter is particularly clear for its global counterpart, SAGE-R2 (Covert et al., 2020). Table 6 shows that G absorbs a larger fraction of the explained variation when accounting for dependency and asymmetry. 27 D G            
+
+> C1 C2
+> −2 −1 0 123−2 02
+> −2 02−2 02
+> −2 −1 0123
+> −2 −1 0123
+> −2 −1 0123
+> −2 −1 0123
+
+Symm−marginal              
+
+> Shapley values
+> DG
+> C1 C2
+> −2 −1 0 123−2 02
+> −2 02−2 02
+> −2 −1 0123
+> −2 −1 0123
+> −2 −1 0123
+> −2 −1 0123
+
+Symm−conditional              
+
+> DG
+> C1 C2
+> −2 −1 0 123−2 02
+> −2 02−2 02
+> −2 −1 0123
+> −2 −1 0123
+> −2 −1 0123
+> −2 −1 0123
+
+Asymmetric Figure 4: Shapley scatter plots for 200 test observations for the low-dimensional simulation. Variable on the x-axis, its Shapley value on y-axis. All Shapley values are estimated using SHAP, i.e. marginalisation. 28 Sym-marg Sym-cond Asym 
+
+C1 0.11 0.11 0.11 
+
+C2 0.00 0.02 0.04 
+
+D 0.66 0.50 0.26 
+
+G 0.11 0.25 0.48 Total 0.88 0.88 0.88 Table 6: SAGE-R2 on test observations for the low-dimensional simulation. −3 −2 −1 0 1 2−2  −1  0 1 2 3              
+
+> C1
+> −3 −2 −1 012−2  −1  0 1 2 3
+> C2
+> −2 −1 012−2  −1  0 1 2 3
+> D
+> −3 −2 −1 012−2  −1  0 1 2 3
+> G
+
+Figure 5: Asymmetric Shapley values based on refitting. Scatter plots for 200 test observa-tions for the low-dimensional simulation. Variable on the x-axis, its Shapley value on y-axis. 
+
+## C.3 Comparison with refitting 
+
+Finally, Figure 5 shows the results for asymmetric Shapley values based on refitting sub-models for each coalition that obeys G → D. This figure clearly shows the problem with refitting: the curvature for G (and C2) that should be inherited from D is not picked up by the refitting (cf. right display of Figure 4 for conditional asymmetric Shapley values based on SHAP). This is because the sub-models that do not include D are linear. In fact, the curva-ture can only be retrieved when we allow a flexible functional form for all other variables in the sub-models. This is generally not desirable, as it will increase variability. 29 D Supplement: additional data analysis results 
+
+fusedTree ridge0 
+
+Sym Asym Sym Asym Intercept 0.500 0.500 0.500 0.500 Genes ( G) 0.122 0.170 0.075 0.143 Disease state ( D) 0.121 0.071 0.118 0.058 Gender ( C1) 0.003 0.005 0.028 0.008 Age ( C2) 0.005 0.007 0.003 0.005 Tumor site ( C3) 0.004 -0.006 0.013 -0.003 Total 0.747 0.747 0.711 0.711 Table 7: SAGE decomposition of C-index of fusedTree and ridge0 models for asymmetric and symmetric setting Sym Asym pNP Sym pNP Asym 
+
+intercept 0.500 0.500 Genes ( G) 0.130 0.173 4.39e-3 5.57e-4 – G High ( G1) 0.076 0.082 0.058 0.039 – G Low (G2 + G3) 0.053 0.091 0.502 0.014 — CMS ( G1) 0.028 0.043 0.398 0.054 — Pred D (G2) 0.025 0.048 0.717 0.245 Disease state ( D) 0.091 0.062 7.80e-4 3.15e-4 Gender ( C1) 0.010 0.008 0.031 0.230 Age ( C2) 0.021 0.010 0.984 0.884 Tumor site ( C3) 0.002 0.001 0.981 0.788 Total 0.754 0.754 Table 8: SAGE decomposition of C-index of blockForest model for symmetric and asym-metric version. Plus significance based on the nonparametric (NP) conditional independence test using Shapley values on log cumulative hazard scale. 
+
+# References 
+
+Aas, K. et al. (2021). Explaining individual predictions when features are dependent: More accurate approximations to Shapley values. Artificial Intelligence , 298 , 103502. Chen, H. et al. (2020). True to the model or true to the data? arXiv preprint arXiv:2006.16234 .30 G_Sym G_Asym D_Sym D_Asym −0.5  0.0  0.5  1.0 
+
+> Shapleys values
+
+Figure 6: Symmetric and asymmetric Shapley values for G and D for the blockForest 
+
+model. Shapley values were computed on the log cumulative hazard scale Covert, I. et al. (2020). Understanding global feature contributions with additive importance measures. Advances in Neural Information Processing Systems , 33 , 17212–17223. Covert, I. et al. (2021). Explaining by removing: A unified framework for model explanation. 
+
+Journal of Machine Learning Research , 22 , 1–90. Friedman, J. et al. (2010). Regularization paths for generalized linear models via coordinate descent. J Statist Soft , 33 , 1. Frye, C. et al. (2020). Asymmetric shapley values: incorporating causal knowledge into model-agnostic explainability. Advances in neural information processing systems , 33 ,1229–1239. Goedhart, J.M. et al. (2024). Fusion of tree-induced regressions for clinico-genomic data. 
+
+arXiv preprint arXiv:2411.02396 .Grömping, U. (2007). Relative importance for linear regression in r: the package relaimpo. 
+
+Journal of statistical software , 17 , 1–27. Hahn, P.R. et al. (2020). Bayesian regression tree models for causal inference: Regulariza-tion, confounding, and heterogeneous effects (with discussion). Bayesian Analysis , 15 ,965–1056. 31 Heagerty, P.J. et al. (2000). Time-dependent ROC curves for censored survival data and a diagnostic marker. Biometrics , 56 , 337–344. Heskes, T. et al. (2020). Causal shapley values: Exploiting causal knowledge to explain indi-vidual predictions of complex models. Advances in neural information processing systems ,
+
+33 , 4778–4789. Hornung, R. and Wright, M.N. (2019). Block forests: random forests for blocks of clinical and omics covariate data. BMC bioinformatics , 20 , 358. Hothorn, T. et al. (2006). A Lego system for conditional inference. Amer. Statist. , 60 , 257– 263. Joseph, A. (2019). Parametric inference with universal function approximators. arXiv preprint arXiv:1903.04209 .Jullum, M. et al. (2021). groupshapley: Efficient prediction explanation with shapley values for feature groups. arXiv preprint arXiv:2106.12228 .Jullum, M. et al. (2025). shapr: Explaining machine learning models with conditional Shapley values in r and python. arXiv preprint arXiv:2504.01842 .Kolpaczki, P. et al. (2024). Approximating the Shapley value without marginal contributions. In Proceedings of the AAAI conference on Artificial Intelligence , volume 38, pages 13246– 13255. Lundberg, S.M. and Lee, S.I. (2017). A unified approach to interpreting model predictions. 
+
+Advances in neural information processing systems , 30 .Mestres, A.C. et al. (2024). mcsurvdata: Meta cohort survival data . R package version 1.22.0. URL https://doi.org/10.18129/B9.bioc.mcsurvdata 
+
+Olsen, L.H.B. et al. (2024). A comparative study of methods for estimating model-agnostic Shapley value explanations. Data Mining and Knowledge Discovery , 38 , 1782–1829. Reyero Lobo, A. et al. (2025). Sobol-CPI: a doubly robust conditional permutation importance statistic. arXiv e-prints , pages arXiv–2501. Schuler, M.S. et al. (2025). Practical challenges in mediation analysis: a guide for applied researchers. Health Services and Outcomes Research Methodology , 25 , 57–84. Spadaccini, G. et al. (2025). Hypothesis-free discovery from epidemiological data by auto-matic detection and local inference for tree-based nonlinearities and interactions. arXiv preprint arXiv:2505.00571 .32 Veerman, J.R. et al. (2019). Estimation of variance components, heritability and the ridge penalty in high-dimensional generalized linear models. Comm Statist Sim Comp , pages 1–19. Verdinelli, I. and Wasserman, L. (2024). Feature importance: A closer look at shapley values and loco. Statistical Science , 39 , 623–636. Visscher, P. et al. (2008). Heritability in the genomics era - concepts and misconceptions. 
+
+Nature Reviews Genetics , 9, 255–266. doi: 10.1038/nrg2322 .Watson, D. et al. (2024). Explaining predictive uncertainty with information theoretic shapley values. Advances in Neural Information Processing Systems , 36 .Watson, D.S. (2022). Interpretable machine learning for genomics. Human genetics , 141 ,1499–1513. Watson, D.S. et al. (2023). Adversarial random forests for density estimation and generative modeling. In International Conference on Artificial Intelligence and Statistics , pages 5357– 5375. PMLR. Wickham, H. (2016). ggplot2: Elegant graphics for data analysis . Springer-Verlag New York. URL https://ggplot2.tidyverse.org 
+
+Williamson, B. and Feng, J. (2020). Efficient nonparametric statistical inference on popu-lation feature importance using Shapley values. In International conference on machine learning , pages 10282–10291. PMLR. Williamson, B.D. et al. (2021). A general framework for inference on algorithm-agnostic variable importance. URL https://arxiv.org/abs/2004.03683 
+
+Wood, S.N. (2011). Fast stable restricted maximum likelihood and marginal likelihood esti-mation of semiparametric generalized linear models. J Roy Statist Soc B , 73 , 3–36. 33

@@ -1,0 +1,235 @@
+Title: Unsupervised Adaptation from FDG to PSMA PET/CT for 3D Lesion Detection under Label Shift
+
+URL Source: https://arxiv.org/pdf/2603.13666v1
+
+Published Time: Tue, 17 Mar 2026 00:55:58 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+# UNSUPERVISED ADAPTATION FROM FDG TO PSMA PET/CT FOR 3D LESION DETECTION UNDER LABEL SHIFT 
+
+# Xiaofeng Liu, Menghua Xia, Yanis Chemli, Georges El Fakhri, Chi Liu, Jinsong Ouyang 
+
+# Yale Biomedical Imaging Institute and Department of Radiology & Biomedical Imaging, Yale University, New Haven, CT 06520, USA 
+
+ABSTRACT 
+
+In this work, we propose an unsupervised domain adapta-tion (UDA) framework for 3D volumetric lesion detection that adapts a detector trained on labeled FDG PET/CT to un-labeled PSMA PET/CT. Beyond covariate shift, cross tracer adaptation also exhibits label shift in both lesion size compo-sition and the number of lesions per subject. We introduce self-training with two mechanisms that explicitly model and compensate for this label shift. First, we adaptively adjust the detection anchor shapes by re-estimating target domain box scales from selected pseudo labels and updating anchors with an exponential moving average. This increases positive anchor coverage for small PSMA lesions and stabilizes box regression. Second, instead of a fixed confidence threshold for pseudo-label selection, we allocate size bin-wise quotas according to the estimated target domain histogram over le-sion volumes. The self-training alternates between supervised learning with prior-guided pseudo labeling on PSMA and su-pervised learning on labeled FDG. On AutoPET 2024, adapt-ing from 501 labeled FDG studies to 369 18 F-PSMA studies, the proposed method improves both AP and FROC over the source-only baseline and conventional self-training without label-shift mitigation, indicating that modeling target lesion prevalence and size composition is an effective path to robust cross-tracer detection. 
+
+Index Terms — PET/CT, Lesion Detection, Unsupervised Domain Adaptation, Self-training, Label Shift 
+
+1. INTRODUCTION 
+
+PET/CT imaging is important for cancer diagnosis and treat-ment planning, offering combined metabolic and anatomic information for detecting malignant lesions. Deep learning models have shown promise for automated 2D [1], 2.5D [2], or 3D [3, 4, 5] lesion detection in PET/CT. However, pre-cisely annotating every lesion for a newly developed tracer can be costly, and a model trained on one tracer often fails to generalize to another due to domain shift [6]. The domain shift is particularly challenging for cross PET tracers applications. For example, a detection model trained on fluorodeoxyglucose (FDG) PET scans may underperform 
+
+Fig. 1 . (a-b) Examples of FDG and PSMA scans. (c) Lesion size distribution per subject for FDG vs. PSMA. On aver-age, each PSMA subject contains more small lesions, whereas FDG has slightly more very large lesions ( ≥150 cc). All vol-umes are resampled to 4 × 4 × 5mm spacing. on prostate-specific membrane antigen (PSMA) PET scans because tracer uptake patterns and typical lesion characteris-tics differ significantly. Specifically, FDG highlights glucose-avid tumors, but also produces high physiological uptake in the brain and myocardium, while PSMA targets prostate can-cer metastases with intense uptake in salivary glands and kid-neys [7]. Although co-scanned CT can provide the corre-sponding location information, the prevalence and size dis-tribution of the lesions can vary between cohorts of patients imaged with these different tracers, leading to a possible la-bel shift in the frequency and characteristics of the lesions (Fig. 1). Developing techniques to adapt models across such domains is critical to leverage knowledge from large scale la-
+
+> arXiv:2603.13666v1 [eess.IV] 14 Mar 2026
+
+beled FDG datasets to new tracers like PSMA, where anno-tated examples can be scarce. Unsupervised domain adaptation (UDA) methods can be a promising solution aimed at transfer of knowledge from a labeled source domain to a different unlabeled target do-main [6]. Recently, in the field of general computer vision, UDA has been applied to 2D image detection and 3D LiDAR point clouds detection [8], but these have not been translated into 3D volumetric lesion detection. More importantly, conventional UDA usually assumes that only the input appearance changes and that the label distribution remains consistent across domains. This assump-tion has led to a series of covariate shift UDA methods [6]. However, the distribution of lesion detection bounding boxes differs markedly between FDG and PSMA PET/CT, which highlights the need to mitigate label shift together with ap-pearance shift. Recently, the label shift has been explored in classification tasks [9, 10]. However, to our knowledge, no prior work has addressed the label shift in UDA detection. In this work, we propose a 3D UDA framework for le-sion detection in whole-body PET/CT, adapting a RetinaNet detector from labeled FDG to unlabeled PSMA tracer. We use the multimodal 3D RetinaNet (M3DRetinaNet) [5] as our detection backbone, which is a one-stage object detector with a focal loss to address sparse objects as well as multi-scale pyramid features for diverse object sizes [11]. Since each pyramid feature level has ≥1,000 anchor box proposals to be processed, it is not efficient to configure a discriminator at each level as adversarial UDA [6]. Instead, we adapt the self-training UDA to generate the pseudo-label in target do-main and alternating the supervised training in labeled source domain and pseudo-labeld target domains. We explicitly mitigate the label shift by incorporating prior knowledge on lesion size and prevalence, utilizing the target domain pre-dictions to estimate the target label distribution. Then we are able to adjust the pseudo-parameter of anchor size used in M3DRetinaNet as well as the size bin-wise threshold for pseudo-label selection accordingly. Our contributions can be summarized as follows: 
+
+• To our knowledge, this is the first attempt of unsupervised domain adaptation for 3D volumetric lesion detection. 
+
+• In addition to the conventional covariate shift, we design a novel self-training scheme with prior knowledge of label dis-tribution shift, which has not been explored in UDA detection. 
+
+• The pseudo-parameter of size distributions and lesion preva-lence in target domains are adaptively estimated to refine the pseudo-label selection. We demonstrate its effectiveness on cross-tracer PET/CT (FDG to PSMA) lesion detection on AutoPET2024 dataset. 
+
+2. METHODOLOGY 
+
+Let the labeled source set be Ds = {(xsi , y si )}N s 
+
+> i=1
+
+from FDG PET/CT and the unlabeled target set be Dt = {xti}N t 
+
+> i=1
+
+from PSMA PET/CT. Each input is a dual-modality 3D volume x ∈
+
+R2×H×W ×Z formed by stacking PET and CT after a common resampling. The source label ysi = {(bij , c ij )}Mi 
+
+> j=1
+
+lists axis-aligned boxes bij ∈ R6 with one lesion class cij = 1 . The goal is to learn a detector fθ that performs well on Dt without target training labels. Since the unknown target label distri-bution differs in lesion sizes and the number of lesions, we explicitly estimate the target domain priors of anchor-shape set S as well as size-density prior composed of a global mean 
+
+μ (lesions per subject) and normalized histogram h over B
+
+volume bins. 
+
+2.1. 3D detector and source pretraining 
+
+We adopt the multimodal 3D RetinaNet (M3DRetinaNet) [5] with a 3D ResNet backbone and a 3D feature pyramid net-work [12] operating on concatenated PET and CT channels. The detector relies on defining 3D anchor shapes {sk}Kk=1 .We apply the anchor boxes at each point in multiscale fea-tures, and the head predicts classification logits and box re-gressions to match ground truth box. With a mini-batch B
+
+and anchor index set A(B), the detection loss is 
+
+Ldet (θ; B) = X
+
+> a∈A (B)
+
+FL( pa, c a) + X
+
+> a∈A +(B)
+
+ℓreg (ta, ˆta), (1) where FL is focal loss [11] for classification, ℓreg is a smooth-L1-type regression loss, pa is the predicted lesion probability for anchor a, ca ∈ { 0, 1} is its assigned class, ta are predicted box parameters, and ˆta are regression targets for positive an-chors A+. Initial anchor shapes S(0) = {sk}Kk=1 , K = 3 are obtained by k-means on source label boxes [5, 11] to fit the source domain label distribution. We pretrain fθ on Ds with 100 epochs to obtain a strong initialization. 
+
+2.2. Epoch-wise anchor size adaptation 
+
+If anchor shapes are too different (e.g., large) relative to tar-get domain lesions, the regression residual or error would be large. We therefore adapt the anchor shapes toward the tar-get size statistics estimated from the selected pseudo labels. At epoch round r, let Bt 
+
+> sel
+
+= S 
+
+> i
+
+ˆyti be the union of selected pseudo boxes. We run k-means (in voxel space) on Bt 
+
+> sel
+
+to obtain centroids {s(r) 
+
+> k
+
+}Kk=1 and update the anchor set by an exponential moving average (EMA): 
+
+s(r) 
+
+> k
+
+← (1 − β) s(r−1)  
+
+> k
+
++ β ˜s(r) 
+
+> k
+
+, k = 1 , . . . , K, (2) where {˜s(r) 
+
+> k
+
+}Kk=1 are the k-means results on the selected target boxes, and β ∈ (0 , 1) . s(r) 
+
+> k
+
+is used for r +1 round predictions. 
+
+2.3. Prior-guided pseudo-label selection 
+
+Given the current detector, a forward pass on a target volume 
+
+xti produces raw detections {(ˆbij , s ij )}j , where ˆbij ∈ R6 is the box and sij ∈ [0 , 1] its confidence. We first discard detec-tions with sij < τ (we use τ = 0 .5) and then apply 3D non-maximum suppression (NMS) with an IoU threshold of 0.25 
+
+to remove largely overlapping boxes, resulting in a cleaned candidate set Ci. The conventional fixed-threshold or top-p%
+
+selection [13, 6] would favor large, high-contrast lesions and bias the target toward source-like statistics. Instead, we select pseudo labels with more fine-grained size bin-wise threshold. Specifically, we use two online up-dated priors: a per subject budget controlling how many boxes a case should be selected, and a dataset-wise size-density his-togram controlling which lesion sizes are retained. Let ˆyt, (r) 
+
+> i
+
+denote the pseudo labels selected for subject i
+
+in round r, and let cM (r) 
+
+> i
+
+= |ˆyt, (r) 
+
+> i
+
+|. We maintain the global mean lesions-per-subject by an EMA: 
+
+μ(r) = (1 − αμ) μ(r−1) + αμ
+
+1
+
+N tN t
+
+X
+
+> i=1
+
+cM (r) 
+
+> i
+
+, (3) with momentum αμ ∈ (0 , 1) . For the subsequent selection in round r, each subject has a per subject budget: 
+
+N (r)allow = λ μ (r), (4) where λ ∈ (0 , 1] controls how aggressively target detections should be admitted. This cap prevents a few scans with many false positives from dominating later rounds. To encode the target size profile, we discretize lesion vol-ume into B bins and define a binning function b : R6 →{1, . . . , B } that maps a box to its volume bin (in cc) under the working voxel spacing. From all pseudo labels selected at round r we compute the normalized histogram bh(r) and up-date the target size prior by EMA: 
+
+h(r) = (1 − αh) h(r−1) + αh bh(r)
+
+(1 − αh) h(r−1) + αh bh(r) 1
+
+, (5) with αh ∈ (0 , 1) and h(0) initialized from the source his-togram using identical bins. During pseudo-label selection for a specific subject in round r, we allocate the budget N (r)allow to size bins according to h(r) by computing fractional quotas ˜nb = h(r) 
+
+> b
+
+N (r)allow ,taking integer parts nb = ⌊˜nb⌋, and assigning any remaining slots to the bins with the largest fractional parts ˜nb − nb until 
+
+P 
+
+> b
+
+nb = N (r)allow . Each candidate (ˆbij , s ij ) ∈ C i is mapped to its bin bij = b(ˆbij ).Within every bin we sort by sij and retain the top-nb can-didates. If a bin has fewer than nb candidates, we keep all of them. The final pseudo-label set for subject i is 
+
+ˆyti = { (ˆbij , 1) }j∈S (r)
+
+> i
+
+, (6) which is then used identically to ground-truth boxes in the detection loss in Eq.(1). By coupling a per-subject budget with bin-wise quotas driven by h(r), the selected pseudo la-bels track the evolving target lesion count and size composi-tion rather than inheriting the FDG source bias. 
+
+Fig. 2 . Example lesion detection results on PSMA PET/CT. 
+
+2.4. Alternating optimization 
+
+The mechanism integrates seamlessly with standard self-training [13, 6]. It changes only the selection rule for pseudo labels and the anchor shapes. We alternate supervised updates on source and pseudo-labeled target data while updating the priors and anchors: 
+
+Step 1: min  
+
+> θ
+
+EBs∼D s
+
+Ldet (θ; Bs).
+
+Step 2: Infer on Dt ⇒ ˆyti ; update μ(r), h (r) by (3) and (5); update S(r) by (2); min  
+
+> θ
+
+EBt∼ bDt
+
+Ldet (θ; Bt).
+
+We repeat for R rounds. Each round comprises a full infer-ence pass on Dt, prior and anchor updates, and an epoch of supervised training on Ds and bDt sequentially. It is worth noting that no adversarial loss or explicit fea-ture alignment was used. The entire adaptation process is rel-atively lightweight and more efficient than trying to adver-sarially train multiple discriminators for four feature pyramid level each with dense ROI proposals. It can be unstable and impractically slow for 3D data. Our self-training approach leverages the solid initialization from FDG and gently nudges it toward the PSMA domain. 
+
+3. EXPERIMENTS 
+
+We evaluate on the public AutoPET2024 challenge dataset [7]. We utilized 501 patient FDG PET/CT studies with lesion as the source domain and 369 18 F-PSMA PET/CT studies as the target domain. Specifically, 501 labeled FDG and 258 unlabeled PSMA studies (70%) are used for UDA training, while 37 (10%) and 74 (20%) PSMA studies are used for target domain validation and testing, respectively. For the Table 1 . Lesion detection performance on PSMA PET/CT.                   
+
+> Model AP@0.1 AP@0.25 AP@0.5 FDG source (no adapt) 0.225 0.184 0.128 Ours (UDA adapted) 0.582 0.467 0.405 Ours (UDA+anchor adapt) 0.607 0.472 0.408 Ours (UDA+label shift) 0.613 0.484 0.417
+> Fine-tuned on labeled PSMA 0.729 0.605 0.518
+
+purpose of our detection task, we converted the segmentation masks into 3D bounding boxes that tightly encapsulate each contiguous lesion region. This provides ground-truth lesion boxes for training and evaluation. All scans are resampled to 4 × 4 × 5mm spacing to match the resolution of some PSMA studies. PET SUV images and CT images were each z score normalized. Although the model can process an arbi-trary size [12], we randomly cropped a fixed 3D input size of 
+
+96 × 96 × 96 voxels for efficient processing during training. The sliding window is applied for testing. For conventional self training with or without anchor adaptation, we select the top 50% box predictions by confidence as pseudo labels. No-tably, we do not need pseudo-label selection and its related hyperparameters in testing stage. Only the final S(r) at the end of training is used as the anchor set for target domain testing. We empirically use B=10 volume bins (cc) covering the range in Fig. 1. Hyperparameters (αμ, α h, β ) are set to 
+
+0.9 to stabilize early rounds. The selection factor λ increases linearly from 0.1 to 0.8 over R=200 rounds. We discard lesions labels with volume < 0.08 cc (less than one voxel at 
+
+4 × 4 × 5 mm). As shown in Fig.2, without self-training for covariate adaptation of the input appearance, the model tends to only predict on relatively high uptake regions and wrongly parti-tioned the lesion. Without modeling label shift, self-training tends to predict relatively larger and fewer lesions, following the label distribution in the FDG dataset. After we incorporate label shift, lesions can be detected more accurately. Quantitatively, we evaluate lesion detection performance using both average precision (AP) and free-response receiver operating characteristic (FROC) [14] analysis, on a held-out set of target-domain (PSMA) images with ground truth labels. For AP, we treat lesion detection as a one-class object detec-tion problem and compute the area under the precision-recall curve for detected lesions. We report AP at IoU thresholds of 0.1, 0.25, and 0.5 (IoU measured between predicted box and the nearest ground-truth lesion box). An IoU of 0.1 or 0.25 is fairly lenient, counting a detection as correct if it overlaps the lesion at least roughly, while 0.5 is more strict and eval-uates localization accuracy. A detection is considered a true positive if its IoU ≥ threshold with any ground truth lesion and if each ground truth is matched to at most one detection (additional detections on the same lesion are false positives). For reference, we also evaluate the unadapted FDG model on 
+
+Fig. 3 . Free-response ROC (FROC) curves on PSMA test set for the FDG-trained model (blue) and self-training UDA without (orange) or with (green) label shift correction. the PSMA test set to quantify the domain shift impact, and an “upper-bound” model trained on FDG and fine-tuned with la-beled PSMA training set for 200 epochs. Table 1 summarizes the detection performance on PSMA PET/CT. After adap-tation, our model’s performance improves substantially. Asimple anchor size adaptation can improve the performance, especially for AP@0.1. The full label shift mitigation with both anchor adapttaion and prior-guided pseudo-label selec-tion achieved the best performance. FROC analysis provides a more comprehensive view of the sensitivity-versus-false-positive tradeoff. We plot the frac-tion of true positive lesions detected against the average num-ber of false positives per scan, by sweeping the confidence cutoff from high to low. For our evaluation, a true positive is defined as a detection with IoU ≥ 0.1 with a ground-truth lesion, following prior works [5]. The FROC curves in Fig. 3 illustrate that the self-training adapted detector achieves much higher sensitivity for any given false positive rate. Mitigating the label shift can further improve the performance. 
+
+4. DISCUSSION AND CONCLUSION 
+
+We presented a self-training framework for 3D lesion detec-tion that explicitly addresses label shift when adapting from FDG to PSMA PET/CT. The method combines epoch-wise anchor shape adaptation with a target-side size-density prior that guides pseudo-label selection. It yields more accurate le-sion localization and improves both AP and FROC on PSMA. The framework requires only model outputs on the target set, which is efficient for 3D data and can be added on to arbi-trary detection base models. Limitations include reliance on accurate binning, which can under-represent highly clustered lesions, and the one-class setting, which simplifies label shift to size and count. Future work will consider uncertainty-weighted selection, adaptive binning driven by information criteria, and extension to multi-class settings. 5. COMPLIANCE WITH ETHICAL STANDARDS 
+
+This research study was conducted retrospectively using hu-man subject data made available in open access. Ethical ap-proval was not required as confirmed by the license attached with the open-access data. 
+
+6. ACKNOWLEDGMENTS 
+
+This work is supported in part by NIH grants R01CA275188, P41EB022544, R21EB034911, R01CA296305, R01CA290745, and NVIDIA Academic Grant Program. 
+
+7. REFERENCES 
+
+[1] T Weikert, PF Jaeger, S Yang, M Baumgartner, HC Breit, DJ Winkel, G Sommer, B Stieltjes, W Thaiss, J Bremerich, et al., “Automated lung cancer assessment on 18f-pet/ct using retina u-net and anatomical region segmentation,” European radiology , vol. 33, no. 6, pp. 4270–4279, 2023. [2] Di Xu, Martin Ma, Minsong Cao, Amar U Kishan, Nicholas G Nickols, Fabien Scalzo, and Ke Sheng, “Mask r-cnn assisted 2.5 d object detection pipeline of 68ga-psma-11 pet/ct-positive metastatic pelvic lymph node after radical prostatectomy from solely ct imag-ing,” Scientific reports , vol. 13, no. 1, pp. 1696, 2023. [3] Ling Chen, Kanfeng Liu, Hui Shen, Hongwei Ye, Huafeng Liu, Lijuan Yu, Jingsong Li, Kui Zhao, and Wentao Zhu, “Multimodality attention-guided 3-d de-tection of nonsmall cell lung cancer in 18 f-fdg pet/ct images,” IEEE Transactions on Radiation and Plasma Medical Sciences , vol. 6, no. 4, pp. 421–432, 2021. [4] Yunlong Zhao, Qiang Lin, Junfeng Mao, Jingjun Wei, Yongchun Cao, Zhengxing Man, Caihong Liu, Jingyan Ma, and Xiaodi Huang, “A coarse-to-fine detection framework for automated lung tumour detection from 3d pet/ct images,” IET Image Processing , vol. 19, no. 1, pp. e70146, 2025. [5] Xiaofeng Liu, Menghua Xia, Yanis Chemli, Georges El Fakhri, and Chi Liu, “Ai-driven multi-lesion detec-tion in whole-body fdg pet/ct,” SPIE Medical Imaging 2026: Image Perception, Observer Performance, and Technology Assessment , 2026. [6] Xiaofeng Liu, Chaehwa Yoo, Fangxu Xing, Hyejin Oh, Georges El Fakhri, Je-Won Kang, Jonghye Woo, et al., “Deep unsupervised domain adaptation: A review of re-cent advances and perspectives,” APSIPA Transactions on Signal and Information Processing , vol. 11, no. 1. [7] Sergios Gatidis, Tobias Hepp, Marcel Fr¨ uh, Christian La Foug` ere, Konstantin Nikolaou, Christina Pfannen-berg, Bernhard Sch¨ olkopf, Thomas K¨ ustner, Clemens Cyran, and Daniel Rubin, “A whole-body fdg-pet/ct dataset with manually annotated tumor lesions,” Sci-entific Data , vol. 9, no. 1, pp. 601, 2022. [8] Meiying Zhang, Weiyuan Peng, Guangyao Ding, Chenyang Lei, Chunlin Ji, and Qi Hao, “Cts: Sim-to-real unsupervised domain adaptation on 3d detection,” in 2024 IEEE/RSJ International Conference on Intelli-gent Robots and Systems (IROS) . IEEE, 2024, pp. 2624– 2631. [9] Xiaofeng Liu, Zhenhua Guo, Fangxu Xing, Jane You, C-C Jay Kuo, Georges El Fakhri, and Jonghye Woo, “Adversarial unsupervised domain adaptation with con-ditional and label shift: Infer, align and iterate,” in Pro-ceedings of the IEEE/CVF international conference on computer vision , 2021, pp. 10367–10376. [10] Xiaofeng Liu, Bo Hu, Linghao Jin, Xu Han, Fangxu Xing, Jinsong Ouyang, Jun Lu, Georges El Fakhri, and Jonghye Woo, “Domain generalization under condi-tional and label shifts via variational bayesian infer-ence,” in Proceedings of the Thirtieth International Joint Conference on Artificial Intelligence . International Joint Conferences on Artificial Intelligence Organiza-tion, 2021, pp. 881–887. [11] Tsung-Yi Lin, Priya Goyal, Ross Girshick, Kaiming He, and Piotr Doll´ ar, “Focal loss for dense object detection,” in Proceedings of the IEEE international conference on computer vision , 2017, pp. 2980–2988. [12] Michael Baumgartner, Paul F J¨ ager, Fabian Isensee, and Klaus H Maier-Hein, “nndetection: a self-configuring method for medical object detection,” in International conference on medical image computing and computer-assisted intervention . Springer, 2021, pp. 530–539. [13] Yang Zou, Zhiding Yu, Xiaofeng Liu, BVK Kumar, and Jinsong Wang, “Confidence regularized self-training,” in Proceedings of the IEEE/CVF international confer-ence on computer vision , 2019, pp. 5982–5991. [14] Xin He and Eric Frey, “Roc, lroc, froc, afroc: An alpha-bet soup,” Journal of the American College of Radiol-ogy , vol. 6, no. 9, pp. 652–655, 2009.

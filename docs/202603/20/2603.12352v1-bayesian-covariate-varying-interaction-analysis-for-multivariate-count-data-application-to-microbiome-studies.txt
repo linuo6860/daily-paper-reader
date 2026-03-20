@@ -1,0 +1,860 @@
+Title: Bayesian Covariate-Varying Interaction Analysis for Multivariate Count Data: Application to Microbiome Studies
+
+URL Source: https://arxiv.org/pdf/2603.12352v1
+
+Published Time: Mon, 16 Mar 2026 00:06:53 GMT
+
+Number of Pages: 33
+
+Markdown Content:
+# Bayesian Covariate-Varying Interaction Analysis for Multivariate Count Data: Application to Microbiome Studies 
+
+## Shuangjie Zhang ∗
+
+Department of Statistics and Data Sciences, The University of Texas at Austin; 
+
+## Michael L. Patnode 
+
+Department of Microbiology and Environmental Toxicology, University of California Santa Cruz 
+
+## Juhee Lee 
+
+Department of Statistics, University of California Santa Cruz 
+
+## March 16, 2026 
+
+Abstract 
+
+Understanding covariate-varying interdependencies among features is of great in-terest in various applications. Motivated by microbiome studies where microbial abundances and interactions vary with environmental factors, we develop a Bayesian covariate-varying factor model. This model flexibly estimates heteroscedasticity in the covariance matrix as a function of covariates. Specifically, our approach employs covariance regression through linear regression on a lower-dimensional factor loading matrix. This formulation, combined with joint sparsity induced by the Dirichlet– Horseshoe prior for the factor loadings, provides robust estimation of covariate-varying covariance in high-dimensional settings. The model simultaneously incor-porates a regression structure for the mean abundance and jointly addresses the covariate-varying mean and covariance structure. Furthermore, the model tackles key statistical challenges such as discreteness, over-dispersion, compositionality, and high dimensionality, common in microbiome data analysis, using a flexible nonpara-metric Bayesian framework. We thoroughly investigate the properties of the model and conduct extensive simulation studies to examine its performance. Real micro-biome data examples are provided for illustration. 
+
+Keywords: Covariate-varying interdependencies, Microbiome data analysis, Multivariate counts, Bayesian factor model, Covariance regression, Heteroscedasticity. 
+
+> ∗
+
+Address for Correspondence: 105 E 24th St, Austin, TX, 78712. E-mail: shuangjie.zhang@austin.utexas.edu. 
+
+1
+
+> arXiv:2603.12352v1 [stat.ME] 12 Mar 2026
+
+# 1 Introduction 
+
+Covariance estimation is a core task in multivariate analysis and is essential for character-izing relationships among variables. Covariance matrices for a multivariate random vector play a pivotal role in various statistical methods, including principal component analy-sis (Pearson, 1901), factor analysis (Rummel, 1988), and canonical-correlation analysis (Hotelling, 1992). Conventional methods for covariance estimation, such as the sample co-variance matrix and covariance estimators with structural assumptions (Fan et al., 2013), typically assume that the data are identically and independently distributed (i.i.d.). How-ever, this assumption is frequently violated in practice, as real-world data often exhibit heteroscedasticity, that is, covariances among variables vary with covariates. Ignoring such covariate dependencies can yield misleading conclusions, necessitating the development of methods that account for these dependencies to provide sensible estimates of the interre-lationships among variables. The problem is even more challenging for high-dimensional data, whose dimension can be much larger than the sample size. Covariance regression has long received significant attention due to its ability to incorpo-rate covariate information, improving both the accuracy and interpretability of covariance estimates. Carroll and Ruppert (1982) first considered a heteroscedastic model in which the variances were given by a parametric function of the mean. Additional approaches include a linear model for the standard deviation (Rutemiller and Bowers, 1968) and a generalized model with a link function to allow non-negativity of variance (Smyth, 1989) were also developed for univariate cases. When it comes to multivariate heteroscedasticity, Leonard and Hsu (1992), Chiu et al. (1996) and Pourahmadi (2011) modeled the logarithm of elements of the covariance matrix as a linear function of known matrices to guarantee the positive definiteness of the covariance matrix. However, interpreting covariate effects on the log scale can be challenging, and the number of parameters to estimate grows rapidly in high-dimensional settings. More recently, sparse and low-rank methods for covariate-2dependent covariance estimation or its inversion (precision matrix) have been considered to manage high-dimensional data where traditional methods are often inadequate. These approaches leverage structural assumptions such as sparsity and low-rank structure to en-hance estimation accuracy and interpretability. Zhang and Leng (2012) modeled Cholesky decomposition of covariance matrix as linear functions of covariates with a moving aver-age construction. Hoff and Niu (2012) expressed the covariance as a baseline covariance matrix plus a rank-1 positive definite matrix which depends on covariates. They further extended to allow the deviation of each covariate-dependent covariance from the baseline to be any rank. Fox and Dunson (2015) placed a Gaussian process prior on the latent factor model and induced a flexible Bayesian nonparametric covariance regression model. The predictor-dependent framework was characterized as a combination of Gaussian process random functions of covariates. Ni et al. (2019) proposed a graphical regression method that estimates directed acyclic graphs for the precision matrix in heterogenous data with additional subject-level covariates. Niu et al. (2023) further modeled continuously varying undirected graphs with additional assistance from any general covariates for underlying heterogeneous multivariate observations. Besides modeling the covariance matrix with covariates, joint modeling for means and covariances allows for the simultaneous exploration of covariate effects on the mean and the covariance of a variable(s) of interest. Pourahmadi (1999) provided a joint mean-covariance model with applications to longitudinal data. In the context of temporal heteroscedasticity, Fong et al. (2006) studied multivariate autoregressive conditionally heteroscedastic (ARCH) models in the financial data. Niu and Hoff (2019) extended their model in Hoff and Niu (2012) to a joint mean and covariance model, studying the covariate effects on both mean and covariance in the application of multiple health outcome measures. Moran et al. (2021) used a parametric covariance regression model to analyze verbal autopsy data. It was designed specifically for cause of death denoted covariance. However, the above approaches 3are built for continuous data, and they can be inappropriate for analyzing multivariate count data. With the advent of high-throughput sequencing (HTS) technologies, multivariate count tables arise in various biological applications for statistical analyses. Especially in micro-biome studies, 16S ribosomal RNA (16S rRNA) sequencing uses similarity-based clustering algorithms to group 16S rRNA sequences into Operational Taxonomic Units (OTUs), pro-ducing multivariate count tables for downstream analysis. An OTU represents a group of organisms classified together based on genetic sequence similarity. Analyzing OTU tables and detecting the structure of microbial interactions is essential for more accurately char-acterizing microbial communities. Popular methods in microbiome studies such as SparCC (Friedman and Alm, 2012), CCLasso (Fang et al., 2015) and SPIEC-EASI (Kurtz et al., 2015) adopt log-transformed counts or log-transformed ratios for analysis of interactions. Specifically, SparCC (Friedman and Alm, 2012) adds pseudo counts and then divides the raw counts by the sample’s total counts for normalization. It models log-transformed ratios of these normalized counts to infer correlations between OTUs through sparse networks. Similarly, CCLasso in Fang et al. (2015) uses ℓ1 penalty to estimate the correlation network of log-transformed counts. SPIEC-EASI (Kurtz et al., 2015) uses graphical lasso (Friedman et al., 2008), a popular penalized method outputting the association of undirected graphs, to obtain a robust precision matrix estimate. The raw OTU counts are also first centered by log-ratio (clr) transformation. See REBECCA (Ban et al., 2015), COAT (Cao et al., 2019) and MOFA (Argelaguet et al., 2018a) for more. However, most existing methods merely center the data at the sample mean and assume a constant covariance structure across all covariates. To circumvent these challenges and model the influence of covariates on microbial inter-actions, we propose a Bayesian covariate-varying sparse factor model employing a rounded-kernel formulation. The model assesses interrelationships between OTUs varying as a func-4tion of covariates. Furthermore, it simultaneously performs model-based normalization and flexibly accommodates large variability in count data. Specifically, we use nonparametric mixtures of rounded multivariate log-normal kernels to introduce latent continuous random variables. The covariance matrix of the kernels is then allowed to vary with covariates, char-acterizing the covariate-varying interrelationships among OTUs. We adopt the low-rank structure factor model and place a Dirichlet–Horseshoe (Dir-HS) prior (Zhang et al., 2025) on the factor loading matrix to effectively learn a high-dimensional covariance structure despite a limited sample size. In addition, we use a Dirichlet process (DP) prior on micro-bial abundances to obtain a flexible joint distribution of count vectors. This nonparametric approach used to model the mean counts flexibly handles excess zeros and overdispersion, common in microbiome data. We also relate covariates to the mean to detect different OTU abundances under covariates. In the rest of the paper, we describe the model and its applications. Sections 2 and 3 present the covariate-dependent rounded multivariate log-normal kernel model, its prior specification, and posterior computation. Section 4 shows the results of simulation studies evaluating the performance of our method. Section 5 presents results from applying the model to a real dataset, and Section 6 concludes with a discussion of the findings and directions for future research. 
+
+# 2 Model Specification 
+
+In this section, we first construct a Bayesian sparse factor model that allows factor loadings to vary with covariates, enabling the estimation of covariate-varying covariance matrices. We then develop a rounded kernel model with a mean regression function to accommodate the discreteness of count data. This model employs a Bayesian nonparametric approach, providing a flexible joint distribution for multivariate count responses. 52.1 Sparse Covariate-dependent Factor Model 
+
+Let ˜Y ⋆ = ( ˜Y ⋆ 
+
+> 1
+
+, . . . , ˜Y ⋆J ) ∈ RJ be a J-dimensional normal random vector, ˜Y ⋆ | μ(x), Σ( x) ∼ NJ
+
+ μ(x), Σ( x), (1) where x = ( x1, . . . , x P ) is a P -dimensional vector of covariates for the sample, with x1 =1 representing the intercept. We first construct a probability model for the covariance matrix Σ( x) as a function of x, which is the main parameter of interest. The covariates included in μ(x) may differ from those in Σ( x) depending on the context of the problem. A model for μ(x) will be discussed later in § 2.2. To overcome the difficulty posed by high dimensionality, particularly when the sample size is much smaller than the number of features, i.e., N ≪ J for each value of x, we extend the spiked covariance structure assumption (Johnstone, 2001). Specifically, we decompose Σ( x) into a low-rank matrix and a diagonal matrix, and construct a factor model whose loadings vary with x:Σ( x) = Λ( x)Λ ′(x) + σ2IJ , (2) where Λ( x) = [ λjk (x)], j = 1 , . . . , J and k = 1 , . . . , K , is a J × K covariate-dependent factor loading matrix. Here, K is the dimension of the subspace that is assumed to capture the statistical variability, and typically K ≪ J. Following Bhattacharya and Dunson (2011) and Xie et al. (2018), we do not impose any constraints on Λ( x), such as column orthogonality, nor do we seek to interpret latent factors, as our primary focus is on inference for Σ( x). We further express λjk (x) as 
+
+λjk (x) = qjk f ′
+
+> k
+
+x. (3) 6Here, fk is a P -dimensional coefficient vector that quantifies covariate effects for factor k.While the global effect f ′
+
+> k
+
+x is shared across features, qjk adjusts its contribution for feature 
+
+j. When the local effect qjk is close to 0, the corresponding λjk (x) becomes small. On the other hand, if fkp ≈ 0, then λjk (x) does not vary with xp for all j. If fkp is small for all k
+
+and p, then Σ( x) does not change much with x.Using (2) and (3), we can rewrite Σ( x) = 
+
+> K
+
+X
+
+> k=1
+
+(qkf ′
+
+> k
+
+x)( x′fkq′
+
+> k
+
+) + σ2IJ , (4) where qk = ( q1k, . . . , q Jk )′. The covariance between features j and j′ is a sum of K quadratic functions of x:Σjj ′ (x) = 
+
+> K
+
+X
+
+> k=1
+
+qjk qj′k
+
+ f ′
+
+> k
+
+x2 + σ2 1( j = j′), (5) which can flexibly capture various shapes over a reasonable range of x. Similar to Hoff and Niu (2012) and Niu and Hoff (2019), including the intercept 1 in x alleviates the constraint that the minimum covariance always occurs at xp = 0 for p > 1. The structure in (4) has 
+
+JK + KP + 1 unknown parameters and significantly reduces the number of parameters to estimate compared to estimating a full J × J covariance matrix Σ for each x. This reduction is crucial in high-dimensional settings. In addition to the spiked covariance structural assumption, we further assume joint sparsity on Σ( x) by employing the Dirichlet–Horseshoe (Dir-HS) prior of Zhang et al. (2025) for qk, for k = 1 , . . . , K :
+
+τk | aτ , b τiid 
+
+∼ Ga( aτ , b τ /J ),
+
+ϕk = ( ϕ1k, . . . , ϕ Jk ) | aϕiid 
+
+∼ Dir( aϕ, . . . , a ϕ),ζjk iid 
+
+∼ C+(0 , 1) , j = 1 , . . . , J, qjk | ϕjk , τ k, ζ jk indep 
+
+∼ N(0 , ζ 2 
+
+> jk
+
+ϕjk τk), j = 1 , . . . , J. 
+
+(6) 7Here, C +(0 , 1) denotes the half-Cauchy distribution on R+ with location 0 and scale 1, and Ga( a, b ) represents the gamma distribution with mean a/b . Under the model in (4) with the prior in (6), the vector ϕk implicitly induces feature selection for interactions for latent factor k, resulting in the shrinkage of qjk corresponding to irrelevant features toward zero. This, in turn, shrinks λjk (x), and those irrelevant features exhibit a small covariance regardless of x. In contrast, τk controls global shrinkage for each factor and effectively truncates the number of active latent factors. This joint sparsity assumption facilitates more reliable estimation of the covariance structure with limited sample sizes and yields favorable theoretical properties (Cai et al., 2015; Xie et al., 2018). Zhang et al. (2025) further discussed the theoretical properties of the Dir-HS distribution, showing that it achieves heavy tails together with a sharp peak at zero, thereby efficiently inducing joint sparsity and enabling robust covariance estimation in high-dimensional settings. Compared to the covariance-regression models discussed earlier (Fox and Dunson, 2015; Moran et al., 2021; Hoff and Niu, 2012), our model is more parsimonious due to (3), while the form in (4) remains flexible enough to capture nontraditional patterns. Moreover, the structural assumption with joint sparsity yields more efficient and robust estimation in high dimensions. We illustrate this in § 4.2 with simulation studies in which the true underlying covariance matrix is an arbitrary function of a covariate. To complete the prior specification for Σ( x), we assume a conditionally conjugate prior on σ2, σ2 ∼ inv-Ga( aσ, b σ), with fixed hyperparameters aσ and bσ, and a standard normal prior on fkp , fkp iid 
+
+∼ N(0 , 1) .
+
+## 2.2 A Flexible Model for Multivariate Count Responses 
+
+Next, we use the latent factor models with covariate-varying factor loadings in § 2.1 as a building block to construct a Bayesian nonparametric mixture model with a rounded kernel, yielding a flexible multivariate count distribution whose mean and covariance vary 8with x.Suppose that we have N samples, for which we observe J-dimensional random count vectors Yi = ( Yi1, . . . , Y iJ ), with Yij ∈ Z≥0, i = 1 , . . . , N , corresponding to features with covariates xi. We introduce a latent multivariate log-normal vector Y ⋆i = exp( ˜Y ⋆i ) ∈
+
+RJ 
+
+> +
+
+and assume that the ˜Y ⋆i ’s are independent samples from the model in (1). We then construct a joint distribution for the count vector Yi using a rounded kernel (Canale and Dunson, 2011): P( Yi = y | μ(xi), Σ( xi)) = 
+
+Z
+
+> A(y)
+
+fy⋆ (y⋆ | μ(xi), Σ( xi)) dy⋆, (7) where the integration region is A(y) = {y⋆ | y1 ≤ y⋆ 
+
+> 1
+
+< y 1 + 1 , . . . , y J ≤ y⋆J < y J + 1 }, and 
+
+fy⋆ (·) is the probability density function of a J-dimensional log-normal distribution with parameters μ(xi) and Σ( xi). The multivariate log-normal density is zero for vectors with negative entries, and the kernel defines a valid multivariate count distribution for Yi. The quantity exp( μj (xi)) is the median of Y ⋆ij and provides an estimate of the abundance of feature j in sample i. We adopt the model in § 2.1 for Σ( xi). The mean and covariance of 
+
+Y ⋆ij are E( Y ⋆ij ) = exp 
+
+
+
+μj (xi) + 12Σjj (xi)
+
+
+
+, Cov( Y ⋆ij , Y ⋆ij ′ ) = E( Y ⋆ij )E( Y ⋆ij ′ )
+
+n
+
+exp(Σ jj ′ (xi)) − 1
+
+o
+
+.
+
+When Σ jj ′ (xi) = 0, it implies there are no microbial interactions between features j and 
+
+j′. For the count distribution Yi, the mean and covariance are finite and can be computed through the probability mass function defined in (7). We illustrate the distributions of y
+
+obtained under the rounded kernel model with specific examples in Supp. §2. We relate μ(xi) to covariates xi through the regression 
+
+μj (xi) = μij = ri + αj + β′ 
+
+> j
+
+˜xi, (8) 9where ˜ xi denotes xi without the intercept xi1. The term ri is the sample (library) size factor, which normalizes counts across samples, and αj represents the normalized baseline abundance of feature j. The regression coefficients βjp quantify the change in the abundance of feature j from its baseline ri + αj due to covariate xip . We consider a conditionally conjugate prior distribution for βjp and assume βjp iid 
+
+∼ N(0 , u 2 
+
+> β
+
+) with fixed u2 
+
+> β
+
+.We take a Bayesian nonparametric approach and construct a flexible prior model for αj
+
+to account for the large variability in abundance among features. This flexible modeling of baseline abundances may further enhance the estimation of Σ( xi) and βj . While βj and 
+
+ri + αj are identifiable, the individual parameters ri and αj in (8) are not identifiable due to the multiplicative structure, E( y⋆ij | ri, α j ) ∝ exp( ri + αj ). However, since the primary inferential goal is to estimate βjp , this non-identifiability does not impact the inference of interest. To mitigate potential computational issues, we impose a mean-constrained Dirichlet process prior for αj as follows: 
+
+αj | G iid 
+
+∼ G =
+
+> ∞
+
+X
+
+> l=1
+
+ψαl
+
+
+
+ωαl δξαl + (1 − ωαl )δνα−ωαl ξαl
+
+> 1−ωαl
+
+
+
+, j = 1 , . . . , J, (9) where δξ is a point mass centered at ξ. We let ξαl | να, u 2
+
+> αiid
+
+∼ N( να, u 2
+
+> α
+
+), l = 1 , 2, . . . ,with fixed να and u2
+
+> α
+
+. The outer mixture weights ψαl in (9) are constructed using a stick-breaking process (Sethuraman, 1994): let ψα 
+
+> 1
+
+= V α 
+
+> 1
+
+and ψαl = V αl
+
+Ql−1
+
+> l′=1
+
+(1 − V αl′ ) for l > 1, with V αl | cα iid 
+
+∼ Be(1 , c α), where the concentration parameter cα is fixed. We assume the inner mixture weights satisfy ωαl | aαω, b αωiid 
+
+∼ Be( aαω, b αω), with fixed aαω and bαω. Under (9), both the prior and posterior means of αj are fixed at να. A similar constraint is imposed on the prior for ri to achieve soft identifiability. Shuler et al. (2021) and Zhang et al. (2025) showed that overall means can be well estimated under such mean-constrained priors. 10 Under the model in (1) and (9), we obtain a Dirichlet process mixture model for Y ⋆i :
+
+Y ⋆i | μ( ˜ xi), Σ( xi) indep 
+
+∼
+
+Z
+
+log-N J
+
+
+
+y⋆ | ri1J + α + β ˜x′
+
+> i
+
+, Σ( xi)
+
+ Y 
+
+> j
+
+dG (αj ), (10) where α = ( α1, . . . , α J )′ and β is a J × P coefficient matrix with βj in the rows. With random mixture weights ωαl and ψαl and random locations ξαl in G(α), the mixture model in (10) can flexibly capture various shapes of the distribution and accommodate variability in the count data. We also consider an extension of the model in (8)–(10) to account for inter-subject heterogeneity, illustrated in detail in Simulations 2 and 3. Similar to (9), we consider a flexible infinite mixture model for ri:
+
+ri | ψrl , ω rliid 
+
+∼
+
+> ∞
+
+X
+
+> l=1
+
+ψrl
+
+
+
+ωrl N( ξrl , u 2 
+
+> r
+
+) + (1 − ωrl )N 
+
+νr − ωrl ξrl
+
+1 − ωrl
+
+, u 2
+
+> r
+
+ 
+
+, (11) where νr and u2 
+
+> r
+
+are fixed. The prior and posterior expectations of ri are fixed at νr
+
+in (11). We jointly specify να and νr using observed counts. For example, we set νr
+
+to the average logarithm of the total count, νr = 1
+
+> N
+
+PNi=1 log 
+
+ PJj=1 yij 
+
+
+
+, and να =
+
+> 1
+> N J
+
+PNi=1 
+
+PJj=1 
+
+ log( yij + 0 .01) − νr . We assume similar priors for ψrl , ωrl , and ξrl : ξrl |
+
+νr, u 2
+
+> ξr
+> iid
+
+∼ N( νr, u 2 
+
+> ξr
+
+), ωrl | arω, b rωiid 
+
+∼ Be( arω, b rω), and ψr 
+
+> 1
+
+= V r 
+
+> 1
+
+, ψrl = V rl
+
+Ql−1
+
+> ℓ′=1
+
+(1 − V rℓ′ ) for 
+
+l > 1, with V rl | cr iid 
+
+∼ Be(1 , c r). Here, u2 
+
+> ξr
+
+, arω, brω, and cr are fixed. 
+
+# 3 Prior Calibration and Posterior Computation 
+
+The prior of Σ( x) in (6) requires the specification of fixed hyperparameters K, aϕ, aτ , and 
+
+bτ . Selecting an appropriate dimension K for the latent space can be challenging. The value of K determines the number of parameters, and a model with a random K would require more complex algorithms, such as a reversible jump Markov Chain Monte Carlo (RJMCMC) method (Green and Hastie, 2009), for posterior simulation. Instead, we set 11 K to a reasonably large value for computational convenience. For example, we empirically determine K by performing principal component analysis (PCA) on the sample covariance matrix of log-transformed normalized counts. We then choose K such that the K largest eigenvalues explain 95% of the total variance. With a sufficiently large K, the model can allow some τk to be small for redundant latent factors. If desired, a geometric or truncated Poisson prior can be placed on K to achieve an optimal posterior contraction rate (Pati et al., 2014). For the remaining hyperparameters aϕ, aτ , and bτ , we follow the configuration in Zhang et al. (2025), setting aϕ = 1 /(0 .2 × J), aτ = 0 .1, and bτ = 1 /J .From simulation studies, we observed that too small a value of aϕ tends to overly shrink 
+
+qjk toward zero, resulting in poor estimates of Σ( x). We also examined the sensitivity to these hyperparameter specifications and found that the model’s performance remains robust within a reasonable range of values. Let θ = {qjk , ϕ jk , τ k, ζ jk , f kp , σ 2, α j , ω αl , V αl , ξ αjl , r i, ω rl , V rl , ξ rl , β jp } denote the full set of random parameters. We use Markov Chain Monte Carlo (MCMC) to sample θ from their posterior distribution. To facilitate computation, we introduce a latent normal vector 
+
+ηiiid 
+
+∼ NK (0 , IK ), so that Y ⋆ij | μij (xi), λj (xi), ηi, σ 2 indep 
+
+∼ log-N 
+
+
+
+μj (xi) + λ′ 
+
+> j
+
+(xi)ηi, σ 2
+
+
+
+, as independent log-normal variables, which significantly improves computational efficiency. The joint posterior distribution of the augmented model is 
+
+p(θ, Y ⋆, η | y, x) ∝
+
+> N
+
+Y
+
+> i=1
+> J
+
+Y
+
+> j=1
+
+p yij ≤ Y ⋆ij < y ij + 1 | ηi, θ NY
+
+> i=1
+
+p(ηi | θ)p(θ). (12) We use the blocked Gibbs sampling algorithm (Ishwaran and James, 2001) with a finite-dimensional truncation of the stick-breaking processes in (9) and (11). The truncation levels 
+
+Lr and Lα are set to sufficiently large values. Given the latent variables, all parameters except ϕk can be updated via Gibbs steps. Although fkp has a conjugate full conditional distribution, we found that mixing over fkp can be poor, so we use an adaptive Metropolis-Hastings algorithm (Haario et al., 2001) for efficient updates of ϕk and fkp . Details of the 12 MCMC algorithm are provided in Supp. § 1. The code is available at https://github.com/ shuang-jie/BCAIA. 
+
+# 4 Simulation Studies 
+
+## 4.1 Simulation 1 
+
+Simulation 1 was designed to mirror the structure of the mice gut microbiome dataset in § 5. The dataset includes two categorical variables, one with two levels and one with three, yielding six experimental conditions. Using indicator variables for the main effects, we constructed x with P = 4 (including the intercept), assumed J = 15 OTUs, and generated five samples per condition, for a total of N = 30 samples. For Σ tr (x), we set 
+
+Ktr = 2. Each qtr  
+
+> jk
+
+was set to 0 with probability 0.5; otherwise, it was sampled from N(0 , 1) and shifted away from zero by 1. We generated f tr 
+
+> kp iid
+
+∼ Unif( −1, 1) and modified some entries so that, under certain conditions, feature interactions depend on only one factor. Specifically, we set f11 = −f13 so that factor 1 has no contribution to feature interactions for x = (1 , 0, 1, 0), as f ′
+
+> 1
+
+x = 0, and f21 = −f22 so that factor 2 has no contribution for 
+
+x = (1 , 1, 0, 0), as f ′
+
+> 2
+
+x = 0. The covariance is then Σ tr (x) = Λ tr (x)Λ tr ,′(x) + σtr ,2IJ , with 
+
+λtr 
+
+> jk
+
+(x) = qtr 
+
+> jk
+
+f tr ,′ 
+
+> k
+
+x and σtr ,2 = 0 .52. True covariance matrices for two arbitrarily selected conditions, x = (1 , 1, 0, 0) and x = (1 , 1, 0, 1), are shown in the lower triangles of Fig. 1(b)-(c). For the mean abundance, rtr 
+
+> iiid
+
+∼ Unif(0 , 2) and αtr 
+
+> jiid
+
+∼ 0.3N( −1, 12) + 0 .7N(5 , 0.52). The coefficients βtr  
+
+> jp
+
+were generated similarly to qtr 
+
+> jk
+
+: set to 0 with probability 0.5, otherwise sampled from N(0 , 1) and shifted by 1. Finally, Y ⋆, tr 
+
+> iiid
+
+∼ log-N J (μtr (xi), Σtr (xi)), with 
+
+μtr  
+
+> ij
+
+= rtr  
+
+> i
+
++ αtr  
+
+> j
+
++ βtr  
+
+> j
+
+˜xi, and the observed counts are Yi = ⌊Y ⋆, tr  
+
+> i
+
+⌋.We specified the values of the fixed hyperparameters as discussed in § 3, K = 8, 
+
+cr = cα = 3, Lr = 30 , L α = 35, aσ = bσ = 3, arω = brω = aαω = bαω = 5 to fit the model for the simulated dataset. We ran MCMC for 160,000 iterations and discarded the 13 (a) ˆΣjj ′ (x) − Σtr  
+
+> jj ′
+
+(x) (b) ˆΣ( x) vs Σ tr (x) (c) ˆΣ( x′) vs Σ tr (x′)Figure 1: [Simulation 1] Panel (a) has a histogram of differences between ˆΣjj ′ (xi) and Σtr  
+
+> jj ′
+
+(xi) under six levels, j ≤ j′. Panels (b) and (c) compare ˆΣtr (x) (lower triangular) to its posterior median estimates ˆΣ( x) (upper triangular) for two arbitrarily selected conditions, 
+
+x = (1 , 0, 0, 1) ′ and x′ = (1 , 1, 0, 0) ′.first half for burn-in. The computation took 13 minutes on an Apple M1 chip laptop. Fig. 1(a) presents a histogram of the differences ˆΣjj ′ (xi) − Σtr  
+
+> jj ′
+
+(xi), j ≤ j′, across all samples. The differences are tightly centered around 0, indicating that the model provides accurate estimates of the covariance that varies with x. Figs. 1(b) and (c) compare posterior median estimates of Σ jj ′ (x) in the upper triangles to the true values Σ tr  
+
+> jj ′
+
+(x) in the lower triangles for two arbitrarily selected conditions, x = (1 , 0, 0, 1) ′ and x = (1 , 1, 0, 0) ′,respectively. The true interaction patterns differ substantially across these conditions, both in terms of which features interact and the strength of their interactions. Comparing ˆΣjj ′ (x) to Σ tr  
+
+> jj ′
+
+(x) shows that our method produces reasonable estimates for both conditions. ˆΣjj ′ (x) for the remaining four conditions is illustrated in Supplementary Fig. 4(a)-(d). Additional results for λ(xi), τk, and σ2 are provided in Supplementary Fig. 3. Fig. 2(a) compares the posterior median estimates of μij to their true values, with red dots representing the posterior medians and grey vertical lines representing 95% credible intervals. Overall, the means of Y ⋆ij are well estimated. Figs. 2(b)-(d) illustrate the posterior median estimates of covariate effects on the mean abundance. Recall that βjp quantifies the change in mean abundance from its baseline, αj + ri. The difference βtr  
+
+> j1
+
+− βtr  
+
+> j2
+
+quantifies the effect of the binary covariate, while the differences βtr  
+
+> j4
+
+− βtr 
+
+> j3
+
+, βtr  
+
+> j5
+
+− βtr 
+
+> j3
+
+, and βtr  
+
+> j5
+
+− βtr 
+
+> j4
+
+14 (a) ˆ μij vs μtr  
+
+> ij
+
+(b) \βj1 − βj2 vs βtr  
+
+> j1
+
+− βtr  
+
+> j2
+
+(c) \βj4 − βj3 vs βtr  
+
+> j4
+
+− βtr 
+
+> j3
+
+(d) \βj5 − βj3 vs βtr  
+
+> j5
+
+− βtr  
+
+> j3
+
+(e) MOFA+: ˆΣ( x) (f) MOFA+: ˆΣ( x′)Figure 2: [Simulation 1] The posterior median estimate of mean abundance μij is plotted against the truth in panels (a). Panels (b)-(d) plot posterior point estimates of βj1 − βj2,
+
+βj4 − βj3 and βj5 − βj3 against their true values. The red dots represent posterior median estimates, and the grey vertical lines 95% posterior credible interval estimates. Panel (e) and (f) illustrate the covariance estimate of MOFA+ for two arbitrarily selected conditions, 
+
+x = (1 , 0, 0, 1) ′ and x′ = (1 , 1, 0, 0) ′.quantify the pairwise effects of the ternary covariate on μij . Panels (b)-(d) show that the covariate effects on the mean abundance are well estimated. A comparison of \βj5 − βj4 to its true value is provided in Supplementary Fig. 3. We compare our method to MOFA+ (Argelaguet et al., 2020), a multi-omics factor analysis framework that provides joint association estimates across heterogeneous datasets. MOFA+ extends the original MOFA model (Argelaguet et al., 2018b) by modeling both shared and modality-specific sources of variability across multiple data views. We treat each category as a different view and apply MOFA+ to the full dataset. The resulting co-variance estimates are presented in Fig. 2(e)-(f) and Supplementary Fig. 4 (e)-(h). MOFA+ 15 Table 1: RMSE of the estimated correlations ˆ ρjk (j < k ) under all methods across three simulation settings. 
+
+Simulation Our Model MOFA+ SparCC CCLasso 
+
+1 0.069 0.602 0.832 0.465 2 0.058 0.336 0.265 0.242 3 0.126 0.357 0.267 0.231 performs well with categorical covariates but misses some dependencies at certain levels. We also applied SparCC and CCLasso separately to each dataset corresponding to the individual categorical levels, since these methods do not incorporate x. Supplementary Fig. 4 compares their correlation estimates to the true values. We report the RMSE of the estimated correlations ˆ ρjk (x) = \Σ( x)jk /pΣ( x)jj Σ( x)kk (j < k ) for all methods in Ta-ble 1. Compared to the other methods, our model more accurately captures the structured, covariate-varying covariance patterns, demonstrating its superior ability to recover feature interactions that vary with covariates. 
+
+## 4.2 Simulation 2 
+
+Simulation 2 considers a dataset with repeated samples that typically has large inter-subject variability. Suppose we have multiple samples from each subject in a set. We let 
+
+si ∈ { 1, . . . , S } denote the subject from which sample i is taken. To accommodate inter-subject variability, we extend the model in a fashion similar to that in Zhang et al. (2025); we let the normalized mean abundance indexed by subjects, that is, αsi,j and assumed the following model for αsi = ( αsi1, . . . , α siJ )′;
+
+αsi | G iid 
+
+∼G(α), s i ∈ { 1, . . . , S },G(α) = 
+
+> J
+
+Y
+
+> j=1
+
+Gj (αj ) = 
+
+> J
+
+Y
+
+> j=1
+
+" ∞X
+
+> l=1
+
+ψαl
+
+(
+
+ωαl δξαjl + (1 − ωαl )δ ναj −ωαl ξαjl 
+
+> 1−ωαl
+> 
+
+)# 
+
+.
+
+(13) 16 That is, the baseline abundance of an OTU is shared by all samples from a subject, and the prior distribution of αs has different mixing locations ξαjl for each OTU to accommodate variability in the baseline abundance among OTUs. To generate a dataset, we let S = 25 subjects and J = 100 OTUs. We included a continuous subject covariate xcsi
+
+> iid
+
+∼ N(0 , 1) and a binary sample covariate, xdi ∈ { 0, 1}, that represents two experimental conditions. Assuming that a sample is obtained from each condition for a subject, we had N = 50 samples. Adapting the common factor model in De Vito et al. (2019, 2021), we let Σ tr (x) = Λ tr 0 Λtr ,′ 
+
+> 0
+
++ Λ tr (x)Λ tr ,′(x) + σ2,tr IJ , where Λ tr 0 is 
+
+J × K0 matrix of common factor loadings with K0 = 2, and Λ tr 0 Λtr ,′ 
+
+> 0
+
+is a baseline covariance. We simulated random variables from N(0 , 1) and shifted them away from zero by 1/2 for 
+
+λtr 0,jk of OTUs 1-25 and 51-100 to ensure that those OTUs have baseline interactions. We let λtr 0,jk = 0 for the remaining OTUs. We next let Λ tr (x) a J × K1 factor loading matrix with K1 = 3 and let λtr 1,jk (x) = qtr 
+
+> jk
+
+f tr ,′ 
+
+> k
+
+x. We then simulated random variables from N(0 , 1), shifted them away from zero by 1/2, and set them to be f tr  
+
+> jk
+
+for OTUs 51-100 and f tr  
+
+> jk
+
+= 0 for the remaining OTUs. And we have f tr 
+
+> kp iid
+
+∼ Unif( −1, 1) and σ2,tr = 0 .52. Under this design, interactions among OTUs 1-25 remain constant across covariates, while among OTUs 51-100 change with the covariates. Furthermore, OTUs 26-50 do not interact with the other OTUs. The covariance matrix corresponding to Σ tr (xi) is illustrated in the lower triangle of Fig 3(b) and (c) for two selected samples. Excess zeros and large inter-subject variability are commonly observed in microbiome data, and we reflect those in the simulated dataset. For the normalized abundance level, we first set ξα, tr  
+
+> j1
+
+= −5, ξα, tr  
+
+> j2
+
+∼ N(2 .5, 0.5) and ξα, tr  
+
+> j3
+
+∼
+
+N(5 , 0.5) and simulated ψtr  
+
+> j
+
+= ( ψtr 
+
+> j1
+
+, ψ tr 
+
+> j2
+
+, ψ tr 
+
+> j3
+
+) ∼ Dir(30 , 40 , 30). The three values, ξα, tr  
+
+> jl
+
+,
+
+l = 1, 2 and 3, represent zero, small and large counts, respectively. We then let αtr  
+
+> sj
+
+= ξα, tr 
+
+> jl
+
+with probability ψtr  
+
+> jl
+
+for s ∈ { 1, . . . , S }. We next simulated size factors rtr 
+
+> iiid
+
+∼ Unif(0 , 2) and regression coefficients βtr  
+
+> jp
+
+similar to Simulation 1. We let μtr (xi) = rtr  
+
+> i
+
+1J + αtr  
+
+> si
+
++ β′xi, and sample count vector Yi from ⌊log-N J (μtr (xi), Σtr (xi)) ⌋. Under this setup, approximately 17 (a) ˆΣjj ′ (x) − Σtr  
+
+> jj ′
+
+(x) (b) ˆΣ( x2) vs Σ tr (x2) (c) ˆΣ( x27 ) vs Σ tr (x27 )Figure 3: [Simulation 2] Panel (a) has a histogram of differences between ˆΣjj ′ (xi) and Σtr  
+
+> jj ′
+
+(xi) of all samples. In (b), the lower left and upper right triangles of the heatmap illustrate true values Σ tr  
+
+> jj ′
+
+and their posterior estimates of correlations ˆΣjj ′ , respectively. Two samples, samples 2 and 27, from subject 2, are arbitrarily chosen for illustration. Their covariates are x2 = (1 , −1.23) , x27 = (0 , −1.23). 
+
+(a) OTUs 67 & 86 (b) OTUs 4 & 96 (c) OTUs 74 & 90 Figure 4: [Simulation 2] Scatter plots of Σ jj ′ (x) (dashed line) and Σ tr  
+
+> jj ′
+
+(x) (solid line) are plotted for three arbitrarily chosen OTU pairs, OTUs 67 and 86 in panel (a), OTUs 4 and 96 in panel (b), and OTUs 74 and 90 in panel (c). Crosses are observed values of the continuous covariate xc. The red and blue colors are for xd = 0 and 1, respectively. The shades represent pointwise 95% posterior credible interval estimates. 30.76% of Yij ’s are 0. We specified the hyper-parameters values similar to Simulation 1 with K = 7. We ran MCMC for 160 , 000 iterations and discarded the first half for burn-in. It took 23 hours on an Apple M1 chip laptop. Fig 3(a) plots the differences ˆΣjj ′ (xi) − Σtr  
+
+> jj ′
+
+(xi) of all samples, j ≤ j′. It shows that the extended model captures covariate varying feature interactions reasonably well even when excess zeros are present and counts greatly vary across subjects. Fig 3(b) and (c) compare the posterior median estimates of Σ( x) to its truth. Their x’s have the same value of the 18 (a) \βj1 − βj2 versus βtr  
+
+> j1
+
+− βtr  
+
+> j2
+
+(b) ˆβj3 versus βtr 
+
+> j3
+
+Figure 5: [Simulation 2] The posterior estimates of the effects of the binary and continuous covariates on abundance are plotted in panels (a) and (b), respectively. The dots represent the posterior median estimates, while the vertical lines indicate their corresponding 95% credible interval estimates. continuous covariate, xc = −1.23, but the discrete covariate xd takes the value of 0 and 1, respectively. Fig 4 presents the posterior estimates of covariance for some selected pairs of OTUs by varying the values of xc and xd. The solid and dashed lines are the truth and pos-terior estimates, and the red and blue colors correspond to xd = 0 and 1, respectively. The shaded area represents point-wise 95% posterior credible interval estimates. The crosses at the bottom of the plots are the observed values of xc. Figs 3 and 4 show that our model successfully identifies inactive OTUs, accurately estimates the baseline covariance, and captures the covariate-varying interrelationship structure among OTUs even when the sample size is smaller than the number of OTUs. Fig 5 illustrates the accuracy of our model in estimating covariate effects on microbial abundances under Simulation 2. The estimates align closely with the diagonal line, indicating that the proposed model accurately recovers both binary and continuous covariate effects. More details on the posterior median estimates of the loading matrices, shrinkage pa-rameters, and mean abundances are provided in Supp Fig 5. The results indicate that the model effectively selects relevant factors and achieves high overall estimation accuracy. We 19 also compared our method to comparators in Supp Fig 6 and compute RMSE shown in Table 1. Due to the continuous covariate, all three comparators, including MOFA+, can-not accommodate covariates and therefore produce a single global estimate shared across samples. 
+
+## 4.3 Simulation 3 
+
+For Simulation 3, we let the covariance matrix arbitrarily vary with a binary covariate, 
+
+xd ∈ { 0, 1} that represents two experimental conditions. Specifically, arbitrary covariance matrices were generated using the vine method in Lewandowski et al. (2009), separately for each value of xd, as follows; We simulated partial correlations from linearly transformed Be(1 , 1) distribution over the interval of ( −1, 1). To encourage sparsity in Σ tr (x), we set the partial correlations below 0.8 to 0 and generated a correlation matrix, ρtr (xd) using their recursive formula. We then sampled σ2,tr  
+
+> j
+
+(xd) independently from Unif(1 , 1.5) and let Σ tr  
+
+> jj ′
+
+(xd) = σ2,tr  
+
+> j
+
+(xd)σ2,tr  
+
+> j′
+
+(xd)ρtr  
+
+> jj ′
+
+(xd). Σ tr (0) and Σ tr (1) are shown in the lower triangle of Fig 6(b) and (c), respectively. We kept the rest of the simulation setup the same as in Simulation 2, with S = 25 subjects, N = 50 samples, and J = 100 OTUs. We also used the same fixed hyperparameter values as in Simulation 2 but choose K = 25 empirically. Following § 3, we perform PCA on clr transformed data and plotted the screen plot of eigenvalues in Supp Fig 5. Furthermore, we examined the prior sensitivity analysis by varying the value of K and found that the covariate-varying covariance matrix estimates remain mostly unchanged for large enough values of K. More detailed results are summarized in Supp Fig 7. Examination of the MCMC simulation using traceplots indicated no evidence of convergence or mixing problems. It takes 16 hours on Apple M1Max. Fig 6(a) has a histogram of the differences ˆΣjj ′ (xd) − Σtr  
+
+> jj ′
+
+(xd), j ≤ j′ for xd ∈ { 0, 1}.Fig 6(b) and (c) compares the posterior estimates ˆΣ(0) and ˆΣ(1) under our model to 20 (a) ˆΣjj ′ − Σtr  
+
+> jj ′
+
+(b) ˆΣ0 vs Σ tr 0 (c) ˆΣ1 vs Σ tr 1
+
+Figure 6: [Simulation 3] Panel (a) presents a histogram of the differences between ˆΣjj ′ (xd)and Σ tr  
+
+> jj ′
+
+(xd), for j ≤ j′ and xd ∈ { 0, 1}, where ˆΣjj ′ (xd) are the posterior median estimates of Σ jj ′ (xd). Panels (b) and (c) compare ˆΣ( xd) to their true values for each xd.
+
+(a) ˆ μij vs μtr  
+
+> ij
+
+(b) \βj1 − βj2 vs βtr  
+
+> j1
+
+− βtr 
+
+> j2
+
+Figure 7: [Simulation 3] Panels (a) and (b) compare the posterior estimates of μij and 
+
+βj1 − βj2 to their true values. The dots represent the posterior median estimates, while the vertical lines indicate the 95% credible interval estimates. their truth. Arbitrary Σ tr (xd) are generated for each condition, while our model has a covariance regression with low rank assumption. However, the model approximates the true interaction structure in Σ tr (xd) reasonably well. Fig 7(a) shows a posterior median estimate of mean abundance μij with their 95% interval estimate. Panel (b) of the figure compares the posterior estimates of the covariate effect βj1 − βj2 on the mean abundance to the truth. The dots are point estimates, and the vertical lines 95% credible interval 21 estimates. Our model effectively captures the covariate effects on the mean abundance. To benchmark its performance, we compared it with MOFA+, SparCC, and CCLasso. For these comparators, we applied the methods separately for each covariate level, obtain-ing two covariance (or correlation) estimates per method. As shown in Table 1, our model achieves the smallest value of RMSE. While SparCC performed best among the compara-tors, it captured group-specific dependencies less accurately than our model (see Supp Fig 8). 
+
+# 5 Mice Gut Microbiome Data Analysis 
+
+We applied our method to a subset of the mice gut microbiome data from Patnode et al. (2019). The experiment aimed to understand how individual species in a human gut mi-crobial community interact with others and respond to dietary changes. Specifically, it examined the effects of a human diet representing the upper tertile of saturated fat and lower tertile of fruit and vegetable consumption (HiSF) supplemented with different fibers. The abundance of beneficial gut microbes may change differently with fiber supplements, and their competition with other microbes may be influenced by the type of supplement. In particular, gnotobiotic mice colonized with a 15-member consortium of human–gut–derived bacterial strains were fed the HiSF diet supplemented with different types of food-grade fibers. Each mouse received a different fiber-supplemented diet for a total of 4 weeks. The abundance of each community member was quantified using short-read shotgun DNA sequencing (community profiling by sequencing (COPRO-Seq)) (Hibberd et al., 2017; Mc-Nulty et al., 2013) to determine the effects of a fiber treatment. For our analysis, we focused on the microbial composition at day 12 post-colonization, comparing three diets: two different fiber supplements, 10% citrus pectin (CPT) and 10% pea fiber (PEF), and HiSF as a control. This resulted in N = 69 samples, with 30, 20, and 19 mice assigned to the three diets: HiSF, CPT, and PEF, respectively. In addition, one specific species, 22 OTU 2, corresponding to Bacteroides cellulosilyticus , hereafter referred to as WH2), was omitted from half of the mice at the time of colonization to assess how its presence or absence affects microbial community dynamics. For analysis, we consider two categorical covariates for μ and Σ: diet, which has three levels, and WH2 status, which is binary. A list of the 15 strains in the defined bacterial consortium can be found in Supp. Tab. 2, and the number of samples for each of the six experimental conditions defined by diet and the WH2 status is provided in Supp. Tab. 3. We note that even in samples where WH2 was omitted, the read counts for WH2 are non-zero due to background sequencing and mapping artifacts, similar to other OTUs. Therefore, we proceeded with all 15 OTUs for the analysis. The lower triangle of the heatmaps in Fig 8 (a)-(f) shows empirical correlation estimates, ρem  
+
+> jj ′
+
+(x), computed using log( yij + 0 .01) after normalization by the log of the total count sample size factor estimates for each of the six conditions. To fit our model, the fixed hyperparameters were set similarly to those in Simulation 1, with K = 8. The choice of K can be determined by the PCA of transformed data as described in § 3. The MCMC simulation ran for 160,000 iterations, discarding the first half as burn-in and using the second half for inference. The computation took 22 minutes on an M1 Mac. The upper triangle of the heatmaps in Fig 8(a)-(f) illustrates posterior mean estimates of correlation ˆ ρjj ′ (x) of the OTUs under the six different conditions for easier interpre-tation. Overall, the interactions are sparse across all experimental conditions, and their structure varies with both diet and WH2 status. In particular, the diet modifications in-volve complex fiber preparations containing diverse polysaccharides; thus, they have the potential to disrupt interactions between species as they compete for distinct glycan struc-tures present in PEF or CPT. Fig 9 illustrates posterior inference on ρjj ′ (x) for two selected pairs of species, where the dots and vertical lines represent the posterior median estimates and 95% credible interval estimates, respectively. From panel (a), the 95% posterior cred-23 (a) absence of WH2 + CPT (b) absence of WH2 + HiSF (c) absence of WH2 + PEF 
+
+(d) CPT (e) HiSF (f) PEF Figure 8: [Mice Data] The lower left and upper right triangles of the heatmap illustrate empirical correlation estimates ρem  
+
+> jj ′
+
+(x) and their posterior estimates ˆ ρjj ′ (x) under the six different experimental conditions, respectively. 
+
+(a) OTUs 9 and 13 (b) OTUs 14 and 15 Figure 9: [Mice Data] Posterior inference on correlations ρjj ′ (x) under the six experimental conditions are illustrated for three pairs. The dots denote posterior median estimates, and the vertical lines 95% credible interval estimates. ible interval for ρjj ′ (x) between OTUs 9 and 13, corresponding to Collinsella aerofaciens 
+
+and Ruminococcaceae sp., indicates that their abundances are negatively associated under all conditions, with statistical significance. Considering the large phylogenetic distance be-24 tween these organisms (belonging to distinct phyla), the strong negative correlation between them across all treatment groups suggests that they may compete for a nutrient present in the background diet, such as protein breakdown products (Wolf et al., 2019). Panel (b) displays the results for the pair of OTUs 14 and 15 corresponding to Ruminococcus albus 
+
+and Subdoligranulum variabile . The interaction between OTUs 14 and 15 is significantly positive across all conditions, as the 95% credible intervals are strictly above zero. The estimated strength of their association varies across diets but shows little change with the status of WH2. Several additional interactions may indicate competition for polysaccha-rides, although these are not statistically significant. OTU 1 ( B. ovatus ) and OTU 7 ( B. finegoldii ), for which the results in Figure 8 indicate a potentially negative association, likely compete for homogalacturonan, a carbohydrate found in the fruits and vegetables of the HiSF diet. A potential positive interaction between OTU 5 ( B. vulgatus ) and OTU 7, especially in the CPT and PEF groups, is also notable. While these species can metabolize homogalacturonan, the interaction suggests that they might cooperatively break down this carbohydrate rather than compete for it. Fig 10 illustrates posterior inferences on the differential microbial mean abundances across diets and WH2 status. The dots and vertical lines represent posterior median es-timates and 95% credible intervals, with intervals not containing zero highlighted in red. From panel (a), the diet supplemented with pea fiber is associated with statistically signif-icant changes in abundance for five OTUs compared to the diet supplemented with citrus pectin. Panels (b) and (c) compare the control diet to the citrus pectin and pea fiber diets, respectively. From the figure, the abundance of B. thetaiotaomicron (OTU 4), and 
+
+Ruminococcaceae (OTU 13) changes significantly across all pairwise diet comparisons. Fi-nally, panel (d) displays the impact of WH2 absence. The absence of WH2 is associated with a significant increase in the abundance of OTUs 1, 3, 5, and 11, corresponding to 
+
+Bacteroides ovatus , Bacteroides thetaiotaomicron 7330, Bacteroides vulgatus , and Odorib-
+
+25 (a) βP EF − βCP T (b) βCP T − βHiSF 
+
+(c) βP EF − βHiSF (d) βW H 2 absence − βW H 2
+
+Figure 10: [Mice Data] Posterior estimates of diet effects on mean abundances are illus-trated. Posterior median estimates are denoted by dots, and 95% credible estimates with vertical lines. The intervals that do not contain zero are marked in red. 
+
+acter splanchnicus , respectively. The initial analysis in Patnode et al. (2019) also found significant differences in the relative abundance of OTU 4 across all three pairwise diet comparisons. These changes were mirrored by changes in protein expression, where OTU 4 demonstrated increased expression of enzymes for metabolizing pea fiber arabinan. OTUs 7 and 13 also showed a marked increase in relative abundance when CPT was added to the diet, confirming the results of the previous analysis. The finding of the expansion of OTUs 1 and 5 when WH2 is omitted from this community is notable as it was observed in multiple independent gnotobiotic mouse experiments. 26 We further analyzed the real data using MOFA+, sparCC, and CCLasso, with the results presented in Supp. Figs. 9–11. MOFA+ was implemented with covariates included, as it accommodates categorical variables. In contrast, sparCC and CCLasso were applied separately within each group because they do not accommodate covariates. Note that these methods provide inference only on interactions. 
+
+# 6 Conclusion 
+
+In this paper, we developed a Bayesian joint model of mean and covariance varying with covariates for high-dimensional multivariate count data. This method utilizes a covariate-varying factor model for the covariance matrix and also models the mean abundance using a flexible DP mixture. The method thus enables the assessment of covariate effects on mean and covariance in tandem. We placed a Dirichlet-Horseshoe prior on the covariate-varying loading matrix to induce sparse feature interactions. The flexible mean mixture kernels handle the excess zeros and over-dispersion problems in the count data. Its performance is demonstrated through simulations and a real data example. From a methodological perspective, our model contributes to the growing literature on covariance regression by extending it to high-dimensional count settings and embedding it within a nonparametric Bayesian framework. Unlike existing approaches that treat covariance as constant over covariates or rely on Gaussian models on transformed data, our method captures dynamic dependence patterns directly in discrete data without ad hoc transformations. Our methods can be further extended by relaxing the linear covariance regression to a more complicated regression formula, such as introducing the transformation of contin-uous covariates √x and x32 . Introducing different orders of covariates induces a higher order of covariance-covariate relationship. It is important to note that while this extension offers greater flexibility, the same higher order of covariates entering the mean regression would need more exploration, e.g., variable selection or shrinkage estimators. With added 27 parameters, more samples are needed to obtain reasonable inferences. A further area of research is to study interactions that vary over time and/or space using temporal or spa-tial multivariate count data. In the presence of temporal or spatial heteroscedasticity, it is natural to consider conditional dependence across time points or locations. Fieuws and Verbeke (2006) discussed a pairwise approach for jointly modeling multivariate longitudinal data using mixed models, providing a foundation for understanding covariance structures in such settings. Adapting the factor loading matrix to be time- or location-dependent has the potential to enhance inference on interaction structures in other domains. 
+
+# References 
+
+Argelaguet, R., Arnol, D., Bredikhin, D., Deloro, Y., Velten, B., Marioni, J. C., and Stegle, O. (2020). Mofa+: a statistical framework for comprehensive integration of multi-modal single-cell data. Genome biology , 21:1–17. Argelaguet, R., Velten, B., Arnol, D., Dietrich, S., Zenz, T., Marioni, J. C., Buettner, F., Huber, W., and Stegle, O. (2018a). Multi-Omics Factor Analysis-a framework for unsupervised integration of multi-omics data sets. Molecular Systems Biology , 14:e8124. Argelaguet, R., Velten, B., Arnol, D., Dietrich, S., Zenz, T., Marioni, J. C., Buettner, F., Huber, W., and Stegle, O. (2018b). Multi-omics factor analysis-a framework for unsupervised integration of multi-omics data sets. Mol Syst Biol , 14(6):e8124. Ban, Y., An, L., and Jiang, H. (2015). Investigating Microbial Co-Occurrence Patterns Based on Metagenomic Compositional Data. Bioinformatics , 31:3322–3329. Bhattacharya, A. and Dunson, D. B. (2011). Sparse bayesian infinite factor models. 
+
+Biometrika , pages 291–306. 28 Cai, T., Ma, Z., and Wu, Y. (2015). Optimal estimation and rank detection for sparse spiked covariance matrices. Probability theory and related fields , 161(3):781–815. Canale, A. and Dunson, D. B. (2011). Bayesian kernel mixtures for counts. Journal of the American Statistical Association , 106(496):1528–1539. Cao, Y., Lin, W., and Li, H. (2019). Large Covariance Estimation for Compositional Data via Composition-Adjusted Thresholding. Journal of the American Statistical Association ,114:759–772. Carroll, R. J. and Ruppert, D. (1982). Robust Estimation in Heteroscedastic Linear Models. 
+
+The Annals of Statistics , 10(2):429 – 441. Chiu, T. Y., Leonard, T., and Tsui, K.-W. (1996). The matrix-logarithmic covariance model. Journal of the American Statistical Association , 91(433):198–210. De Vito, R., Bellio, R., Trippa, L., and Parmigiani, G. (2019). Multi-study factor analysis. 
+
+Biometrics , 75:337–346. De Vito, R., Bellio, R., Trippa, L., and Parmigiani, G. (2021). Bayesian multistudy factor analysis for high-throughput biological data. The annals of applied statistics , 15(4):1723– 1741. Fan, J., Liao, Y., and Mincheva, M. (2013). Large covariance estimation by thresholding principal orthogonal complements. Journal of the Royal Statistical Society Series B: Statistical Methodology , 75(4):603–680. Fang, H., Huang, C., Zhao, H., and Deng, M. (2015). Cclasso: correlation inference for compositional data through lasso. Bioinformatics , 31(19):3172–3180. Fieuws, S. and Verbeke, G. (2006). Pairwise fitting of mixed models for the joint modeling of multivariate longitudinal profiles. Biometrics , 62(2):424–431. 29 Fong, P. W., Li, W. K., and An, H.-Z. (2006). A simple multivariate arch model specified by random coefficients. Computational statistics & data analysis , 51(3):1779–1802. Fox, E. B. and Dunson, D. B. (2015). Bayesian nonparametric covariance regression. The Journal of Machine Learning Research , 16(1):2501–2542. Friedman, J. and Alm, E. J. (2012). Inferring correlation networks from genomic survey data. PLOS Computational Biology , 8:1–11. Friedman, J., Hastie, T., and Tibshirani, R. (2008). Sparse inverse covariance estimation with the graphical lasso. Biostatistics , 9(3):432–441. Green, P. J. and Hastie, D. I. (2009). Reversible jump mcmc. Genetics , 155(3):1391–1403. Haario, H., Saksman, E., and Tamminen, J. (2001). An adaptive metropolis algorithm. 
+
+Bernoulli , pages 223–242. Hibberd, A. A., Lyra, A., Ouwehand, A. C., Rolny, P., Lindegren, H., Cedg˚ ard, L., and Wettergren, Y. (2017). Intestinal microbiota is altered in patients with colon cancer and modified by probiotic intervention. BMJ open gastroenterology , 4(1):e000145. Hoff, P. D. and Niu, X. (2012). A Covariance Regression Model. Statistica Sinica , pages 729–753. Hotelling, H. (1992). Relations between two sets of variates. In Breakthroughs in statistics: methodology and distribution , pages 162–190. Springer. Ishwaran, H. and James, L. F. (2001). Gibbs Sampling Methods for Stick-breaking Priors. 
+
+Journal of the American Statistical Association , 96:161–173. Johnstone, I. M. (2001). On the distribution of the largest eigenvalue in principal compo-nents analysis. The Annals of statistics , 29(2):295–327. 30 Kurtz, Z. D., M¨ uller, C. L., Miraldi, E. R., Littman, D. R., Blaser, M. J., and Bonneau, R. A. (2015). Sparse and compositionally robust inference of microbial ecological net-works. PLoS computational biology , 11(5):e1004226. Leonard, T. and Hsu, J. S. J. (1992). Bayesian Inference for a Covariance Matrix. The Annals of Statistics , 20(4):1669 – 1696. Lewandowski, D., Kurowicka, D., and Joe, H. (2009). Generating Random Correlation Matrices Based on Vines and Extended Onion Method. Journal of Multivariate Analysis ,100(9):1989–2001. McNulty, N. P., Wu, M., Erickson, A. R., Pan, C., Erickson, B. K., Martens, E. C., Pudlo, N. A., Muegge, B. D., Henrissat, B., Hettich, R. L., et al. (2013). Effects of diet on resource utilization by a model human gut microbiota containing bacteroides cellulosi-lyticus wh2, a symbiont with an extensive glycobiome. PLoS biology , 11(8):e1001637. Moran, K. R., Turner, E. L., Dunson, D., and Herring, A. H. (2021). Bayesian hierarchical factor regression models to infer cause of death from verbal autopsy data. Journal of the Royal Statistical Society Series C: Applied Statistics , 70(3):532–557. Ni, Y., Stingo, F. C., and Baladandayuthapani, V. (2019). Bayesian graphical regression. 
+
+Journal of the American Statistical Association , 114(525):184–197. Niu, X. and Hoff, P. D. (2019). Joint mean and covariance modeling of multiple health outcome measures. The annals of applied statistics , 13(1):321. Niu, Y., Ni, Y., Pati, D., and Mallick, B. K. (2023). Covariate-assisted bayesian graph learning for heterogeneous data. Journal of the American Statistical Association , pages 1–15. Pati, D., Bhattacharya, A., Pillai, N. S., Dunson, D., et al. (2014). Posterior contraction 31 in sparse bayesian factor models for massive covariance matrices. Annals of Statistics ,42(3):1102–1130. Patnode, M. L., Beller, Z. W., Han, N. D., Cheng, J., Peters, S. L., Terrapon, N., Henrissat, B., Le Gall, S., Saulnier, L., Hayashi, D. K., et al. (2019). Interspecies competition impacts targeted manipulation of human gut bacteria by fiber-derived glycans. Cell ,179(1):59–73. Pearson, K. (1901). Liii. on lines and planes of closest fit to systems of points in space. The London, Edinburgh, and Dublin philosophical magazine and journal of science , 2(11):559– 572. Pourahmadi, M. (1999). Joint mean-covariance models with applications to longitudinal data: Unconstrained parameterisation. Biometrika , 86(3):677–690. Pourahmadi, M. (2011). Covariance Estimation: The GLM and Regularization Perspec-tives. Statistical Science , 26(3):369 – 387. Rummel, R. J. (1988). Applied factor analysis . Northwestern University Press. Rutemiller, H. C. and Bowers, D. A. (1968). Estimation in a heteroscedastic regression model. Journal of the American Statistical Association , 63(322):552–557. Sethuraman, J. (1994). A Constructive Definition of the Dirichlet Prior. Statistica Sinica ,4:639–650. Shuler, K., Verbanic, S., Chen, I. A., and Lee, J. (2021). A bayesian nonparametric analysis for zero-inflated multivariate count data with application to microbiome study. Journal of the Royal Statistical Society: Series C (Applied Statistics) .Smyth, G. K. (1989). Generalized linear models with varying dispersion. Journal of the Royal Statistical Society: Series B (Methodological) , 51(1):47–60. 32 Wolf, A. R., Wesener, D. A., Cheng, J., Houston-Ludlam, A. N., Beller, Z. W., Hibberd, M. C., Giannone, R. J., Peters, S. L., Hettich, R. L., Leyn, S. A., et al. (2019). Biore-mediation of a common product of food processing by a human gut bacterium. Cell host & microbe , 26(4):463–477. Xie, F., Xu, Y., Priebe, C. E., and Cape, J. (2018). Bayesian estimation of sparse spiked covariance matrices in high dimensions. arXiv preprint arXiv:1808.07433 .Zhang, S., Shen, Y., Chen, I. A., and Lee, J. (2025). Sparse bayesian group factor model for feature interactions in multiple count tables data. Journal of the American Statistical Association , 120(550):723–736. Zhang, W. and Leng, C. (2012). A moving average cholesky factor model in covariance modelling for longitudinal data. Biometrika , 99(1):141–150. 33

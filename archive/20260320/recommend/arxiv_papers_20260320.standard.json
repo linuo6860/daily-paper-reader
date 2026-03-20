@@ -1,0 +1,858 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-20T19:27:07.422670+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 36,
+    "deep_cap": 6,
+    "deep_selected": 10,
+    "quick_candidates": 43,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2603.18089v1",
+      "title": "CytoSyn: a Foundation Diffusion Model for Histopathology -- Tech Report",
+      "abstract": "Computational pathology has made significant progress in recent years, fueling advances in both fundamental disease understanding and clinically ready tools. This evolution is driven by the availability of large amounts of digitized slides and specialized deep learning methods and models. Multiple self-supervised foundation feature extractors have been developed, enabling downstream predictive applications from cell segmentation to tumor sub-typing and survival analysis. In contrast, generative foundation models designed specifically for histopathology remain scarce. Such models could address tasks that are beyond the capabilities of feature extractors, such as virtual staining. In this paper, we introduce CytoSyn, a state-of-the-art foundation latent diffusion model that enables the guided generation of highly realistic and diverse histopathology H&E-stained images, as shown in an extensive benchmark. We explored methodological improvements, training set scaling, sampling strategies and slide-level overfitting, culminating in the improved CytoSyn-v2, and compared our work to PixCell, a state-of-the-art model, in an in-depth manner. This comparison highlighted the strong sensitivity of both diffusion models and performance metrics to preprocessing-specific details such as JPEG compression. Our model has been trained on a dataset obtained from more than 10,000 TCGA diagnostic whole-slide images of 32 different cancer types. Despite being trained only on oncology slides, it maintains state-of-the-art performance generating inflammatory bowel disease images. To support the research community, we publicly release CytoSyn's weights, its training and validation datasets, and a sample of synthetic images in this repository: https://huggingface.co/Owkin-Bioptimus/CytoSyn.",
+      "authors": [
+        "Thomas Duboudin",
+        "Xavier Fontaine",
+        "Etienne Andrier",
+        "Lionel Guillou",
+        "Alexandre Filiot",
+        "Thalyssa Baiocco-Rodrigues",
+        "Antoine Olivier",
+        "Alberto Romagnoni",
+        "John Klein",
+        "Jean-Baptiste Schiratti"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-03-18T08:58:07+00:00",
+      "link": "https://arxiv.org/pdf/2603.18089v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Foundation model for histopathology and survival analysis",
+      "llm_evidence_cn": "用于组织病理学和生存分析的基础模型",
+      "llm_evidence": "用于组织病理学和生存分析的基础模型",
+      "canonical_evidence": "用于组织病理学和生存分析的基础模型",
+      "llm_tldr_en": "A generative foundation model for histopathology supporting tasks like tumor sub-typing and survival analysis.",
+      "llm_tldr_cn": "一种用于组织病理学的生成式基础模型，支持肿瘤分型和生存分析等任务。",
+      "llm_tldr": "一种用于组织病理学的生成式基础模型，支持肿瘤分型和生存分析等任务。",
+      "llm_tags": [
+        "query:bio-ca:composite"
+      ],
+      "matched_query_tag": "query:bio-ca:composite",
+      "matched_query_text": "Papers central to 追踪癌症生物信息学新方法，重点关注多组学整合、生物标志物发现、预后预测及机器学习分析。, especially work that connects or combines: biomarker; survival analysis; machine learning; multi-omics; bioinformatics; cancer; Deep learning methods for cancer data analysis; Machine learning studies for prognosis prediction and biomarker discovery in cancer; Multi omics integration approaches in cancer analysis; Novel bioinformatics methods and models for cancer research.",
+      "matched_requirement_id": "req-composite-bio-ca",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.13497v1",
+      "title": "Synthetic Melanoma Image Generation and Evaluation Using Generative Adversarial Networks",
+      "abstract": "Melanoma is the most lethal form of skin cancer, and early detection is critical for improving patient outcomes. Although dermoscopy combined with deep learning has advanced automated skin-lesion analysis, progress is hindered by limited access to large, well-annotated datasets and by severe class imbalance, where melanoma images are substantially underrepresented. To address these challenges, we present the first systematic benchmarking study comparing four GAN architectures-DCGAN, StyleGAN2, and two StyleGAN3 variants (T/R)-for high-resolution melanoma-specific synthesis. We train and optimize all models on two expert-annotated benchmarks (ISIC 2018 and ISIC 2020) under unified preprocessing and hyperparameter exploration, with particular attention to R1 regularization tuning. Image quality is assessed through a multi-faceted protocol combining distribution-level metrics (FID), sample-level representativeness (FMD), qualitative dermoscopic inspection, downstream classification with a frozen EfficientNet-based melanoma detector, and independent evaluation by two board-certified dermatologists. StyleGAN2 achieves the best balance of quantitative performance and perceptual quality, attaining FID scores of 24.8 (ISIC 2018) and 7.96 (ISIC 2020) at gamma=0.8. The frozen classifier recognizes 83% of StyleGAN2-generated images as melanoma, while dermatologists distinguish synthetic from real images at only 66.5% accuracy (chance = 50%), with low inter-rater agreement (kappa = 0.17). In a controlled augmentation experiment, adding synthetic melanoma images to address class imbalance improved melanoma detection AUC from 0.925 to 0.945 on a held-out real-image test set. These findings demonstrate that StyleGAN2-generated melanoma images preserve diagnostically relevant features and can provide a measurable benefit for mitigating class imbalance in melanoma-focused machine learning pipelines.",
+      "authors": [
+        "Pei-Yu Lin",
+        "Yidan Shen",
+        "Neville Mathew",
+        "Renjie Hu",
+        "Siyu Huang",
+        "Courtney M. Queen",
+        "Cameron E. West",
+        "Ana Ciurea",
+        "George Zouridakis"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-03-13T18:21:55+00:00",
+      "link": "https://arxiv.org/pdf/2603.13497v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "deep learning for melanoma skin cancer image analysis",
+      "llm_evidence_cn": "用于黑色素瘤皮肤癌图像分析的深度学习",
+      "llm_evidence": "用于黑色素瘤皮肤癌图像分析的深度学习",
+      "canonical_evidence": "用于黑色素瘤皮肤癌图像分析的深度学习",
+      "llm_tldr_en": "Benchmarks GAN architectures for generating high-resolution synthetic melanoma images to improve detection.",
+      "llm_tldr_cn": "基准测试了用于生成高分辨率合成黑色素瘤图像的GAN架构，以改善癌症检测。",
+      "llm_tldr": "基准测试了用于生成高分辨率合成黑色素瘤图像的GAN架构，以改善癌症检测。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.14418v1",
+      "title": "Deep EM with Hierarchical Latent Label Modelling for Multi-Site Prostate Lesion Segmentation",
+      "abstract": "Label variability is a major challenge for prostate lesion segmentation. In multi-site datasets, annotations often reflect centre-specific contouring protocols, causing segmentation networks to overfit to local styles and generalise poorly to unseen sites in inference. We treat each observed annotation as a noisy observation of an underlying latent 'clean' lesion mask, and propose a hierarchical expectation-maximisation (HierEM) framework that alternates between: (1) inferring a voxel-wise posterior distribution over the latent mask, and (2) training a CNN using this posterior as a soft target and estimate site-specific sensitivity and specificity under a hierarchical prior. This hierarchical prior decomposes label-quality into a global mean with site- and case-level deviations, reducing site-specific bias by penalising the likelihood term contributed only by site deviations. Experiments on three cohorts demonstrate that the proposed hierarchical EM framework enhances cross-site generalisation compared to state-of-the-art methods. For pooled-dataset evaluation, the per-site mean DSC ranges from 29.50% to 39.69%; for leave-one-site-out generalisation, it ranges from 27.91% to 32.67%, yielding statistically significant improvements over comparison methods (p<0.039). The method also produces interpretable per-site latent label-quality estimates (sensitivity alpha ranges from 31.5% to 47.3% at specificity beta approximates 0.99), supporting post-hoc analyses of cross-site annotation variability. These results indicate that explicitly modelling site-dependent annotation can improve cross-site generalisation.",
+      "authors": [
+        "Wen Yan",
+        "Yipei Wang",
+        "Shiqi Huang",
+        "Natasha Thorley",
+        "Mark Emberton",
+        "Vasilis Stavrinides",
+        "Yipeng Hu",
+        "Dean Barratt"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-15T15:03:20+00:00",
+      "link": "https://arxiv.org/pdf/2603.14418v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Deep learning for prostate lesion segmentation in cancer data",
+      "llm_evidence_cn": "深度学习用于癌症数据中的前列腺病变分割",
+      "llm_evidence": "深度学习用于癌症数据中的前列腺病变分割",
+      "canonical_evidence": "深度学习用于癌症数据中的前列腺病变分割",
+      "llm_tldr_en": "Proposes a hierarchical EM framework for robust multi-site prostate lesion segmentation using CNNs.",
+      "llm_tldr_cn": "提出了一种分层 EM 框架，利用 CNN 实现鲁棒的多中心前列腺病变分割。",
+      "llm_tldr": "提出了一种分层 EM 框架，利用 CNN 实现鲁棒的多中心前列腺病变分割。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.16249v2",
+      "title": "Synergizing Deep Learning and Biological Heuristics for Extreme Long-Tail White Blood Cell Classification",
+      "abstract": "Automated white blood cell (WBC) classification is essential for leukemia screening but remains challenged by extreme class imbalance, long-tail distributions, and domain shift, leading deep models to overfit dominant classes and fail on rare subtypes. We propose a hybrid framework for rare-class generalization that integrates a generative Pix2Pix-based restoration module for artifact removal, a Swin Transformer ensemble with MedSigLIP contrastive embeddings for robust representation learning, and a biologically-inspired refinement step using geometric spikiness and Mahalanobis-based morphological constraints to recover out-of-distribution predictions. Evaluated on the WBCBench 2026 challenge, our method achieves a Macro-F1 of 0.77139 on the private leaderboard, demonstrating strong performance under severe imbalance and highlighting the value of incorporating biological priors into deep learning for hematological image analysis.",
+      "authors": [
+        "Duc T. Nguyen",
+        "Hoang-Long Nguyen",
+        "Huy-Hieu Pham"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-17T08:32:31+00:00",
+      "link": "https://arxiv.org/pdf/2603.16249v2",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Deep learning and biological heuristics for leukemia screening and cell classification",
+      "llm_evidence_cn": "用于白血病筛查和细胞分类的深度学习与生物启发式方法",
+      "llm_evidence": "用于白血病筛查和细胞分类的深度学习与生物启发式方法",
+      "canonical_evidence": "用于白血病筛查和细胞分类的深度学习与生物启发式方法",
+      "llm_tldr_en": "Proposes a hybrid deep learning framework for rare white blood cell classification in leukemia.",
+      "llm_tldr_cn": "提出了一种用于白血病罕见白细胞分类的混合深度学习框架。",
+      "llm_tldr": "提出了一种用于白血病罕见白细胞分类的混合深度学习框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.16249v3",
+      "title": "Synergizing Deep Learning and Biological Heuristics for Extreme Long-Tail White Blood Cell Classification",
+      "abstract": "Automated white blood cell (WBC) classification is essential for leukemia screening yet remains challenging under extreme class imbalance and domain shift. These limitations often cause deep models to overfit dominant classes while failing to generalize to rare pathological subtypes. To address this issue, we propose a three-stage hybrid framework. First, a self-supervised Pix2Pix restoration module mitigates synthetic noise and restores high frequency cytoplasmic details. Second, we integrate a Swin Transformer ensemble with MedSigLIP contrastive embeddings to enhance rare-class semantic representation. Finally, we introduce a biologically inspired refinement strategy combining geometric spikiness analysis and Mahalanobis-based morphological constraints to explicitly rescue suppressed minority predictions. Our hybrid framework achieves a Macro-F1 score of 0.77139 on the private leaderboard, demonstrating strong robustness under extreme long-tail distributions. The code is available at https://github.com/trongduc-nguyen/WBCBench2026.",
+      "authors": [
+        "Duc T. Nguyen",
+        "Hoang-Long Nguyen",
+        "Huy-Hieu Pham"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-17T08:32:31+00:00",
+      "link": "https://arxiv.org/pdf/2603.16249v3",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Deep learning for leukemia screening and white blood cell classification",
+      "llm_evidence_cn": "深度学习用于白血病筛查和白细胞分类",
+      "llm_evidence": "深度学习用于白血病筛查和白细胞分类",
+      "canonical_evidence": "深度学习用于白血病筛查和白细胞分类",
+      "llm_tldr_en": "A hybrid deep learning framework for white blood cell classification to aid in leukemia screening.",
+      "llm_tldr_cn": "一种用于白细胞分类的混合深度学习框架，旨在辅助白血病筛查。",
+      "llm_tldr": "一种用于白细胞分类的混合深度学习框架，旨在辅助白血病筛查。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.17179v1",
+      "title": "Ablation Study of a Fairness Auditing Agentic System for Bias Mitigation in Early-Onset Colorectal Cancer Detection",
+      "abstract": "Artificial intelligence (AI) is increasingly used in clinical settings, yet limited oversight and domain expertise can allow algorithmic bias and safety risks to persist. This study evaluates whether an agentic AI system can support auditing biomedical machine learning models for fairness in early-onset colorectal cancer (EO-CRC), a condition with documented demographic disparities. We implemented a two-agent architecture consisting of a Domain Expert Agent that synthesizes literature on EO-CRC disparities and a Fairness Consultant Agent that recommends sensitive attributes and fairness metrics for model evaluation. An ablation study compared three Ollama large language models (8B, 20B, and 120B parameters) across three configurations: pretrained LLM-only, Agent without Retrieval-Augmented Generation (RAG), and Agent with RAG. Across models, the Agent with RAG achieved the highest semantic similarity to expert-derived reference statements, particularly for disparity identification, suggesting agentic systems with retrieval may help scale fairness auditing in clinical AI.",
+      "authors": [
+        "Amalia Ionescu",
+        "Jose Guadalupe Hernandez",
+        "Jui-Hsuan Chang",
+        "Emily F. Wong",
+        "Paul Wang",
+        "Jason H. Moore",
+        "Tiffani J. Bright"
+      ],
+      "primary_category": "cs.MA",
+      "categories": [
+        "cs.MA"
+      ],
+      "published": "2026-03-17T22:13:22+00:00",
+      "link": "https://arxiv.org/pdf/2603.17179v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "AI system for fairness auditing in colorectal cancer detection",
+      "llm_evidence_cn": "用于结直肠癌检测公平性审计的 AI 系统",
+      "llm_evidence": "用于结直肠癌检测公平性审计的 AI 系统",
+      "canonical_evidence": "用于结直肠癌检测公平性审计的 AI 系统",
+      "llm_tldr_en": "Evaluates an agentic AI system for auditing fairness in machine learning models for colorectal cancer detection.",
+      "llm_tldr_cn": "评估了一种用于审计结直肠癌检测机器学习模型公平性的智能体 AI 系统。",
+      "llm_tldr": "评估了一种用于审计结直肠癌检测机器学习模型公平性的智能体 AI 系统。",
+      "llm_tags": [
+        "query:bio-ca:composite"
+      ],
+      "matched_query_tag": "query:bio-ca:composite",
+      "matched_query_text": "Papers central to 追踪癌症生物信息学新方法，重点关注多组学整合、生物标志物发现、预后预测及机器学习分析。, especially work that connects or combines: biomarker; survival analysis; machine learning; multi-omics; bioinformatics; cancer; Deep learning methods for cancer data analysis; Machine learning studies for prognosis prediction and biomarker discovery in cancer; Multi omics integration approaches in cancer analysis; Novel bioinformatics methods and models for cancer research.",
+      "matched_requirement_id": "req-composite-bio-ca",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.18249v1",
+      "title": "RAFT-UP: Robust Alignment for Spatial Transcriptomics with Explicit Control of Spatial Distortion",
+      "abstract": "Spatial transcriptomics (ST) profiles gene expression across a tissue section while preserving the spatial coordinates. Because current ST technologies typically profile two-dimensional tissue slices, integrating and aligning slices from different regions of the same three-dimensional tissue or from samples under different conditions enables analyses that reveal 3D organization and condition-associated spatial patterns. Two major challenges remain. First, interpretable and flexible control over spatial distortion is needed because rigid transformations can be overly restrictive, whereas highly deformable mappings may arbitrarily distort spatial proximity. Second, biologically plausible matching is also needed, especially when the slices overlap partially. Here, we introduce RAFT-UP, a tool for robust ST alignment that provides explicit control over spatial distance preservation through a fused supervised Gromov-Wasserstein (FsGW) optimal transport framework. FsGW combines expression and spatial information, incorporates spot-wise constraints to discourage biologically implausible matches, and enforces a pairwise distance-consistency constraint that prevents mapping two pairs of spots when their spatial distances differ beyond a specified tolerance. We demonstrate that RAFT-UP accurately aligns slices from different regions of the same tissue and slices from different samples. Benchmarking shows that RAFT-UP improves spatial distance preservation while achieving spot label matching accuracy comparable to state-of-the-art methods. Finally, we demonstrate RAFT-UP on two spatially constrained downstream applications, including spatiotemporal mapping of developing mouse midbrain and comparative cross-slice analysis of cell-cell communication. RAFT-UP is available as open-source software.",
+      "authors": [
+        "Yaqi Wu",
+        "Jingfeng Wang",
+        "Xin Maizie Zhou",
+        "Yanxiang Zhao",
+        "Zixuan Cang"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM",
+        "math.OC"
+      ],
+      "published": "2026-03-18T20:15:41+00:00",
+      "link": "https://arxiv.org/pdf/2603.18249v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Novel bioinformatics method for spatial transcriptomics alignment",
+      "llm_evidence_cn": "空间转录组比对的新生物信息学方法",
+      "llm_evidence": "空间转录组比对的新生物信息学方法",
+      "canonical_evidence": "空间转录组比对的新生物信息学方法",
+      "llm_tldr_en": "A robust alignment method for spatial transcriptomics to reveal 3D tissue organization.",
+      "llm_tldr_cn": "一种鲁棒的空间转录组比对方法，用于揭示组织的三维结构。",
+      "llm_tldr": "一种鲁棒的空间转录组比对方法，用于揭示组织的三维结构。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Novel bioinformatics methods and models for cancer research",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.18460v1",
+      "title": "Interpretable Prostate Cancer Detection using a Small Cohort of MRI Images",
+      "abstract": "Prostate cancer is a leading cause of mortality in men, yet interpretation of T2-weighted prostate MRI remains challenging due to subtle and heterogeneous lesions. We developed an interpretable framework for automatic cancer detection using a small dataset of 162 T2-weighted images (102 cancer, 60 normal), addressing data scarcity through transfer learning and augmentation. We performed a comprehensive comparison of Vision Transformers (ViT, Swin), CNNs (ResNet18), and classical methods (Logistic Regression, SVM, HOG+SVM). Transfer-learned ResNet18 achieved the best performance (90.9% accuracy, 95.2% sensitivity, AUC 0.905) with only 11M parameters, while Vision Transformers showed lower performance despite substantially higher complexity. Notably, HOG+SVM achieved comparable accuracy (AUC 0.917), highlighting the effectiveness of handcrafted features in small datasets. Unlike state-of-the-art approaches relying on biparametric MRI (T2+DWI) and large cohorts, our method achieves competitive performance using only T2-weighted images, reducing acquisition complexity and computational cost. In a reader study of 22 cases, five radiologists achieved a mean sensitivity of 67.5% (Fleiss Kappa = 0.524), compared to 95.2% for the AI model, suggesting potential for AI-assisted screening to reduce missed cancers and improve consistency. Code and data are publicly available.",
+      "authors": [
+        "Vahid Monfared",
+        "Mohammad Hadi Gharib",
+        "Ali Sabri",
+        "Maryam Shahali",
+        "Farid Rashidi",
+        "Amit Mehta",
+        "Reza Rawassizadeh"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-19T03:40:07+00:00",
+      "link": "https://arxiv.org/pdf/2603.18460v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Deep learning and Vision Transformers for prostate cancer detection in MRI",
+      "llm_evidence_cn": "用于MRI中前列腺癌检测的深度学习和视觉Transformer",
+      "llm_evidence": "用于MRI中前列腺癌检测的深度学习和视觉Transformer",
+      "canonical_evidence": "用于MRI中前列腺癌检测的深度学习和视觉Transformer",
+      "llm_tldr_en": "Compares CNNs and Transformers for interpretable prostate cancer detection in small MRI cohorts.",
+      "llm_tldr_cn": "比较了CNN和Transformer在小型MRI队列中进行可解释前列腺癌检测的效果。",
+      "llm_tldr": "比较了CNN和Transformer在小型MRI队列中进行可解释前列腺癌检测的效果。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.18461v1",
+      "title": "Cell-Type Prototype-Informed Neural Network for Gene Expression Estimation from Pathology Images",
+      "abstract": "Estimating slide- and patch-level gene expression profiles from pathology images enables rapid and low-cost molecular analysis with broad clinical impact. Despite strong results, existing approaches treat gene expression as a mere slide- or spot-level signal and do not incorporate the fact that the measured expression arises from the aggregation of underlying cell-level expression. To explicitly introduce this missing cell-resolved guidance, we propose a Cell-type Prototype-informed Neural Network (CPNN) that leverages publicly available single-cell RNA-sequencing datasets. Since single-cell measurements are noisy and not paired with histology images, we first estimate cell-type prototypes-mean expression profiles that reflect stable gene-gene co-variation patterns.CPNN then learns cell-type compositional weights directly from images and models the relationship between prototypes and observed bulk or spatial expression, providing a biologically grounded and structurally regularized prediction framework. We evaluate CPNN on three slide-level datasets and three patch-level spatial transcriptomics datasets. Across all settings, CPNN achieves the highest performance in terms of Spearman correlation. Moreover, by visualizing the inferred compositional weights, our framework provides interpretable insights into which cell types drive the predicted expression. Code is publicly available at https://github.com/naivete5656/CPNN.",
+      "authors": [
+        "Kazuya Nishimura",
+        "Ryoma Bise",
+        "Shinnosuke Matsuo",
+        "Haruka Hirose",
+        "Yasuhiro Kojima"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-19T03:42:11+00:00",
+      "link": "https://arxiv.org/pdf/2603.18461v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Integration of pathology images and single-cell RNA-seq for gene expression",
+      "llm_evidence_cn": "整合病理图像和单细胞测序数据进行基因表达预测",
+      "llm_evidence": "整合病理图像和单细胞测序数据进行基因表达预测",
+      "canonical_evidence": "整合病理图像和单细胞测序数据进行基因表达预测",
+      "llm_tldr_en": "Estimates gene expression from pathology images by integrating single-cell RNA-sequencing prototypes.",
+      "llm_tldr_cn": "通过整合单细胞测序原型，从病理图像中估算基因表达谱。",
+      "llm_tldr": "通过整合单细胞测序原型，从病理图像中估算基因表达谱。",
+      "llm_tags": [
+        "query:bio-ca:composite"
+      ],
+      "matched_query_tag": "query:bio-ca:composite",
+      "matched_query_text": "Papers central to 追踪癌症生物信息学新方法，重点关注多组学整合、生物标志物发现、预后预测及机器学习分析。, especially work that connects or combines: biomarker; survival analysis; machine learning; multi-omics; bioinformatics; cancer; Deep learning methods for cancer data analysis; Machine learning studies for prognosis prediction and biomarker discovery in cancer; Multi omics integration approaches in cancer analysis; Novel bioinformatics methods and models for cancer research.",
+      "matched_requirement_id": "req-composite-bio-ca",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.18660v1",
+      "title": "Multimodal Model for Computational Pathology:Representation Learning and Image Compression",
+      "abstract": "Whole slide imaging (WSI) has transformed digital pathology by enabling computational analysis of gigapixel histopathology images. Recent foundation model advances have accelerated progress in computational pathology, facilitating joint reasoning across pathology images, clinical reports, and structured data. Despite this progress, challenges remain: the extreme resolution of WSIs creates computational hurdles for visual learning; limited expert annotations constrain supervised approaches; integrating multimodal information while preserving biological interpretability remains difficult; and the opacity of modeling ultra-long visual sequences hinders clinical transparency. This review comprehensively surveys recent advances in multimodal computational pathology. We systematically analyze four research directions: (1) self-supervised representation learning and structure-aware token compression for WSIs; (2) multimodal data generation and augmentation; (3) parameter-efficient adaptation and reasoning-enhanced few-shot learning; and (4) multi-agent collaborative reasoning for trustworthy diagnosis. We specifically examine how token compression enables cross-scale modeling and how multi-agent mechanisms simulate a pathologist's \"Chain of Thought\" across magnifications to achieve uncertainty-aware evidence fusion. Finally, we discuss open challenges and argue that future progress depends on unified multimodal frameworks integrating high-resolution visual data with clinical and biomedical knowledge to support interpretable and safe AI-assisted diagnosis.",
+      "authors": [
+        "Peihang Wu",
+        "Zehong Chen",
+        "Lijian Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-19T09:24:44+00:00",
+      "link": "https://arxiv.org/pdf/2603.18660v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Multimodal representation learning and foundation models for computational pathology",
+      "llm_evidence_cn": "计算病理学的多模态表示学习和基础模型",
+      "llm_evidence": "计算病理学的多模态表示学习和基础模型",
+      "canonical_evidence": "计算病理学的多模态表示学习和基础模型",
+      "llm_tldr_en": "Surveys deep learning advances in multimodal computational pathology for cancer analysis.",
+      "llm_tldr_cn": "综述了用于癌症分析的多模态计算病理学深度学习进展。",
+      "llm_tldr": "综述了用于癌症分析的多模态计算病理学深度学习进展。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.04288v1",
+      "title": "A multi-center analysis of deep learning methods for video polyp detection and segmentation",
+      "abstract": "Colonic polyps are well-recognized precursors to colorectal cancer (CRC), typically detected during colonoscopy. However, the variability in appearance, location, and size of these polyps complicates their detection and removal, leading to challenges in effective surveillance, intervention, and subsequently CRC prevention. The processes of colonoscopy surveillance and polyp removal are highly reliant on the expertise of gastroenterologists and occur within the complexities of the colonic structure. As a result, there is a high rate of missed detections and incomplete removal of colonic polyps, which can adversely impact patient outcomes. Recently, automated methods that use machine learning have been developed to enhance polyps detection and segmentation, thus helping clinical processes and reducing missed rates. These advancements highlight the potential for improving diagnostic accuracy in real-time applications, which ultimately facilitates more effective patient management. Furthermore, integrating sequence data and temporal information could significantly enhance the precision of these methods by capturing the dynamic nature of polyp growth and the changes that occur over time. To rigorously investigate these challenges, data scientists and experts gastroenterologists collaborated to compile a comprehensive dataset that spans multiple centers and diverse populations. This initiative aims to underscore the critical importance of incorporating sequence data and temporal information in the development of robust automated detection and segmentation methods. This study evaluates the applicability of deep learning techniques developed in real-time clinical colonoscopy tasks using sequence data, highlighting the critical role of temporal relationships between frames in improving diagnostic precision.",
+      "authors": [
+        "Noha Ghatwary",
+        "Pedro Chavarias Solano",
+        "Mohamed Ramzy Ibrahim",
+        "Adrian Krenzer",
+        "Frank Puppe",
+        "Stefano Realdon",
+        "Renato Cannizzaro",
+        "Jiacheng Wang",
+        "Liansheng Wang",
+        "Thuy Nuong Tran",
+        "Lena Maier-Hein",
+        "Amine Yamlahi",
+        "Patrick Godau",
+        "Quan He",
+        "Qiming Wan",
+        "Mariia Kokshaikyna",
+        "Mariia Dobko",
+        "Haili Ye",
+        "Heng Li",
+        "Ragu B",
+        "Antony Raj",
+        "Hanaa Nagdy",
+        "Osama E Salem",
+        "James E. East",
+        "Dominique Lamarque",
+        "Thomas de Lange",
+        "Sharib Ali"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-04T17:05:14+00:00",
+      "link": "https://arxiv.org/pdf/2603.04288v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Deep learning for colorectal cancer precursor detection",
+      "llm_evidence_cn": "用于结直肠癌前兆检测的深度学习",
+      "llm_evidence": "用于结直肠癌前兆检测的深度学习",
+      "canonical_evidence": "用于结直肠癌前兆检测的深度学习",
+      "llm_tldr_en": "Evaluates deep learning methods for detecting and segmenting polyps to prevent colorectal cancer.",
+      "llm_tldr_cn": "评估用于检测和分割息肉的深度学习方法，以预防结直肠癌。",
+      "llm_tldr": "评估用于检测和分割息肉的深度学习方法，以预防结直肠癌。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.04288v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.12352v1",
+      "title": "Bayesian Covariate-Varying Interaction Analysis for Multivariate Count Data: Application to Microbiome Studies",
+      "abstract": "Understanding covariate-varying interdependencies among features is of great interest in various applications. Motivated by microbiome studies where microbial abundances and interactions vary with environmental factors, we develop a Bayesian covariate-varying factor model. This model flexibly estimates heteroscedasticity in the covariance matrix as a function of covariates. Specifically, our approach employs covariance regression through linear regression on a lower-dimensional factor loading matrix. This formulation, combined with joint sparsity induced by the Dirichlet--Horseshoe prior for the factor loadings, provides robust estimation of covariate-varying covariance in high-dimensional settings. The model simultaneously incorporates a regression structure for the mean abundance and jointly addresses the covariate-varying mean and covariance structure. Furthermore, the model tackles key statistical challenges such as discreteness, over-dispersion, compositionality, and high dimensionality, common in microbiome data analysis, using a flexible nonparametric Bayesian framework. We thoroughly investigate the properties of the model and conduct extensive simulation studies to examine its performance. Real microbiome data examples are provided for illustration.",
+      "authors": [
+        "Shuangjie Zhang",
+        "Michael L. Patnode",
+        "Juhee Lee"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME"
+      ],
+      "published": "2026-03-12T18:17:47+00:00",
+      "link": "https://arxiv.org/pdf/2603.12352v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "bioinformatics method for microbiome interaction analysis",
+      "llm_evidence_cn": "用于微生物组相互作用分析的生物信息学方法",
+      "llm_evidence": "用于微生物组相互作用分析的生物信息学方法",
+      "canonical_evidence": "用于微生物组相互作用分析的生物信息学方法",
+      "llm_tldr_en": "Develops a Bayesian model to estimate covariate-varying interactions in high-dimensional microbiome data.",
+      "llm_tldr_cn": "开发了一种贝叶斯模型，用于估计高维微生物组数据中随协变量变化的相互作用。",
+      "llm_tldr": "开发了一种贝叶斯模型，用于估计高维微生物组数据中随协变量变化的相互作用。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "bioinformatics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.14666v1",
+      "title": "EviATTA: Evidential Active Test-Time Adaptation for Medical Segment Anything Models",
+      "abstract": "Deploying foundational medical Segment Anything Models (SAMs) via test-time adaptation (TTA) is challenging under large distribution shifts, where test-time supervision is often unreliable. While active test-time adaptation (ATTA) introduces limited expert feedback to improve reliability, existing ATTA methods still suffer from unreliable uncertainty estimation and inefficient utilization of sparse annotations. To address these issues, we propose Evidential Active Test-Time Adaptation (EviATTA), which is, to our knowledge, the first ATTA framework tailored for medical SAMs. Specifically, we adopt the Dirichlet-based Evidential Modeling to decompose overall predictive uncertainty into distribution uncertainty and data uncertainty. Building on this decomposition, we design a Hierarchical Evidential Sampling strategy, where image-wise distribution uncertainty is used to select informative shifted samples, while distance-aware data uncertainty guides sparse pixel annotations to resolve data ambiguities. We further introduce Dual Consistency Regularization, which enforces progressive prompt consistency on sparsely labeled samples to better exploit sparse supervision and applies variational feature consistency on unlabeled samples to stabilize adaptation. Extensive experiments on six medical image segmentation datasets demonstrate that EviATTA consistently improves adaptation reliability with minimal expert feedback under both batch-wise and instance-wise test-time adaptation settings.",
+      "authors": [
+        "Jiayi Chen",
+        "Yasmeen George",
+        "Winston Chong",
+        "Jianfei Cai"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-15T23:46:31+00:00",
+      "link": "https://arxiv.org/pdf/2603.14666v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Active test-time adaptation for medical image segmentation",
+      "llm_evidence_cn": "医学图像分割的主动测试时自适应方法",
+      "llm_evidence": "医学图像分割的主动测试时自适应方法",
+      "canonical_evidence": "医学图像分割的主动测试时自适应方法",
+      "llm_tldr_en": "Introduces EviATTA for medical SAMs to handle distribution shifts in medical image segmentation.",
+      "llm_tldr_cn": "为医学SAM模型引入EviATTA框架，以处理医学图像分割中的分布偏移问题。",
+      "llm_tldr": "为医学SAM模型引入EviATTA框架，以处理医学图像分割中的分布偏移问题。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Novel bioinformatics methods and models for cancer research",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.04811v1",
+      "title": "Meta-D: Metadata-Aware Architectures for Brain Tumor Analysis and Missing-Modality Segmentation",
+      "abstract": "We present Meta-D, an architecture that explicitly leverages categorical scanner metadata such as MRI sequence and plane orientation to guide feature extraction for brain tumor analysis. We aim to improve the performance of medical image deep learning pipelines by integrating explicit metadata to stabilize feature representations. We first evaluate this in 2D tumor detection, where injecting sequence (e.g., T1, T2) and plane (e.g., axial) metadata dynamically modulates convolutional features, yielding an absolute increase of up to 2.62% in F1-score over image-only baselines. Because metadata grounds feature extraction when data are available, we hypothesize it can serve as a robust anchor when data are missing. We apply this to 3D missing-modality tumor segmentation. Our Transformer Maximizer utilizes metadata-based cross-attention to isolate and route available modalities, ensuring the network focuses on valid slices. This targeted attention improves brain tumor segmentation Dice scores by up to 5.12% under extreme modality scarcity while reducing model parameters by 24.1%.",
+      "authors": [
+        "SangHyuk Kim",
+        "Daniel Haehn",
+        "Sumientra Rampersad"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-05T04:54:49+00:00",
+      "link": "https://arxiv.org/pdf/2603.04811v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Deep learning architectures for brain tumor analysis",
+      "llm_evidence_cn": "用于脑肿瘤分析的深度学习架构",
+      "llm_evidence": "用于脑肿瘤分析的深度学习架构",
+      "canonical_evidence": "用于脑肿瘤分析的深度学习架构",
+      "llm_tldr_en": "Leverages scanner metadata to guide feature extraction and improve deep learning for brain tumor analysis.",
+      "llm_tldr_cn": "利用扫描仪元数据引导特征提取，改进脑肿瘤分析的深度学习流水线。",
+      "llm_tldr": "利用扫描仪元数据引导特征提取，改进脑肿瘤分析的深度学习流水线。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.04811v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.13666v1",
+      "title": "Unsupervised Adaptation from FDG to PSMA PET/CT for 3D Lesion Detection under Label Shift",
+      "abstract": "In this work, we propose an unsupervised domain adaptation (UDA) framework for 3D volumetric lesion detection that adapts a detector trained on labeled FDG PET/CT to unlabeled PSMA PET/CT. Beyond covariate shift, cross tracer adaptation also exhibits label shift in both lesion size composition and the number of lesions per subject. We introduce self-training with two mechanisms that explicitly model and compensate for this label shift. First, we adaptively adjust the detection anchor shapes by re-estimating target domain box scales from selected pseudo labels and updating anchors with an exponential moving average. This increases positive anchor coverage for small PSMA lesions and stabilizes box regression. Second, instead of a fixed confidence threshold for pseudo-label selection, we allocate size bin-wise quotas according to the estimated target domain histogram over lesion volumes. The self-training alternates between supervised learning with prior-guided pseudo labeling on PSMA and supervised learning on labeled FDG. On AutoPET 2024, adapting from 501 labeled FDG studies to 369 $^{18}$F-PSMA studies, the proposed method improves both AP and FROC over the source-only baseline and conventional self-training without label-shift mitigation, indicating that modeling target lesion prevalence and size composition is an effective path to robust cross-tracer detection.",
+      "authors": [
+        "Xiaofeng Liu",
+        "Menghua Xia",
+        "Yanis Chemli",
+        "Georges El Fakhri",
+        "Chi Liu",
+        "Jinsong Ouyang"
+      ],
+      "primary_category": "eess.IV",
+      "categories": [
+        "eess.IV",
+        "cs.AI",
+        "cs.CV",
+        "physics.med-ph"
+      ],
+      "published": "2026-03-14T00:25:29+00:00",
+      "link": "https://arxiv.org/pdf/2603.13666v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "3D lesion detection in PET/CT for cancer",
+      "llm_evidence_cn": "癌症PET/CT中的3D病灶检测",
+      "llm_evidence": "癌症PET/CT中的3D病灶检测",
+      "canonical_evidence": "癌症PET/CT中的3D病灶检测",
+      "llm_tldr_en": "Proposes an unsupervised domain adaptation framework for 3D lesion detection in PET/CT scans.",
+      "llm_tldr_cn": "提出了一种用于PET/CT扫描中3D病灶检测的无监督领域自适应框架。",
+      "llm_tldr": "提出了一种用于PET/CT扫描中3D病灶检测的无监督领域自适应框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "cancer",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.14797v1",
+      "title": "Multi-Task Genetic Algorithm with Multi-Granularity Encoding for Protein-Nucleotide Binding Site Prediction",
+      "abstract": "Accurate identification of protein-nucleotide binding sites is fundamental to deciphering molecular mechanisms and accelerating drug discovery. However, current computational methods often struggle with suboptimal performance due to inadequate feature representation and rigid fusion mechanisms, which hinder the effective exploitation of cross-task information synergy. To bridge this gap, we propose MTGA-MGE, a framework that integrates a Multi-Task Genetic Algorithm with Multi-Granularity Encoding to enhance binding site prediction. Specifically, we develop a Multi-Granularity Encoding (MGE) network that synergizes multi-scale convolutions and self-attention mechanisms to distill discriminative signals from high-dimensional, redundant biological data. To overcome the constraints of static fusion, a genetic algorithm is employed to adaptively evolve task-specific fusion strategies, thereby effectively improving model generalization. Furthermore, to catalyze collaborative learning, we introduce an External-Neighborhood Mechanism (ENM) that leverages biological similarities to facilitate targeted information exchange across tasks. Extensive evaluations on fifteen nucleotide datasets demonstrate that MTGA-MGE not only establishes a new state-of-the-art in data-abundant, high-resource scenarios but also maintains a robust competitive edge in rare, low-resource regimes, presenting a highly adaptive scheme for decoding complex protein-ligand interactions in the post-genomic era.",
+      "authors": [
+        "Yiming Gao",
+        "Liuyi Xu",
+        "Pengshan Cui",
+        "Yining Qian",
+        "An-Yang Lu",
+        "Xianpeng Wang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-03-16T03:51:54+00:00",
+      "link": "https://arxiv.org/pdf/2603.14797v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Bioinformatics method for protein-nucleotide binding site prediction",
+      "llm_evidence_cn": "蛋白质-核苷酸结合位点预测的生物信息学方法",
+      "llm_evidence": "蛋白质-核苷酸结合位点预测的生物信息学方法",
+      "canonical_evidence": "蛋白质-核苷酸结合位点预测的生物信息学方法",
+      "llm_tldr_en": "A multi-task genetic algorithm framework for accurate protein-nucleotide binding site prediction.",
+      "llm_tldr_cn": "一种用于准确预测蛋白质-核苷酸结合位点的多任务遗传算法框架。",
+      "llm_tldr": "一种用于准确预测蛋白质-核苷酸结合位点的多任务遗传算法框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "bioinformatics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.04887v1",
+      "title": "Federated Modality-specific Encoders and Partially Personalized Fusion Decoder for Multimodal Brain Tumor Segmentation",
+      "abstract": "Most existing federated learning (FL) methods for medical image analysis only considered intramodal heterogeneity, limiting their applicability to multimodal imaging applications. In practice, some FL participants may possess only a subset of the complete imaging modalities, posing intermodal heterogeneity as a challenge to effectively training a global model on all participants' data. Meanwhile, each participant expects a personalized model tailored to its local data characteristics in FL. This work proposes a new FL framework with federated modality-specific encoders and partially personalized multimodal fusion decoders (FedMEPD) to address the two concurrent issues. Specifically, FedMEPD employs an exclusive encoder for each modality to account for the intermodal heterogeneity. While these encoders are fully federated, the decoders are partially personalized to meet individual needs -- using the discrepancy between global and local parameter updates to dynamically determine which decoder filters are personalized. Implementation-wise, a server with full-modal data employs a fusion decoder to fuse representations from all modality-specific encoders, thus bridging the modalities to optimize the encoders via backpropagation. Moreover, multiple anchors are extracted from the fused multimodal representations and distributed to the clients in addition to the model parameters. Conversely, the clients with incomplete modalities calibrate their missing-modal representations toward the global full-modal anchors via scaled dot-product cross-attention, making up for the information loss due to absent modalities. FedMEPD is validated on the BraTS 2018 and 2020 multimodal brain tumor segmentation benchmarks. Results show that it outperforms various up-to-date methods for multimodal and personalized FL, and its novel designs are effective.",
+      "authors": [
+        "Hong Liu",
+        "Dong Wei",
+        "Qian Dai",
+        "Xian Wu",
+        "Yefeng Zheng",
+        "Liansheng Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-05T07:25:58+00:00",
+      "link": "https://arxiv.org/pdf/2603.04887v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Federated learning for multimodal brain tumor segmentation",
+      "llm_evidence_cn": "用于多模态脑肿瘤分割的联邦学习",
+      "llm_evidence": "用于多模态脑肿瘤分割的联邦学习",
+      "canonical_evidence": "用于多模态脑肿瘤分割的联邦学习",
+      "llm_tldr_en": "A federated learning framework for multimodal brain tumor segmentation addressing data heterogeneity.",
+      "llm_tldr_cn": "一种用于多模态脑肿瘤分割的联邦学习框架，解决了数据异构性问题。",
+      "llm_tldr": "一种用于多模态脑肿瘤分割的联邦学习框架，解决了数据异构性问题。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.04887v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.14321v1",
+      "title": "Personalized Cell Segmentation: Benchmark and Framework for Reference-Guided Cell Type Segmentation",
+      "abstract": "Accurate cell segmentation is critical for biological and medical imaging studies. Although recent deep learning models have advanced this task, most methods are limited to generic cell segmentation, lacking the ability to differentiate specific cell types. In this work, we introduce the Personalized Cell Segmentation (PerCS) task, which aims to segment all cells of a specific type given a reference cell. To support this task, we establish a benchmark by reorganizing publicly available datasets, yielding 1,372 images and over 110,000 annotated cells. As a pioneering solution, we propose PerCS-DINO, a framework built on the DINOv2 backbone. By integrating image features and reference embeddings via a cross-attention transformer and contrastive learning, PerCS-DINO effectively segments cells matching the reference. Extensive experiments demonstrate the effectiveness of the proposed PerCS-DINO and highlight the challenges of this new task. We expect PerCS to serve as a useful testbed for advancing research in cell-based applications.",
+      "authors": [
+        "Bisheng Wang",
+        "Jaime S. Cardoso",
+        "Lin Wu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-15T10:39:47+00:00",
+      "link": "https://arxiv.org/pdf/2603.14321v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Personalized cell segmentation for biological imaging",
+      "llm_evidence_cn": "生物成像的个性化细胞分割",
+      "llm_evidence": "生物成像的个性化细胞分割",
+      "canonical_evidence": "生物成像的个性化细胞分割",
+      "llm_tldr_en": "A reference-guided framework for segmenting specific cell types in biological and medical images.",
+      "llm_tldr_cn": "一种参考引导的框架，用于在生物和医学图像中分割特定类型的细胞。",
+      "llm_tldr": "一种参考引导的框架，用于在生物和医学图像中分割特定类型的细胞。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Novel bioinformatics methods and models for cancer research",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.15080v1",
+      "title": "Open Biomedical Knowledge Graphs at Scale: Construction, Federation, and AI Agent Access with Samyama Graph Database",
+      "abstract": "Biomedical knowledge is fragmented across siloed databases -- Reactome for pathways, STRING for protein interactions, Gene Ontology for functional annotations, ClinicalTrials.gov for study registries, and dozens more. Researchers routinely download flat files from each source and write bespoke scripts to cross-reference them, a process that is slow, error-prone, and not reproducible. We present two open-source biomedical knowledge graphs -- Pathways KG (118,686 nodes, 834,785 edges from 5 sources) and Clinical Trials KG (7,774,446 nodes, 26,973,997 edges from 5 sources) -- built on Samyama, a high-performance graph database written in Rust.   Our contributions are threefold. First, we describe a reproducible ETL pattern for constructing large-scale KGs from heterogeneous public data sources, with cross-source deduplication, batch Cypher loading, and portable snapshot export. Second, we demonstrate cross-KG federation: loading both snapshots into a single graph tenant enables property-based joins across datasets, answering questions like ``Which biological pathways are disrupted by drugs currently in Phase~3 trials for breast cancer?'' -- a query that neither KG can answer alone. Third, we introduce schema-driven MCP server generation: each KG automatically exposes typed tools for LLM agents via the Model Context Protocol, enabling natural-language access to graph queries without manual tool authoring.   All data sources are open-license (CC~BY~4.0, CC0, OBO). Snapshots, ETL code, and MCP configurations are publicly available. The combined federated graph (7.89M nodes, 27.8M edges) loads in 76 seconds on commodity hardware (Mac Mini M4, 16GB RAM), and the signature cross-KG query -- ``which pathways are disrupted by drugs in Phase~3 breast cancer trials?'' -- returns validated results in 2.1 seconds.",
+      "authors": [
+        "Madhulatha Mandarapu",
+        "Sandeep Kunkunuru"
+      ],
+      "primary_category": "cs.DB",
+      "categories": [
+        "cs.DB",
+        "cs.AI",
+        "q-bio.QM"
+      ],
+      "published": "2026-03-16T10:36:13+00:00",
+      "link": "https://arxiv.org/pdf/2603.15080v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "biomedical knowledge graphs for pathways and protein interactions",
+      "llm_evidence_cn": "用于通路和蛋白质相互作用的生物医学知识图谱",
+      "llm_evidence": "用于通路和蛋白质相互作用的生物医学知识图谱",
+      "canonical_evidence": "用于通路和蛋白质相互作用的生物医学知识图谱",
+      "llm_tldr_en": "Scalable construction of biomedical knowledge graphs to unify fragmented biological data.",
+      "llm_tldr_cn": "构建可扩展的生物医学知识图谱，以统一碎片化的生物数据。",
+      "llm_tldr": "构建可扩展的生物医学知识图谱，以统一碎片化的生物数据。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "bioinformatics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.05317v1",
+      "title": "How important are the genes to explain the outcome - the asymmetric Shapley value as an honest importance metric for high-dimensional features",
+      "abstract": "In clinical prediction settings the importance of a high-dimensional feature like genomics is often assessed by evaluating the change in predictive performance when adding it to a set of traditional clinical variables. This approach is questionable, because it does not account for collinearity nor known directionality of dependencies between variables. We suggest to use asymmetric Shapley values as a more suitable alternative to quantify feature importance in the context of a mixed-dimensional prediction model. We focus on a setting that is particularly relevant in clinical prediction: disease state as a mediating variable for genomic effects, with additional confounders for which the direction of effects may be unknown. We derive efficient algorithms to compute local and global asymmetric Shapley values for this setting. The former are shown to be very useful for inference, whereas the latter provide interpretation by decomposing any predictive performance metric into contributions of the features. Throughout, we illustrate our framework by a leading example: the prediction of progression-free survival for colorectal cancer patients.",
+      "authors": [
+        "Mark A. van de Wiel",
+        "Jeroen Goedhart",
+        "Martin Jullum",
+        "Kjersti Aas"
+      ],
+      "primary_category": "stat.ML",
+      "categories": [
+        "stat.ML",
+        "cs.LG"
+      ],
+      "published": "2026-03-05T15:58:50+00:00",
+      "link": "https://arxiv.org/pdf/2603.05317v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Shapley values for genomic feature importance in clinical prediction",
+      "llm_evidence_cn": "临床预测中基因组特征重要性的Shapley值评估",
+      "llm_evidence": "临床预测中基因组特征重要性的Shapley值评估",
+      "canonical_evidence": "临床预测中基因组特征重要性的Shapley值评估",
+      "llm_tldr_en": "Uses asymmetric Shapley values to quantify genomic feature importance in clinical models.",
+      "llm_tldr_cn": "使用非对称Shapley值量化临床预测模型中的基因组特征重要性。",
+      "llm_tldr": "使用非对称Shapley值量化临床预测模型中的基因组特征重要性。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Machine learning studies for prognosis prediction and biomarker discovery in cancer",
+      "matched_requirement_id": "req-8",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.05317v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.14644v2",
+      "title": "LUMINA: A Multi-Vendor Mammography Benchmark with Energy Harmonization Protocol",
+      "abstract": "Publicly available full-field digital mammography (FFDM) datasets remain limited in size, clinical annotations, and vendor diversity, hindering the development of robust models. We introduce LUMINA, a curated, multi-vendor FFDM dataset that explicitly encodes acquisition energy and vendor metadata to capture clinically relevant appearance variations often overlooked in existing benchmarks. This dataset contains 1824 images from 468 patients (960 benign, 864 malignant), with pathology-confirmed labels, BI-RADS assessments, and breast-density annotations. LUMINA spans six acquisition systems and includes both high- and low-energy imaging styles, enabling systematic analysis of vendor- and energy-induced domain shifts. To address these variations, we propose a foreground-only pixel-space alignment method (''energy harmonization'') that maps images to a low-energy reference while preserving lesion morphology. We benchmark CNN and transformer models on three clinically relevant tasks: diagnosis (benign vs. malignant), BI-RADS classification, and density estimation. Two-view models consistently outperform single-view models. EfficientNet-B0 achieves an AUC of 93.54% for diagnosis, while Swin-T achieves the best macro-AUC of 89.43% for density prediction. Harmonization improves performance across architectures and produces more localized Grad-CAM responses. Overall, LUMINA provides (1) a vendor-diverse benchmark and (2) a model-agnostic harmonization framework for reliable and deployable mammography AI.",
+      "authors": [
+        "Hongyi Pan",
+        "Gorkem Durak",
+        "Halil Ertugrul Aktas",
+        "Andrea M. Bejar",
+        "Baver Tutun",
+        "Emre Uysal",
+        "Ezgi Bulbul",
+        "Mehmet Fatih Dogan",
+        "Berrin Erok",
+        "Berna Akkus Yildirim",
+        "Sukru Mehmet Erturk",
+        "Ulas Bagci"
+      ],
+      "primary_category": "eess.IV",
+      "categories": [
+        "eess.IV",
+        "cs.CV",
+        "cs.DB",
+        "cs.LG"
+      ],
+      "published": "2026-03-15T22:41:40+00:00",
+      "link": "https://arxiv.org/pdf/2603.14644v2",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "mammography benchmark for malignant and benign breast cancer detection",
+      "llm_evidence_cn": "用于恶性和良性乳腺癌检测的乳腺摄影基准",
+      "llm_evidence": "用于恶性和良性乳腺癌检测的乳腺摄影基准",
+      "canonical_evidence": "用于恶性和良性乳腺癌检测的乳腺摄影基准",
+      "llm_tldr_en": "A multi-vendor mammography dataset for robust breast cancer detection model development.",
+      "llm_tldr_cn": "一个多厂商乳腺摄影数据集，用于开发鲁棒的乳腺癌检测模型。",
+      "llm_tldr": "一个多厂商乳腺摄影数据集，用于开发鲁棒的乳腺癌检测模型。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "cancer",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

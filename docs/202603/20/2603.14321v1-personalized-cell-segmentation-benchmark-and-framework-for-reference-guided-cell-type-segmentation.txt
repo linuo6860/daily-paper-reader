@@ -1,0 +1,133 @@
+Title: Personalized Cell Segmentation: Benchmark and Framework for Reference-Guided Cell Type Segmentation
+
+URL Source: https://arxiv.org/pdf/2603.14321v1
+
+Published Time: Tue, 17 Mar 2026 06:23:21 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+# PERSONALIZED CELL SEGMENTATION: BENCHMARK AND FRAMEWORK FOR REFERENCE-GUIDED CELL TYPE SEGMENTATION 
+
+# Bisheng Wang 1, Jaime S. Cardoso 2, and Lin Wu 31 INESC TEC, Portugal 2 INESC TEC, Faculdade de Engenharia, Universidade do Porto, Portugal  
+
+> 3
+
+# James Watt School of Engineering, University of Glasgow, United Kingdom 
+
+ABSTRACT 
+
+Accurate cell segmentation is critical for biological and med-ical imaging studies. Although recent deep learning models have advanced this task, most methods are limited to generic cell segmentation, lacking the ability to differentiate specific cell types. In this work, we introduce the Personalized Cell Segmentation (PerCS) task, which aims to segment all cells of a specific type given a reference cell. To support this task, we establish a benchmark by reorganizing publicly available datasets, yielding 1,372 images and over 110,000 annotated cells. As a pioneering solution, we propose PerCS-DINO, a framework built on the DINOv2 backbone. By integrat-ing image features and reference embeddings via a cross-attention transformer and contrastive learning, PerCS-DINO effectively segments cells matching the reference. Extensive experiments demonstrate the effectiveness of the proposed PerCS-DINO and highlight the challenges of this new task. We expect PerCS to serve as a useful testbed for advancing research in cell-based applications. 
+
+Index Terms — Personalized segmentation, cell segmen-tation, benchmark, biomedical image analysis 
+
+1. INTRODUCTION 
+
+Cell segmentation [1, 2], the task of delineating individual cells or their substructures (e.g., nuclei, cytoplasm, mem-branes) from microscopic images, is a fundamental step in biological image analysis. It underpins downstream tasks such as quantitative analysis and decision-making, and crit-ically determines the reliability and reproducibility of bio-logical discoveries. Therefore, accurate cell segmentation is indispensable across biomedical research, drug discovery, and high-throughput biological data processing [3]. Recent advances in deep learning and the emergence of foundation models have driven remarkable progress in general-purpose cell segmentation. Approaches such as Cell-pose [4], CellSAM [5], and Cellpose-SAM [6] leverage large pre-trained models to achieve impressive performance across diverse datasets. However, these methods are trained for generic segmentation, lacking the flexibility to handle unseen or user-specified cell types without retraining or extensive manual annotation. For example, in many applications it is important to segment specific cell types (e.g., tumor cells or rare stem cells), which current frameworks cannot effi-ciently address. Personalized segmentation [7, 8] offers an alternative by segmenting all targets belonging to the same class as a given reference example. However, existing frame-works [7, 9] are designed for natural images, where objects are relatively sparse, distinct, and large. In contrast, cell images involve small sizes, dense adhesion, morphological variability, and heterogeneous modalities (e.g., fluorescence, bright-field), making direct transfer particularly difficult. To address these limitations, we introduce Personalized Cell Segmentation (PerCS), which aims to segment all cells of a target type within an image, given only a single anno-tated reference cell of any type. To facilitate research in this direction, we reorganize multiple public cell segmentation datasets [4, 6, 10, 11, 12] and construct a new benchmark containing 1372 images and over 110,000 annotated cells spanning 108 cell types. The dataset covers cells from multi-ple imaging sources, varying densities, and diverse modalities (e.g., fluorescence, bright field, histology), capturing diverse and realistic challenges in bioimage analysis. Building on this task, we propose a strong baseline frame-work, PerCS-DINO, which leverages DINOv2 [13] as the backbone for discriminative feature extraction. To enable personalized segmentation, we design a reference-guided cross-attention transformer [14], allowing the reference cell features to interact with image features and guiding the model to automatically learn feature similarity for personalized cell segmentation. In addition, a cell-level supervised contrastive loss [15] is integrated to enhance inter-class separation among different types of cells. Experiments on our PerCS benchmark and PerPanNuke datasets demonstrate the strong performance and generalization capability of PerCS-DINO. 
+
+2. TASK SETTING AND DATASETS 
+
+Fig. 1 illustrates the traditional cell segmentation framework of Cellpose-SAM [5]. An input image is first encoded into patch-wise feature embeddings, which are then upsampled through a transposed convolution layer to generate pixel-wise vector flows. These vector flows are finally transformed into 
+
+> arXiv:2603.14321v1 [cs.CV] 15 Mar 2026
+
+Fig. 1 . Framework of generic method, Cellpose-SAM [5]. (a) Input images. (b) Image features. (c) Horizontal and vertical vector flows and binary cell mask. (d) Cell mask. cell masks via post-processing. Although Cellpose-SAM demonstrates strong generic segmentation performance, it lacks the ability to distinguish between different cell cate-gories. In practice, microscopy images often contain multiple cell types, and isolating a particular category of interest is often required. Achieving this with existing frameworks requires retraining, which is labor intensive and inflexible. 
+
+2.1. Personalized Cell Segmentation (PerCS) 
+
+To address this limitation, we introduce the task of Personal-ized Cell Segmentation (PerCS). As illustrated in Fig. 3, given a query image and a reference cell (which may be sampled ei-ther from the query or from another image), the objective of PerCS is to segment all cells in the query image that belong to the same category as the reference. Unlike generic cell seg-mentation, PerCS supports user-driven and category-specific segmentation without retraining. Several studies have investigated personalized segmenta-tion [7, 8] in the context of natural images. However, prior methods are typically for semantic segmentation or sparse, large-scale instances. These approaches do not transfer well to cell images, where objects are small, densely clustered, and morphologically diverse. This motivates the development of a dedicated framework for PerCS in bioimage analysis. 
+
+2.2. Datasets 
+
+2.2.1. PerCS Dataset 
+
+To facilitate research on PerCS, we reorganize multiple public cell segmentation datasets (including Cellpose [4], YeaZ [10], YeastNet [12], BriFiSeg [16], CellSAM [6]) and construct a comprehensive benchmark consisting of 1372 images and over 110,000 annotated cells. The dataset covers cells of different shapes, varying densities, and diverse modalities (e.g., fluorescence, bright-field, histology), capturing diverse and realistic challenges in bioimage analysis. Unlike exist-ing resources that typically provide images without explicit category-level organization, we perform a rigorous manual reorganization to reclassify all images into 108 distinct types. This classification is based on distinct morphological features and available biological metadata provided by the original sources. To ensure label reliability, the categorization process underwent independent verification, filtering out ambiguous 
+
+Fig. 2 . Sample images (top row) and corresponding colored annotation masks (bottom row) from the PerCS dataset. Ref-erence targets are outlined in red in the annotation masks. samples. This fine-grained categorization enables targeted evaluation of cross-class generalization. Some example im-ages are shown in Fig. 2. The manually classified dataset is then divided into three subsets: train, test, and novel set. The training set (1,186 im-ages) and test set (105 images) share overlapping cell types, while the novel set (81 images) contains unseen types, serv-ing as a benchmark for evaluating generalization to previ-ously unobserved categories. To better approximate real mi-croscopy scenarios where multiple cell types co-occur, we ad-ditionally generate mixed-type images: for each image, cells from different types are randomly pasted from other images. This augmentation is applied dynamically during training and fixed during testing to ensure consistency and fairness. 
+
+2.2.2. PerPanNuke Dataset 
+
+In addition to our main PerCS benchmark, we further con-struct a personalized PanNuke dataset (PerPanNuke) based on the PanNuke dataset [17]. Compared to our main PerCS benchmark, PerPanNuke introduces additional challenges due to the coexistence of multiple nuclear types within the same histology image, which often exhibit highly similar morpho-logical characteristics. This makes distinguishing between categories substantially more difficult. PanNuke provides high-quality multi-class annotations for five cell nucleus types. Instead of treating it as a conven-tional multi-class segmentation task, we reformulate it under the PerCS setting by strictly mapping the original class labels to the reference-guided protocol: given a reference nucleus of a specified category, the model is required to segment all nuclei of the same type within the image. We follow the official split protocol of PanNuke, using folds 1 and 2 for training and fold 3 for evaluation. For reference selection in both datasets, we adopt consis-tent strategies to ensure fairness and reproducibility. During training, in each iteration, a reference cell (or nucleus) is ran-domly sampled from the training set. During testing, a fixed reference target is predefined for every image and kept identi-cal across all methods, thereby enabling fair comparison un-der the same evaluation protocol. Fig. 3 . Framework of our proposed method, PerCS-DINO. 
+
+3. BASELINE FRAMEWORK 3.1. Adaptation of Existing Works 
+
+Since no prior methods directly address our task, we adapt two representative approaches as baselines. 
+
+Personalized SAM. Since the original personalized SAM [7] supports only single-object segmentation, we ex-tend it by selecting 100 candidate points that are both spatially separated and visually similar to the reference target. These points are then taken as prompts to segment cells. Non max-imum suppression (NMS) is adopted to remove duplicated segmentation. 
+
+Cellpose-SAM. Cellpose-SAM [5] is a method of generic cell segmentation and lacks the ability to differentiate cell cat-egories. We adopt the similarity-based filtering strategy from personalized SAM [7] to filter its predictions which have dif-ferent cell types from referent cell. Note that since the novel split partially overlaps with the Cellpose-SAM training data, we do not report the results of Cellpose-SAM on this split. 
+
+3.2. PerCS-DINO 
+
+As illustrated in Fig. 3, we propose PerCS-DINO, a personal-ized cell segmentation framework tailored for dense and het-erogeneous cellular images. The framework consists of three main components: a DINOv2-based backbone for feature ex-traction, a reference-guided cross-attention transformer for feature interaction, and a cell-level contrastive learning mod-ule for inter-class discrimination. 
+
+Backbone with DINOv2. We adopt DINOv2 ViT-L as the backbone to extract global image representations. Unlike the ViT encoder in SAM [18], DINOv2 yields more discrim-inative features, which is critical to distinguish subtle differ-ences between cell types. 
+
+Reference-guided cross-attention and decoding. Given the feature map of the query image fq ∈ RB×HW ×D and the embedding of a reference cell fref ∈ RB×1×D (where B,
+
+HW , and D denote batch size, the flattened spatial resolution, and the feature dimension, respectively), we first compute a cosine similarity map fs ∈ RB×HW ×1. The concatenated features [fq ; fs] are projected through a linear layer to 256 dimensions and then processed by a two-layer multi-head at-tention transformer with four heads. This module enables an effective interaction between reference and query features, al-lowing the network to propagate category-specific cues across the image. The fused representation is subsequently decoded through transposed convolutions into a three-channel output. Two channels encode vector flow fields, which represent the spatial gradients directing each pixel toward the topological center of its corresponding cell instance [4], while the third channel produces a probability map indicating the likelihood that each pixel belongs to the same category as the reference cell. The computation of ground truth vector flows and the subsequent post-processing for mask reconstruction follow the Cellpose framework [4]. 
+
+Cell-level supervised contrastive learning. While reference-guided cross-attention improves patch-level sim-ilarity modeling, it is insufficient to ensure robust category discrimination. To address this, we incorporate a supervised contrastive learning objective [15] at the cell level to en-courage embeddings of the same category to cluster together while pushing apart embeddings of different categories. Af-ter cross-attention layer, pixel embeddings belonging to the same cell are aggregated via global pooling to form cell-level representations. Formally, let zi denote the embedding of cell 
+
+i, normalized to unit length, and let yi be its class label. The supervised contrastive loss for a batch of N cells is defined as: 
+
+LSCL =
+
+> N
+
+X
+
+> i=1
+
+−1
+
+|P (i)|
+
+X 
+
+> p∈P(i)
+
+log exp( zi · zp/τ )
+
+PNa=1 1[a̸=i] exp( zi · za/τ ) ,
+
+(1) where P (i) = {p ∈ { 1, . . . , N } \ { i} | yp = yi} is the set of positive samples sharing the same class as i, τ is a tempera-ture hyper-parameter, and · denotes dot-product similarity. Finally, the overall training loss combines three objec-tives: (i) a mean squared error (MSE) loss LMSE on vector flow prediction, (ii) a binary cross-entropy loss with logits 
+
+LBCE for pixel-wise category classification, and (iii) the su-pervised contrastive loss LSCL . The full loss function is: 
+
+L = LMSE + LBCE + LSCL . (2) 
+
+4. EXPERIMENTS 4.1. Implementation Details 
+
+We adopt DINOv2-Large [13] as the backbone. During train-ing, all images are randomly cropped to a fixed resolution Table 1 . Comparison of PerCS-DINO with baseline methods under different IoU thresholds.                                                                         
+
+> Methods IoU PerCS Test PerCS Novel PerPanNuke AP PRAP PRAP PRPerSAM 0.3 0.241 0.513 0.313 0.249 0.540 0.317 0.151 0.186 0.445 Cellpose-SAM 0.3 0.465 0.618 0.654 ---0.368 0.433 0.708
+> PerCS-DINO 0.3 0.739 0.837 0.862 0.660 0.758 0.836 0.395 0.442 0.785
+> PerSAM 0.5 0.153 0.350 0.214 0.171 0.394 0.231 0.112 0.142 0.340 Cellpose-SAM 0.5 0.428 0.583 0.617 ---0.334 0.403 0.659
+> PerCS-DINO 0.5 0.655 0.780 0.804 0.560 0.685 0.755 0.364 0.418 0.740
+
+of 336 × 336 . This resolution is explicitly chosen to satisfy the patch-size alignment constraints of DINOv2 (multiples of 14) while optimizing the trade-off between receptive field coverage and computational efficiency. Data augmentation includes random horizontal and vertical flips. During infer-ence, we employ a sliding-window strategy for larger images: patches of size 336 × 336 are extracted with a stride of 168, vector flows are predicted for each patch, and overlapping re-gions are averaged to obtain the final segmentation. For the PerPanNuke dataset, the input resolution is kept at 224 × 224 ,consistent with the original image size. The model is trained for 60 epochs with a batch size of 1 using the Adam optimizer. The initial learning rate is 1×10 −5
+
+with a weight decay of 0.1, and is reduced by a factor of 10 during the last 10 epochs. The temperature τ in the con-trastive loss is fixed to 0.1, empirically set to balance hard example mining with feature space smoothing. All experi-ments are conducted on a single NVIDIA A100 GPU. 
+
+4.2. Evaluation Metrics 
+
+Segmentation performance is evaluated with instance-level matching, where predicted masks are paired with ground-truth cells via the Hungarian algorithm. A match is con-sidered a true positive (TP) if the intersection-over-union (IoU) exceeds a threshold; unmatched predictions are false positives (FP), and unmatched ground-truth cells are false negatives (FN). We report AP, Precision (P), and Recall (R) under IoU thresholds of 0.3 and 0.5 to capture both tolerant and stricter criteria: AP = T P T P +F P +F N , P = T P T P +F P , R = T P T P +F N .
+
+4.3. Results Comparison 
+
+Table 1 reports the performance of three methods in the PerCS test, Novel split, and the PerPanNuke dataset. PerSAM performs poorly across all datasets, indicating that direct transfer from natural images to dense biological scenarios is ineffective. In contrast, Cellpose-SAM achieves higher recall, benefiting from its pretraining on large-scale cell images. However, as it lacks the ability to differentiate cell categories, it suffers from substantial false positives, even after applying cell-level similarity filtering. Our PerCS-DINO, trained specifically for the person-alized cell segmentation task, surpasses both baselines and achieves the best performance on the PerCS test set, reach-ing AP of 73.9% and 65.5% at IoU threshold of 0.3 and 0.5, respectively. On the PerCS novel split, PerCS-DINO also demonstrates competitive segmentation quality, provid-ing strong evidence of its zero-shot transferability to un-seen cell types. PerCS-DINO also attains the highest AP on PerPanNuke, although performance remains limited by the high morphological similarity among nucleus categories in histopathology images, underscoring the intrinsic difficulty of the PerCS task and motivating future improvements in reference modeling. 
+
+4.4. Difficulty Analysis 
+
+Despite the encouraging results of our method, two key chal-lenges remain. First, segmentation masks lack refinement: downsampling in the backbone reduces spatial details, lead-ing to a clear performance drop under stricter IoU thresholds (e.g., 0.5 vs. 0.3). Second, the framework relies on a single reference cell, which is insufficient given the large morpho-logical variability across cell types. This limitation is partic-ularly evident in PerPanNuke, where visually similar nuclei often cause false positives despite high recall. Future work should therefore focus on more discriminative feature learn-ing or the integration of multiple positive and negative refer-ences to enhance robustness. 
+
+5. CONCLUSION 
+
+We introduced the task of Personalized Cell Segmentation (PerCS), which aims to segment all instances of a target cell type given only a single reference cell. To support this task, we constructed a benchmark by reorganizing multiple public datasets, covering over 110k annotated cells across 108 cate-gories and diverse imaging modalities. Finally, we proposed PerCS-DINO, a baseline framework that combines DINOv2 features, reference-guided cross-attention, and cell-level con-trastive learning. Experiments on PerCS and PerPanNuke demonstrate its effectiveness while highlighting the chal-lenges of personalized bioimage analysis. Acknowledgments. This work is co-financed by Com-ponent 5 - Capitalization and Business Innovation, integrated in the Resilience Dimension of the Recovery and Resilience Plan within the scope of the Recovery and Resilience Mecha-nism (MRR) of the European Union (EU), framed in the Next Generation EU, for the period 2021 - 2026, within project NewSpacePortugal, with reference 11 
+
+6. REFERENCES 
+
+[1] Viktor Petukhov, Rosalind J Xu, Ruslan A Soldatov, Paolo Cadinu, Konstantin Khodosevich, Jeffrey R Moffitt, and Pe-ter V Kharchenko, “Cell segmentation in imaging-based spa-tial transcriptomics,” Nature biotechnology , vol. 40, no. 3, pp. 345–354, 2022. [2] Jun Ma, Ronald Xie, Shamini Ayyadhury, Cheng Ge, Anubha Gupta, Ritu Gupta, Song Gu, Yao Zhang, Gihun Lee, Joonkee Kim, et al., “The multimodality cell segmentation challenge: toward universal solutions,” Nature methods , vol. 21, no. 6, pp. 1103–1113, 2024. [3] Meghan K Driscoll and Assaf Zaritsky, “Data science in cell imaging,” Journal of cell science , vol. 134, no. 7, pp. jcs254292, 2021. [4] Carsen Stringer, Tim Wang, Michalis Michaelos, and Marius Pachitariu, “Cellpose: a generalist algorithm for cellular seg-mentation,” Nature methods , vol. 18, no. 1, pp. 100–106, 2021. [5] Marius Pachitariu, Michael Rariden, and Carsen Stringer, “Cellpose-sam: superhuman generalization for cellular seg-mentation,” bioRxiv , pp. 2025–04, 2025. [6] Uriah Israel, Markus Marks, Rohit Dilip, Qilin Li, Changhua Yu, Emily Laubscher, Ahamed Iqbal, Elora Pradhan, Ada Ates, Martin Abt, et al., “Cellsam: a foundation model for cell seg-mentation,” BioRxiv , pp. 2023–11, 2025. [7] Renrui Zhang, Zhengkai Jiang, Ziyu Guo, Shilin Yan, Junting Pan, Xianzheng Ma, Hao Dong, Peng Gao, and Hongsheng Li, “Personalize segment anything model with one shot,” arXiv preprint arXiv:2305.03048 , 2023. [8] Muhammad Ibraheem Siddiqui, Muhammad Umer Sheikh, Hassan Abid, Kevin Henry, and Muhammad Haris Khan, “Towards persense++: Advancing training-free personalized instance segmentation in dense images,” arXiv preprint arXiv:2508.14660 , 2025. [9] Yang Liu, Muzhi Zhu, Hengtao Li, Hao Chen, Xinlong Wang, and Chunhua Shen, “Matcher: Segment anything with one shot using all-purpose feature matching,” arXiv preprint arXiv:2305.13310 , 2023. [10] Nicola Dietler, Matthias Minder, Vojislav Gligorovski, Au-goustina Maria Economou, Denis Alain Henri Lucien Joly, Ahmad Sadeghi, Chun Hei Michael Chan, Mateusz Kozi´ nski, Martin Weigert, Anne-Florence Bitbol, et al., “A convolutional neural network segments yeast microscopy images with high accuracy,” Nature communications , vol. 11, no. 1, pp. 5723, 2020. [11] Christoph Spahn, Estibaliz G´ omez-de Mariscal, Romain F Laine, Pedro M Pereira, Lucas von Chamier, Mia Conduit, Mariana G Pinho, Guillaume Jacquemet, S´ eamus Holden, Mike Heilemann, et al., “Deepbacs for multi-task bacterial image analysis using open-source deep learning approaches,” 
+
+Communications Biology , vol. 5, no. 1, pp. 688, 2022. [12] Hanhae Kim, Junha Shin, Eiru Kim, Hyojin Kim, Sohyun Hwang, Jung Eun Shim, and Insuk Lee, “Yeastnet v3: a public database of data-specific and integrated functional gene net-works for saccharomyces cerevisiae,” Nucleic acids research ,vol. 42, no. D1, pp. D731–D736, 2014. [13] Maxime Oquab, Timoth´ ee Darcet, Th´ eo Moutakanni, Huy Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, et al., “Dinov2: Learning robust visual features without supervision,” arXiv preprint arXiv:2304.07193 , 2023. [14] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-reit, Llion Jones, Aidan N Gomez, Lukasz Kaiser, and Illia Polosukhin, “Attention is all you need,” Advances in neural information processing systems , vol. 30, 2017. [15] Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna, Yonglong Tian, Phillip Isola, Aaron Maschinot, Ce Liu, and Dilip Krishnan, “Supervised contrastive learning,” Advances in neural information processing systems , vol. 33, pp. 18661– 18673, 2020. [16] Gendarme Mathieu, El Debs Bachir, et al., “Brifiseg: adeep learning-based method for semantic and instance seg-mentation of nuclei in brightfield images,” arXiv preprint arXiv:2211.03072 , 2022. [17] Jevgenij Gamper, Navid Alemi Koohbanani, Ksenija Benet, Ali Khuram, and Nasir Rajpoot, “Pannuke: an open pan-cancer histology dataset for nuclei instance segmentation and classifi-cation,” in European congress on digital pathology . Springer, 2019, pp. 11–19. [18] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura Gustafson, Tete Xiao, Spencer White-head, Alexander C Berg, Wan-Yen Lo, et al., “Segment any-thing,” in Proceedings of the IEEE/CVF international confer-ence on computer vision , 2023, pp. 4015–4026.

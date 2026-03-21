@@ -1,0 +1,778 @@
+Title: An Interpretable and Stable Framework for Sparse Principal Component Analysis
+
+URL Source: https://arxiv.org/pdf/2603.13806v1
+
+Published Time: Tue, 17 Mar 2026 02:54:29 GMT
+
+Number of Pages: 26
+
+Markdown Content:
+# An Interpretable and Stable Framework for Sparse Principal Component Analysis 
+
+Ying Hu a, Hu Yang a, ∗
+
+> aCollege of Mathematics and Statistics, Chongqing University, Chongqing, 401331, China
+
+Abstract 
+
+Sparse principal component analysis (SPCA) solves the problem of poor in-terpretability and variable redundancy that principal component analysis (PCA) often faces with high-dimensional data. However, SPCA imposes uniform penalties on variables and lacks differential modeling of variable im-portance, leading to unstable performance in highly noisy or structurally complex data. We propose SP-SPCA that introduces a single equilibrium parameter, which incorporates a single balancing parameter into the regular-ization framework to adjust variable penalties adaptively. This modification of the L2 penalty enables flexible control over the trade-off between sparsity and variance explained while maintaining computational efficiency. Simula-tion studies show that our method consistently outperforms standard sparse principal component techniques in identifying sparse loading patterns, fil-tering noise variables, and preserving cumulative variance, especially under high-dimensional and noisy conditions. Empirical applications to crime and financial market datasets confirm the method’s practical utility. In appli-cations to real datasets, the method selects fewer but more relevant vari-ables, reducing complexity while maintaining explanatory power. Overall, our approach provides a robust and efficient alternative for sparse model-ing in complex, high-dimensional data, offering clear advantages in stability, feature selection, and interpretability. 
+
+Keywords: Dimension reduction, SPCA, Variable selection, Single-parametric principal components regression estimation, Noise robustness   
+
+> ∗Corresponding author
+> Email address: yh@cqu.edu.cn (Hu Yang)
+> arXiv:2603.13806v1 [stat.ML] 14 Mar 2026
+
+1. Introduction 
+
+Principal Component Analysis (PCA) has long been recognized as a fun-damental and effective technique for dimensionality reduction in data science and multivariate statistical analysis. PCA constructs a set of orthogonal linear combinations of the original variables—known as principal compo-nents—that aim to capture as much of the data variance as possible(Pearson (1901)). However, traditional PCA expresses each component as a linear combination of all variables, regardless of their individual contributions. As a result, many variables with negligible loadings remain involved, making the interpretation of principal components difficult, particularly in high-dimensional settings. This issue was highlighted early on in the work of Jeffers (1967). To improve the interpretability of PCA, various sparsity-inducing modifi-cations have been proposed. Cadima and Jolliffe (1995) introduced an early idea of sparse PCA by thresholding small loadings to zero. However, this approach lacked a principled rule for selecting the threshold, often leading to instability and the potential exclusion of informative variables. Later, Jolliffe et al. (2003) proposed the SCoTLASS method, which incorporated an L1-norm penalty directly into the PCA objective function. This allowed sparse solutions to emerge naturally through optimization. Yet, the resulting prob-lem was non-convex, making solutions sensitive to initialization and lacking clear guidance on parameter tuning. In 2006, Zou (2006) proposed Sparse Principal Component Analysis (SPCA) by reformulating PCA as a regression problem with an elastic net penalty. SPCA successfully combined variable selection and principal component ex-traction, and has since spurred a series of developments. To address non-convexity, d’Aspremont et al. (2007) introduced DSPCA using semidefinite relaxation. Shen and Huang (2008) proposed a sparse PCA framework (sPCA-rSVD) by reformulating PCA as a regularized low-rank matrix ap-proximation problem, introducing sparsity through thresholded singular vec-tors with efficient iterative updates.Qi et al. (2013) later proposed a hybrid-norm SPCA model that combined L1 and L2 penalties, offering more flexible and accurate control over sparsity. More recently, Merola and Chen (2019) developed PSPCA, which transformed the NP-hard variable selection step into a sequence of tractable regression subproblems, significantly improv-2ing for SPCA have been proposed.In addition, there are many studies on the algorithmic aspects of the SPCA.Moghaddam et al. (2006) formulated Sparse PCA as a combinatorial optimization problem via discrete spectral methods, and proposed greedy (GSPCA) and exact (ESPCA) algorithms to efficiently extract sparse components with improved variance retention and interpretability. Wang and Wu (2012) proposed an iterative elimination al-gorithm for sparse PCA, inspired by recursive feature elimination (RFE) techniques. Their method eliminates variables one by one based on criteria minimizing variance loss—either by absolute loading values or an approxi-mated minimal variance loss (AMVL) metric—resulting in a simple yet ef-fective approach that bypasses complex optimization. Despite these advances, SPCA still has limitations. The use of the L2
+
+penalty tends to apply uniform shrinkage across all variables, failing to dis-tinguish between those with strong and weak contributions to the variance. This can lead to information redundancy and reduced interpretability. More-over, in high-dimensional, low-sample-size settings, the estimated loadings can be highly sensitive to sample variation, resulting in unstable principal components. Inspired by recent work by Yang (1989) on single-parameter regularization for ridge regression, which adaptively penalizes variables according to their relative importance, we propose an improvement to the traditional SPCA framework. Specifically, we modify the L2 penalty by introducing a bal-ance parameter that allows for more flexible trade-offs between sparsity and variance retention. The resulting method, termed Single-Parametric Sparse PCA (SP-SPCA), aims to provide principal components that are both more interpretable and more stable in high-dimensional settings. 
+
+2. Motivation and Method Details 
+
+2.1. Single-Parametric Sparse Principal Component Analysis 
+
+Traditional SPCA methods are constructed based on ridge regression es-timation. However, ridge regression estimation has a significant drawback: its shrinkage effect on the regression coefficients is uniform, meaning that all covariates are shrunk to the same degree, regardless of their contribu-tion to the response variable. We believe this aspect can be improved. The single-parameter principal component regression estimation proposed by Yang (1989) effectively addresses this issue. Therefore, this work proposes a new sparse principal component analysis method based on single-parameter 3principal component regression estimation. The methodological details are as follows. Let X be a p−dimensional random vector with covariance matrix Σ.Performing the singular value decomposition (SVD) on X, we obtain: 
+
+X = U DV T . (1) Thus, XT X = V D 2V T , where D = diag (d1, d 2, · · · , d p), so the eigenval-ues of XT X are d2 
+
+> i
+
+for i = 1 , 2, . . . , p .According to the definition of Principal Component Analysis (PCA), the 
+
+i-th principal component is given by Yi = XV i with variance d2 
+
+> i
+
+.From the definition of Single-Parameter Principal Component Regression Estimation (SPPCR), we have: 
+
+ˆβSPPCR = ( XT X + V KV T )−1XT Y, (2) where 
+
+K = diag 
+
+ d21(1 − θ)
+
+d21 + θ − 1, d22(1 − θ)
+
+d22 + θ − 1, . . . , d2 
+
+> r
+
+(1 − θ)
+
+d2 
+
+> r
+
++ θ − 1, 1
+
+θ − dr+1 , · · · , 1
+
+θ − dp
+
+
+
+,
+
+(3) where r satisfies d2 
+
+> r
+
+≥ 1 ≥ d2 
+
+> r+1
+
+and θ ∈ (d2
+
+> p
+
+, 1) .
+
+For the relationship between SPPCR estimation and Principal Compo-nent Analysis (PCA), we present the following theorem: 
+
+Theorem 2.1. For ∀i, denote Yi = UiDii .Yi is the i-th principal components. Suppose ˆβSPPCR is the single-parameter principal component regression esti-mation given by 
+
+ˆβSP P CR = argmin 
+
+> β
+
+{∥ Yi − Xβ ∥22 + ∥√KV T β∥22}. (4) 
+
+Let ˆν = ˆβSP P CR  
+
+> ∥ˆβSP P CR ∥1
+
+, then ˆν = Vi.
+
+Proof of Theorem 2.1 Denote that XT X = V D 2V T and V T V = I, we 4have: 
+
+ˆβSP P CR = ( XT X + V KV T )−1XT XV i
+
+= V D2
+
+D2 + K V T Vi
+
+= Vi
+
+D2
+
+> ii
+
+D2 
+
+> ii
+
++ Kii 
+
+,
+
+thus ˆν = Vi.Since Yi = UiDii , the theorem relies on the results of principal component analysis. Therefore, we consider the following theorem: 
+
+Theorem 2.2. Let Xi denote the i-th row vector of the random vector X,and define Z = √KV T . Then, 
+
+(ˆ α, ˆβ) = argmin 
+
+> α,β
+
+{∥ Xi − αβ T Xi∥22 + ∥Zβ ∥22}, (5) 
+
+subject to the constraint ∥α∥22 = 1 . It follows that ˆβ ∝ V1.
+
+cProof of Theorem 2.4 
+
+> n
+
+X
+
+> i=1
+
+∥Xi − αβ T Xi∥22 =
+
+> n
+
+X
+
+> i=1
+
+T rX Ti (I − βα T )( I − αβ T )Xi
+
+=
+
+> n
+
+X
+
+> i=1
+
+XiXTi T r (I − βα T )( I − αβ T )= T r (I − βα T − αβ T + βα T αβ T )XT X
+
+= T rX T X + T rβ T XT Xβ − 2T rα T XT Xβ 
+
+= T rX T X + βT XT Xβ − 2αX T Xβ. 
+
+Since Z = √KV T , then 
+
+∥Zβ ∥22 = βT ZT Zβ = βT V KV T β, 
+
+thus 
+
+> n
+
+X
+
+> i=1
+
+∥Xi − αβ T Xi∥22 + ∥Zβ ∥22 = T rX T X − 2αX T Xβ + βT (XT X + V KV T )β. 
+
+5For a fixed α, the minimum value of the above equation is 
+
+β = ( XT X + V KV T )−1XT Xα, 
+
+then we have 
+
+> n
+
+X
+
+> i=1
+
+∥Xi − αβ T Xi∥22 + ∥Zβ ∥22 = T rX T X − αX T X(XT X + V KV T )−1XT Xα. (6) Therefore, 
+
+ˆα = argmax 
+
+> α
+
+{αX T X(XT X + V KV T )−1XT Xα } (7) 
+
+s.t.α T α = 1 ,
+
+denote that ˆβ = ( XT X + V KV T )−1XT X ˆα and XT X = V D 2V T , we have 
+
+XT X(XT X + V KV T )−1XT X = V D4
+
+D2 + K V T . (8) Thus ˆα = sV 1, s = 1 or − 1, then ˆβ = s D211  
+
+> D211 +K11
+
+V1
+
+Theorem 2.4 does not rely on the results of principal component analysis but derives the first principal component directly based on regression. Next, we extend the result of Theorem 2.4 to the first k principal components. 
+
+Theorem 2.3. Suppose we consider the first k principal components. Define 
+
+Ap×k = ( α1, α 2, ..., α k) and Bp×k = ( β1, β 2, ..., β p), with Z = √KV T . Then, 
+
+( ˆA, ˆB) = argmin 
+
+> A,B
+
+{
+
+> n
+
+X
+
+> i=1
+
+∥Xi − AB T Xi∥22 +
+
+> k
+
+X
+
+> j=1
+
+∥Zβ j ∥22}, (9) 
+
+subject to the constraint ∥A∥22 = Ik, implying that ˆβj ∝ Vj for j = 1 , 2, ..., k .
+
+Proof of Theorem 2.3 By analogy with the proof of the preceding theorem, we can similarly obtain 
+
+> n
+
+X
+
+> i=1
+
+∥Xi − AB T Xi∥22 +
+
+> k
+
+X
+
+> j=1
+
+∥Zβ j ∥22 = T rX T X +
+
+> k
+
+X
+
+> j=1
+
+(−2αTj XT Xβ j + βTJ (XT X + V KV T )βj ).
+
+6For a fixed A, the minimum value of the above equation is 
+
+B = ( XT X + V KV T )−1XT XA, 
+
+thus 
+
+ˆA = argmax 
+
+> A
+
+{T rAX T X(XT X + V KV T )−1XT XA }, (10) this is an eigenvalue decomposition problem, whose solution is ˆαj = sj Vj , s j =1or − 1, then ˆβj = sjD2  
+
+> jj
+> D2
+> jj +Kjj
+
+Vj for j = 1 , 2, · · · , k .In this paper, we incorporate L1 regularization to propose an interpretable and stable framework for sparse principal component analysis, namely the Single-Parametric Sparse Principal Component Analysis (SP-SPCA): 
+
+( ˆA, ˆB) = argmin 
+
+> A,B
+
+{
+
+> n
+
+X
+
+> i=1
+
+∥Xi − AB T Xi∥22 +
+
+> k
+
+X
+
+> j=1
+
+∥Zβ j ∥22 +
+
+> k
+
+X
+
+> j=1
+
+λj ∥βj ∥1}. (11) 
+
+s.t.A T A = Ik,
+
+2.2. Algorithm for solving SP-SPCA 
+
+We know that A is an orthogonal matrix. Let A⊥ be any matrix whose columns are orthogonal to those of A, such that [A; A⊥] forms a p × p or-thogonal matrix. Therefore, we have: 
+
+> n
+
+X
+
+> i=1
+
+∥Xi − AB T Xi∥22 = ∥X − XBA T ∥22
+
+= ∥XA ⊥∥22 + ∥XA − XB ∥22
+
+= ∥XA ⊥∥22 +
+
+> k
+
+X
+
+> j=1
+
+∥Xα j − Xβ j ∥22
+
+First, consider the problem of solving B given a fixed A. For j = 1 , · · · , k ,let Y ∗ 
+
+> j
+
+= Xα j . According to the analysis above, we have: 
+
+( ˆA, ˆB) = arg min 
+
+> A,B
+
+(
+
+∥XA ⊥∥22 +
+
+> k
+
+X
+
+> j=1
+
+∥Y ∗ 
+
+> j
+
+− Xβ j ∥22 + ∥Zβ j ∥22 + λj ∥βj ∥1
+
+)
+
+.
+
+(12) 7Since A is fixed, the problem above reduces to: 
+
+ˆβj = arg min 
+
+> βj
+
+∥Y ∗ 
+
+> j
+
+− Xβ j ∥22 + ∥Zβ j ∥22 + λj ∥βj ∥1 . (13) We refer to the above optimization problem as the **SPPCSO problem** (Sparse Principal Component with Structured Optimization). On the other hand, given a fixed B, the goal is to minimize Pni=1 ∥Xi − AB T Xi∥22 =
+
+∥X − XBA T ∥22 subject to the constraint AT A = I. The solution is given by the following theorem. 
+
+Theorem 2.4. Let Mn×p and Nn×k be two matrices. Consider the following minimization problem: 
+
+ˆA = arg min  
+
+> A
+
+∥M − N A T ∥22, subject to AT A = Ik×k.
+
+Assume the SVD of M T N is U DV T . Then the solution is 
+
+ˆA = U V T .
+
+To solve equation(13), we only need the matrix XT X. The reason is as follows: 
+
+∥Y ∗ 
+
+> j
+
+− Xβ j ∥22 + ∥Zβ j ∥22 + λj ∥βj ∥1 = ( αj − βj )T XT X(αj − βj ) + ∥Zβ j ∥22 + λj ∥βj ∥1.
+
+(14) This applies also to computing the SVD in (XT X)B = U DV T . Note that 1 
+
+> n
+
+XT X is the sample covariance matrix. If the true covariance matrix 
+
+Σ of X is known, we may substitute Σ in place of XT X in (14), leading to the following form: 
+
+(αj − βj )T Σ( αj − βj ) + ∥Zβ j ∥22 + λj ∥βj ∥1. (15) Although equation (15) is not in the standard SPPCSO form, it can be transformed accordingly. Let 
+
+Y ∗ = Σ 12 αj , X∗ = Σ 12 ,
+
+then the optimization becomes: 8ˆβj = arg min 
+
+> βj
+
+∥Y ∗ − X∗βj ∥22 + ∥Zβ j ∥22 + λj ∥βj ∥1 .
+
+Hence, the core of the algorithm is to solve the SPPCSO problem. The SPPCSO problem is equivalent to: 
+
+ˆβ := arg min 
+
+> β
+
+∥y − Xβ ∥22 + ∥Zβ ∥22 + λ∥β∥1 . (16) We define an augmented dataset (˜ y, ˜X) by: 
+
+˜X =
+
+XZ
+
+
+
+, ˜y =
+
+y
+
+0
+
+
+
+,
+
+Then the SPPCSO problem can be rewritten as: 
+
+ˆβ := arg min 
+
+> β
+
+n
+
+∥˜y − ˜Xβ ∥22 + λ∥β∥1
+
+o
+
+.
+
+This is clearly a standard Lasso problem and can be efficiently solved using coordinate descent. We describe the algorithm in detail below. 1. Initialize A = V [: , 1 : k], i.e., the first k standard principal components obtained from PCA; 2. Given a fixed A = [ α1, · · · , α k], solve the following k SPPCSO prob-lems: 
+
+βj = arg min 
+
+> β
+
+(αj − β)T XT X(αj − β) + ∥Zβ j ∥22 + λj ∥βj ∥1 ;
+
+3. For a fixed B = [ β1, · · · , β k], compute the SVD decomposition: 
+
+XT XB = U DV T ,
+
+and update A = U V T ;4. Repeat Steps 2 and 3 until convergence; 5. Normalize the sparse loadings: ˜Vj = βj
+
+∥βj ∥1
+
+, j = 1 , 2, · · · , k. 
+
+9Algorithm 1 Coordinate Descent Algorithm for SPPCSO 
+
+Require: Initial estimate ˆβ(0) , parameters λ, θ, tolerance ϵ = 10 −4
+
+1: Define the active set ξ(0) = {j ∈ { 1, . . . , p } : ˆβ(0) 
+
+> j
+
+̸ = 0 }
+
+2: Construct the augmented data: 
+
+X∗ =
+
+XZ
+
+
+
+, y∗ =
+
+y
+
+0
+
+
+
+where Z = √KU T , K = diag 
+
+d1(1 −θ) 
+
+> d1+θ−1
+
+, . . . , dr (1 −θ)  
+
+> dr+θ−1
+
+, 1 
+
+> θ
+
+− dr+1 , . . . , 1 
+
+> θ
+
+− dp
+
+
+
+3: U is the orthogonal matrix from SVD of XTξ(0) Xξ(0) , and di is its i-th eigenvalue 
+
+Ensure: Optimized coefficients ˆβSPPCSO 
+
+4: Initialize ˆβ(0) = ˆβLasso , set iteration counter k = 0 
+
+5: repeat 
+
+6: for j = 1 to p do 
+
+7: Compute partial residual: 
+
+rj = ( X∗ 
+
+> j
+
+)T
+
+
+
+y∗ − X∗−j ˆβ(k)
+
+> −j
+
+
+
+8: Update: 
+
+ˆβ(k+1)  
+
+> j
+
+= S(rj , λ ), S(r, λ ) = sign (r) · max( |r| − λ, 0) 
+
+9: end for 
+
+10: if ∥ ˆβ(k+1) − ˆβ(k)∥ < ϵ then 
+
+11: ˆβSPPCSO = ˆβ(k+1) 
+
+12: return ˆβSPPCSO 
+
+13: end if 
+
+14: k ← k + 1 
+
+15: until convergence 10 3. Simulations 
+
+3.1. Preliminary Validation on Low-Dimensional Data 
+
+Similar to the numerical simulations developed by Zou (2006) in SPCA, we first verify the performance of SP-SPCA under a low-dimensional data structure. We generate the following three variables: 
+
+V1 ∼ N (0 , 50) ,V2 ∼ N (0 , 300) ,V3 = −0.3V1 + 0 .925 V2 + ε, ε ∼ N (0 , 1) .
+
+(17) 
+
+V1, V2, and V3 are independent of each other. We give the following 10 observed variables: 
+
+Xi = V1 + ε1 
+
+> i
+
+, ε1 
+
+> i
+
+∼ N (0 , 1) , i = 1 , 2, 3, 4,Xi = V2 + ε2 
+
+> i
+
+, ε2 
+
+> i
+
+∼ N (0 , 1) , i = 5 , 6, 7, 8,Xi = V3 + ε3 
+
+> i
+
+, ε3 ∼ N (0 , 1) , i = 9 , 10 ,
+
+(18) where εji , j = 1 , 2, 3, i = 1 , 2, . . . , 10 are independent of each other. We use the covariance matrix of (X1, . . . , X 10 ) to compute PCA, SPCA, SP-SPCA. The number of observed variables associated with the three basic variables 
+
+V1, V2, and V3 are 4, 4, and 2, respectively, thus V1 and V2 are of comparable significance, while the interpretability of V3 is relatively low. In the principal component analysis, the cumulative variance contribution of the first two principal components has reached 99.04%, so we only need to focus on the orthogonal sparse representation of the first two principal components, which is consistent with the number of V1 and V2 basic variables. Since the variance of V2 is significantly higher than that of V1, ideally, the first principal component should be represented by X5, X 6, X 7, X 8, i.e., the variables originate from V2; and the second principal component should be represented by X1, X 2, X 3, X 4, which corresponds to V1. Their loading coefficients should be uniformly distributed and close in value. Since X9 and 
+
+X10 are derived from V3, which is a combination of V1 and V2 plus independent noise, their statistical properties are closer to those of V1 and V2, and thus their contributions to the principal components should be close to those of X1
+
+to X8. In addition, the variable loading coefficients on V3 should be sparsified in the principal component representation. In the results, SP-SPCA achieves feature selection consistent with SPCA, but its resulting loading matrix is 11 Table 1: Loading matrix and explained variance for PCA, SPCA, and SP-SPCA on a low-dimensional dataset. 
+
+PCA SPCA SP-SPCA 
+
+PC1 PC2 PC1 PC2 PC1 PC2 
+
+X1 -0.315 0.400 0 0.590 0 0.491 
+
+X2 -0.315 0.349 0 0.206 0 0.501 
+
+X3 -0.315 0.404 0 0.566 0 0.502 
+
+X4 -0.315 0.396 0 0.538 0 0.498 
+
+X5 0.317 0.277 0.388 0 0.499 0
+
+X6 0.317 0.225 0.651 0 0.501 0
+
+X7 0.317 0.274 0.336 0 0.502 0
+
+X8 0.317 0.276 0.559 0 0.499 0
+
+X9 0.317 0.218 0 0 0 0
+
+X10 0.317 0.221 0 0 0 0
+
+Variance 97.6% 1.44% 60.55% 10.30% 64.5% 11.1% closer to the ideal, with a cumulative variance explained of 75.6%, higher than SPCA’s 70.8%, thus retaining more information. In summary, SP-SPCA is effective in variable screening, effectively filter-ing out noisy variables, while enhancing the explanatory power of variables and retaining higher information. This also indicates that SP-SPCA is more advantageous than traditional SPCA in dealing with redundant and noisy variables. Next, in order to further test the advantages of SP-SPCA in prin-cipal component analysis, we apply the model to high-dimensional datasets for simulation experiments. 
+
+3.2. High-dimensional simulation data generation process and simulation set-tings 
+
+To evaluate the performance of the proposed SP-SPCA method for high-dimensional sparse structure identification, we designed a set of simulation experiments based on the latent factor model. The key parameter settings involved in the simulation experiments are shown in Table 2. The specific data generation process is as follows: 12 Table 2: Key parameter settings used in the simulation studies 
+
+Parameter Symbol 
+
+Sample size n
+
+Total number of variables p
+
+Number of latent factors d
+
+Variables per factor s
+
+Number of mixed variables m
+
+• We split the variables into structural variables Xstruct and mixed vari-ables Xmix . First, generate the latent factor matrix F ∈ Rn×d with elements obeying the standard normal distribution; 
+
+• Each factor Fj , j = 1 , 2, · · · , d corresponds to the control of sj struc-tural variables, generating a matrix of coefficients P ∈ RPstruct ×d and superimposed on the standard normal noise to obtain the structural variable part: X struct = FP ⊤ + ε,ε ∼ N (0 , 1) ;
+
+• For the mixed variable part, each variable is jointly influenced by 2 to 3
+
+randomly selected latent factors, with coefficients randomly generated and unit normalized, and superimposed noise to obtain Xmix ;
+
+• Splice the above structural and mix variables to form the final data matrix X = ( Xstruct , Xmix ) and center all variables. This simulation structure can effectively simulate the existence of multiple latent factors and cross-influence between variables in real high-dimensional data, so as to verify the extraction ability and sparsity control effect of the model under different structural complexity. In order to evaluate the performance of the model in an all-round way, we set up the following four groups of simulation experiments for different parameters: 
+
+Case 1. We first consider a typical high-dimensional setting: the number of samples is n = 100 and the number of variables is p = 300 . The number of latent factors is set to d = 5 and each factor controls s = 50 variables. In addition, m = 50 mixing variables are included. 
+
+Case 2. We investigate the performance stability of SP-SPCA by in-creasing the variable dimension p while fixing n = 100 and d = 5 . We 13 set p = 150 , 300 , 450 , 600 , 750 , 900 while fixing the number of mixing vari-ables to m = p/ 6, corresponding to m = 25 , 50 , 75 , 100 , 125 , 150 , and setting 
+
+s = 25 , 50 , 75 , 100 , 125 , 150 . The case is designed to evaluate the stability of the method in high and ultra-high dimensional situations. 
+
+Case 3. We evaluate the robustness of the method to crossover variables by varying the number of mixing variables m while fixing n = 100 , p = 300 
+
+and d = 5 . We consider m = 10 , 50 , 100 , 150 , corresponding to the setting 
+
+s = 58 , 50 , 40 , 30 . This setting is intended to test the resistance of the method to overlapping disturbances with mixed variables. 
+
+Case 4. We investigate the ability of the method to parse complex factor structures by varying the number of latent factors d. The sample size is fixed at n = 100 and the total number of variables is fixed at p = 300 . We consider d = 2 , 5, 10 and the number of mixing variables is fixed at m = 50 ,adjusting s = 125 , 50 , 25 accordingly. The experiment is designed to evaluate the structure-resolving ability of SP-SPCA. To ensure that the results are not oh-so-accidental, we repeated the ex-periment 50 times for each set of cases, and finally averaged the resulting cumulative variance contributions. These four sets of simulation experi-ments systematically evaluate the performance and robustness of the pro-posed method in multiple dimensions. Case 1 provides a benchmark eval-uation under standard settings to verify the feasibility of the model in the underlying high-dimensional structure; Case 2 explores the stability and scal-ability of the method as the dimensionality gradually increases, reflecting its adaptability to ultra-high-dimensional data; Case 3 tests the robustness of the model in the presence of a non-ideal data structure by adjusting the de-gree of mixed-variable interferences; and Case 4 focuses on the variation in the number of latent factors to test the performance of the method in the presence of complex structures. Case 4 focuses on the variation in the num-ber of latent factors to test the ability of the method in a complex structural discrimination task. 
+
+3.3. Analysis of results of high-dimensional simulation data 
+
+In the study of Shen and Huang (2008) et al. it was pointed out that the cumulative variance contribution of principal component results from SPCA is greatly reduced in high dimensional data scenarios, which is due to the fact that SPCA over-penalizes the loadings, resulting in the princi-pal component directions being too sparse at the expense of the variance 14 explanation ability. By empirically summarizing a large number of simula-tions in the literature, we found that the cumulative variance contribution of SPCA is usually 50% 65% in medium and high dimensional data structures, while the cumulative variance contribution is below 50% in high and extreme high dimensional cases. In this simulation experiment, since a specific data structure was predefined, the numerical comparison focuses on evaluating the cumulative variance explained by each method when producing the loading matrix closest to the ideal sparse structure. According to the previously de-scribed data setup, the ideal loading pattern is as follows: for each principal component, the variables Xi+1 ˘Xi+50 , i = 0 , 50 , 100 , 150 , 200 have nonzero loadings, while the remaining variables have zero loadings, with variables 
+
+X251 ˘X300 fully sparse (all loadings zero), as shown in the table 3. There-fore, we constrain the number of nonzero loadings per principal component to 50. Table 3: Case 1: Ideal Loadings Matrix Results. 
+
+PC1 PC2 PC3 PC4 PC5 
+
+X1˘X50 Nonzero 0 0 0 0
+
+X51 ˘X100 0 Nonzero 0 0 0
+
+X101 ˘X150 0 0 0 Nonzero 0
+
+X151 ˘X200 0 0 0 0 Nonzero 
+
+X201 ˘X250 0 0 Nonzero 0 0
+
+X251 ˘X300 0 0 0 0 0Figure 1 and 2 present a heatmap comparison of the loading matrices obtained by the traditional SPCA and the improved SP-SPCA in Case 1. In the variable blocks Xi+1 ˘Xi+50 , i = 0 , 50 , 100 , 150 , 200 , the SPCA heatmap shows large white areas (zeros), whereas SP-SPCA displays concentrated blue/red stripes. Moreover, in the variable block X251 ˘X300 , which should ideally be fully sparse, SPCA yields more nonzero loadings. As previously described, we constrained the number of nonzero loadings per principal com-ponent to 50; thus, these results indicate that SPCA is more prone to erro-neous sparsity. Additionally, SP-SPCA achieves a higher cumulative variance explained (68.7%) compared to SPCA (56.5%), reducing information loss by 12.2%. Overall, SP-SPCA maintains sparsity while accurately identifying key variables and effectively eliminating unimportant ones, whereas traditional 15 Figure 1: loadings matrix under SPCA method in Case 1  
+
+> Figure 2: loadings matrix under SP-SPCA method in Case 1
+
+SPCA tends to over-sparsify, potentially discarding important information (e.g., the nonzero loading of X153 was incorrectly shrunk to zero).  
+
+> Table 4: Case 2: Comparison of cumulative variance explained (%) under different dimen-sions p.
+
+p 150 300 450 600 750 900 SPCA 57% 56.5% 29.2% 20% 16.3% 14.4% SP-SPCA 68.8% 65.7% 60% 56.9% 55.9% 54.6% Based on the comparison results in Table 4 and Figure 3, when the data dimension p increases from 150 to 900 under identical parameter settings, SPCA’s cumulative variance explained drops sharply from a maximum of 57% to 14.4% (a 74.8% decrease), indicating severe information loss un-der high-dimensional noise. In contrast, SP-SPCA consistently maintains a contribution rate above 54.6% (peaking at 68.8%), with only a 20.9% de-crease, retaining 54.6% of the variance even at p = 900 . These results further demonstrate the effectiveness and stability of our method for dimensionality reduction in high-dimensional data scenarios. To further assess the robustness of the methods, we gradually increased the proportion of mixed variables in the data. Mixed variables, being ex-16 Table 5: Case 3: Comparison of cumulative variance explained (%) under different numbers of mixed variables m with n = 100 , p = 300 .
+
+m 10 50 100 150 SPCA 61% 56.5% 38.1% 27.2% SP-SPCA 71.2% 65.7% 47.3% 35.3%       
+
+> Table 6: Case 4: Comparison of cumulative variance explained (%) under different numbers of latent factors dwith n= 100 ,p= 300 .
+
+d 2 5 10 SPCA 22.4% 56.5% 44% SP-SPCA 60% 65.7% 61.1% pressed by multiple latent factors, should not define the directions of princi-pal components and are expected to be sparsified by the model. Therefore, increasing the proportion of mixed variables effectively raises the noise level in the data. As shown in Table 5, the cumulative variance explained by SPCA de-creases sharply from 61% to 27.2% as m increases from 10 to 150, reflecting its difficulty in distinguishing signal from noise under increasing noise con-ditions. In contrast, SP-SPCA, while also showing a decline from 71.2% to 35.3%, consistently outperforms SPCA across all levels of m and retains sub-stantial information even when m = 150 . This indicates that SP-SPCA is more robust to noise and better at maintaining essential signal components in high-noise environments. Moreover, the performance gap between SPCA and SP-SPCA widens as m increases, further highlighting the superior stabil-ity and discriminative power of our proposed method in identifying relevant variables and suppressing irrelevant noise. These results demonstrate the effectiveness of SP-SPCA in high-dimensional noisy data settings and under-score its potential for applications requiring reliable variable selection and dimensionality reduction under challenging conditions. Since the number of latent factors d reflects the structural complexity of the data, increasing d effectively challenges the model’s factor resolution ability. As shown in Table 6, SP-SPCA consistently maintains a cumulative variance explained above 60%, demonstrating its robustness in accurately identifying principal component directions and achieving precise sparsity in the loading matrix, even under complex data structures. In contrast, SPCA 17 Figure 3: Comparison of numerical simulation results for high-dimensional data. 
+
+exhibits significant instability, with the cumulative variance explained drop-ping sharply when d increases or fluctuating unpredictably, highlighting its limitations in handling high structural complexity. The above results suggest that SP-SPCA not only performs better in variable selection under noisy or high-dimensional conditions but also adapts more effectively to intrinsic structural complexities of the data. One possi-ble reason is that the single-parameter optimization framework enables SP-SPCA to balance sparsity and signal preservation more effectively, whereas SPCA may suffer from over-sparsification or underfitting when the factor structure becomes intricate. These findings imply that SP-SPCA has stronger generalization potential across diverse data scenarios and is better suited for practical applications where latent structures are often complex and un-known. 
+
+4. Empirical analysis 
+
+To evaluate the performance of the proposed method on real-world data and cover as many data types as possible, we conducted empirical analyses on 18 two representative datasets, one low-dimensional and one high-dimensional. The details of these datasets are provided in Table 7. 
+
+> Table 7: Description of datasets used for empirical analysis
+
+Name Samples Features Type Description Source Crime 1994 99 Regular Social data UCI S&P 500 150 503 High-dimensional Financial data Kaggle 
+
+4.1. Crime data 
+
+We first selected the low-dimensional Crime dataset as the initial analysis target. This dataset contains 1,994 observations and 99 variables, making it a representative example of low-dimensional data. 
+
+> Figure 4: Cumulative explanatory rate curves and gravel plots for the Crime data.
+
+Since the true underlying principal component structure of empirical data is typically unknown, our goal is to explain a substantial portion of the vari-ance while obtaining a sparser and more interpretable principal component loading matrix. Therefore, the empirical analysis focuses on comparing the two methods in terms of the total number of nonzero loadings required to achieve the same cumulative variance explained. To determine the appro-priate number of principal components, we combined the classical scree plot and the PCA cumulative variance plot. 19 Table 8: Comparison of the total number of nonzero loadings under different cumulative variance explained levels for SPCA and SP-SPCA on the Crime dataset 
+
+Variance 10% 20% 30% 40% 50% 60% 70% 80% SPCA 8 27 45 123 220 432 666 1485 SP-SPCA 14 24 40 59 104 347 644 1485 As shown in Figure 4, when the number of principal components reaches 15, the cumulative variance explained by PCA reaches 85%, and the scree plot flattens beyond 15 components. Based on this, we selected the top 15 principal components for analysis. Given that the dataset contains 99 variables, the maximum possible number of nonzero loadings is 1,485. 
+
+> Figure 5: Comparison of results for the Crime data .
+
+Table 8 and Figure 5 compare the performance of SPCA and SP-SPCA on the Crime dataset. The results show that, at the same cumulative vari-ance explained, SP-SPCA consistently yields fewer nonzero loadings than SPCA, especially in the middle range of 40%–60% cumulative variance, where the gap is most pronounced. Specifically, to achieve 40% cumulative vari-ance, SPCA produces 123 nonzero loadings, while SP-SPCA requires only 59, nearly half. This sparsity advantage persists at 50% and 60% explained 20 variance, with SPCA having 220 and 432 nonzero loadings, respectively, com-pared to only 104 and 347 for SP-SPCA, reflecting a significant reduction in dimensional burden. This indicates that SP-SPCA is more efficient in model compression and variable selection, preserving essential explanatory power while substantially reducing redundancy and enhancing the interpretability and usability of the principal components. Furthermore, as the cumulative variance approaches 80%, the number of nonzero loadings between the two methods converges (both around 1,485), indicating that near-complete recovery requires nearly full loadings for both. However, in practical applications, researchers and analysts are typically more interested in the middle range, where a balance between parsimony and explanatory power is crucial. In these key regions, SP-SPCA’s demonstrated sparsity advantage and superior ability to capture principal component struc-tures highlight its superiority in sparse principal component analysis tasks. 
+
+4.2. S &P500 data 
+
+For the high-dimensional data analysis, we selected the S&P500 index and its constituent stocks’ closing prices from July 2023 to February 2024, resulting in a dataset with 150 observations and 503 variables, classifying it as high-dimensional. However, it is well known that stock prices typically follow a unit root process, exhibiting a random walk pattern over time, which leads to variance increasing with time. This violates the stationarity assumptions of classical statistical models and can distort the covariance matrix estimation in principal component analysis (PCA), causing SPCA to extract spurious factors. In contrast, log returns, defined as rt = ln( Pt/P t−1), generally sat-isfy weak stationarity (i.e., constant mean and variance over time) and are more suitable for time series modeling. Therefore, consistent with standard practices in financial research, we apply sparse principal component analysis (SPCA) on the log-return-transformed data. 
+
+> Table 9: Comparison of the total number of nonzero loadings under different cumulative variance explained levels for SPCA and SP-SPCA
+
+Variance 10% 20% 30% 40% 50% 60% 70% 80% SPCA 16 75 209 2187 6319 9852 12856 25150 SP-SPCA 16 52 152 2002 5721 9055 12103 25150 As shown in Figure 6, when the number of principal components reaches 21 Figure 6: Cumulative explanatory rate curves and gravel plots for the S&P500 data. 
+
+80, the cumulative variance explained by PCA reaches 85%, and the scree plot flattens beyond 80 components. However, considering sparsity, we chose to extract the top 50 principal components for further analysis. Meanwhile, we note that this dataset contains 503 variables, and with 50 principal compo-nents selected, the maximum possible number of nonzero loadings is 25,150. Consistent with the previous analysis, we compare the two methods based on the total number of nonzero loadings required to achieve the same cumu-lative variance explained. The number of principal components is determined using a combination of the classical scree plot and the PCA cumulative vari-ance explained curve. Notably, this dataset contains 503 variables, and with 50 principal components selected, the maximum possible number of nonzero loadings is 25,150. As shown in Table 9 and Figure 7, the empirical analysis on the high-dimensional S&P 500 financial dataset demonstrates the significant sparsity advantage of the SP-SPCA method. Specifically, within the 10%–70% cumu-lative variance explained range, SP-SPCA consistently yields fewer nonzero loadings than the traditional SPCA method, with relative reductions rang-ing from 17.3% to 27.3%. For example, at the 20% variance level, SP-SPCA produces 52 nonzero loadings compared to SPCA’s 75, a reduction of 30.7%. This gap is particularly pronounced at moderate explanation lev-els (40%–60%); for instance, at 50% cumulative variance, SP-SPCA’s 5,721 22 Figure 7: Comparison of results for the S&P500 data . 
+
+nonzero loadings are 9.5% fewer than SPCA’s 6,319, indicating that SP-SPCA more effectively eliminates redundant variable associations while pre-serving the main covariance structure. Additionally, in the low-variance phase ( < 30% ), SP-SPCA exhibits a steeper sparsity growth curve, with a slope 38.6% lower than SPCA in the 20%–30% interval, suggesting that it captures the same level of vari-ance using fewer variables. In the high-variance phase ( > 70% ), although both methods eventually converge to the same maximum number of load-ings (25,150), SP-SPCA’s convergence is more gradual, with a growth rate of 107.8% versus SPCA’s 95.7% in the 70%–80% interval, revealing its superior sparsity control even under high variance explanation demands. Overall, SP-SPCA achieves comparable or even better cumulative variance explanation with fewer nonzero loadings, making it more conducive to simplifying subse-quent analyses, improving model robustness, and enhancing feature selection and interpretability, thus providing a superior tool for high-dimensional data analysis. 23 5. Conclusion 
+
+Building upon the SPPCSO framework, this chapter proposes a single-parameter sparse principal component analysis method (SP-SPCA) and sys-tematically investigates its performance and advantages. Through extensive numerical simulations and empirical analyses on high-dimensional real-world datasets, the proposed SP-SPCA is comprehensively compared with the tra-ditional SPCA in terms of variable selection, information retention, and ro-bustness. In simulated settings with clear low-dimensional structures, the results show that SP-SPCA can accurately identify block structures of variables generated by different latent factors. While maintaining a high cumulative explained variance, SP-SPCA produces sparse loading representations that are more consistent with theoretical expectations. Compared with traditional SPCA, SP-SPCA demonstrates greater stability in avoiding the misselection of irrelevant or weakly correlated variables and effectively mitigates the loss of important information caused by excessive sparsification. In high-dimensional simulation experiments, as the number of variables, noise proportion, and latent factors gradually increase, the cumulative ex-plained variance of SPCA decreases significantly and exhibits considerable fluctuations. In contrast, SP-SPCA consistently maintains a higher and more stable explanatory capacity, indicating stronger robustness and generaliza-tion ability in high-dimensional noisy environments. These findings suggest that SP-SPCA provides a better balance between sparsity and information preservation, enabling more effective discrimination between signal variables and noise variables. Empirical analyses on the Crime dataset and the S&P500 high-dimensional financial dataset further support these observations. Under the same level of cumulative explained variance, SP-SPCA requires significantly fewer nonzero loadings than SPCA, with the difference being particularly pronounced in the moderate explanation range. This indicates that SP-SPCA can capture the primary covariance structure of the data with lower model complexity, thereby improving the interpretability and practical usability of the princi-pal components. Moreover, after stationarizing the financial time series, SP-SPCA continues to exhibit strong sparsity control and efficient information extraction, demonstrating its potential applicability in real high-dimensional data analysis. Overall, the results indicate that SP-SPCA outperforms traditional SPCA 24 in terms of variable selection accuracy, information retention, and robust-ness in high-dimensional settings. The proposed method therefore provides a more effective approach for principal component analysis that simultane-ously achieves dimensionality reduction and model interpretability in high-dimensional data scenarios. 
+
+6. Acknowledgments 
+
+This work is supported by the National Natural Science Foundation of China [Grant No. 12371281].The authors would like to express their sin-cere gratitude to the Associate Editor and the referees for their invaluable comments, which significantly contributed to enhancing the paper. 
+
+References 
+
+Tibshirani R. (1996). Regression shrinkage and selection via the Lasso. Jour-nal of the Royal Statistical Society, Series B , 58 , 267-288. Huang J., Ma S., Zhang C. (2008). Adaptive lasso for sparse high-dimensional regression models. Statistica Sinica , 18 , 1603-1618. Jia J.,Yu B. (2010). On model selection consistency of the elastic net when p ≫ n. Statist. Sinica , 20 , 595-611. Yang H.(1989). single-parametric principal component regression estima-tion(in Chinese). Journal of Applied Mathematics for Colleges and Uni-versities , 4, 74-80. Zou H., Hastie T. (2005). Regularization and variable selection via the elastic net. Journal of the Royal Statistical Society. Series B , 67 , 301-320. Zou H. (2006). The adaptive lasso and its oracle properties. Journal of the American Statistical Association , 101 , 1418-1429. Merola G.M., Chen G. (2019). Projection sparse principal component anal-ysis: An efficient least squares method. Journal of Multivariate Analysis ,
+
+173 , 366–382. Pearson, K. (1901). On lines and planes of closest fit to systems of points in space. Philosophical Magazine , 2, 559–572. 25 Jolliffe, I. (2002). Principal Component Analysis (2nd ed.). Springer, New York. Jeffers, J. (1967). Two case studies in the application of principal component. 
+
+Applied Statistics , 16 , 225–236. Cadima, J., Jolliffe, I. T. (1995). Loadings and correlations in the interpreta-tion of principal components. Journal of Applied Statistics , 22 (2), 203–214. Jolliffe, I. T., Trendafilov, N. T., Uddin, M. (2003). A modified principal component technique based on the LASSO. Journal of Computational and Graphical Statistics , 12 (3), 531–547. Zou H., Hastie T., Tibshirani R. (2006). Sparse principal component analysis. 
+
+Journal of Computational and Graphical Statistics , 15 (2), 265–286. d’Aspremont, A., El Ghaoui, L., Jordan, M. I., Lanckriet, G. R. G. (2007). A direct formulation for sparse PCA using semidefinite programming. SIAM Review , 49 (3), 434–448. Qi X., Luo R., Zhao H.(2013). Sparse principal component analysis by choice of norm. Journal of Multivariate Analysis , 115 , 127–160. Shen, H., & Huang, J. Z. (2008). Sparse principal component analysis via reg-ularized low rank matrix approximation. Journal of Multivariate Analysis ,
+
+99 (6), 1015–1034. Johnstone, I. M., & Lu, A. Y. (2009). On consistency and sparsity for prin-cipal components analysis in high dimensions. Journal of the American Statistical Association , 104 (486), 682–693. Moghaddam B., Weiss Y., Avidan S. (2006). Spectral bounds for sparse PCA: Exact and greedy algorithms. In Advances in Neural Information Process-ing Systems , MIT Press, Cambridge, MA, pp. 915–922. Wang Y., Wu Q. (2012). Sparse PCA by iterative elimination algorithm. 
+
+Advances in Computational Mathematics , 36 , 137–151. 26

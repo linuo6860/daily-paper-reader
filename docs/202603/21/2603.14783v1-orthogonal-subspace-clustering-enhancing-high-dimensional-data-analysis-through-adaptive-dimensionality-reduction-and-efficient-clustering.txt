@@ -1,0 +1,909 @@
+Title: Orthogonal Subspace Clustering: Enhancing High-Dimensional Data Analysis through Adaptive Dimensionality Reduction and Efficient Clustering
+
+URL Source: https://arxiv.org/pdf/2603.14783v1
+
+Published Time: Tue, 17 Mar 2026 02:57:19 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# Orthogonal Subspace Clustering: Enhancing High-Dimensional Data Analysis through Adaptive Dimensionality Reduction and Efficient Clustering 
+
+Qing-Yuan Wen, Da-Qing Zhang ∗
+
+> School of Science, University of Science and Technology Liaoning, Anshan, Liaoning Province, 114051, PR China
+
+Abstract 
+
+This paper presents Orthogonal Subspace Clustering (OSC), an innovative method for high-dimensional data clustering. We first establish a theoretical theorem proving that high-dimensional data can be decom-posed into orthogonal subspaces in a statistical sense, whose form exactly matches the paradigm of Q-type factor analysis. This theorem lays a solid mathematical foundation for dimensionality reduction via matrix decomposition and factor analysis. Based on this theorem, we propose the OSC framework to address the "curse of dimensionality"—a critical challenge that degrades clustering effectiveness due to sample sparsity and ineffective distance metrics. OSC integrates orthogonal subspace construction with classical clustering techniques, introducing a data-driven mechanism to select the subspace dimension based on cumulative variance contribution. This avoids manual selection biases while maximizing the retention of discriminative information. By projecting high-dimensional data into an uncorrelated, low-dimensional orthogonal sub-space, OSC significantly improves clustering efficiency, robustness, and accuracy. Extensive experiments on various benchmark datasets demonstrate the effectiveness of OSC, with thorough analysis of evaluation metrics including Cluster Accuracy (ACC), Normalized Mutual Information (NMI), and Adjusted Rand Index (ARI) highlighting its advantages over existing methods. 
+
+Keywords: Orthogonal subspaces, High-dimensional data, Cumulative variance, K-Means clustering 
+
+1. Introduction 
+
+The processing and analysis of high-dimensional data have become central topics in fields such as bioin-formatics, machine learning, and signal processing [1–3]. Data types like text, images, and gene sequences often possess tens of thousands to millions of features, leading to significant computational and storage bur-dens. Moreover, the "curse of dimensionality" due to sample sparsity causes traditional distance metrics to become ineffective, increases sensitivity to noise, and substantially degrades clustering performance. There-fore, employing effective dimensionality reduction techniques as a preprocessing step has become essential for enhancing clustering outcomes and uncovering latent structures in high-dimensional data. Existing dimensionality reduction methods can be broadly categorized into feature selection and fea-ture extraction. Feature selection reduces dimensionality by evaluating feature importance and selecting a discriminative subset, preserving the original semantics of the data. Techniques include weight allocation [4] or sparsity constraints [5], which have been successfully applied in clustering cancer microarray data by combining statistical measures with clustering algorithms [6]. Feature extraction, on the other hand, constructs new feature representations to capture deep-seated patterns in the data. Examples include clus-tering ensemble methods based on random projection and fuzzy C-means [7], supervised dimensionality reduction models that jointly learn projection matrices and neighborhood structures [8], and the P-SFCM approach integrating sparse fuzzy clustering with principal component analysis [9]. Additionally, methods   
+
+> ∗Corresponding author
+> Email address: d.q.zhang@ustl.edu.cn (Da-Qing Zhang)
+> arXiv:2603.14783v1 [cs.LG] 16 Mar 2026
+
+such as manifold learning (e.g., t-SNE, UMAP), neural network-based dimensionality reduction (e.g., au-toencoders), dictionary learning, generative models (e.g., VAEs), and tensor decomposition offer diverse tools for visualization and representation learning, addressing high-dimensional nonlinearity and structural complexity from different perspectives. Among these paradigms, subspace clustering methods have attracted sustained attention due to their ability to explicitly capture local structures within high-dimensional data. Unlike traditional clustering, subspace clustering assumes that data inherently reside in a union of low-dimensional subspaces. It improves clustering performance by learning local sparse representations or low-dimensional embeddings to construct affinity graphs [10–12]. These methods are particularly suitable for data with complex local structures or feature heterogeneity, such as image sets, document collections, and multi-view data. Their advantages include adaptability to the sparse nature of high-dimensional data by building sparse similarity matrices that suppress redundancy and noise; preservation of local geometric structures, with some methods balancing sparsity and connectivity in similarity graphs through criteria like "good neighbors" [13]; and effective mitigation of metric distortion caused by the curse of dimensionality by performing distance calculations in low-dimensional subspaces. However, traditional subspace clustering still faces two major challenges: first, the construction of similarity graphs and feature decomposition often involve high computational complexity, limiting scalability to large-scale datasets; second, subspace dimensions or parameters frequently rely on empirical settings, lacking data-adaptive mechanisms. This study makes two key contributions to high-dimensional data clustering: 1. Theoretical Foundation of Orthogonal Subspace Decomposition 
+
+We establish a rigorous theorem that proves high-dimensional data can be statistically decomposed into orthogonal subspaces, whose structural form is fully consistent with the paradigm of Q-type factor analysis. This theorem provides a solid mathematical basis for dimensionality reduction via matrix decomposition, validating the theoretical rationality of subsequent subspace-based operations. 2. Data-Driven Orthogonal Subspace Clustering (OSC) Framework 
+
+We propose an efficient OSC framework integrating orthogonal subspace construction with classical clustering techniques: 
+
+• A data-driven dimension selection mechanism that automatically determines the optimal sub-space dimension based on cumulative variance contribution, eliminating manual selection bias and maximizing the retention of discriminative information. 
+
+• A hybrid clustering pipeline that first projects high-dimensional data into an uncorrelated, low-dimensional orthogonal subspace, then performs clustering in this structured space. This ap-proach preserves the structural characteristics of subspace clustering while significantly improving computational efficiency, robustness, and clustering accuracy, providing a scalable and automated solution for high-dimensional data analysis. The remainder of this paper is structured as follows. Section 2 introduces the theoretical background and mathematical notation essential for understanding the OSC algorithm. Section 3 details the proposed OSC approach, including the correlation matrix decomposition process, cumulative variance evaluation, and the orthogonal subspace projection mechanism. Section 4 presents and discusses the experimental results, providing a comprehensive comparison of OSC with existing methods using various benchmark datasets. The evaluation metrics, including Cluster Accuracy (ACC), Normalized Mutual Information (NMI), and Adjusted Rand Index (ARI), are thoroughly analyzed to highlight the advantages of the OSC method. Finally, Section 5 concludes the paper by summarizing the key findings, discussing the limitations of the OSC method, and outlining directions for future research. 
+
+2. Related Work 
+
+K-Means, as a classic partitioning clustering algorithm, has wide applications in data mining and pattern recognition. The algorithm achieves data partitioning through iterative optimization of the sum of squared 2distances from samples to cluster centers. Its objective function is defined as: 
+
+min 
+
+> Ci
+> k
+
+X
+
+> i=1
+
+X
+
+> x∈Ci
+
+∥x − μi∥2
+
+where Ci represents the i-th cluster, and μi = 1
+
+> |Ci|
+
+P 
+
+> x∈Ci
+
+x is the centroid of the corresponding cluster. The algorithm’s iterative process consists of two alternating steps: first, each sample is assigned to the nearest centroid’s cluster, and second, the centroid position is updated based on the samples within the cluster, until the objective function converges or the maximum number of iterations is reached. The tendency of Euclidean distance to converge in high-dimensional spaces is a core challenge for K-Means. As the dimensionality increases, the variance of distances between samples gradually decreases, causing all samples to become uniformly distributed in the distance space. This phenomenon renders the clustering strategy based on nearest centroid assignment ineffective, as the differences in distances from samples to different centroids no longer provide sufficient discriminative power. From an information theory perspective, data points in high-dimensional spaces tend to be distributed near the vertices of a hypercube, with Euclidean distance primarily reflecting the number of dimensions rather than the intrinsic structure of the data. Additionally, the curse of dimensionality exacerbates data sparsity, making the boundaries of each cluster indistinct. In typical high-dimensional applications such as gene expression data in bioinformatics and term frequency vectors in text mining, directly applying K-Means to the original space often yields suboptimal or even incorrect clustering results. Matrix decomposition provides a solid mathematical foundation for dimensionality reduction of high-dimensional data. The singular value decomposition of a data matrix X ∈ RN ×p is represented as X =
+
+U ΣV ⊤, where U ∈ RN ×N and V ∈ Rp×p are orthogonal matrices, and Σ ∈ RN ×p is a diagonal matrix containing the singular values. This decomposition maps the data to a sample space spanned by the left singular vectors and a feature space spanned by the right singular vectors, essentially forming a geometric interpretation of second-order tensor decomposition. The core advantage of singular value decomposition lies in its optimal approximation property: for any rank r < rank (X), the truncated singular value decomposition 
+
+Ur Σr V ⊤ 
+
+> r
+
+is the best rank-r approximation of X in the Frobenius norm sense. This property provides a theoretical basis for dimensionality reduction, where the most data information is retained in the sense of minimal reconstruction error by preserving the subspace corresponding to the largest singular values. Singular value decomposition is deeply connected to factor analysis, which models observed data by introducing latent variables. The factor analysis model assumes that the original data can be decomposed into a linear combination of common factors and specific factors: 
+
+X − μ = F Λ⊤ + ε
+
+where F ∈ RN ×m is the common factor matrix, with its column vectors forming a set of orthogonal variables, i.e., F ⊤F = Im; Λ ∈ Rp×m is the factor loading matrix, describing the association strength between observed variables and common factors; and ε ∈ RN ×p is the specific factor matrix, representing the unique variance component of each observed variable. The model assumes that specific factors are mutually orthogonal, i.e., 
+
+εε ⊤ = Ψ is a diagonal matrix; and common factors are orthogonal to specific factors, i.e., F ⊤ε = 0 . These orthogonality assumptions not only simplify the model estimation process but also provide a clear statistical interpretation: common factors reflect the shared variance among multiple observed variables, while specific factors represent the unique information of each variable. Estimating the factor loading matrix Λ is the core problem of factor analysis. Traditional methods include the principal axis factoring method, maximum likelihood estimation, and iterative principal axis factoring. Among these, maximum likelihood estimation has asymptotic optimality under the normality assumption, while the principal axis factoring method is more suitable for non-normal data. Although both factor analysis and principal component analysis are dimensionality reduction methods, they have fundamental differences. Principal component analysis is a purely geometric transformation aimed at maximizing the variance of the data after projection, with components strictly orthogonal but without statistical model assumptions. In contrast, factor analysis is a statistical modeling method that 3explicitly assumes the existence of latent factors driving the variation in observed variables. In terms of estimation objectives, principal component analysis directly obtains component directions through singular value decomposition, while factor analysis requires iterative estimation of the loading matrix and specific variances. In terms of interpretability, the factor loadings of factor analysis have clear variable association meanings, whereas principal components merely represent the directions of maximum variance in the data. In practical applications, when researchers focus on the association structure between variables, factor analysis is more appropriate; when the goal is simply data compression or visualization, principal component analysis is more direct and efficient. This equivalence reveals the deep intrinsic connection between matrix decomposition and statistical modeling, laying a solid theoretical foundation for dimensionality reduction methods based on sample correlation structures. 
+
+3. Methodology 
+
+To address the limitations of traditional subspace clustering methods and enhance their applicability to high-dimensional data, we propose the Orthogonal Subspace Clustering (OSC) framework. This section details the theoretical foundations and methodological innovations of OSC, including the correlation matrix decomposition process, cumulative variance evaluation, and the orthogonal subspace projection mechanism. Consider the data matrix X = ( xij ) ∈ RN ×p, where N represents the sample size and p denotes the number of attributes. The matrix X encapsulates the high-dimensional data that we aim to cluster. To standardize the data and eliminate the mean effect, we define the centered data matrix X⊤ 
+
+> c
+
+= X⊤ − 1pμ⊤,where 1p is a column vector of ones with length p, and μ is the mean of each row of X. The mean μ is calculated as: 
+
+μ = ( μ1, μ 2, . . . , μ N )⊤
+
+where 
+
+μk = 1
+
+p
+
+> p
+
+X
+
+> j=1
+
+xk,j 
+
+for each row k. This centering process ensures that the subsequent analyses are based on the deviations of the data points from their respective means, thereby enhancing the robustness of the clustering algorithm. Let Y = X⊤ 
+
+> c
+
+, which represents the transposed and centered data matrix. The theoretical foundation for OSC is established by Theorem 1, which describes the conditions under which the observed data matrix 
+
+Y can be decomposed into a union of low-dimensional subspaces. This theorem provides the necessary mathematical framework to support the OSC method’s effectiveness in capturing the underlying structure of high-dimensional data. 
+
+Theorem 1 (Multi-Distribution Heteroscedastic Subspace Statistical Orthogonality). 
+
+Let the observation data matrix Y = [ y1, . . . , y N ] ∈ Rp×N have column vectors satisfying the following conditions: the samples are partitioned into k disjoint clusters C1, . . . , C k with |Ci| = Ni and Pki=1 Ni = N .For each cluster Ci, there exists a fixed mi-dimensional linear subspace Si ⊂ Rp such that when j ∈ Ci,
+
+yj = zj + ej , where the signal component zj ∈ S i and the noise component ej ∼ N (0 , σ 2 
+
+> i
+
+Ip). Assume that the signal vectors {zj }j∈Ci are independently and identically distributed on Si with covariance matrices having minimum eigenvalues λmin ≥ ci > 0; the noise vectors {ej } are mutually independent and independent of the signals; the subspaces are separated with min i̸=j ∥Pi −Pj ∥2 ≥ δ > 0, where Pi is the orthogonal projection matrix of Si; and the noise variances are bounded with max i σ2 
+
+> i
+
+≤ σ2max < ∞ and the noise energy satisfies 
+
+∥E∥F ≪ ∥ Z∥F .Let munion = dim(span( ∪ki=1 Si)) and take m ≥ munion . Let bUm be the matrix formed by the first m left singular vectors of Y in its singular value decomposition, and define the residual matrix bε = Y − bUm bU ⊤ 
+
+> m
+
+Y .Then: bU ⊤ 
+
+> m
+
+bUm = Im, bU ⊤ 
+
+> m
+
+bε = 0 m×N ,
+
+and the residual covariance matrix satisfies 
+
+E[bε⊤ bε] = block-diag  σ21 (p − m1)IN1 , . . . , σ 2
+
+> k
+
+(p − mk)INk
+
+ + ∆ N ,
+
+4where the error matrix ∆N satisfies: ∆N (a, b ) = 0 when samples a, b belong to different clusters; |∆N (a, b )| ≤ 
+
+Cσ 2max /(δ√N ) when a̸ = b belong to the same cluster Ci; and its Frobenius norm satisfies ∥∆N ∥F =
+
+O(σ2max /(δ√N )) .
+
+Proof. Let Y = U ΣV ⊤ be the compact singular value decomposition, where U ∈ Rp×r has orthonormal columns and r = rank( Y ). By bUm = U (: , 1 : m) and the orthonormality of U , we directly obtain bU ⊤ 
+
+> m
+
+bUm =
+
+Im. By the definition of the residual: 
+
+bU ⊤ 
+
+> m
+
+bε = bU ⊤ 
+
+> m
+
+(Y − bUm bU ⊤ 
+
+> m
+
+Y ) = 0 ,
+
+which proves the first two conclusions. To prove the third conclusion, let Sunion = span( ∪ki=1 Si), Uunion be its orthonormal basis, and Punion =
+
+Uunion U ⊤ 
+
+> union
+
+be the projection matrix. 
+
+In the ideal case , the residual is: 
+
+ε = ( Ip − Punion )E, 
+
+since Si ⊆ S union implies Punion Z = Z. By the projection property, for j ∈ Ci we have (Ip − Punion )ej =(Ip − Pi)ej . Calculating the expectations yields: 
+
+• For same-cluster samples: E[∥ε·j ∥22] = σ2 
+
+> i
+
+(p − mi)
+
+• For different samples within the same cluster: E[ε⊤·j ε·l] = 0 
+
+• For samples from different clusters: E[ε⊤·j ε·l] = 0 
+
+Thus, E[ε⊤ε] = block-diag  σ21 (p − m1)IN1 , . . . , σ 2
+
+> k
+
+(p − mk)INk
+
+.
+
+In the actual case , the residual decomposes as: 
+
+bε = ( Ip − Punion )E + ( Punion − bPm)Z + ( Punion − bPm)E, 
+
+where bPm = bUm bU ⊤ 
+
+> m
+
+. By the Davis-Kahan theorem: 
+
+∥ bPm − Punion ∥F = Op(σmax /(δ√N )) .
+
+The residual covariance expectation is: 
+
+E[bε⊤ bε] = E[ε⊤ε] + E[ε⊤∆ + ∆ ⊤ε] + E[∆ ⊤∆] ,
+
+where ∆ = ( Punion − bPm)( Z + E). By the Cauchy-Schwarz inequality: 
+
+∥E[ε⊤∆] ∥F = O(σ2max /(δ√N )) , E[∥∆⊤∆∥F ] = O(σ2max /(δ2N )) .
+
+The expectations of residuals from different clusters are zero, and the off-diagonal elements within the same cluster are O(σ2max /(δ√N )) , ensuring the error matrix ∆N meets the theorem’s requirements. □
+
+Theorem 1 establishes that the singular value decomposition of the transposed centered data matrix 
+
+Y = X⊤ 
+
+> c
+
+D−1 yields a residual structure consistent with the factor analysis model in Section 2. Assuming Y
+
+satisfies the conditions of Theorem 1, this theoretical alignment motivates our adoption of factor analysis for dimensionality reduction within the Orthogonal Subspace Clustering (OSC) framework. The factor model is expressed as: 
+
+Y = X⊤ 
+
+> c
+
+D−1 = F A ⊤ 
+
+> m
+
++ ε
+
+where F ∈ Rp×m denotes the factor score matrix, Am ∈ RN ×m the factor loading matrix, and ε the specific factor matrix. We impose the following orthogonality assumptions on the model: 1. The columns of F are mutually orthogonal unit vectors, i.e., F ⊤F = Im. 2. The factor scores F are orthogonal to the specific factors ε, i.e., F ⊤ε = 0. 3. The specific factors ε have uncorrelated columns, i.e., ε⊤ε is diagonal. 5The focus of this model is the calculation of the factor loading matrix Am. We need to address two key problems: 1) estimating the parameter m, and 2) estimating the factor loading matrix itself. As mentioned in Section 2, there are three methods for calculating the loading matrix. Here, we adopt the principal axis factoring method. The steps are as follows: 1. Calculate the sample correlation matrix Rsamples = D−1XcX⊤ 
+
+> c
+
+D−1 and perform its spectral decom-position: 
+
+Rsamples = U ΛU ⊤
+
+where U is the matrix of orthogonal eigenvectors and Λ is the diagonal matrix of ordered eigenvalues. 2. Determine the number of factors m using the cumulative variance contribution rate: 
+
+θ(m) = 
+
+Pmi=1 λi
+
+PNi=1 λi
+
+The smallest m satisfying θ(m) ≥ θ0 (typically 0.85 or 0.90) is selected, ensuring sufficient discriminative information retention while avoiding manual parameter setting. 3. Express the sample correlation matrix in the form: 
+
+Rsamples = ( F A ⊤ 
+
+> m
+
++ ε)⊤(F A ⊤ 
+
+> m
+
++ ε)
+
+Expanding this expression and utilizing the orthogonality assumptions, we obtain: 
+
+Rsamples = AmA⊤ 
+
+> m
+
++ Ψ 
+
+where Am = U (: , 1 : m)Λ 1/21: m and Ψ is the diagonal matrix of specific variances. When the influence of specific factors is negligible ( ε ≈ 0), we have: 
+
+Rsamples ≈ AmA⊤
+
+> m
+
+This approximation allows us to estimate the factor loading matrix Am from the spectral decomposition of 
+
+Rsamples .Having obtained the loading matrix, we can express X⊤ 
+
+> c
+
+as: 
+
+X⊤ 
+
+> c
+
+= F A ⊤
+
+> m
+
+D
+
+This equation demonstrates that the column vectors of X⊤ 
+
+> c
+
+(the centered samples) can be approximately represented as linear combinations of the orthogonal subspace basis vectors F . The factor loading matrix 
+
+DA m ∈ RN ×m contains the coordinates of each centered sample in the orthogonal subspace span {F }.This completes the dimensionality reduction process, mapping the original p-dimensional samples to m-dimensional coordinate vectors. The transformation effectively projects high-dimensional data into a lower-dimensional orthogonal subspace while preserving essential structural information. This projection not only reduces computational complexity but also enhances the interpretability and effectiveness of subsequent analyses, particularly in clustering applications. The K-Means clustering algorithm will then be applied to the matrix DA m, which represents the samples in the reduced m-dimensional orthogonal subspace. This application achieves the clustering objective by grouping similar samples together in the lower-dimensional space. The use of the orthogonal subspace ensures that the distance metrics used in K-Means are more reliable and meaningful, thereby improving the overall clustering performance. Algorithm 1 outlines the steps for estimating the number of factors m and the factor loading matrix Am.This algorithm provides a systematic approach to dimensionality reduction, ensuring that the underlying structure of the high-dimensional data is preserved. The OSC method leverages the structural properties of the underlying subspaces to enable efficient and accurate clustering of high-dimensional data. By integrating orthogonal subspace construction with classical clustering techniques, OSC addresses the challenges of high computational complexity and the need for data-adaptive mechanisms. The method’s innovations include a data-driven mechanism for selecting the dimension of the orthogonal subspace and a clustering framework that fuses orthogonal subspace projection with K-Means. These advancements ensure computational efficiency and significantly improve clustering robustness and accuracy. 6Algorithm 1: Orthogonal Subspace Clustering with Factor Analysis 
+
+Input: Raw data matrix X = ( xij ) ∈ RN ×p; Threshold for cumulative variance contribution rate θ0
+
+(typically between 0.7 and 0.9) 
+
+Output: Cluster assignments for the samples 
+
+// Initialize cluster assignments  
+
+> 1
+
+cluster_assignments ← None 
+
+// Data Preprocessing  
+
+> 2
+
+for k ← 1 to N do  
+
+> 3
+
+μk ← 1
+
+> p
+
+Ppj=1 xkj  
+
+> 4
+
+μ ← (μ1, μ 2, . . . , μ N )⊤ ∈ RN 
+
+> 5
+
+for k ← 1 to N do  
+
+> 6
+
+σk ←
+
+q 1
+
+> p−1
+
+Ppj=1 (xkj − μk)2 
+
+> 7
+
+D ← diag (σ1, σ 2, . . . , σ N ) ∈ RN ×N 
+
+> 8
+
+X⊤ 
+
+> c
+
+← X⊤ − 1N μ⊤ 
+
+> 9
+
+Rsamples ← D−1XcX⊤ 
+
+> c
+
+D−1
+
+// Spectral Decomposition  
+
+> 10
+
+Rsamples ← U ΛU ⊤
+
+// Determine Number of Factors  
+
+> 11
+
+for m ← 1 to N do  
+
+> 12
+
+θ(m) ←   
+
+> Pmi=1 λi
+> PNi=1 λi
+> 13
+
+if θ(m) ≥ θ0 then  
+
+> 14
+
+return m
+
+// Estimate Factor Loading Matrix  
+
+> 15
+
+Am ← U (: , 1 : m)Λ 1/21: m
+
+// Clustering  
+
+> 16
+
+cluster_assignments ← K-Means (DA m) 
+
+> 17
+
+return cluster_assignments 
+
+74. Experiments and Results Analysis 
+
+4.1. Experimental Setup 4.1.1. Dataset 
+
+This paper evaluates the proposed method using nine real high-dimensional datasets, including the image datasets ORL [14], Jaffe [15], MNIST [16], Coil20 [17], Yale [18], CASIA-FaceV5 [19], and biological gene datasets bladderGSE89 [20], gastricGSE2685 [21], and MLL [22]. Table 1 provides basic statistical information for the nine datasets, whereas Figure 1 shows representative samples from the six picture datasets. 2000 samples from the MNIST dataset and 4500 samples from 100 categories in the CASIA-FaceV5 dataset were randomly picked in order to manage computational complexity for comparative tests.                                         
+
+> Figure 1: Representative samples from six image datasets (from left to right): ORL, Jaffe, MNIST, Coil20, Yale, and CASIA-FaceV5 Table 1: Real-world datasets description
+> Data Sample Size Features True Categories Source ORL 400 92 ×112 40 Cambridge University AT&T Lab Jaffe 212 256 ×256 10 JAFFE Face Database MNIST 2000 28 ×28 10 LeCun MNIST Database Coil20 1440 128 ×128 20 Columbia University COIL-20 Yale 165 320 ×243 15 Yale Face Database CASIA-FaceV5 4500 640 ×480 100 CASIA Face Database bladderGSE89 40 5724 3GEO: GSE89 gastricGSE2685 30 4522 2GEO: GSE2685 MLL 72 12533 3UCI Machine Learning Repository
+
+4.1.2. Cluster evaluation metrics 
+
+We used three metrics—Normalized Mutual Information (NMI), Cluster Accuracy (ACC), and Adjusted Rand Index (ARI)—to assess the clustering quality produced by each technique. After determining the best mapping link between cluster labels and true labels, ACC computes the percentage of correctly classified samples. It gauges how closely clustering results match actual labels. 
+
+ACC =
+
+Pni=1 δ(ri; map (ci)) 
+
+n , δ(x, y ) = 
+
+(
+
+1 if x = y
+
+0 otherwise (1) In this case, ri and ci represent the true label and the obtained label for the data point xi, respectively. The Hungarian algorithm’s optimal redistribution is represented by map. The correlation between data distributions is measured via mutual information. Stronger correlation is indicated by higher mutual information. The joint distribution of random samples (x, y ) is p(x, y ), whereas the marginal distributions of samples x and y, respectively, are p(x) and p(y). The relative entropy between the joint distribution p(x, y ) and the marginal distributions p(x)p(y) is represented by the mutual information 
+
+R(X; Y ). Normalization is used to obtain the Normalized Mutual Information (NMI), which varies from 
+
+[0 , 1] , in order to reduce bias brought on by information inflation. Its basic idea is to use information entropy to measure how much information about one variable is contained in another. 8R(X; Y ) = X
+
+> x∈X
+
+X
+
+> y∈Y
+
+p(x, y ) log p(x, y )
+
+p(x)p(y) (2) 
+
+NMI = R(X; Y )
+
+pH(X)H(Y ) (3) In this case, information entropy is represented by H(X) = − P 
+
+> i
+
+p(xi) log p(xi) and H(Y ) = − P 
+
+> j
+
+p(yj ) log p(yj ).A statistic called ARI is used to assess how closely clustering results match actual labels. It provides a more trustworthy evaluation of clustering model performance by addressing the problem of the Rand coefficient AR scoring unduly high in random partitions by introducing an expectation correction for random clustering. 
+
+ARI = RI − E[RI ]max( RI ) − E[RI ] (4) The Rand coefficient is RI = a+da+b+c+d . The number of sample pairs that fall into the same category in both the clustered labels G and the true labels T is indicated by a. The number of samples that fall into the same category in T but different categories in G is indicated by b, and the number of samples that fall into different categories in T but the same category in G is shown by c. The number of samples in T and G that fall into distinct categories is represented by d.
+
+4.2. Experimental Results 
+
+This paper compares the performance of the proposed OSC algorithm with four existing approaches: Sparse Subspace Clustering (SSC)[10], Low-Rank Representation (LRR)[11], Factor K-Means (FKM)[23], and Reduced-Dimension K-Means (RKM)[24]. Nine real-world datasets were used for the experiments, and parameter adjustment was used to guarantee fair comparisons: The optimal parameter values for the SSC algorithm were selected from the set {5, 10 , 20 , 50 , 80 , 100 , 200 , 500 , 800 }. The LRR algorithm was tuned within the range {0.001 , 0.01 , 0.02 , 0.05 , 0.1, 0.2, 1, 2, 5}. FKM and RKM required no hyperparameter tuning. The experimental findings are displayed in tabular form, with columns indicating evaluation metrics for each comparison approach and rows representing various datasets. The best outcomes are indicated in bold.                                                   
+
+> Table 2: Algorithm Comparison on ACC
+> Datasets SSC LRR FKM RKM OSC ORL 0.817 0.705 0.573 0.608 0.865
+> Jaffe 0.925 0.735 0.755 0.715 0.940
+> MNIST 0.656 0.628 0.547 0.519 0.589 Coil20 0.684 0.649 0.603 0.476 0.792
+> yale 0.775 0.721 0.570 0.624 0.778
+> CASIA-FaceV5 0.600 0.560 0.530 0.440 0.684
+> bladderGSE89 0.550 0.600 0.675 0.625 0.825
+> gastricGSE2685 0.767 0.900 0.900 0.920 0.963
+> MLL 0.805 0.611 0.639 0.653 0.847
+
+Experimental results from three evaluation metrics—clustering accuracy (ACC), normalized mutual in-formation (NMI), and adjusted kappa (ARI)—show that the proposed method performs better than compar-ative algorithms on most image datasets (ORL, Jaffe, MNIST, Coil20, Yale, CASIA-FaceV5) and biomedical datasets (bladderGSE89, gastricGSE2685, MLL). This demonstrates its effectiveness for high-dimensional grouping tasks. The ACC metric quantifies the consistency between true labels and clustering outcomes. With an ACC of 0.865 on the ORL dataset, our method performs better than SSC (0.817), LRR (0.705), FKM (0.573), and RKM (0.608), as shown in Table 2. With an ACC of 0.940, the proposed method significantly outperforms other algorithms on the Jaffe dataset. Furthermore, it still has a clear advantage on datasets like Coil20, 9bladderGSE89, gastricGSE2685, and MLL. On the MNIST dataset, the recommended method only yields an ACC of 0.589, which is slightly lower than that of other comparison methods.                                                   
+
+> Table 3: Algorithm Comparison on NMI
+> Datasets SSC LRR FKM RKM OSC ORL 0.906 0.824 0.800 0.817 0.931
+> Jaffe 0.937 0.840 0.843 0.826 0.944
+> MNIST 0.648 0.529 0.497 0.502 0.531 Coil20 0.864 0.750 0.726 0.688 0.843 yale 0.785 0.758 0.690 0.735 0.797
+> CASIA-FaceV5 0.761 0.732 0.737 0.690 0.880
+> bladderGSE89 0.519 0.455 0.452 0.378 0.646
+> gastricGSE2685 0.401 0.532 0.459 0.649 0.732
+> MLL 0.545 0.483 0.408 0.390 0.654
+
+NMI is used to evaluate how well clustering results correspond to actual categories at the information level. The recommended method performs better on the ORL dataset with an NMI value of 0.931 than SSC (0.906) and LRR (0.824), as shown in Table 3. The Jaffe dataset’s clustering results, as indicated by the NMI of 0.944, demonstrate a highly consistent information structure with the true categories. With an NMI of 0.646—much higher than the optimal comparison algorithm SSC (0.519)—our method successfully detected intra-class compactness and inter-class separation in the bladderGSE89 dataset. Additionally, the proposed method demonstrated improved correlation collecting capabilities for datasets like as CASIA-FaceV5 and gastricGSE2685. Only on the MNIST and Coil20 datasets were the NMI values of the proposed technique slightly lower than those of the comparator methods.                                                   
+
+> Table 4: Algorithm Comparison on ARI
+> Datasets SSC LRR FKM RKM OSC ORL 0.732 0.457 0.470 0.507 0.816
+> Jaffe 0.962 0.672 0.664 0.640 0.965
+> MNIST 0.516 0.412 0.478 0.471 0.475 Coil20 0.624 0.499 0.495 0.446 0.722
+> yale 0.625 0.587 0.457 0.519 0.671
+> CASIA-FaceV5 0.771 0.452 0.452 0.459 0.552 bladderGSE89 0.353 0.405 0.398 0.341 0.658
+> gastricGSE2685 0.514 0.595 0.608 0.725 0.891
+> MLL 0.522 0.447 0.359 0.353 0.541
+
+ARI evaluates the degree of consistency between clustering results and true labels while taking random clustering effects into consideration. The recommended method produces an ARI of 0.816 on the ORL dataset, significantly higher than SSC (0.732) and LRR (0.457), as shown in Table 4. The gastric GSE2685 dataset had an ARI of 0.891, which was also a significant improvement over other algorithms; the bladder GSE89 dataset had an ARI of 0.858, while the optimal comparison algorithm LRR only reached 0.405; and the Jaffe dataset had an ARI of 0.658, which was nearly perfect agreement. 
+
+4.3. Experimental Analysis 4.3.1. Sensitivity analysis of OSC algorithms’ subspace dimensions 
+
+The cumulative variance explanation rate determines the subspace dimension, or the number of variables. Cumulative variance explanation rate thresholds of 0.70, 0.75, 0.80, 0.85, and 0.90 were established in order to examine the effect of this dimension on clustering performance. ACC was used as the assessment metric to analyze clustering efficacy under various thresholds; the findings are displayed in Figure 2. cumulative 10 variance explanation rate criteria, which show the percentage of variance kept after dimensionality reduction in relation to the initial total variance, are represented on the horizontal axis. Values closer to 1 imply better clustering performance. The vertical axis represents clustering accuracy, which measures the consistency between clustering results and true labels. Significant variations in the ACC performance of different datasets under cumulative variance explanation rate criteria are seen in Figure 2. As the threshold increases from 0.70 to 0.80, the ORL dataset shows a growing trend in ACC, reaching optimal performance at threshold 0.80 (equivalent to subspace dimension 30). Retaining 80% of the variance is adequate for successful feature extraction in this dataset, whereas higher proportions introduce redundant information, as further raising the threshold deteriorates performance. At threshold 0.80 (dimension 28), where discriminative information is fully retrieved, the Jaffe dataset performs at its best. The MNIST dataset shows a constant increase in ACC with increasing thresholds, culminating at 0.85 (dimension 10), due to the intricacy of handwritten digit features, necessitating a greater variance retention rate to capture feature details. Peak ACC is reached by the Coil20 dataset at a threshold of 0.80 (dimension 10). As the threshold rises from 0.70 to 0.80, category-distinguishing variance is successfully maintained. Performance stabilizes or slightly declines beyond 0.80 as the impact of additional variation decreases. At threshold 0.80 (dimensions 18 and 46, respectively), which already includes enough facial identification features, both the Yale and CASIA-FaceV5 datasets perform at their best. At threshold 0.85 (dimension 21), the gastricGSE2685 dataset performs at its best. At a threshold of 0.75 (dimensions 33 and 26, respectively), the MLL and bladderGSE89 datasets perform optimally, suggesting that 75% cumulative variance explanation already provides adequate categorical information. Clustering judgments may be hampered by irrelevant variance introduced by overly high criteria. In conclusion, optimal clustering efficiency is attained at different subspace dimensions (defined by cumu-lative variance explanation) due to variations in feature complexity and category information distribution across datasets. The majority of facial datasets (ORL, Jaffe, Yale, CASIA-FaceV5) and object datasets (Coil20) cluster at 0.80. The complex image and the biological datasets (MNIST, gastricGSE2685) necessi-tate raising the threshold to 0.85; some datasets (bladderGSE89, MLL) perform best at a threshold of 0.75. These findings support the usefulness of using cumulative variance explanation rate to determine subspace dimensions, which serves as a foundation for parameter selection in clustering tasks involving a variety of datasets. 
+
+4.3.2. Algorithm performance comparison across different sample sizes 
+
+Clustering tests were performed on the ORL dataset (40 categories overall) utilizing samples from n =2, 4, 7, 15 , and 30 categories, respectively, in order to assess the algorithm’s robustness across sample sizes. The mean and standard deviation of ACC and NMI were recorded after 20 repetitions of each setting. Tables 5 and 6 display the results. "Mean" and "SD" stand for the mean and standard deviation, respectively, in the tables.                                                              
+
+> Table 5: ACC Performance on the ORL Dataset across Sample Sizes
+> Number of Subjects Metric SSC LRR FKM RKM OSC 2 subjects mean 1.000 0.870 0.940 0.960 1.000
+> SD 0.000 0.000 0.094 0.075 0.000
+> 4 subjects mean 0.975 0.851 0.831 0.880 1.000
+> SD 0.000 0.005 0.141 0.146 0.000
+> 7 subjects mean 0.957 0.841 0.661 0.718 0.998
+> SD 0.000 0.005 0.105 0.107 0.006 15 subjects mean 0.862 0.839 0.656 0.659 0.878
+> SD 0.028 0.014 0.072 0.044 0.027 30 subjects mean 0.851 0.824 0.617 0.629 0.865
+> SD 0.003 0.023 0.043 0.048 0.024
+
+In terms of clustering accuracy (ACC), Table 5 demonstrates that when the sample size is modest 11 0.70 0.75 0.80 0.85 0.90 
+
+Cumulative Explained Variance Threshold 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> ACC
+
+Clustering ACC of ORL     
+
+> ACC 0.70 0.75 0.80 0.85 0.90
+
+Cumulative Explained Variance Threshold 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> ACC
+
+Clustering ACC of Jaffe     
+
+> ACC 0.70 0.75 0.80 0.85 0.90
+
+Cumulative Explained Variance Threshold 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> ACC
+
+Clustering ACC of MNIST     
+
+> ACC 0.70 0.75 0.80 0.85 0.90
+
+Cumulative Explained Variance Threshold 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> ACC
+
+Clustering ACC of Coil20     
+
+> ACC 0.70 0.75 0.80 0.85 0.90
+
+Cumulative Explained Variance Threshold 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> ACC
+
+Clustering ACC of CASIA-FaceV5     
+
+> ACC 0.70 0.75 0.80 0.85 0.90
+
+Cumulative Explained Variance Threshold 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> ACC
+
+Clustering ACC of yale     
+
+> ACC 0.70 0.75 0.80 0.85 0.90
+
+Cumulative Explained Variance Threshold 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> ACC
+
+Clustering ACC of gastricGSE2685     
+
+> ACC 0.70 0.75 0.80 0.85 0.90
+
+Cumulative Explained Variance Threshold 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> ACC
+
+Clustering ACC of MLL     
+
+> ACC 0.70 0.75 0.80 0.85 0.90
+
+Cumulative Explained Variance Threshold 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> ACC
+
+Clustering ACC of bladderGSE89 
+
+> ACC
+
+Figure 2: ACC Comparison Across Datasets at Variance Thresholds 
+
+12 (n = 2 , 4, 7), the OSC algorithm performs near or around 1.000, greatly beating comparator algorithms like SSC, LRR, FKM, and RKM. In particular, the OSC method attains an average ACC of 1.000 for n = 2 ,which is greater than LRR (0.870), FKM (0.940), and RKM (0.960) but comparable to SSC (1.000). The OSC algorithm outperforms SSC (0.975) and LRR (0.851) when n = 4 , maintaining an ACC of 1.000. Every algorithm shows performance decrease as the sample size grows to n = 15 and 30 . However, the OSC method shows better scalability by maintaining the highest mean values (0.878 and 0.865, respectively). The OSC method typically shows lower standard deviation values, indicating improved stability.                                                              
+
+> Table 6: NMI Performance on the ORL Dataset across Sample Sizes
+> Number of Subjects Metric SSC LRR FKM RKM OSC 2 subjects mean 1.000 0.881 0.839 0.871 1.000
+> SD 0.000 0.000 0.259 0.221 0.000
+> 4 subjects mean 0.940 0.860 0.817 0.862 1.000
+> SD 0.039 0.000 0.110 0.141 0.000
+> 7 subjects mean 0.927 0.822 0.817 0.818 0.998
+> SD 0.037 0.009 0.072 0.064 0.008 15 subjects mean 0.963 0.898 0.810 0.801 0.933 SD 0.018 0.012 0.044 0.034 0.014 30 subjects mean 0.911 0.887 0.769 0.795 0.928
+> SD 0.009 0.008 0.023 0.019 0.009
+
+In terms of the normalized mutual information (NMI) metric, Table 6 demonstrates that the OSC algorithm outperforms other comparison algorithms, achieving an NMI mean of 1.000 for smaller sample sizes ( n = 2 , 4). In particular, the SSC method produces an NMI mean of 1.000 when n = 2 , but LRR produces 0.881 and FKM 0.839. The suggested approach achieves an NMI mean of 1.000 when n = 4 ,exceeding SSC (0.940). All algorithms’ NMI values typically drop with increasing sample size. Nonetheless, the suggested approach retains the greatest values for n = 7 and n = 30 (0.998 and 0.928, respectively), demonstrating its capacity to successfully detect cluster structures across a range of sample sizes. Significant drops in the NMI mean and higher standard deviations were observed in the FKM and RKM algorithms, suggesting comparatively lower stability. In contrast, the proposed method demonstrated smaller standard deviations and more stable clustering performance. Overall, all algorithms’ clustering performance decreases with increasing sample size. Nonetheless, the approach presented in this study exhibits exceptional stability and scalability, maintaining ideal or nearly optimal ACC and NMI values in the majority of cases with minor result changes. 
+
+4.3.3. Analysis of OSC algorithm convergence speed 
+
+To verify the convergence of the proposed OSC algorithm, convergence curves depicting the objective function value versus iteration count were plotted on the ORL, Coil20, Yale, and CASIA-FaceV5 datasets. The ORL dataset converges quickly, as seen in Figure 3, where the objective function value significantly decreases and stabilizes after four rounds. The Yale dataset similarly experiences a descent from high to low values, with a notable drop early on followed by stabilization, converging to a steady state after 14 iterations; the Coil20 dataset shows a gradual decline in objective function values, with a rapid decrease initially slowing down later, ultimately stabilizing after 22 iterations; The objective function value of the CASIA-FaceV5 dataset is high in the early iterations before rapidly declining. After just three rounds, it converges to a stable number that doesn’t significantly fluctuate in subsequent iterations. The OSC algorithm presented in this study converges quickly on a variety of high-dimensional datasets, according to a thorough investigation, and the objective function value stays constant after convergence. This provides effective computational assurance for real-world clustering applications and supports the algorithm’s strong convergence features. 13 0 5 10 15 20 25 30 35 40 
+
+Number of Iteration         
+
+> 17.4
+> 17.6
+> 17.8
+> 18.0
+> 18.2
+> 18.4
+> Objective Function Value  ORL 010 20 30 40 50 60 70 80
+
+Number of Iteration           
+
+> 7500
+> 7860
+> 8220
+> 8580
+> 8940
+> 9300
+> Objective Function Value  Coil20 0510 15 20 25 30 35 40 45 50
+
+Number of Iteration         
+
+> 1.0184
+> 1.1124
+> 1.2065
+> 1.3005
+> 1.3945
+> 1.4885
+> Objective Function Value  1e8
+> Yale 010 20 30 40 50 60 70 80
+
+Number of Iteration 
+
+> 1020
+> 1026
+> 1032
+> 1038
+> 1044
+> 1050
+> Objective Function Value  CASIA-FaceV5 Figure 3: Convergence Speed of the OSC Algorithm across Datasets
+
+4.3.4. Comparison examination of algorithm computational efficiency 
+
+To evaluate the temporal efficiency of different algorithms, the average computation time of the LRR, SSC, FKM, RKM, and OSC algorithms was compared on nine datasets, namely bladderGSE89, CASIA-FaceV5, Coil20, gastricGSE2685, Jaffe, MLL, MNIST, ORL, and Yale. The comparison results are presented in Figure 4, and the sample sizes corresponding to each dataset are given in Equation (5).The sample sizes for the nine datasets are configured according to s1, s 2, s 3, s 4, s 5, s 6, s 7, s 8, s 9 in Equation (5). 
+
+s1 = {2, 4, 7, 15 , 30 }, s2 = {2, 3, 5, 8, 10 }, s3 = {2, 3, 4, 5, 6},s4 = {2, 3, 5, 8, 10 }, s5 = {2, 4, 7, 10 , 15 }, s6 = {20 , 40 , 60 , 80 , 100 },s7 = {1, 2, 3}, s8 = {1, 2}, s9 = {1, 2, 3}
+
+(5) The SSC algorithm has a substantially longer processing time than other methods, as the figure illustrates. The reason behind this is that SSC necessitates calculating the ℓ1 norm minimization problem for every data point, usually using iterative algorithms like AML or ADMM, whose computational cost increases dramatically with problem magnitude. On the other hand, LRR solves a kernel norm minimization issue that can be effectively solved via singular value thresholding and frequently admits closed-form solutions. Across all datasets, the OSC algorithm continuously maintains low computing time, showing just a slight rise as the number of samples increases. The computational time of the LRR algorithm is less than that of SSC, but it is still greater than that of the suggested approach and exhibits a more noticeable increasing trend with increasing sample size. Although FKM and RKM algorithms often have shorter computation time than SSC, on some datasets they nevertheless show comparatively low computational efficiency. In conclusion, because of their great algorithmic complexity, SSC and LRR show comparatively low time efficiency. Although RKM and FKM provide faster computation speeds, they perform worse when it comes to clustering. The OSC algorithm allows for fast clustering of jobs across datasets of different sizes, due to its high time efficiency and exceptional performance. 14 2 4 7 15 30 
+
+Number of Subjects   
+
+> 10 2
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> Runtime (seconds)
+
+Runtime Comparison of Five Algorithms on ORL Dataset 
+
+Algorithms     
+
+> LRR
+> SSC
+> FKM
+> RKM
+> OSC 235810
+
+Number of Subjects  
+
+> 10 1
+> 10 0
+> 10 1
+> Runtime (seconds)
+
+Runtime Comparison of Five Algorithms on Jaffe Dataset 
+
+Algorithms     
+
+> LRR
+> SSC
+> FKM
+> RKM
+> OSC 23456
+
+Number of Subjects  
+
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> Runtime (seconds)
+
+Runtime Comparison of Five Algorithms on MNIST Dataset 
+
+Algorithms     
+
+> LRR
+> SSC
+> FKM
+> RKM
+> OSC 235810
+
+Number of Subjects  
+
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> Runtime (seconds)
+
+Runtime Comparison of Five Algorithms on Coil20 Dataset 
+
+Algorithms     
+
+> LRR
+> SSC
+> FKM
+> RKM
+> OSC 24710 15
+
+Number of Subjects  
+
+> 10 1
+> 10 0
+> 10 1
+> Runtime (seconds)
+
+Runtime Comparison of Five Algorithms on Yale Dataset 
+
+Algorithms     
+
+> LRR
+> SSC
+> FKM
+> RKM
+> OSC 20 40 60 80 100
+
+Number of Subjects  
+
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> Runtime (seconds)
+
+Runtime Comparison of Five Algorithms on CASIA-FaceV5 Dataset 
+
+Algorithms   
+
+> LRR
+> SSC
+> FKM
+> RKM
+> OSC 123
+
+Number of Subjects  
+
+> 10 1
+> 10 0
+> 10 1
+> Runtime (seconds)
+
+Runtime Comparison of Five Algorithms on bladderGSE89 Dataset 
+
+Algorithms  
+
+> LRR
+> SSC
+> FKM
+> RKM
+> OSC 12
+
+Number of Subjects  
+
+> 10 1
+> 10 0
+> Runtime (seconds)
+
+Runtime Comparison of Five Algorithms on gastricGSE2685 Dataset 
+
+Algorithms   
+
+> LRR
+> SSC
+> FKM
+> RKM
+> OSC 123
+
+Number of Subjects 
+
+> 10 0
+> 10 1
+> 10 2
+> Runtime (seconds)
+
+Runtime Comparison of Five Algorithms on MLL Dataset 
+
+Algorithms 
+
+> LRR
+> SSC
+> FKM
+> RKM
+> OSC
+
+Figure 4: Algorithm Runtime Comparison for High-Dimensional Datasets 
+
+15 5. Conclusion 
+
+An OSC technique is proposed in this study. In order to extract dominant and mutually independent variation patterns from high-dimensional data, its fundamental idea is to build an orthogonal factor model that projects the data onto a set of low-dimensional orthogonal subspaces. The OSC algorithm success-fully finds the underlying structure of high-dimensional data and eliminates unnecessary information while preserving model simplicity and interpretability, according to theoretical analysis and experimental find-ings.The algorithm finds the directions that contribute the highest variance while guaranteeing their mutual independence by enforcing orthogonal constraints. This feature shows notable benefits when working with high-dimensional datasets with intricate relationships since it allows OSC to explain the fundamental vari-ation in data during clustering. OSC achieves competitive clustering performance across several assessment measures, according to experiments conducted on nine publicly available high-dimensional datasets. However, this study also highlights a number of the OSC algorithm’s shortcomings, including the fact that its effectiveness is largely dependent on the precise data variance estimation. Its sensitivity to anoma-lous noise is a serious drawback. The algorithm may mistakenly interpret a noisy sample or outlier that significantly increases variance as a legitimate data structure and create a different subspace for interpreta-tion. The accuracy of cluster assignments is jeopardized by this overfitting to noise variance, which distorts the underlying subspace structure. This problem is most noticeable in datasets where there are a lot of outliers or low signal-to-noise ratios. Future studies will concentrate on the following areas in light of the aforementioned analysis: 1. Robustness Enhancement : To lessen the effect of outliers on the orthogonal subspace generation process, use robust statistical techniques like sparse modeling. 2. Noise Identification Mechanism : To discover and manage high-variance noisy points during preprocessing or iterative stages, incorporate an outlier detection module into the OSC framework. 
+
+References 
+
+[1] X. Desquesnes, A. Elmoataz, Nonmonotonic front propagation on weighted graphs with applications in image processing and high-dimensional data classification, IEEE Journal of Selected Topics in Signal Processing. 11 (6) (2017) 897–907. doi:10.1109/JSTSP.2017.2731520 .[2] H. Nematzadeh, J. G. Nieto, J. F. Aldana-Montes, I. Navas-Delgado, Pattern recognition frequency-based feature selection with multi-objective discrete evolution strategy for high-dimensional medical datasets, Expert Systems with Applications. 249 (Sep. Pt.A) (2024) 123521. doi:10.1016/j.eswa. 2024.123521. 
+
+[3] D. Wang, L. Wang, W. Chen, H. Wang, C. Liang, Unsupervised multi-view feature selection based on weighted low-rank tensor learning and its application in multi-omics datasets, Engineering Applications of Artificial Intelligence. 143 (2025) 110041. doi:10.1016/j.engappai.2025.110041 .[4] H. Zhao, J. Shi, Y. Zhang, Phfs: Progressive hierarchical feature selection based on adaptive sample weighting, IEEE Transactions on Neural Networks and Learning Systems. 36 (8) (2025) 1–13. doi: 10.1109/tnnls.2025.3525643 .[5] L. Guo, L. Chen, X. Lu, C. L. P. Chen, Membership affinity lasso for fuzzy clustering, IEEE Transactions on Fuzzy Systems. 28 (2) (2020) 294–307. doi:10.1109/TFUZZ.2019.2905114 .[6] P. S. A. Babu, A. C. S. Rao, S. Dara, Clustering-based hybrid feature selection approach for high dimensional microarray data, Chemometrics and Intelligent Laboratory Systems. 217 (2) (2021) 104305. 
+
+doi:10.1016/j.chemolab.2021.104305 .[7] P. Rathore, J. C. Bezdek, S. M. Erfani, S. Rajasegarar, M. Palaniswami, Ensemble fuzzy clustering using cumulative aggregation on random projections, IEEE Transactions on Fuzzy Systems. 26 (3) (2018) 1510–1524. doi:10.1109/TFUZZ.2017.2729501 .16 [8] Y. Pang, B. Zhou, F. Nie, Simultaneously learning neighborship and projection matrix for supervised dimensionality reduction, IEEE Transactions on Neural Networks and Learning Systems. 30 (9) (2019) 2779–2793. doi:10.1109/TNNLS.2018.2886317 .[9] J. Chen, J. Zhu, H. Jiang, H. Yang, F. Nie, Sparsity fuzzy c-means clustering with principal component analysis embedding, IEEE Transactions on Fuzzy Systems. 31 (7) (2023) 2175–2187. doi:10.1109/ TFUZZ.2022.3217343 .[10] E. Elhamifar, R. Vidal, Sparse subspace clustering: algorithm, theory, and applications, IEEE Trans-actions on Pattern Analysis and Machine Intelligence. 35 (11) (2013) 2765–2781. doi:10.1109/TPAMI. 2013.57 .[11] G. Liu, Z. Lin, S. Yan, J. Sun, Y. Yu, Y. Ma, Robust recovery of subspace structures by low-rank representation, IEEE Transactions on Pattern Analysis and Machine Intelligence. 35 (1) (2013) 171– 184. doi:10.1109/TPAMI.2012.88 .[12] Y. Du, G.-F. Lu, G. Ji, Robust and optimal neighborhood graph learning for multi-view clustering, Information Sciences. 631 (2023) 429–448. doi:10.1016/j.ins.2023.02.089 .[13] J. Yang, J. Liang, K. Wang, P. Rosin, M. H. Yang, Subspace clustering via good neighbors, IEEE Transactions on Pattern Analysis and Machine Intelligence. 42 (6) (2020) 1537–1544. doi:10.1109/ TPAMI.2019.2913863 .[14] F. Samaria, A. Harter, Parameterisation of a stochastic model for human face identification, in: Pro-ceedings of the Second IEEE Workshop on Applications of Computer Vision., 1994, pp. 138–142. 
+
+doi:10.1109/ACV.1994.341300 .[15] M. J. Lyons, J. Budynek, S. Akamatsu, Automatic classification of single facial images, IEEE Trans-actions on Pattern Analysis and Machine Intelligence. 21 (12) (1999) 1357–1362. doi:10.1109/34. 817413 .[16] Y. LeCun, L. Bottou, Y. Bengio, P. Haffner, Gradient-based learning applied to document recognition, Proceedings of the IEEE. 86 (11) (1998) 2278–2324. doi:10.1109/5.726791 .[17] S. A. Nene, Columbia object image library (coil-20), Technical Report. 5 (1996). [18] X. He, S. Yan, Y. Hu, P. Niyogi, H. Zhang, Face recognition using laplacianfaces, IEEE Trans-actions on Pattern Analysis and Machine Intelligence. 27 (3) (2005) 328–340. doi:http://doi. ieeecomputersociety.org/10.1109/TPAMI.2005.55 .[19] X. Ma, Facial recognition for casia-face v5 in virtue of convolutional neural networks, in: 2022 Interna-tional Conference on Big Data, Information and Computer Network (BDICN)., 2022, pp. 713–716. [20] L. Mengual, M. Burset, E. Ars, J. J. Lozano, H. Villavicencio, M. J. Ribal, A. Alcaraz, Dna microarray expression profiling of bladder cancer allows identification of noninvasive diagnostic markers, Journal of Urology. 182 (2) (2009) 741–748. doi:10.1016/j.juro.2009.03.084 .[21] H. Yoshitaka, H. Taniguchi, S. Tsutsumi, N. Machida, J.-M. Chong, M. Fukayama, T. Kodama, H. Abu-ratani, Global gene expression analysis of gastric cancer by oligonucleotide microarrays, Cancer Re-search. 62 (1) (2002) 233–240. doi:10.1046/j.1523-5394.2002.101008.x .[22] T. R. Golub, D. K. Slonim, P. Tamayo, C. Huard, G. Michelle, J. P. Mesirov, H. Coller, M. L. Loh, J. R. Downing, M. A. Caligiuri, C. D. Bloomfield, E. S. Lander, Molecular classification of cancer: class discovery and class prediction by gene monitoring, Science. 286 (5439) (1999) 531–537. doi: 10.1126/science.286.5439.531 .17 [23] M. Vichi, H. A. L. Kiers, Factorial k-means analysis for two-way data, Computational Statistics and Data Analysis. 37 (1) (2001) 49–64. doi:10.1016/S0167-9473(00)00064-5 .[24] J. MacQueen, Some methods for classification and analysis of multivariate observations, in: Proceedings of the 5th Berkeley Symposium on Mathematical Statistics and Probability., Vol. 1, 1967, pp. 281–297. 18

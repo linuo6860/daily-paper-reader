@@ -1,0 +1,3107 @@
+Title: PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling
+
+URL Source: https://arxiv.org/pdf/2602.19685v1
+
+Published Time: Tue, 24 Feb 2026 03:03:14 GMT
+
+Number of Pages: 38
+
+Markdown Content:
+# PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+Xinyu Yuan 1 2 * Xixian Liu 1 2 * Yashi Zhang 1 2 * Zuobai Zhang 1 2 Hongyu Guo 3 4 Jian Tang 1 5 6 †
+
+## Abstract 
+
+Building Virtual Cells that can accurately simu-late cellular responses to perturbations is a long-standing goal in systems biology. A fundamen-tal challenge is that high-throughput single-cell sequencing is destructive: the same cell cannot be observed both before and after a perturbation. Thus, perturbation prediction requires mapping unpaired control and perturbed populations. Exist-ing models address this by learning maps between distributions, but typically assume a single fixed response distribution when conditioned on ob-served cellular context ( e.g. , cell type) and the per-turbation type. In reality, responses vary system-atically due to unobservable latent factors such as microenvironmental fluctuations and complex batch effects, forming a manifold of possible dis-tributions for the same observed conditions. To ac-count for this variability, we introduce PerturbD-iff, which shifts modeling from individual cells to entire distributions. By embedding distributions as points in a Hilbert space, we define a diffusion-based generative process operating directly over probability distributions. This allows Perturb-Diff to capture population-level response shifts across hidden factors. Benchmarks on established datasets show that PerturbDiff achieves state-of-the-art performance in single-cell response predic-tion and generalizes substantially better to unseen perturbations. See our project page, where code and data will be made publicly available. 
+
+## 1. Introduction 
+
+The human body is an ensemble of cells, each evolutionar-ily shaped to respond to disturbances. Recent advances in high-throughput single-cell perturbation sequencing have enabled systematic characterization of cellular responses to 
+
+> *
+
+Equal contribution; the first author led the project, and the other two authors are ordered alphabetically. †Corresponding author. 1Mila - Qu ´ebec AI Institute 2University of Montr ´eal 
+
+> 3
+
+University of Ottawa 4National Research Council of Canada 
+
+> 5
+
+HEC Montr´ eal 6CIFAR AI Chair. Correspondence to: Jian Tang 
+
+<tangjian@mila.quebec >.
+
+controlled interventions (Zhang et al., 2025). This gives a powerful tool to study relationships between diverse pertur-bations and phenotypic outcomes, including immune signal-ing through cytokines (Biosciences, 2023), drug responses for therapeutic discovery (Zhang et al., 2025), and genetic modifications to uncover gene function (Nadig et al., 2025). Nevertheless, although modern platforms can assay hun-dreds or even thousands of perturbation conditions, the space of possible interventions—spanning genes, drugs, dosages, and cellular contexts—grows combinatorially and remains far beyond what can be explored exhaustively. As a result, experimental measurements remain costly and labor-intensive. This gap creates a strong need for computational methods that generalize beyond observed conditions to predict cellular responses. In response, virtual cell mod-els (Bunne et al., 2024) have emerged as a new frontier at the intersection of artificial intelligence and biology. These models aim to simulate cellular state changes under unseen perturbations by predicting transcriptomic gene expressions. Early methods, such as linear models (Ahlmann-Eltze et al., 2024) and foundation models like scGPT (Cui et al., 2024), often rely on performing regression between randomly paired control and perturbed cells. This paradigm is funda-mentally limited because single-cell sequencing is destruc-tive: the same cell cannot be observed both before and after perturbation. With no true cell-to-cell correspondence in the data, random pairing drives models to learn an average re-sponse across cells, thereby failing to capture cellular hetero-geneity. To address this, more recent methods shift towards learning transitions between control and perturbed distri-butions. For example, STATE (Adduri et al., 2025) aligns populations using a kernel-based objective, CellFlow (Klein et al., 2025) uses flow matching, and Squidiff (He et al., 2025) leverages diffusion-based modeling. While effec-tive, these methods commonly assume that, conditioned on observed cellular context, the control or perturbed cell dis-tribution is fixed (Fig. 1(a)). In reality, however, unobserved latent factors, such as microenvironmental fluctuations and complex batch effects, introduce systematic variability that reshapes the underlying cell distributions (Fig. 1(b)). By overlooking this distribution variability, current methods tend to predict a static response distribution that marginal-izes over these unobserved latents, limiting generalization to unseen perturbations or cellular contexts. 1    
+
+> arXiv:2602.19685v1 [cs.LG] 23 Feb 2026 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling Unpaired
+> (a) Control to Perturbed Cells (b) Varied Control to Perturbed Distributions
+> Unobserved
+> Latent Factor
+> Distribution of Single Cells Distribution of Cell Distributions
+> Resting
+> Active
+> Acute
+> Figure 1. Distributional variability in single-cell perturbation data. (a) Traditional methods operate on unpaired control and perturbed cells, learning to map a control cell distribution to a perturbed one. (b) However, variations in cell distributions arise from unobserved latent factors, inducing a family of distinct cell distributions and shifting the objective to learning a distribution over cell distributions.
+
+To address this limitation, we introduce PerturbDiff. By treating the population distribution itself as a random vari-able, PerturbDiff models a family of plausible response distributions, corresponding to variability induced by unob-served latent factors. In particular, as illustrated in Fig. 2, we first embed cell distributions into a reproducing kernel Hilbert space (RKHS) (Berlinet & Thomas-Agnan, 2011), where each distribution is represented by its kernel mean em-bedding as a single point in this function space. We then de-fine a diffusion process directly over these function-valued representations, yielding a principled generative framework at the distribution level rather than the level of individual cells, as in existing methods. Importantly, this construction naturally induces a Maximum Mean Discrepancy (MMD) objective for diffusion training, providing a direct and well-founded measure for aligning source and target cell popu-lations. Compared to pointwise MSE-based losses in stan-dard diffusions, the resulting MMD loss is better suited to sparse, high-dimensional single-cell features. Empirically, our method achieves state-of-the-art performance on large-scale signaling, drug and genetic perturbation benchmarks, including PBMC (Biosciences, 2023), Tahoe100M (Zhang et al., 2025) and Replogle (Nadig et al., 2025), demon-strating strong and well-balanced results across 14 diverse metrics (see Fig. 3). Furthermore, to address the scarcity of perturbed data, such as limited cell types, we introduce a novel pretraining strat-egy that learns marginal single-cell distributions by integrat-ing perturbation data with large-scale unperturbed RNA-seq data, thereby covering a broader range of cellular states. Em-pirically, the pretrained model exhibits non-trivial zero-shot predictive capability, and fine-tuning consistently outper-forms training from scratch when data is scarce. 
+
+## 2. Preliminary 
+
+2.1. Notations: Cells, Populations, and Distributions 
+
+We consider a fixed set of genes G, with size |G| ranging from thousands to tens of thousands. A single cell is repre-sented by its gene expression vector x ∈ R|G| , where each dimension corresponds to the expression of one gene. The set of all possible cell profiles constitutes the cell space 
+
+X ⊂ R|G| . A finite collection of cells X = {x1, . . . , xN }
+
+is referred to as a cell population . We use P to denote a 
+
+probability distribution over X , and let P(X ) be the space of all such distributions. 
+
+2.2. Problem Formulation 
+
+In perturbation datasets, we observe two cell populations: the control cells Xctrl and the perturbed cells Xpert . Cells in 
+
+Xctrl and Xpert are unpaired: no cell-to-cell correspondence is assumed. Given Xctrl , the goal of perturbation modeling is to predict the cellular response after perturbation. Both Xctrl and Xpert are associated with cellular context 
+
+labels c, which describes observable experimental and bi-ological conditions such as cell type, donor, experimental batch, or their combinations. Xpert is additionally associated with perturbation labels τ (e.g. , a cytokine, drug, or genetic intervention). We use Pc and Pc,τ to denote the (unknown) cell distributions conditioned on c and (c, τ ), respectively. 
+
+2.3. Diffusion Models 
+
+Diffusion models (Ho et al., 2020; Song et al., 2021b) are a family of generative models that learn data distributions from empirical samples by reversing a fixed forward Markov chain q(xt|xt−1) that gradually corrupts data x0 ∼ pdata .The transition kernel at timestep t ∈ { 1, . . . , T } admits the closed form: q(xt|x0) = N xt; γtx0, σ 2 
+
+> t
+
+I, where γt and 
+
+σt define the noise schedule. One way to parameterize the reverse process is to reconstruct the clean sample x0 from its noisy state xt (Salimans & Ho, 2022), given time t and all the condition information η, trained via the simplified denoising objective (Ho et al., 2020): 
+
+Ex0∼pdata ,ε ∼N (0 ,I),t 
+
+h
+
+x0 − xθ (xt, t, η ) 22
+
+i
+
+. (1) To strengthen conditional fidelity, classifier-free guidance (CFG) (Ho & Salimans, 2022) is widely used. The model is trained with a mixture of conditional and unconditional 2PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+inputs by replacing η with a null token ∅ with probabil-ity pdrop . At sampling time, the prediction is steered to-ward the condition by linearly extrapolating between the conditional and unconditional estimates: ˆxθ (xt, t, η ) = (1 + w) xθ (xt, t, η ) − w xθ (xt, t, ∅), where w ≥ 0 con-trols the guidance strength. 
+
+## 3. Related Work 
+
+Single-cell perturbation prediction has been extensively studied. Early methods perform deterministic cell-wise mapping via random pairing, differing mainly in modeling design. Linear models (Ahlmann-Eltze et al., 2024) regress perturbed expressions, offering a simple yet strong baseline. GEARS (Roohani et al., 2024) incorporates gene–gene inter-action graphs. scGPT (Cui et al., 2024) finetunes pretrained cell foundation models. Due to random pairing, these mod-els are driven to capture average perturbation effects. Prob-abilistic conditional generative models treat single cells as random variables, capturing single-cell stochasticity. sc-Gen (Lotfollahi et al., 2019) models perturbation as latent shifts in a VAE, CPA (Lotfollahi et al., 2023) further disen-tangles perturbation and biological covariates in latent space. Squidiff (He et al., 2025) applies diffusion models to capture nonlinear effects. Population-level methods avoid random pairing by directly mapping control and perturbed distribu-tions. CellOT (Bunne et al., 2023) uses an optimal transport framework. STATE (Adduri et al., 2025) aligns populations via a kernel-based discrepancy objective. CellFlow (Klein et al., 2025) learns a continuous-time flow via vector fields, while Unlasting (Chi et al., 2025) adopts diffusion bridges to model stochastic transitions between distributions. Most existing methods assume a single perturbed distribu-tion Pc,τ conditioned on observed context c and perturbation type τ , implicitly marginalizing variability from unobserved factors. In contrast, we directly model the distribution-level variability driven by latent factors (Fig. 1(b)), by learning a diffusion process directly over the space of cell distributions. 
+
+## 4. Method 
+
+We present PerturbDiff, a diffusion framework over cell distributions for perturbation prediction (Fig. 2). We model 
+
+distributional variability by treating cell distributions as random variables (Sec. 4.1), represent them via kernel mean embeddings (Sec. 4.2), and define diffusion over these em-beddings (Sec. 4.3) with a tractable training and sampling scheme (Sec. 4.4). We then describe the model architecture (Sec. 4.5), a pretraining strategy using large-scale single-cell atlases (Sec. 4.6), and conclude with a discussion (Sec. 4.7). 
+
+4.1. Motivation 
+
+We frame perturbation prediction as a conditional diffusion-based generative modeling problem. A key design choice in diffusion is the definition of the random variable on which the stochastic process is defined. Most existing methods take a single-cell state x ∈ X as the random variable and learn a conditional distribution over cells (He et al., 2025) (Klein et al., 2025). Under this formulation, for a given observed condition (c, τ ), these methods model a single perturbed cell distribution Pc,τ (Fig. 1(a)). In practice, however, cell samples collected under the same (c, τ ) can be influenced by unobservable latent factors, such as microenvironmen-tal fluctuations and complex batch effects. These latents induce variability at the distribution level , corresponding to a family of plausible response distributions associated with the same (c, τ ) (Fig. 1(b)). Existing methods do not model this distributional variability , but collapse heterogeneous responses into a single distribution Pc,τ , potentially limiting generalization to unseen conditions. 
+
+Cell distribution as random variable. To capture such distributional variability, we shift the random variable from individual cells to cell populations. Concretely, instead of as-suming a single perturbed distribution Pc,τ , we consider the perturbed population to be a random variable Dc,τ taking val-ues in P(X ). The realizations of Dc,τ are cell distributions induced by unobserved latents. Analogously, we denote the corresponding control distribution-valued random variable by Dc. Under this view, Dc,τ captures the family of possible perturbed distributions observed under the same condition 
+
+(c, τ ); the commonly learned target Pc,τ corresponds to the expectation of this random variable E[Dc,τ ].
+
+Goal. We aim to model the conditional law of this per-turbed distribution-valued random variable conditioned on the control one, with Fθ defining a diffusion-based genera-tive process on the space of distributions: 
+
+Dc,τ ∼ F θ (· | Dc, c, τ ). (2) 
+
+4.2. Representing Cell Distributions Empirical distributions from cell batches. While Dc,τ 
+
+is conceptually a distribution-valued random variable sup-ported on P(X ), it is not directly observable. In prac-tice, experiments under a fixed condition (c, τ ) provide only finite batches of cells , each offering a partial and noisy view of the underlying perturbed population. Im-portantly, different batches might be implicitly influenced by different latent factors. Given a perturbed cell batch 
+
+Bpert = {x1, . . . , xm}, we construct the empirical distribu-tion ˜P pert := 1
+
+> m
+
+Pmj=1 δxj , which serves as a finite-sample Monte-Carlo estimate of a realization of Dc,τ . Note that 
+
+δx is the Dirac delta distribution at point x. Analogously, batches of control cells yield empirical distributions ˜P ctrl ,corresponding to a realization of the control variable Dc.For a given condition (c, τ ), the collections { ˜P pert } and 
+
+{ ˜P ctrl } provide observed samples of the distribution-valued objects Dc,τ and Dc, respectively. These empirical distribu-tions form the data used to learn our generative model. 3PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling Forward Diffusion Process                      
+
+> 𝝁 0≔𝝁 𝑐 ,𝜏
+> 𝝁 0𝝁 𝑡
+> 𝝁 𝜃
+> (a) Distributions to Hilbert Space (b) Diffusion Modeling over Cell Distributions (c) MM -DiT Block
+> MLP MLP
+> Joint Attention
+> Modulation Modulation
+> Guidance
+> 𝝁 𝑡 𝝁 𝒄
+> Concatenate
+> QKV
+> Perturbation
+> Timestep
+> Batch
+> Cell Type
+> MM -DiT
+> Block
+> Final
+> Layer
+> ×𝑁
+> +
+> 𝝁 𝑡
+> 𝝁 𝑐
+> Denoising
+> Network min ℒ𝑡
+> 𝐷 𝑐 ,𝜏
+> 𝐷 𝑐
+> 𝜇 𝑃 =𝔼 𝑍 ∼𝑃 𝑘 𝑍 ,⋅
+> 𝝁 𝑐
+> 𝝁 𝑐 ,𝜏
+> Hilbert Space ℋ𝑘 Cell Space 𝒳 Guidance
+
+Figure 2. Overview of the PerturbDiff framework. (a) Distribution-valued random variables Dc,τ and Dc,τ in cell space are mapped to Hilbert-space elements μc,τ and μc ∈ H k via kernel mean embedding. (b) Diffusion is defined on perturbed embeddings μ0:= μc,τ , with a denoising network predicting the target μθ . (c) Each MM-DiT block performs joint attention over control and perturbed token streams. 
+
+Hilbert space representation of cell distributions. To enable a diffusion process over distributions, we embed probability distributions into a reproducing kernel Hilbert space (RKHS) (Berlinet & Thomas-Agnan, 2011) Hk in-duced by a positive-definite kernel k : X × X → R. Each probability distribution P ∈ P (X ) is mapped to its kernel mean embedding μP := EZ∼P [k(Z, ·)] ∈ H k, which is well-defined under mild conditions (see App. B.1.2). This mapping places distributions as points in a well-behaved function space, enabling operations between distributions such as interpolation and discrepancy directly in Hk. We summarize the key properties below. 
+
+Remark 4.1 ( Geometric Properties ). For distributions 
+
+P, Q on X , kernel mean embeddings satisfy: (i) linear-ity: μαP +(1 −α)Q = αμP + (1 − α)μQ; (ii) kernel geom-etry: ⟨μP , μQ⟩Hk = EZ∼P,Z ′∼Q[k(Z, Z ′)] ; (iii) induced distance: ∥μP −μQ∥2 
+
+> Hk
+
+= MMD 2
+
+> k
+
+(P, Q ), where MMD de-notes Maximum Mean Discrepancy (Borgwardt et al., 2006). Applying the embedding to Dc,τ and Dc yields random el-ements μDc,τ and μDc taking values in Hk, which define the state space for our diffusion model (denoted μc,τ and 
+
+μc for brevity). Accordingly, the observed data for training, which is originally a collection of empirical cell distribu-tions { ˜Ppert } and { ˜Pctrl }, is mapped into kernel mean embed-dings in Hk, {μ ˜Ppert } and {μ ˜Pctrl }, respectively. We discuss tractable training and sampling of μc,τ and μc in Sec. 4.4. 
+
+4.3. Diffusion Modeling on Cell Distributions Forward diffusion process over cell distributions. We construct a diffusion model directly in the RKHS Hk, de-signed to mirror the standard DDPM (Ho et al., 2020), but operating on kernel mean embeddings of cell distri-butions rather than on finite-dimensional vectors. The for-ward diffusion process starts from the perturbed embedding 
+
+μ0 := μc,τ , and progressively injects noise to transform it towards a Gaussian-like reference measure 1 in Hk.In Euclidean space, sampling noise from Gaussian distri-butions is tractable and straightforward. However, Hk is infinite-dimensional. Gaussian random elements , which 
+
+> 1
+
+A measure refers to a probability distribution, not a density. 
+
+are generalized Gaussian random variables that take values in Hk, are easy to characterize with a mean element and covariance operator (see App. B.1.4). 
+
+Definition 4.2 (Forward diffusion process) . Let {βt}Tt=1 ⊂
+
+(0 , 1) be a variance schedule and let C : Hk → H k be a self-adjoint, positive semi-definite, trace-class covariance operator. We define the forward Markov chain 
+
+μt = p1 − βtμt−1 + pβt Ξt, Ξt ∼ N Hk (0 , C ), (3) where each Ξt is a Gaussian random element in Hk fol-lowing the Gaussian measure NHk (0 , C ) (App. B.1.5). We discuss tractable sampling of Ξt in Sec. 4.4. By closure of Gaussian measures under affine transforma-tion and summation (Lem. B.7 and Lem. B.8) in Hk, the forward process remains Gaussian across steps t, yielding the closed-form marginal 
+
+μt | μ0 ∼ N Hk
+
+ √αtμ0, (1 − αt)C, (4) where αt := Qts=1 (1 − βs). Thus, this establishes a diffu-sion process over cell distributions, seamlessly extending the DDPM framework to Hk.
+
+Conditional reverse process and variational objective. 
+
+Given the forward diffusion defined above, the true re-verse conditional Pt−1|t, 0(μt−1|μt, μ0) admits a closed-form Gaussian measure in Hk, whose mean is a linear com-bination of μt and μ0 and whose covariance is determined by the forward noise schedule (detailed in Prop. B.10). Directly sampling from this conditional distribution is in-tractable since μ0 is unknown during generation. As in DDPM, we therefore adopt a variational formulation and parameterize the reverse process using a learnable mean function μθ (·) (details in App. B.1.6). This yields a sim-plified denoising objective, expressed in the RKHS norm: 
+
+Lt ∝ || μ0 − μθ (μt, t )|| 2 
+
+> Hk
+
+. (5) To model perturbation responses, we extend the uncondi-tional reverse process above to a conditional one by in-corporating the control embedding μc, and the covariates 
+
+(c, τ ). We implement this via classifier-free guidance (Ho 4PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+& Salimans, 2022), which leads to a conditional denoising objective (full derivations in App. B.1.6): 
+
+Lt ∝ μ0 − μθ (μt, t, μc, c, τ ) 2
+
+> Hk
+
+. (6) This reverse process enables stochastic, conditional gener-ation of perturbed cell distributions, while remaining well-defined in the infinite-dimensional RKHS. 
+
+4.4. Training and Sampling Distribution-aware loss via cell batches. Our training objective (Eqn. (6) ) is defined in Hk, which is infinite-dimensional and therefore intractable. We thus instantiate all kernel mean embedding random elements appearing in the objective (namely μ0, μc, and μθ ) via empirical cell batches. Recall that μ0 is the perturbed kernel mean em-bedding μc,τ . A perturbed batch Bpert of size m yields a finite-sample realization of this random element by inducing an empirical distribution ˜Ppert , whose empirical kernel mean embedding μ ˜Ppert acts as a Monte Carlo estimate of μc,τ ,converging as m → ∞ . Analogously, the control embed-ding μc is instantiated from a control batch Bctrl . And we let a neural network output a batch of predicted perturbed cells 
+
+Bθ = {xθ
+
+> 1
+
+, . . . , xθm}, which is associated with ˜Pθ , to model 
+
+μθ . Leveraging the RKHS distance property in Rem. 4.1, the reverse objective admits an exact equivalence: 
+
+|| μ0 − μθ (μt, t, μPc , c, τ )|| 2 
+
+> Hk
+
+= MMD 2
+
+> k
+
+( ˜Ppert , ˜Pθ ). (7) As a result, training reduces to matching the predicted and real cell populations via MMD , providing a distribution-aware objective beyond pointwise cell-wise reconstruction. Network details for constructing Bθ are deferred to Sec. 4.5. 
+
+Tractable approximation of Gaussian noise in RKHS. 
+
+Our diffusion process is defined over kernel mean embed-dings in Hk, which requires adding Gaussian random ele-ments Ξt during the forward noising process. Direct sam-pling from function-valued Gaussian measures is intractable. Therefore, we construct a tractable approximation by inject-ing additive Gaussian noise independently to each cell in the original space and recomputing the empirical kernel mean embeddings. As proved in App. B.1.7, under a first-order lin-earization of the kernel feature map, this procedure induces an Hk-valued Gaussian random element whose covariance operator can be characterized explicitly (Prop. B.14). This yields a theoretically grounded and tractable realization of the Gaussian random element required for diffusion noising. 
+
+Multi-scale training objective. In practice, we use a hybrid loss combining the distribution-aware loss (Eqn. (7) ) with a standard DDPM loss that treats single cells as random variables to make our framework more compact: 
+
+Ltotal = MMD 2
+
+> k
+
+( ˜Ppert , ˜Pθ ) + 1
+
+m
+
+> m
+
+X
+
+> j=1
+
+|| xj − xθj || 22. (8) Empirically, we observe that optimization is dominated by the MMD term and the MSE term adds simple regularization on the global batch centroid (see Sec. 5.5). 
+
+Sampling. Since Hk is intractable, we perform determinis-tic DDIM (Song et al., 2020) sampling directly in cell space, consistent with our training procedure. 
+
+4.5. Architecture Design 
+
+As shown in Fig. 2(c), our denoising network jointly en-codes the perturbed and control cell batches (Bpert , B ctrl )via a Multi-Modal Diffusion Transformer (MM-DiT) (Esser et al., 2024), which maintains two parallel token streams that interact via joint attention in each block. This design represents perturbation effects as structured deviations from the control distribution. The timestep t and covariate (c, τ )
+
+embeddings are combined and injected into every block via adaptive LayerNorm with zero initialization (AdaLN-Zero) (Peebles & Xie, 2023), following standard DiT-style conditioning. Architectural details are provided in App. B.3. 
+
+4.6. Marginal Pretraining as a Prior 
+
+While perturbation datasets are often limited in cell type and experimental batch diversity, large-scale single-cell atlases span a much broader range of cell states across both observ-able and latent contexts. Although unperturbed, these data capture rich population structures and biologically plausible cell states, providing a broad prior over the cell manifold. Motivated by this, we introduce a marginal pretraining stage in PerturbDiff, where the model first learns the unperturbed cell distribution conditioned solely on cellular context c,
+
+Dc ∼ F θ (· | c), (9) before being finetuned on perturbation data to model perturbation-induced distributional shifts. As in Eqn. (2) ,
+
+Fθ denotes the diffusion process defined in Hk.This stage uses all available training cells from perturbation datasets spanning dozens of cell types, alongside 61 million cells across hundreds of cell types from single-cell RNA-seq data curated in CellxGene (Program et al., 2025). This two-stage paradigm improves data efficiency and generalization, particularly when perturbation data are scarce. 
+
+4.7. Discussion Relationship with function space diffusion. Existing func-tional diffusion models (Kerrigan et al., 2022) aim to gen-erate a single continuous function (e.g. , audio waves) from finite and noisy observations. In contrast, our method gener-ates cell distributions , which are represented by kernel mean embeddings in RKHS, to solve perturbation predictions. Al-though both methods define diffusion processes in Hilbert space, they fundamentally differ in their modeling targets and the specific spaces they operate in ( i.e. , Sobolev spaces 
+
+v.s. RKHS). As a result, diffusion formulations, derivations, and training objectives are inherently different. 
+
+Relationship with STATE. STATE (Adduri et al., 2025), as an emerging and increasingly adopted method, uses MMD 5PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling PerturbDiff (From Scratch) PerturbDiff (Finetuned) STATE CPA Mean Linear CellFlow Squidiff R2 
+
+> DirAgr
+> ES
+> LFCSpear
+> DEOver
+> DEPrec
+> AUPRC
+> AUROC
+> PDCorr
+> PDS L1
+> PDS L2
+> PDS cos
+> 1.00 0.00
+> 0.87
+> 0.58
+> 0.54
+> 0.01
+> 0.72
+> 0.31
+> 0.62
+> 0.42
+> 0.64
+> 0.47
+> 0.73 0.51
+> 0.68
+> 0.57
+> 0.97
+> 0.42
+> 1.00
+> 0.71
+> 1.00
+> 0.71
+> 1.00
+> 0.71
+
+(a) PBMC. R2  
+
+> DirAgr
+> ES
+> LFCSpear
+> DEOver
+> DEPrec
+> AUPRC
+> AUROC
+> PDCorr
+> PDS L1
+> PDS L2
+> PDS cos
+> 1.00 0.00
+> 0.81
+> 0.63
+> 0.60
+> 0.36
+> 0.77
+> 0.48
+> 0.66
+> 0.38
+> 0.65
+> 0.46
+> 0.68 0.47
+> 0.69
+> 0.58
+> 0.87
+> 0.37
+> 1.00
+> 0.71
+> 1.00
+> 0.71
+> 1.00
+> 0.71
+
+(b) Tahoe100M. R2  
+
+> DirAgr
+> ES
+> LFCSpear
+> DEOver
+> DEPrec
+> AUPRC
+> AUROC
+> PDCorr
+> PDS L1
+> PDS L2
+> PDS cos
+> 1.00 0.00
+> 0.85
+> 0.61
+> 0.91
+> 0.59
+> 0.61
+> 0.24
+> 0.25
+> 0.13
+> 0.22
+> 0.13
+> 0.29 0.17
+> 0.71
+> 0.51
+> 0.53
+> 0.22
+> 0.85
+> 0.64
+> 0.86
+> 0.65
+> 0.71
+> 0.59
+
+(c) Replogle. 
+
+Figure 3. Perturbation prediction results across methods, metrics, and datasets. Each axis represents a performance metric, with higher values indicating better performance. 
+
+Table 1. Data statistics. We report the number of cells (#Cells), perturbations (#Pert.), cell types (#CT.), and experimen-tal batches (#Batches) for each dataset, highlighting data diversity. See detailed data analyses in App. A.4, including zero-expression sparsity, sample imbalance, and distribution shifts.                     
+
+> Dataset #Cells #Pert. #CT. #Batches PBMC 9.7M 90 18 12 Tahoe100M 101.2M 1,137 50 14 Replogle 0.6M 2,023 456 CellxGene 60.9M /662 10,887
+
+for population matching to train transformers that align control and perturbed cell populations. Our work offers a fundamentally different modeling perspective. Rather than treating population matching as a deterministic objective, we formulate perturbation prediction as learning a stochas-tic distribution over cell distributions . In our framework, MMD is not externally imposed, but arises naturally from the equivalence property of squared RKHS distance between kernel mean embeddings, which coincides with MMD by construction. We also discuss a score-matching (Song et al., 2021a) perspective to interpret our MMD in App B.4. 
+
+## 5. Experiment 
+
+5.1. Experimental Setup Downstream and pretraining datasets. We evaluate perturbation prediction on three widely used benchmark datasets following STATE, including signaling (PBMC), drug (Tahoe100M), and genetic (Replogle) perturbations. All tasks predict perturbed gene expressions over 2,000 
+
+highly variable genes (HVGs), with preprocessing and test splits following STATE (App. A.2). For pretraining, we combine all training cells from these three perturbation datasets with 61 million single-cell RNA-seq cells from CellxGene (statistics in Tab. 1). To enable cross-dataset pretraining, we unify gene spaces with a merge-then-select strategy (App. A.3.2), yielding 12,626 informative genes with high overlap across datasets (Tab. 3; >98% overlap for PBMC and Tahoe100M, >45% for Replogle and Cellx-Gene), enabling effective knowledge transfer. 
+
+Training Configuration. We report two variants of our method: PerturbDiff (From Scratch) (trained from scratch) and PerturbDiff (Finetuned) (pretrained then finetuned). Unless otherwise specified in App. C.1, all training stages (training from scratch, pretraining and finetuning) share the same diffusion pipeline, optimizer, training and sampling procedures, and checkpoint selection. Diffusion-specific settings are detailed in App. B.2. 
+
+Baselines. We compare against diverse strong baselines, including the widely used mean baseline (Kernfeld et al., 2025) and a linear model (Ahlmann-Eltze et al., 2024), both previously shown to outperform many existing methods, in-cluding foundation models such as scGPT (Cui et al., 2024) and scFoundation (Hao et al., 2024). For the mean baseline, we average expression profiles per perturbation over train-ing cells (variants aggregated by cell type or experimental batch are reported in App. C.3). We further compare against leading perturbation models 2: CPA (Lotfollahi et al., 2023), STATE (Adduri et al., 2025), CellFlow (Klein et al., 2025), and Squidiff (He et al., 2025). All baselines are trained un-der the same data split using their official implementations and evaluated under a unified protocol for fair comparison. 
+
+Evaluation Metrics. We adopt the Cell-Eval frame-work (Adduri et al., 2025) for evaluation following STATE, alongside the Coefficient of Determination (R 2) metric from CellFlow. Metrics assess performance from two per-spectives: (1) average expression accuracy across cells —measuring how well the predicted average expression shift matches the ground truth, using R 2, Pearson Delta Correla-tion (PDCorr), Mean Absolute Error (MAE), Mean Squared Error (MSE), and the Perturbation Discrimination Score (PDS L1 , PDS L2 , PDS cos ) (2) biologically meaningful dif-ferential gene patterns across genes —evaluating whether predicted cells capture true differential expression (DE) pat-terns, using DE overlap (DEOver), DE precision (DEPrec), direction agreement (DirAgr), log-fold-change Spearman correlation (LFCSpear), AUROC, AUPRC, and effect size correlation (ES). Among these, DE-related metrics are par-ticularly important, as the core of perturbation modeling is to recover biologically meaningful gene responses rather than merely matching average expression levels. See de-tailed metric definitions in App. C.2. 
+
+5.2. Main Results: Perturbation Performance Overall performance across datasets. Across 12 diverse metrics 3 (Fig. 3), PerturbDiff (From Scratch) consistently outperforms all baselines across nearly all metrics on the large-scale PBMC and Tahoe100M datasets, and achieves the second best performance on the smaller Replogle dataset. This demonstrates the effectiveness of our diffusion frame-
+
+> 2
+
+Unlasting (Chi et al., 2025) is excluded (no public code). 
+
+> 3
+
+We report higher-is-better metrics in Fig. 3; lower-is-better metrics (MSE, MAE) and full numerical results are in App C.3. 
+
+6PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling            
+
+> (a) PBMC. (b) Tahoe100M.
+> Figure 4. Per-metric scatter plots comparing PerturbDiff (From Scratch) and STATE . Each point denotes one held-out condition (62 conditions for PBMC; 735 for Tahoe100M).
+> (a) Density over DE genes. (b) Density over non-DE genes.
+> Figure 5. Distribution of −log 10 (padj )for true DE and non-DE genes on PBMC across true data, PerturbDiff (From Scratch), and STATE. Larger values indicate a gene is more likely DE.
+
+work that models cell distributions as random variables rather than single cells. In particular, PerturbDiff (From Scratch) shows substantial gains on differential expression (DE)-related metrics like AUPRC and AUROC, indicating improved capture of biologically meaningful, population-level response shifts beyond average expression matching. While PerturbDiff (From Scratch) slightly trails behind STATE on Reploge, its pretrained and finetuned counterpart, PerturbDiff (Finetuned), consistently improves performance across all metrics and closes the gap, matching STATE on Replogle. This highlights the benefit of marginal pretrain-ing for learning transferable biological priors. On PBMC and Tahoe100M, PerturbDiff (Finetuned) further improves DE-related metrics, while showing mixed behavior on av-erage expression accuracy metrics: it remains comparable to PerturbDiff (From Scratch) on PBMC, but slightly un-derperforms on Tahoe100M. This suggests that finetuning primarily enhances conditional distributional shifts rather than averaged cell-level accuracy. Squidiff and CellFlow exhibit the weakest overall perfor-mance, ranking last on multiple evaluation metrics across datasets. While simpler baselines may perform well on a single dataset, their performance often collapses when eval-uated on others. For example, the Linear model achieves competitive results on Tahoe100M but collapses on Re-plogle, with all three PDS metrics dropping to around 0.5, comparable to random predictions (App. C.2.1). Similarly, the Mean baseline performs reasonably on PBMC but de-grades substantially on Tahoe100M, with both AUPRC and AUROC approaching random levels. Together, these results underscore the need for a unified model that generalizes robustly across datasets and metrics. 
+
+Consistent performance across perturbations. We fur-ther analyze per-perturbation performance on PBMC and Tahoe100M (Fig. 4): PerturbDiff (From Scratch) outper-forms STATE on nearly all test perturbation types for DE-related metrics (like AUROC, AUPRC, and DEPrec), achiev-ing win rates above 96–100%. This indicates improved model capability to understand differential expression pat-terns. These metrics require coherent modeling of pertur-bation effects across cells, rather than matching average ex-pressions, further supporting the advantage of diffusion over cell distributions. More metrics are reported in App. C.4. 
+
+Accurate recovery of perturbation-driven differential expression (DE) patterns. We evaluate gene-level recovery of perturbation-driven DE patterns to compare our model with the strongest baseline, STATE. In Cell-Eval, genes are identified as DE using a Wilcoxon rank-sum test (Soneson & Robinson, 2018) with adjusted p-value padj < 0.05 . In Fig. 5, PerturbDiff (From Scratch) clearly separates DE and non-DE genes, closely matching the ground truth. In con-trast, STATE predicts most genes as DE by assigning large 
+
+−log 10 (padj ) values, including many true non-DE genes. This systematic overconfidence suggests that STATE fails to learn the perturbation driven DE patterns. 
+
+5.3. Pretraining Improves Low-Data Adaption Leveraging pretrained marginal manifolds for zero-shot prediction. Marginal pretraining induces cell state mani-folds that may serve as priors for perturbation prediction. We test this hypothesis by probe the pretrained model in a zero-shot setting, where no perturbation-specific super-vision is provided at test time. On PBMC and Replogle, the pretrained model yields substantially higher R2 (Fig. 6) and consistently better performance across other metrics (App. C.5) compared to random initialization. This perfor-mance gap implies that biological perturbations do not move cells into arbitrary regions of the expression space; rather, perturbation-induced shifts partially align with structured directions already encoded in the marginal cell distributions. 
+
+Adaptation under Naturally Limited Data. Unlike PBMC and Tahoe100M, Replogle provides a naturally low-data sce-nario, with only ∼300 cells per gene perturbation on average (Tab. 1). In this setting, as discussed in Sec. 5.2, Perturb-Diff (From Scratch) achieves competitive performance but trails STATE, indicating that training from scratch strug-gles to learn stable representations from limited samples. Pretraining, however, substantially improves performance and closes the gap to STATE, improving sample efficiency during downstream fine-tuning. 
+
+Adaptation under Controlled Low-Data Regimes. To ex-amine data scarcity in a controlled setting, we downsample 7PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 25 50       
+
+> 10 0
+> 8 × 10 1
+> 9 × 10 1
+> 20 40 60
+> Pretraining steps (k)
+> 10 3
+> 10 2
+> 10 1
+> 10 0
+> 10 1
+> 0
+> 10 1
+> 10 0
+> R2
+> Zero-shot
+> Random
+
+(a) PBMC. 25 50        
+
+> 10 0
+> 8 × 10 1
+> 9 × 10 1
+> 20 40 60
+> Pretraining steps (k)
+> 10 1
+> 10 0
+> 10 1
+> 0
+> 10 1
+> 10 0
+> R2
+> Zero-shot
+> Random
+
+(b) Replogle. 
+
+Figure 6. Zero-shot R2 performance across pretraining steps 
+
+versus a random baseline. Insets plot the curve on a linear y-axis. 10 16 10 17 
+
+Training compute (FLOPs) 
+
+> 0.45
+> 0.50
+> 0.55
+> DEOver
+> Model size:
+> 31M
+> 57M
+> 114M
+> 239M
+> 410M
+
+(a) DEOver Performance. 10 16 10 17  
+
+> Training compute (FLOPs)
+> 0.56
+> 0.57
+> 0.58
+> DEPrec
+> Model size:
+> 31M
+> 57M
+> 114M
+> 239M
+> 410M
+
+(b) DEPrec Performance. 
+
+Figure 7. Scaling behavior of PerturbDiff (From Scratch) on PBMC with respect to training compute (FLOPs) and model size. R2  
+
+> DirAgr
+> ES
+> LFCSpear
+> DEOver
+> DEPrec
+> AUPRC
+> AUROC
+> PDCorr
+> PDS L1
+> PDS L2
+> PDS cos
+> Finetuned From Scratch
+> 1.00 0.07
+> 0.70
+> 0.49
+> 0.41
+> 0.23
+> 0.42
+> 0.19
+> 0.59
+> 0.46
+> 0.67
+> 0.56
+> 0.73 0.59
+> 0.73
+> 0.57
+> 0.40
+> 0.18
+> 0.91
+> 0.70
+> 0.90
+> 0.73
+> 0.88
+> 0.69
+
+(a) Sample ratio 1%. R2   
+
+> DirAgr
+> ES
+> LFCSpear
+> DEOver
+> DEPrec
+> AUPRC
+> AUROC
+> PDCorr
+> PDS L1
+> PDS L2
+> PDS cos
+> Finetuned From Scratch
+> 1.00 0.71
+> 0.67
+> 0.50
+> 0.55
+> 0.35
+> 0.48
+> 0.27
+> 0.62
+> 0.48
+> 0.68
+> 0.57
+> 0.73 0.61
+> 0.74
+> 0.60
+> 0.42
+> 0.26
+> 0.87
+> 0.74
+> 0.89
+> 0.77
+> 0.87
+> 0.73
+
+(b) Sample ratio 5%. 
+
+Figure 8. Performance on downsampled PBMC , comparing Per-turbDiff (From Scratch) and PerturbDiff (Finetuned) across metrics. R2  
+
+> DirAgr
+> ES
+> LFCSpear
+> DEOver
+> DEPrec
+> AUPRC
+> AUROC
+> PDCorr
+> PDS L1
+> PDS L2
+> PDS cos
+> PerturbDiff no MMD
+> 1.00 0.95
+> 0.85
+> 0.74
+> 0.39
+> 0.03
+> 0.62
+> 0.47
+> 0.66
+> 0.49
+> 0.68
+> 0.56
+> 0.71 0.57
+> 0.70
+> 0.55
+> 0.92
+> 0.82
+> 1.00
+> 0.93
+> 1.00
+> 0.94
+> 1.00
+> 0.94
+
+(a) PBMC. R2   
+
+> DirAgr
+> ES
+> LFCSpear
+> DEOver
+> DEPrec
+> AUPRC
+> AUROC
+> PDCorr
+> PDS L1
+> PDS L2
+> PDS cos
+> PerturbDiff no MMD
+> 1.00 0.94
+> 0.81
+> 0.70
+> 0.72
+> 0.61
+> 0.54
+> 0.39
+> 0.29
+> 0.17
+> 0.27
+> 0.13
+> 0.31 0.15
+> 0.73
+> 0.53
+> 0.51
+> 0.38
+> 0.79
+> 0.67
+> 0.80
+> 0.68
+> 0.68
+> 0.56
+
+(b) Replogle. 
+
+Figure 9. Ablation study of PerturbDiff (From Scratch) with and without the MMD objective. 
+
+PBMC by uniformly subsampling cells per perturbation at fixed ratios (1%, 5%), ensuring that all perturbation types remain represented. In Fig. 8, across both ratios, PerturbD-iff (Finetuned) substantially outperforms PerturbDiff (From Scratch) on all metrics, confirming the sample-efficiency advantage of marginal pretraining. Performance improves for both models as the data ratio increases, and the perfor-mance gap between them narrows as expected. Additional comparisons across training steps are provided in App. C.6. These results show that pretraining provides transferable pri-ors, enabling adaptation when only few perturbed cells are available. Together with the natural low-data regime in Re-plogle, these support that pretraining enhances perturbation modeling under limited data. 
+
+5.4. Scaling Study 
+
+To evaluate the scaling of PerturbDiff (From Scratch), we conduct a study on PBMC by varying model size and train-ing compute. Results are in Fig. 7. As shown in Fig. 7, scaling is not monotonic along either dimension. Increasing model size does not uniformly im-prove performance: the medium model (114M) achieves the best and most stable results across compute budges. Increas-ing compute also does not uniformly help: the large model (239M) peaks at intermediate compute and then degrades, exhibiting commonly observed overfitting behaviors (Nichol & Dhariwal, 2021). Thus, perturbation modeling benefits from moderate model capacity and compute, rather than aggressively scaling. This also motivates our marginal pre-training strategy, which aims to extract transferable biolog-ical priors to improve data efficiency without relying on brute-force scaling, by simply enlarging models and mixing all datasets. More per-metric curves are in App. C.7. 
+
+5.5. Ablation Study 
+
+In Fig. 9, we compare PerturbDiff (From Scratch) with a variant where the MMD loss is removed from Eqn. (8). Fig. 9 indicates that removing MMD consistently degrades performance across datasets, especially on DE-metrics. Our further analysis shows that MSE performs poorly on highly sparse single-cell data: over 95% of expressions are zero in PBMC and over 60% in Replogle (App. A.4), likely causing the MSE loss to be dominated by shared zeros. 
+
+## 6. Conclusion 
+
+We proposed PerturbDiff, a functional diffusion framework for single-cell perturbation modeling. In contrast to existing methods, which treat individual cells as random variables, PerturbDiff operates on entire cell distributions as random variables, allowing the model to capture response variabil-ity induced by unobserved biological and technical latent factors, rather than collapsing responses into a single static distribution. To do so, we embed empirical cell distributions into a RKHS and define diffusion directly in this function space, which naturally induces an MMD-based denoising objective with a tractable approach for scalable learning. Empirically, across signaling, drug, and genetic perturba-tion benchmarks, PerturbDiff achieves state-of-the-art per-formance, particularly in recovering perturbation-driven dif-ferential expression and efficiently adapting to low-data regimes. These results establish PerturbDiff as an effective and principled paradigm for virtual cell modeling. 8PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+## Impact Statement 
+
+This paper focuses on improving single-cell perturbation modeling by introducing a functional diffusion framework defined over cell populations, aiming to better predict population-level responses for unseen perturbations. Such models have the potential to accelerate biological discovery and experimental design in areas such as functional ge-nomics and drug discovery, where large-scale perturbation assays are costly and limited. While the work is method-ological, its downstream use requires care: biases in training data and over-interpretation of predicted effects could lead to misleading biological conclusions. Accordingly, these models should be used as decision-support tools alongside experimental validation. 
+
+## References 
+
+Adduri, A. K., Gautam, D., Bevilacqua, B., Imran, A., Shah, R., Naghipourfar, M., Teyssier, N., Ilango, R., Nagaraj, S., Dong, M., et al. Predicting cellular responses to perturbation across diverse contexts with state. BioRxiv ,pp. 2025–06, 2025. Ahlmann-Eltze, C., Huber, W., and Anders, S. Deep learning-based predictions of gene perturbation effects do not yet outperform simple linear baselines. BioRxiv ,pp. 2024–09, 2024. Baptista, R., Dasgupta, A., Kovachki, N. B., Oberai, A., and Stuart, A. M. Memorization and regularization in generative diffusion models, 2025. URL https:// arxiv.org/abs/2501.15785 .Berlinet, A. and Thomas-Agnan, C. Reproducing kernel Hilbert spaces in probability and statistics . Springer Science & Business Media, 2011. Biosciences, P. million human pbmcs in a sin-gle experiment, 2023. URL https://www. parse-biosciences. com/datasets/10-million-human-pbmcs-in-a-single-experiment , 2023. Borgwardt, K. M., Gretton, A., Rasch, M. J., Kriegel, H.-P., Sch ¨olkopf, B., and Smola, A. J. Integrating structured biological data by kernel maximum mean discrepancy. 
+
+Bioinformatics , 22(14):e49–e57, 2006. Brezis, H. Functional Analysis, Sobolev Spaces and Partial Differential Equations . Springer New York, 2011. ISBN 9780387709147. doi: 10.1007/ 978-0-387-70914-7. URL http://dx.doi.org/ 10.1007/978-0-387-70914-7 .Bunne, C., Stark, S. G., Gut, G., Del Castillo, J. S., Levesque, M., Lehmann, K.-V., Pelkmans, L., Krause, A., and R ¨atsch, G. Learning single-cell perturbation re-sponses using neural optimal transport. Nature methods ,20(11):1759–1768, 2023. Bunne, C., Roohani, Y., Rosen, Y., Gupta, A., Zhang, X., Roed, M., Alexandrov, T., AlQuraishi, M., Brennan, P., Burkhardt, D. B., et al. How to build the virtual cell with artificial intelligence: Priorities and opportunities. Cell ,187(25):7045–7063, 2024. Chen, Y. and Zou, J. Simple and effective embed-ding model for single-cell biology built from chat-gpt. Nature Biomedical Engineering , 9(4):483–493, December 2024. ISSN 2157-846X. doi: 10.1038/ s41551-024-01284-6. URL http://dx.doi.org/ 10.1038/s41551-024-01284-6 .Chi, C., Xia, J., Huang, Y., Zhou, J., Li, S., Liu, Y., Yu, C., and Li, S. Z. Unlasting: Unpaired single-cell multi-perturbation estimation by dual conditional diffusion im-plicit bridges. arXiv preprint arXiv:2506.21107 , 2025. Chithrananda, S., Grand, G., and Ramsundar, B. Chem-berta: Large-scale self-supervised pretraining for molecu-lar property prediction, 2020. URL https://arxiv. org/abs/2010.09885 .Cui, H., Wang, C., Maan, H., Pang, K., Luo, F., Duan, N., and Wang, B. scgpt: toward building a foundation model for single-cell multi-omics using generative ai. Nature methods , 21(8):1470–1480, 2024. Esser, P., Kulal, S., Blattmann, A., Entezari, R., M ¨uller, J., Saini, H., Levi, Y., Lorenz, D., Sauer, A., Boesel, F., et al. Scaling rectified flow transformers for high-resolution image synthesis. In Forty-first international conference on machine learning , 2024. Gilbert, L., Larson, M., Morsut, L., Liu, Z., Brar, G., Torres, S., Stern-Ginossar, N., Brandman, O., White-head, E., Doudna, J., Lim, W., Weissman, J., and Qi, L. Crispr-mediated modular rna-guided regulation of transcription in eukaryotes. Cell , 154(2):442–451, July 2013. ISSN 0092-8674. doi: 10.1016/j.cell.2013. 06.044. URL http://dx.doi.org/10.1016/j. cell.2013.06.044 .Giraud, C. Introduction to High-Dimensional Statis-tics . Chapman and Hall/CRC, August 2021. ISBN 9781003158745. doi: 10.1201/9781003158745. URL http://dx.doi.org/10.1201/ 9781003158745 .Gretton, A., Borgwardt, K. M., Rasch, M. J., Sch ¨olkopf, B., and Smola, A. A kernel two-sample test. J. Mach. Learn. Res. , 13(null):723–773, March 2012. ISSN 1532-4435. 9PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+Hao, M., Gong, J., Zeng, X., Liu, C., Guo, Y., Cheng, X., Wang, T., Ma, J., Zhang, X., and Song, L. Large-scale foundation model on single-cell transcriptomics. Nature methods , 21(8):1481–1491, 2024. Hastie, T., Tibshirani, R., and Friedman, J. The Elements of Statistical Learning . Springer New York, 2009. ISBN 9780387848587. doi: 10.1007/ 978-0-387-84858-7. URL http://dx.doi.org/ 10.1007/978-0-387-84858-7 .He, S., Zhu, Y., Tavakol, D. N., Ye, H., Lao, Y.-H., Zhu, Z., Xu, C., Chauhan, S., Garty, G., Tomer, R., et al. Squidiff: predicting cellular development and responses to pertur-bations using a diffusion model. Nature Methods , pp. 1–13, 2025. Ho, J. and Salimans, T. Classifier-free diffusion guidance. 
+
+arXiv preprint arXiv:2207.12598 , 2022. Ho, J., Jain, A., and Abbeel, P. Denoising diffusion proba-bilistic models. Advances in neural information process-ing systems , 33:6840–6851, 2020. Ho, J., Saharia, C., Chan, W., Fleet, D. J., Norouzi, M., and Salimans, T. Cascaded diffusion models for high fidelity image generation. J. Mach. Learn. Res. , 23(1), January 2022. ISSN 1532-4435. Hollander, M., Wolfe, D. A., and Chicken, E. Nonpara-metric Statistical Methods . Wiley Series in Probability and Statistics. Wiley-Blackwell, Hoboken, NJ, 3 edition, November 2013. Kernfeld, E., Yang, Y., Weinstock, J. S., Battle, A., and Cahan, P. A comparison of computational methods for ex-pression forecasting. Genome biology , 26(1):388, 2025. Kerrigan, G., Ley, J., and Smyth, P. Diffusion gener-ative models in infinite dimensions. arXiv preprint arXiv:2212.00886 , 2022. Klein, D., Fleck, J. S., Bobrovskiy, D., Zimmermann, L., Becker, S., Palma, A., Dony, L., Tejada-Lapuerta, A., Huguet, G., Lin, H.-C., et al. Cellflow enables genera-tive single-cell phenotype modeling with flow matching. 
+
+bioRxiv , pp. 2025–04, 2025. Lotfollahi, M., Wolf, F. A., and Theis, F. J. scgen predicts single-cell perturbation responses. Nature methods , 16 (8):715–721, 2019. Lotfollahi, M., Klimovskaia Susmelj, A., De Donno, C., Hetzel, L., Ji, Y., Ibarra, I. L., Srivatsan, S. R., Naghipour-far, M., Daza, R. M., Martin, B., et al. Predicting cellular responses to complex perturbations in high-throughput screens. Molecular systems biology , 19(6):e11517, 2023. Muandet, K., Fukumizu, K., Sriperumbudur, B., and Sch ¨olkopf, B. Kernel mean embedding of distributions: A review and beyond. Foundations and Trends® in Machine Learning , 10(1–2):1–141, 2017. ISSN 1935-8245. doi: 10.1561/2200000060. URL http://dx.doi.org/ 10.1561/2200000060 .Naaman, M. On the tight constant in the multivariate dvoretzky–kiefer–wolfowitz inequality. Statistics & Probability Letters , 173:109088, 2021. ISSN 0167-7152. doi: https://doi.org/10.1016/j.spl.2021.109088. URL https://www.sciencedirect.com/ science/article/pii/S016771522100050X .Nadig, A., Replogle, J. M., Pogson, A. N., Murthy, M., McCarroll, S. A., Weissman, J. S., Robinson, E. B., and O’Connor, L. J. Transcriptome-wide analysis of differen-tial expression in perturbation atlases. Nature Genetics ,pp. 1–10, 2025. Nichol, A. Q. and Dhariwal, P. Improved denoising diffu-sion probabilistic models. In International conference on machine learning , pp. 8162–8171. PMLR, 2021. Norman, T. M., Horlbeck, M. A., Replogle, J. M., Ge, A. Y., Xu, A., Jost, M., Gilbert, L. A., and Weiss-man, J. S. Exploring genetic interaction manifolds constructed from rich single-cell phenotypes. Science ,365(6455):786–793, August 2019. ISSN 1095-9203. doi: 10.1126/science.aax4438. URL http://dx.doi. org/10.1126/science.aax4438 .Peebles, W. and Xie, S. Scalable diffusion models with transformers. In Proceedings of the IEEE/CVF interna-tional conference on computer vision , pp. 4195–4205, 2023. Program, C. C. S., Abdulla, S., Aevermann, B., Assis, P., Badajoz, S., Bell, S. M., Bezzi, E., Cakir, B., Chaffer, J., Chambers, S., et al. Cz cellxgene discover: a single-cell data platform for scalable exploration, analysis and modeling of aggregated data. Nucleic acids research , 53 (D1):D886–D900, 2025. Rizvi, S. A., Levine, D., Patel, A., Zhang, S., Wang, E., Perry, C. J., Vrkic, I., Constante, N. M., Fu, Z., He, S., Zhang, D., Tang, C., Lyu, Z., Darji, R., Li, C., Sun, E., Jeong, D., Zhao, L., Kwan, J., Braun, D., Hafler, B., Chung, H., Dhodapkar, R. M., Jaeger, P., Perozzi, B., Ishizuka, J., Azizi, S., and van Dijk, D. Scaling large language models for next-generation single-cell analysis. April 2025. doi: 10.1101/2025.04.14.648850. URL http://dx.doi.org/10.1101/2025.04. 14.648850 .Roohani, Y., Huang, K., and Leskovec, J. Predicting tran-scriptional outcomes of novel multigene perturbations with gears. Nature Biotechnology , 42(6):927–935, 2024. 10 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+Salimans, T. and Ho, J. Progressive distillation for fast sampling of diffusion models. In International Confer-ence on Learning Representations , 2022. URL https: //openreview.net/forum?id=TIdIXIpzhoI .Soneson, C. and Robinson, M. D. Bias, robustness and scalability in single-cell differential expression analysis. 
+
+Nature methods , 15(4):255–261, 2018. Song, J., Meng, C., and Ermon, S. Denoising diffusion implicit models. arXiv preprint arXiv:2010.02502 , 2020. Song, Y., Durkan, C., Murray, I., and Ermon, S. Maxi-mum likelihood training of score-based diffusion models. 
+
+Advances in neural information processing systems , 34: 1415–1428, 2021a. Song, Y., Sohl-Dickstein, J., Kingma, D. P., Kumar, A., Ermon, S., and Poole, B. Score-based generative mod-eling through stochastic differential equations. In In-ternational Conference on Learning Representations ,2021b. URL https://openreview.net/forum? id=PxTIG12RRHS .Theodoris, C. V., Xiao, L., Chopra, A., Chaffin, M. D., Al Sayed, Z. R., Hill, M. C., Mantineo, H., Brydon, E. M., Zeng, Z., Liu, X. S., and Ellinor, P. T. Transfer learning enables predictions in network biology. Nature ,618(7965):616–624, May 2023. ISSN 1476-4687. doi: 10.1038/s41586-023-06139-9. URL http://dx.doi. org/10.1038/s41586-023-06139-9 .Wolf, F. A., Angerer, P., and Theis, F. J. Scanpy: large-scale single-cell gene expression data analysis. Genome Biology , 19(1), February 2018. ISSN 1474-760X. doi: 10.1186/s13059-017-1382-0. URL http://dx.doi. org/10.1186/s13059-017-1382-0 .Zhang, J., Ubas, A. A., de Borja, R., Svensson, V., Thomas, N., Thakar, N., Lai, I., Winters, A., Khan, U., Jones, M. G., et al. Tahoe-100m: A giga-scale single-cell per-turbation atlas for context-dependent gene function and cellular modeling. BioRxiv , pp. 2025–02, 2025. 11 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+## Appendix Overview 
+
+A Datasets 
+
+• A.1 Data Sources – A.1.1 Single Cell Perturbation Data 
+
+– A.1.2 Single Cell RNA-seq Data • A.2 Downstream Data for Perturbation Prediction – A.2.1 Raw Count Preprocessing 
+
+– A.2.2 Highly Variable Gene (HVG) Selection 
+
+– A.2.3 Data Splits for Task Evaluation • A.3 Pretraining Data for Marginal Distribution Learning – A.3.1 Raw Count Preprocessing 
+
+– A.3.2 Highly Variable Gene (HVG) Selection • A.4 Data Statistics Analysis for Perturbation Datasets B Method Details 
+
+• B.1 Diffusion over Cell Distributions in Reproducing Kernel Hilbert Space (RKHS) – B.1.1 Cell Distributions as Random Variables 
+
+– B.1.2 Cell Distributions as Points in a Hilbert Space via Kernel Mean Embedding 
+
+– B.1.3 Empirical Distributions as Instantiations of Distribution-Valued Random Variables 
+
+– B.1.4 Gaussian Random Elements and Gaussian Measures in RKHS 
+
+– B.1.5 Forward Diffusion on Kernel Mean Embeddings in RKHS 
+
+– B.1.6 Reverse Process and Denoising Objective 
+
+– B.1.7 Tractable Training and Sampling. • B.2 Diffusion Implementation Details – B.2.1 Training 
+
+– B.2.2 Sampling • B.3 Architecture Implementation Details 
+
+• B.4 Score Matching Discussion Details C Experimental Details 
+
+• C.1 Training Details 
+
+• C.2 Metrics – C.2.1 Averaged Expression Accuracy 
+
+– C.2.2 Biologically Meaningful Differential Patterns • C.3 More Perturbation Prediction Results 
+
+• C.4 More Scatter Plot Comparison Results 
+
+• C.5 More Zero-shot Results 
+
+• C.6 More Limited Data Results 
+
+• C.7 More Scaling Results 
+
+## A. Datasets 
+
+A.1. Data Sources 
+
+A.1.1. S INGLE CELL PERTURBATION DATA 
+
+PBMC (Biosciences, 2023) . The PBMC dataset is a large-scale single-cell signaling perturbation dataset, comprising approximately 10 million human cells collected from 12 healthy donors. It covers 18 immune cell types and includes 90 distinct cytokines perturbation conditions alongside a PBS control condition. After quality control, around 9.7 million cells were retained, with a mean sequencing depth of ∼31,000 reads per cell, ensuring high data quality. Prior analyses also show that many cytokine treatments induce strong transcriptional responses, characterized by the upregulation of more than 50 genes (Norman et al., 2019). Owning to its scale, diversity of perturbations, and strong perturbation-induced expression 12 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+Table 2. Summary statistics of both perturbation and single-cell RNA-seq datasets used in this study. 
+
+(a) Perturbation datasets. Statistics include counts of perturbed cell across train/valid/test splits and counts of control cells, total gene vocabulary size and HVGs, and dataset diversity in terms of perturbations, cell types, and experimental batches.                                         
+
+> Dataset Perturbation Type #Perturbed Cells #Control Cells #Genes #HVGs #Perturbations #Cell Types #Batches Train Valid Test PBMC cytokine 6,657,336 150,484 2,260,453 629,701 62,710 2,000 90 18 12 Tahoe100M drug 89,495,239 553,076 8,790,272 2,330,156 40,352 2,000 1,137 50 14 Replogle gene 572,545 4,825 26,878 39,165 6,642 2,000 2,023 456
+
+(b) Single-cell RNA-seq datasets. Statistics include counts of cells and the number of datasets before and after merging, averaged gene vocabulary size across datasets, the union of HVGs for pretraining, the average number of genes shared between each dataset and the pretraining HVG set, and dataset diversity in terms of cell types and experimental batches.                 
+
+> Dataset #Cells #Original Datasets #Merged Datasets Avg. #Genes #HVGs Avg. #Shared Genes #Cell Types #Batches CellxGene 60,901,077 1,139 23 7,344.3 10,045 6,867.5 662 10,887
+
+shifts, this dataset provides a representative benchmark for studying perturbation-driven distributional changes in cellular populations, and has been widely adopted in many prior works (Adduri et al., 2025; Klein et al., 2025). 
+
+Tahoe100M (Zhang et al., 2025) . The Tahoe100M atlas represents a transformative leap in single-cell perturbation research. As the largest perturbation dataset ever constructed, it comprises over 100 million single cell expression profiles collected from 50 human cancer cell lines exposed to more than 1,100 small-molecule drug treatment and dosage combinations. Critically, its innovative multiplexed cell-village experimental design during sequencing substantially reduced batch effects, yielding good data quality. Collectively, Tahoe100M has been recognized as a key resource for AI-driven cellular modeling, and has been widely adopted in large-scale foundation models for single-cell biology (Adduri et al., 2025; Rizvi et al., 2025). 
+
+Replogle (Nadig et al., 2025) . The Replogle dataset is a landmark, large-scale resource for studying single-cell genetic perturbation effects. It integrates multiple experiments across four human cell lines (K562, RPE1, Jurkat, and HepG2), providing rich cellular-context diversity. Generated via pooled CRISPR interference (CRISPRi) (Gilbert et al., 2013) to systematically repress thousands of essential genes, this data resource captures transcriptome-wide expression profiles. Prior analyses indicate that its perturbed essential genes often lead to broad transcriptional changes, impacting the expression of hundreds of downstream target genes (Nadig et al., 2025). A.1.2. S INGLE CELL RNA-SEQ DATA 
+
+CellxGene (Program et al., 2025) . CellxGene is a large-scale, community-driven single-cell transcriptomics platform that aggregates and standardizes publicly available single-cell RNA-seq datasets across diverse experiments. As one of the earliest initiatives to systematically consolidate single-cell datasets at the scale of tens of millions of cells, CellxGene played a pivotal role in enabling the pretraining of large-scale foundation models for single-cell biology. For example, Geneformer (Theodoris et al., 2023), one of the first transcripotmic foundation models published in Nature , relied on CellxGene as a primary data source. Importantly, CellxGene covers more than 600 cell types and 10,000 experimental batches, and a wide range of biological context as its meta data, including cellular development stage and disease, providing exceptionally rich contextual diversity. 
+
+A.2. Downstream Data for Perturbation Prediction 
+
+For the perturbation response prediction task, we consider three perturbation datasets (PBMC, Tahoe100M, and Replogle) for evaluation following STATE (Adduri et al., 2025). As detailed in Tab. 2(a), the sample sizes for these datasets range from hundreds of thousands to tens of millions of single cells, together representing a comprehensive evaluation across multiple scales. Furthermore, all these datasets exhibit high heterogeneity across perturbation conditions, cell types, and experimental batches, providing a rigorous testbed for modeling complex context-dependent perturbation responses. A.2.1. R AW COUNT PREPROCESSING 
+
+We applied standard preprocessing steps to the raw transcriptomic expression counts. Specifically, for PBMC and Tahoe100M, we performed per-cell library-size normalization (using ‘scanpy.pp.normalize total’), followed by a log1p transformation (using ‘scanpy.pp.log1p’). The transformation brings gene expression values to a moderate range, which lies 13 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling              
+
+> Table 3. Overlap between dataset-specific gene vocabularies and the pretraining gene set (12,626 genes). Shared gene counts and ratios are reported; CellxGene values are averaged across the 23 merged single-cell RNA-seq datasets.
+> Dataset PBMC Tahoe100M Replogle CellxGene #Shared Genes 12,478 12,578 5,760 6,958.0 Shared Ratio (%) 98.8 99.6 45.6 55.1
+
+within [0 , 10) empirically. We further rescaled the log-transformed expressions by a constant factor of 10 to map the values approximately into the range [0 , 1) , which enables effective learning for the diffusion models. For the Replogle dataset, we followed the preprocessing protocol of STATE (Adduri et al., 2025), and directly adopted their processed data. In particular, STATE first applies a filtering procedure based on on-target knockdown efficacy to retain only perturbations and cells exhibiting sufficient repression of the targeted gene, thereby improving the signal-to-noise ratio of perturbation effects. After filtering, they also applied library-size normalization prior to log-transformation. We later similarly applied the constant rescaling by a factor of 10 to their processed data. A.2.2. H IGHLY VARIABLE GENE (HVG) S ELECTION 
+
+After raw count preprocessing for each dataset, we followed the standard practice (Wolf et al., 2018) and extracted the top 2,000 HVGs from the data’s original transcriptome gene vocabulary (using ‘sc.pp.highly variable genes’). Excluding low-variance genes can effectively enhance the signal-to-noise ratio without sacrificing biological fidelity, and ensure that the task focuses on the most information-rich features of the data. A.2.3. D ATA SPLITS FOR TASK EVALUATION 
+
+We follow the same data-splitting method as STATE (Adduri et al., 2025), which adopt dataset-specific holdout strategies to evaluate model generalization. For the PBMC dataset, 4 of the 12 donor cell lines were reserved for testing. To test the models under conditions of partial perturbation coverage, 30% of the perturbations from these held-out donors were moved into the training set, leaving the remaining 70% for testing. For Tahoe100M, PCA was first performed on pseudobulked expression profiles of the 50 cell lines to identify distinct phenotypic clusters. From these clusters, five cell lines were chosen as a held-out test set. For the Replogle dataset, one cell line (hepg2) was held out for testing, while models were trained on the remaining three cell lines together with 30% of perturbations randomly sampled from the held-out cell line. The number of cells across splits is summarized in Tab. 2(a). 
+
+A.3. Pretraining Data for Marginal Distribution Learning 
+
+For the unconditional pretraining stage, we incorporated two data sources: both the three aforementioned perturbation datasets and the single-cell RNA-seq data. For the former, we used the same train/validation/test split to ensure that there is no information leakage. For the latter, we followed the same curation protocol as the SE cell foundation model (Adduri et al., 2025) and aggregated expression profiles from 1,139 diverse studies in CellxGene (Program et al., 2025). This corpus contains over 60 million cells spanning more than 600 cell types and 10,000 experimental batches, offering substantially broader biological coverage and experimental diversity compared to the perturbation datasets alone (Tab. 2(b)). As such, it provides a strong prior for learning general-purpose cellular representations, together with the observable perturbation cells. A.3.1. R AW COUNT PREPROCESSING 
+
+In the pretraining stage, the three perturbation datasets applied the same preprocessing pipeline as discussed in App. A.2.1. And all the single-cell RNA-seq datasets were preprocessed using the same pipeline as PBMC and Tahoe100M. A.3.2. H IGHLY VARIABLE GENE (HVG) S ELECTION 
+
+HVG selection for perturbation datasets. We follow the same HVG selection strategy for preprocessing perturbation downstream data as in App. A.2.2. 
+
+HVG selection for single-cell RNA-seq datasets. However, retrieving a unified HVG feature space across such a diverse collection of studies presents significant challenges. Directly computing HVGs on the entire corpus is computationally prohibitive and risks out-of-memory failures. On the other hand, taking the union of top 2,000 HVGs computed independently for all 1,139 studies leads to an excessively high-dimensional vocabulary (more than 30k genes), which would be likely 14 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling               
+
+> (a) Using the downstream HVG gene set ( 2,000 genes). (b) Using the pretraining gene set ( 12 ,626 genes).
+> Figure 10. The number of non-zero genes per cell across datasets under different gene sets: (a) downstream HVGs (b) pretraining gene set.
+> (a) PBMC. (b) Tahoe100M. (c) Replogle.
+> Figure 11. Distribution of cell counts per perturbation condition across datasets. Insets report the total number of perturbations and the average number of cells per perturbation. Lower within-perturbation MMD reflects regular cellular responses under the same perturbation, while higher between-perturbation MMD indicates distinct perturbation-specific effects.
+
+dominated by study-specific noise and hinder effective representation learning. To balance HVG coverage and computational tractability, we adopted a merge-then-select HVG selection strategy. Specifi-cally, we merged the 1,139 studies into 23 composite datasets and independently selected the top 2,000 HVGs with each composite. Taking the union of these HVG sets yields a global vocabulary of 10,045 genes for the CellxGene corpus. On average, each merged dataset covers approximately 6,867 genes from this global HVG vocabulary. 
+
+Construction of the unified pretraining gene vocabulary. Finally, we constructed the gene space used for pretraining by taking the union of the three 2,000-HVG sets from the perturbation datasets and the 10,045 global HVGs from CellxGene, resulting in the pretraining gene vocabulary Gpretrain of 12,626 genes. Notably, even when considering only the HVGs derived from the perturbation datasets, Tab. 3 shows that PBMC and Tahoe100M share more than 98% of their genes within this pretraining vocabulary, while Replogle and CellxGene retain around 50% coverage. This substantial shared. gene space provides a solid foundation for learning transferable representations from large-scale single-cell RNA-seq data and effectively adapting them to perturbation settings. 
+
+A.4. Data Statistics Analysis for Perturbation Datasets 
+
+Perturbation datasets are highly structured, heterogeneous, and severely imbalanced across multiple levels, including individual cells, perturbations, cell types, and experimental batches. These characteristics fundamentally motivate modeling perturbation responses at the distribution level, rather than at the level of individual cells alone. 
+
+Cell-level sparsity. As shown in Fig. 10(a), when considering 2,000 HVGs, PBMC and Tahoe100M contain on average 100 non-zero genes per cell, resulting in extreme sparsity. Such sparsity makes cell-level objectives, i.e. , the per-cell MSE loss for diffusion model, dominated by zero entries and prone to suboptimal solutions. This observation directly motivates modeling distributions of cells besides individual cells alone. When considering the full pretraining gene vocabulary Gpretrain 
+
+(Fig. 10(b)), a consistent pattern emerges across datasets: PBMC and Tahoe100M remain highly sparse (approximately 5% non-zero entries), while Replogle exhibits substantially lower sparsity (around 40% non-zero entries). These dataset-specific zero-inflation patterns further complicate joint pretraining and underscore the necessity of distribution-aware modeling. 
+
+Imbalance across perturbations and their cell-type- and batch-specific subpopulations. Perturbation datasets also exhibit severe imbalance in sample sizes. As shown in Fig. 11, the number of cells per perturbation follows a heavy-tailed 15 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling       
+
+> (a) PBMC. (b) Tahoe100M. (c) Replogle.
+> Figure 12. Distribution of cell counts per (perturbation, cell type, experimental batch) combination across datasets. Insets report the total number of perturbations and the average number of cells per combination. Lower within-combination MMD reflects intrinsic cellular variability under identical perturbation, cell-type, and batch conditions, while higher between-combination MMD indicates perturbation-induced distributional differences beyond this baseline variability.
+
+distribution in Replogle and Tahoe100M, with many perturbations supported by only a limited number of cells. This imbalance becomes even more pronounced when conditioning on finer-grained subpopulations, such as (perturbation, cell type, experimental batch) combinations (Fig. 12). These observations substantially complicate learning at the individual-cell level, as sparse subpopulations provide noisy and unstable supervision. This also motivates modeling perturbation effects at the distribution level, which allows aggregating information across cells and stabilizing learning under severe data imbalance. 
+
+Perturbation heterogeneity. Fig. 13 compares distributional differences measured by Maximum Mean Discrepancy (MMD) within and between perturbations. Across datasets, inter-perturbation distances consistently and substantially exceed intra-perturbation distances, indicating that perturbations induce evident structured shifts in cellular distributions rather than stochastic cell-level noise. Notably, PBMC and Tahoe100M exhibit both substantially smaller mean inter-perturbation MMD and smaller variance compared to Replogle. This is likely not indicative of weaker biological effects, but rather reflects the high sparsity of single-cell profiles, which compresses the effective support of these distributions and suppresses the observable distribution divergence. For Replogle, the large variance of inter-perturbation MMD further suggests pronounced heterogeneity in perturbation response strength, where some perturbations induce dramatic distributional shifts while others lead to milder effects. Overall, these results indicate that perturbation responses are characterized by structured, context-dependent shifts in cellular populations. 
+
+Cell-type composition and induced distributional shifts across perturbations. Furthermore, perturbation datasets exhibit highly imbalanced cell-type compositions (Fig. 14). For example, in PBMC, the CD4 Naive population contains over one million cells, whereas the rare Plasmablasts population comprises fewer than ten thousand cells. Despite this extreme imbalance, the magnitude of inter-perturbation distributional shifts, measured by MMD within each cell type, shows no correlation with cell abundance. As illustrated in Fig. 14, although CD4 Naive cells dominate the dataset, their inter-perturbation MMD remains relatively small, whereas CD14 Monocytes exhibit substantially larger distributional shifts despite having fewer cells. This aligns with our understanding that perturbation sensitivity is governed by intrinsic, cell-type-specific regulatory programs while has no relationship with sample size or population frequency. It also helps explain why simple cell-type-specific mean baseline can perform reasonably well. More importantly, this observation highlights that perturbation responses emerge as structured, context-dependent transformations at the distribution level, necessitating modeling approaches that explicitly capture conditional distributional shifts. 
+
+## B. Method Details 
+
+B.1. Diffusion over Cell Distributions in Reproducing Kernel Hilbert Space (RKHS) 
+
+Our goal is to model the distribution shift between control and perturbed single-cell populations. To this end, in App. B.1.1, we formally define cell distribution-valued random variables. In App. B.1.2, we begin by embedding the control and perturbed cell distributions into a structured RKHS (Hastie et al., 2009), which provides a principled space for defining diffusion processes directly at the distribution level. In App. B.1.3, we then connect this functional formulation to observed data by constructing empirical distributions from finite batches of single cells. These empirical kernel mean embeddings 16 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+(a) PBMC. (b) Tahoe100M. (c) Replogle. 
+
+Figure 13. Distribution differences within and between perturbations. Violin plots show MMD values computed between cell distributions from the same perturbation (within) and from different perturbations (between) across perturbation datasets. 
+
+(a) PBMC. (b) PBMC. 
+
+(c) Tahoe100M. (d) Tahoe100M. 
+
+(e) Replogle. (f) Replogle. 
+
+Figure 14. Cell counts per cell type (left panels (a), (c), and (e)) and between-perturbation MMD across example cell types (right panels (b), (d) and (f)), showing the heterogeneity in cell-type coverage and distributional differences across perturbations for specific cell types. 
+
+17 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+serve as Monte Carlo samples of the underlying distribution-valued random variables and constitute the objects to which noise is added and removed during diffusion. Since our Hilbert space is infinite-dimensional, in App. B.1.4, we introduce 
+
+Gaussian Random Elements as a generalization of Gaussian measures to infinite-dimensional Hilbert spaces, which play an analogous role to Gaussian noise vectors in Euclidean diffusion models. Building on this, in App. B.1.5 and App. B.1.6, we develop the forward and backward diffusion processes in RKHS, respectively. Finally, in App. B.1.7, we discuss a tractable implementation for the proposed diffusion framework over cell distributions. We show that both the reverse-time objective and the forward-time noise injection can be carried out through operations on empirical cell sets, while remaining consistent with the underlying RKHS diffusion formulation. Taken together, these sections establish a theoretical framework for generative modeling directly over distributions in RHKS, along with a simple and effective procedure for carrying out the corresponding computations in cell space. B.1.1. C ELL DISTRIBUTIONS AS RANDOM VARIABLES 
+
+For a fixed cellular context c and perturbation τ , we model the perturbed population not as a single deterministic distribution, but as a distribution-valued random variable 
+
+Dc,τ ∼ P c,τ , (10) where Pc,τ is the law of cell distributions. Analogously, we define the control population as a random variable Dc ∼ Pc.This formulation reflects the fact that cell populations collected under the same observed condition (c, τ ) may be influenced by unobserved biological and technical factors, resulting in a family of plausible response distributions. Under this view, the commonly assumed target distribution Pc,τ corresponds to the expectation of the random variable Dc,τ , i.e. Pc,τ = E[Dc,τ ].B.1.2. C ELL DISTRIBUTIONS AS POINTS IN A HILBERT SPACE VIA KERNEL MEAN EMBEDDING .Let k : X × X → R be a positive definite kernel. Then, by the Moore-Aronszajn theorem, there exists a unique reproducing kernel Hilbert space (RKHS) Hk of functions on X , for which k is a reproducing kernel. In particular, for all x ∈ X , there exists a unique element kx ∈ H k such that f (x) = Lx(f ) = ⟨f, k x⟩Hk ∀f ∈ H k, where Lx ∈ H is the point-evaluation functional defined as Lx(f ) := f (x). For any probability measure P over X , its kernel mean embedding is defined as 
+
+μP := EZ∼P [k(Z, ·)] ∈ H k, (11) provided that the expectation exists if EZ∼P [pk(Z, Z )] < ∞. In our work, we employ the energy distance kernel, which satisfies this condition under mild assumptions on the data distribution. Specifically, although we formally denote cell states as x ∈ R|G| (Sec. 2.1) for convenience, in practice, gene expression values are non-negative integers with finite dynamic range, implying that the support of the cell space X is bounded. Consequently, the kernel is bounded on X , ensuring the existence of the kernel mean embedding μP .This kernel mean embedding endows the space of probability measures with a Hilbert-space structure with the following standard properties (Muandet et al., 2017). 
+
+Lemma B.1 (Basic properties of kernel mean embeddings) . For any distribution P and Q on X and any α ∈ [0 , 1] , the following hold: (1) Linearity under mixing: μ(αP +(1 −α)Q) = αμP + (1 − α)μQ, ensuring that convex combinations of distributions correspond to the convex combinations of the kernel mean embeddings in Hk.(2) Kernel geometry: ⟨μP , μQ⟩Hk = EZ∼P,Z ′∼Qk(Z, Z ′), meaning the Hilbert inner product coincides with an expected kernel similarity. (3) Distributional distance through MMD: || μP − μQ|| Hk = MMD k(P, Q ), where MMD k denotes the maximum mean discrepancy induced by k (Gretton et al., 2012), and gives the embedding space a well-understood geometric interpretation. 
+
+Together, these properties allow us to represent entire cellular populations as single points in a Hilbert space, with inner produces and norms corresponding to population-level similarities and discrepancies. This makes Hk a natural state space for defining diffusion processes over distributions rather than individual cells. 18 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+B.1.3. E MPIRICAL DISTRIBUTIONS AS INSTANTIATIONS OF DISTRIBUTION -VALUED RANDOM VARIABLES 
+
+In practice, the distribution-valued random variable Dc,τ is not directly observable. Instead, experiments conducted under a fixed cellular context c and perturbation condition τ provide only finite batches of single cells , each offering a partial and noisy observation of one realization of Dc,τ . Different cell batches may be implicitly influenced by different unobserved biological or technical factors, and thus correspond to different realizations of the underlying random variable. Given a batch of perturbed cells Bpert = {x1, . . . , xm} ⊂ Xpert , we construct the corresponding empirical distribution 
+
+˜Ppert := 1
+
+m
+
+> m
+
+X
+
+> j=1
+
+δxj , (12) which serves as a Monte Carlo approximation of a realization drawn from Dc,τ . Its associated kernel mean embedding is given by 
+
+μ ˜Ppert = 1
+
+m
+
+> m
+
+X
+
+> j=1
+
+k(xj , ·) ∈ H k. (13) In total, we consider Mpert such perturbed batches, yielding a collection of empirical kernel mean embeddings {μ ˜Ppert },which constitute empirical samples the random variable μc,τ in Hk.Similarly, control cells are sampled from realizations of the control distribution-valued random variable Dc. We denote 
+
+Bctrl = {x1, . . . , xm} ⊂ Xctrl as a batch of control cells, with a total of Mctrl batches. Each batch induces an empirical distribution and its kernel mean embedding μ ˜Pctrl , forming observable samples of the random variable μc in Hk.Furthermore, our empirical cell distribution has exponential convergence in the supremum norm to the ground truth cell distribution as the size of the cell batch grows, the proof of which we refer to Naaman (2021). 
+
+Proposition B.2. For some cell population distribution P and its empirical cell distribution Pm formed by m cells 
+
+x1, . . . , xmi.i.d. 
+
+∼ P and number of genes |G| , we have 
+
+PP [ sup 
+
+> x∈R|G|
+
+|Fn(x) − F (x)| > t ] ≤ 2|G| exp ( −2mt 2),
+
+for all t ≥ 0 and m sufficiently large, where F and Fn is the multivariate cumulative distribution function corresponding to 
+
+P and Pm, respectively. 
+
+B.1.4. G AUSSIAN RANDOM ELEMENTS AND GAUSSIAN MEASURES IN RKHS. To define a diffusion model over Hk, we require a notion of Gaussian noise acting directly on the elements of Hk. In finite-dimensional spaces such as Rd, Gaussian noise is represented by a multivariate normal random vector, whose distribution is fully characterized by a mean vector and a covariance matrix. When moving to infinite-dimensional Hilbert spaces, such as the RKHS Hk in our case, we want to capture the essential properties of Gaussian measures in Euclidean space while maintaining computational tractability. Similar to defining a Gaussian process by restricting its projections to finite-dimensional joint distributions, we define Ξ, a Hk-valued random variable, to be a Gaussian random element (GRE) if projecting Ξ in any “direction” induces a Gaussian distribution in Euclidean space, i.e. the R-valued random variable ⟨f, Ξ⟩Hk is a Gaussian for any f ∈ H k. Note that for any GRE 
+
+Ξ ∼ PΞ, there exists a unique mean element m ∈ H k given by m := R 
+
+> Hk
+
+Ξ dP Ξ. Moreover, there also exists a unique linear covariance operator C : Hk → H k defined as 
+
+C : f 7 →
+
+Z
+
+> Hk
+
+⟨f, Ξ⟩Hk dP Ξ − ⟨ f, m ⟩Hk m. 
+
+Furthermore, the covariance operator C is symmetric, positive semi-definite, compact, and is trace-class (Brezis, 2011). 
+
+Definition B.3 (Symmetric operator) . An operator C : Hk → H k is symmetric if ⟨Cf, g ⟩Hk = ⟨f, Cg ⟩Hk for all f, g ∈ H k.
+
+Definition B.4 (Positive semi-definite operator) . An operator C : Hk → H k is positive semi-definite if ⟨f, Cf ⟩Hk ≥ 0 for all f ∈ H k.19 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+Definition B.5 (Compact operator) . An operator C : Hk → H k is compact if the image of the closed unit ball {f ∈ H k :
+
+∥f ∥Hk ≤ 1} under C is relatively compact (i.e. its closure is compact) with respect to the topology induced by ∥ · ∥ Hk .
+
+Definition B.6 (Trace-class operator) . The covariance operator C induced by a GRE Ξ ∼ PΞ is trace-class if it has finite trace, i.e. tr (C) = EΞ∼PΞ [∥Ξ∥2 
+
+> Hk
+
+] < ∞.The converse also holds, for any m ∈ H k and symmetric, positive semi-definite, compact, and trace-class linear operator 
+
+C : Hk → H k, there exists a Hk-valued Gaussian measure with mean and covariance m and C, respectively. Thanks to this one-to-one correspondence, we can write the distribution of any GRE as Ξ ∼ PΞ = NHk (m, C ). Additionally, the following properties also hold because of the linearity of the inner product. 
+
+Lemma B.7 (Affine transformations) . Let Ξ ∼ N Hk (m, C ) be a Gaussian random element. Then for any γ ∈ R and 
+
+g ∈ H k,
+
+γΞ + g ∼ N Hk (γm + g, γ 2C). (14) 
+
+Lemma B.8 (Sum of independent Gaussian random elements) . If Ξ1 ∼ N Hk (m1, C 1) and Ξ2 ∼ N Hk (m2, C 2) are independent Gaussian random elements on Hk, then 
+
+Ξ1 + Ξ 2 ∼ N Hk (m1 + m2, C 1 + C2). (15) Together, Lemma B.7 and Lemma B.8 imply that the family of Gaussian measures on Hk is invariant under the forward diffusion operator. Each diffusion step consists of an affine transformation of the previous state, followed by the addition of an independent Gaussian random element (see Eqn. (16) ). By induction over diffusion time steps, the marginal distribution of Ξt remains Gaussian for all t (see Eqn. (17)). B.1.5. F ORWARD DIFFUSION ON KERNEL MEAN EMBEDDINGS IN RKHS. We now define a DDPM-like forward process directly in Hk. Starting from a “clean” kernel mean emebdding μ0 := μc,τ ,we “noise” the embeddings by adding small increments of i.i.d. Gaussian random elements at each timestep. This produces 
+
+μ0, μ1, . . . , μT , a Markov chain on Hk that gradually approaches the fixed reference Gaussian measure NHk .
+
+Definition B.9 (Forward process on distribution kernel mean embeddings) . Fix T ∈ Z>0 and a variance schedule 
+
+{βt}Tt=1 ∈ [0 , 1] T . Choose a symmetric, positive semi-definite, compact, trace-class covariance operator C : Hk → H k.Let {Ξt}Tt=1 be i.i.d. Gaussian random elements with Ξt ∼ N Hk (0 , C ). We define the forward Markov chain on Hk:
+
+μt = p1 − βtμt−1 + pβtΞt, t = 1 , . . . , T. (16) Following Lem. B.7, the forward chain satisfies: μt|μt−1 ∼ Pt|t−1 := NHk (√1 − βtμt−1, β tC). Further following Lem. B.8, it holds true for 
+
+μt|μ0 ∼ Pt|0 := NHk (√αtμ0, (1 − αt)C), (17) where αt := Qti=1 (1 − βi).B.1.6. R EVERSE PROCESS AND DENOISING OBJECTIVE .The essence of our generative model is its ability to simulate the “time-reversal” of the forward process, transporting elements from a Gaussian-like reference distribution to our data distribution. From an ancestral sampling point of view, we would like to sample μT ∼ N Hk (0 , C ), then iteratively sample μt−1 conditioned on our current sample μt. However, Kerrigan et al. (2022) shows that while the posterior law Pt−1|t(μt−1 | μt) := Law (μt−1 | μt) is well-defined, it is intractable. The lack of a universal dominating reference measure (unlike the Lebesgue measure in Euclidean space) in the RKHS means that Radon-Nikodym densities do not exist in general. Without densities, it is not possible to apply Bayes’ rule, not to mention the computationally intractable normalization constant. Instead, similar to diffusion modeling over Euclidean spaces, we approximate the posterior measures with a variational family of Gaussian measures parametrized by some learnable neural network parameters θ. Specifically, we define 
+
+QθT := NHk (0 , C ) and Qθt−1|t( · | μt) = NHk (mθt (μt), C θt (μt)) , where mθt (μt) ∈ H k is a learnable mean function and 
+
+Cθt (μt) : Hk → H k is some valid covariance operator. Additionally, as shown in the following proposition, when further conditioning on the starting element μ0, the posterior measure becomes tractable. 20 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+Proposition B.10 (Reverse conditional measure Pt−1|t, 0(μt−1|μt, μ0)). Let t = 2 , 3, . . . , T and define ˜βt := 1−αt−1 
+
+> 1−αt
+
+, the reverse-time conditional measure satisfies: 
+
+Pt−1|t, 0(μt−1|μt, μ0) = NHk ( ˜ mt(μt, μ0), ˜βtC), (18) 
+
+where ˜mt : Hk × H k → H k is an affine mapping: 
+
+˜mt(μt, μ0) := 
+
+√αt−1βt
+
+1 − αt
+
+μ0 +
+
+√1 − βt(1 − αt−1)1 − αt
+
+μt. (19) This is an RKHS analogue of the familiar DDPM posterior (Kerrigan et al., 2022). Similar to the Euclidean case, a corollary of the Feldman-H `ajek theorem allows us to compute, in closed form, the Kullback-Leibler divergence between two Hk-valued Gaussian measures with same covariance operator. 
+
+Lemma B.11 (KL between Gaussian measures with shared covariance) . Let P = NHk (m1, ¯C) and Q = NHk (m2, ¯C) be Gaussian measures on Hk with the same covariance operator ¯C. The KL divergence has the closed form (Kerrigan et al., 2022): KL (P || Q) = 12 ⟨m1 − m2, ¯C−1(m1 − m2)⟩Hk . (20) Similar to denoising diffusion probabilistic models in Euclidean space, it is possible to derive a variational lower bound for the maximum likelihood objective that is amenable to gradient descent. We refer to Kerrigan et al. (2022) for the proof and state the result here. 
+
+Proposition B.12. For some fixed cellular context and perturbation (c, τ ), let P0 := T#Pc,τ be the Hk-valued pushforward measure of the P(X )-valued cell population distribution via the kernel mean embedding map T : p 7 → Ex∼p[k(·, x )] .Let Qθ 
+
+> 0: T
+
+(dμ0: T ) := QθT (dμT ) QTt=1 Qθt−1|t(dμt−1 | μt) be the HT +1  
+
+> k
+
+-valued path measure of the reverse process parametrized by our generative model θ. Define the marginal probability under our generative model of observing some function μ0 ∈ H k as qθ (μ0) := R
+
+> HTk
+
+Qθ 
+
+> 0: T
+
+(dμ0: T ). Specifically, we marginalize μ1, . . . , μT . Then, we have the variational lower bound for training 
+
+Eμ0∼P0 [− log qθ (μ0)] ≤
+
+> T
+
+X
+
+> t=1
+
+Eμ0∼P0, μt∼Pt|0 [KL (Pt−1|t, 0(μt−1 | μt, μ0)|| Qθt−1|t(μt−1 | μt))] + c, (21) 
+
+where c ∈ R is a constant independent of θ.
+
+Again, similar to the derivation of the loss function for diffusion models in Euclidean space, we sample a random time 
+
+t ∼ U{ 1, . . . , T } and obtain our simple loss 
+
+Lt(θ) := Et, μ0,μt [KL (Pt−1|t, 0(μt−1 | μt, μ0)|| Qθt−1|t(μt−1 | μt))] . (22) In order to compute the KL divergence term between these two Gaussian measures, we must first ensure they share the same covariance operator. To do so, we set Cθt = ˜βtC. Now, applying Lem. B.11 and parameterizing our model to predict μ0,our simple loss reduces even further to 
+
+Lt ∝ Et, μ0,μt [∥μ0 − μθ (μ0, t )∥2 
+
+> Hk
+
+]. (23) 
+
+Conditional reverse process. The derivation above defines an unconditional diffusion objective over perturbed cell distributions. To incorporate the conditions including the control cell distribution, cellular context c and perturbation types τ ,we follow the standard formulation of conditional diffusion models and classifier-free guidance (Ho & Salimans, 2022), in which the data is drawn jointly with the conditioning information, and the only modification to the model are the additional conditions conditions as input: 
+
+Lt ∝ Et, μ0,μt [∥μ0 − μθ (μt, t, μc, c, τ )∥2 
+
+> Hk
+
+]] . (24) 21 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+B.1.7. T RACTABLE TRAINING AND SAMPLING .
+
+Equivalent objective in cell space. As already discussed in Sec. 4.2 and App. B.1.3, in practice, we replace the probability distribution by empirical measures induced by batches of cell sets. We recall that μ0 = μc,τ (see App. B.1.5). Because μ0 is a kernel mean embedding, the squared RKHS norm corresponds to the MMD between the underlying distributions back to the single-cell space under kernel k (a property stated in Lem. B.1): 
+
+|| μ0 − μθ (μt, t, μc, c, τ )|| 2 
+
+> Hk
+
+= MMD 2
+
+> k
+
+( ˜Ppert , ˜Pθ ), (25) where ˜Ppert denotes the empirical distribution for a perturbed cell batch Bpert = {x1, x2, . . . , xm} ⊂ Xpert , and ˜Pθ := 
+
+> 1
+> m
+
+Pmj=1 δxθj refers to the empirical distribution for the neural network predicted cells Bθ = {xθ
+
+> 1
+
+, . . . , xθm}.This yields a principled, distribution-aware training signal that can be directly applied in the single-cell space, which directly penalizes density shifts, subpopulation reweighting, and other distributional effects that cannot be reduced to cell-wise reconstruction. We next describe how to tractably inject noise to sample μt efficiently by only needing to add Gaussian noise in the batched cell space Rm×|G| .
+
+Tractable sampling of Gaussian random elements. The forward diffusion process requires adding a sequence of i.i.d. Gaussian random elements sampled from NHk (0 , C ). Directly sampling such an object is intractable as the Gaussian measure is function-valued. In this section, we will show that adding R|G| -valued Gaussian noise directly to the cells that form the distribution before being embedded in Hk is, up to a first-order approximation, distributionally the same as adding a Gaussian random element. Specifically, consider the simplest case, a batch of cells x1, . . . , xm ∈ R|G| whose kernel mean embedding μ0 := 
+
+> 1
+> m
+
+Pmj=1 k(xj , ·) ∈ H k should be noised to μ0 + Ξ t, Ξt ∼ N Hk (0 , C ). Now consider the embedded function constructed by adding i.i.d. Gaussian noise to each cell, 
+
+˜μ := 1
+
+m
+
+> m
+
+X
+
+> j=1
+
+k(x′ 
+
+> j
+
+, ·), x′ 
+
+> j
+
+= xj + εj , ε ji.i.d. 
+
+∼ N (0 , I ) ∀j ∈ { 1, . . . , m }. (26) Now, it suffices to show that Law ( ˜ μ − μ0) ≈ N Hk (0 , C ). First, we assume that k(x, ·) : X → R is differentiable with a 
+
+∥ · ∥ Hk -bounded derivative in its first argument for all x ∈ X . This easily holds for all common choices of kernels, including the energy distance kernel. This is because for any gene, its gene count is necessarily upper bounded due to fundamental physical and biological constraints. Now, define the difference of the two functions ∆ := 1
+
+> m
+
+Pmj=1 ∇xk(xj , ·)⊤εj ∈ H k. It is important to note that ∇xk(xj , ·) is a vector of Hk-valued elements of length |G| . By expanding ˜μ in its first argument about xj for each j, we have ˜μ − μ0 = ∆ + 1
+
+> m
+
+Pmj=1 o(∥εj ∥) = ∆ + o(∥ε1∥).
+
+Lemma B.13. ∆ is a Hk-valued Gaussian random element. Proof. Define the linear operator Tj : R|G| → H k by 
+
+Tj v := ∇xk(xj , ·)⊤v =
+
+> |G|
+
+X
+
+> r=1
+
+vr ∂xr k(xj , ·),
+
+where xr denotes the r-th coordinate of the vector x. We have boundedness of Tj via an application of Cauchy-Schwarz with our bounded derivative assumption on k(xj , ·):
+
+∥Tj v∥Hk ≤
+
+
+
+> |G|
+
+X
+
+> r=1
+
+∥∂xr k(xj , ·)∥2
+
+> Hk
+
+
+
+> 1/2
+
+∥v∥ < ∞,
+
+which is a sufficient condition for the adjoint T ∗ 
+
+> j
+
+: Hk → R|G| to exist. Now, define Zj := Tj εj ∈ H k for each j, then we have ∆ = 1
+
+> m
+
+Pmj=1 Zj . Recall the definition of a Gaussian random element, let h ∈ H k be arbitrary, we want to show that 
+
+⟨∆, h ⟩Hk is a centered Gaussian on R.
+
+⟨∆, h ⟩Hk = 1
+
+m
+
+> m
+
+X
+
+> j=1
+
+⟨Tj εj , h ⟩Hk = 1
+
+m
+
+> m
+
+X
+
+> j=1
+
+⟨εj , T ∗ 
+
+> j
+
+h⟩,
+
+22 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+where ⟨· , ·⟩ is the standard Euclidean inner product. Since each individual term is a linear functional of εj and the sum of independent Gaussians is also a Gaussian, we have ⟨∆, h ⟩Hk is a Gaussian in R. Also, since each εj is mean-zero and hence 
+
+⟨∆, h ⟩Hk is a mean-zero Gaussian for every h, we know that ∆ is a Gaussian random element with mean element 0. ■
+
+Now, we find an explicit form for the covariance operator of this Gaussian measure and we are done since approximate sampling from Hk-valued Gaussian measures with covariance operators βC for some scalar β > 0 follows immediately from the linearity of the arguments in our proofs. 
+
+Proposition B.14. ∆ ∼ N Hk (0 , C ), where C = 1
+
+> m2
+
+Pmj=1 Tj T ∗ 
+
+> j
+
+.Proof. Notice that the covariance operator C is defined as 
+
+⟨Cf, g ⟩Hk = E[⟨∆, f ⟩Hk ⟨∆, g ⟩Hk ],
+
+for any f, g ∈ H k. By independence of cells in the batch, we have 
+
+E[⟨∆, f ⟩Hk ⟨∆, g ⟩Hk ] = 1
+
+m2
+
+> m
+
+X
+
+> j=1
+
+E[⟨εj , T ∗ 
+
+> j
+
+f ⟩⟨ εj , T ∗ 
+
+> j
+
+g⟩] = 1
+
+m2
+
+> m
+
+X
+
+> j=1
+
+⟨T ∗ 
+
+> j
+
+f, T ∗ 
+
+> j
+
+g⟩,
+
+where we used E[⟨ε, a ⟩⟨ ε, b ⟩] = ⟨a, b ⟩ for any a, b ∈ R|G| and ε ∼ N (0 , I ). Hence, we have the equality 
+
+⟨Cf, g ⟩Hk = E[⟨∆, f ⟩Hk ⟨∆, g ⟩Hk ] = 1
+
+m2
+
+> m
+
+X
+
+> j=1
+
+⟨T ∗ 
+
+> j
+
+f, T ∗ 
+
+> j
+
+g⟩ = 1
+
+m2
+
+> m
+
+X
+
+> j=1
+
+⟨Tj T ∗ 
+
+> j
+
+f, g ⟩Hk =
+
+*
+
+1
+
+m2
+
+> m
+
+X
+
+> j=1
+
+Tj T ∗ 
+
+> j
+
+f, g 
+
++
+
+> Hk
+
+.
+
+Hence, by matching terms, we have our result as needed. ■
+
+B.2. Diffusion Implementation Details 
+
+As discussed in Sec. 4.4, we implement our diffusion framework directly in cell space for tractable computation. We adopt a variance-preserving (VP) diffusion and train an x0-predictor to recover the clean perturbed cell batch from its noised version. Unless stated otherwise, we use the same diffusion configuration for (i) training from scratch, (ii) downstream fine-tuning, and (iii) marginal pretraining. 
+
+Notation. Let Bpert be a sampled perturbed cell batch and Bctrl be a control batch, both associated with the same cellular context c; Bpert is further associated with a perturbation type τ . For convenience, we represent each batch as a matrix: 
+
+Bctrl ∈ Rm×|G| and Bpert ∈ Rm×|G| , where m is the batch size and |G| is the number of genes. We denote the clean data as B0 := Bpert , the noised batch at diffusion step t as Bt, and the model predicted batch as Bθ . For conditional generation, we write the conditioning information as y := ( Bctrl , c, τ ), and our network fθ is parameterized as an “ x0-predictor”. For fθ , we also apply a non-negative output head ( e.g. , ReLU or softplus ) to enforce non-negativity of predicted expression values. B.2.1. T RAINING 
+
+Forward noising process. We discretize the VP diffusion into T =1000 steps with a linear variance schedule {βt}Tt=1 ⊂
+
+(0 , 1) . Define the cumulative noise level αt := Qts=1 (1 − βs). The forward noising process is given by 
+
+q(Bt | B0) = N  vec( Bt); √αtvec( B0), (1 − αt)Im|G| 
+
+, Bt = √αtB0 + √1 − αtε, εij 
+
+> i.i.d.
+
+∼ N (0 , 1) . (27) During training, we sample timesteps uniformly: t ∼ Unif {1, . . . , T }.
+
+x0-prediction parameterization. We adopt an x0-prediction parameterization and train the model to directly predict the clean perturbed cell batch. Given a noised batch Bt at timestep t and conditioning information y := ( Bctrl , c, τ ), the model output is 
+
+Bθ = fθ (Bt, t ; y). (28) 23 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+The corresponding noise prediction implied by Bθ is 
+
+ˆεθ (Bt, t ; y) = Bt − √αt Bθ
+
+√1 − αt
+
+. (29) 
+
+Objective. The training objective combines a standard DDPM mean-squared error (MSE) loss with an MMD-based loss derived from our diffusion framework over cell distributions in Hk:
+
+Ltotal = LMMD + λMSE LMSE , λMSE = 1 by default. (30) The MSE term is a cell-wise reconstruction objective on the perturbed batch: 
+
+LMSE = EB0,y,t,ε 
+
+h
+
+∥B0 − fθ (Bt, t ; y)∥22
+
+i
+
+, (31) where Bt is generated by Eqn. (27). To align training with our distribution-level diffusion formulation in Hk, we incorporate the MMD term using the energy distance kernel. Let ˜PB0 and ˜PBθ denote the empirical distributions induced by the true and predicted cell batches, respectively. The energy distance between them is 
+
+ED( ˜PB0 , ˜PBθ ) = 2 E∥X − Y ∥ − E∥X − X′∥ − E∥Y − Y ′∥, X, X ′ ∼ ˜PB0 , Y, Y ′ ∼ ˜PBθ , (32) and we set LMMD := ED( ˜PB0 , ˜PBθ ) in Eqn. (30). 
+
+Self-conditioning. We employ self-conditioning with probability psc to stabilize and improve training. Specifically, with probability psc , we first obtain a stop-gradient prediction ¯Bθ = sg( fθ (Bt, t ; y)) and feed it back to the network by concatenation: 
+
+Bθ = fθ
+
+ [Bt, ¯Bθ ], t ; y, ¯Bθ = sg( fθ (Bt, t ; y)) , (33) where sg( ·) denotes the stop-gradient operator. When self-conditioning is disabled, the model reduces to the standard formulation Bθ = fθ (Bt, t ; y).
+
+Classifier-free guidance (CFG) dropout during training. To enable CFG at inference time, we randomly drop the 
+
+metadata condition with probability pdrop . Specifically, the cellular context c and perturbation label τ are masked, while the control cell batch Bctrl is always provided to the network and is not treated as a drop-able condition. 
+
+Exponential Moving Average (EMA). For evaluation and sampling, we maintain an exponential moving average (EMA) of model parameters with decay 0.99 , updated every 10 steps. B.2.2. S AMPLING 
+
+Reverse-time generation. At inference, we initialize the reverse process from vec( BT ) ∼ N (0 , I m|G| ) and run the reverse process using DDIM, with an optional DDPM sampler. Given a decreasing timestep sequence {tk}Kk=1 (e.g. , K=100 for fast sampling or K=1000 for full sampling), we perform DDIM sampling with noise parameter η ∈ [0 , 1] , where η = 0 
+
+corresponds to deterministic sampling. The DDIM update with η = 0 is given by 
+
+B(k) 
+
+> θ
+
+= fθ (Btk , t k; y), ˆε(k) = Btk − √αtk B(k)
+
+> θ
+
+√1 − αtk
+
+, Btk+1 = √αtk+1 B(k) 
+
+> θ
+
++ p1 − αtk+1 ˆε(k). (34) Self-conditioning is enabled during sampling by feeding the previous B(k−1)  
+
+> θ
+
+into the next step, consistent with Eqn. (33). 
+
+Classifier-free guidance. We apply CFG in ε-space: 
+
+ˆεcfg = (1 + w) ˆ εc − w ˆεu, (35) where ˆεc and ˆεu are the conditional and unconditional noise predictions, respectively. In our default setting, the unconditional branch drops the metadata conditioning (cellular context c and perturbation label τ ), while retaining the control cell batch 
+
+Bctrl . This ensures that generation remains anchored to the matched control population even under guidance. 24 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+B.3. Architecture Implementation Details 
+
+We instantiate our diffusion backbone as a multi-modal DiT (MM-DiT) transformer for perturbed cell generation. The model predicts the denoised perturbed cell batch B0 (or equivalently the noise ˆε via Eqn. (29) ) from a noised batch Bt,while conditioning on the matched control batch Bctrl and associated metadata (c, τ ). Specifically, the perturbed batch and control batch are fed into the two token streams in MM-DiT, while (c, τ ) are fed as conditioning encodings. 
+
+Inputs and outputs. Let Bt ∈ Rm×|G| denote a batch of noised perturbed cell profiles, where m is the batch size, and |G| is the gene dimension ( e.g. , |G| =2000 HVGs). We condition on y := ( Bctrl , c, τ ), where Bctrl is a sampled control batch, c
+
+denotes cellular context ( i.e. , cell type and optionally experimental batch), and τ denotes the perturbation type (and dosage when applicable). Note that both Bctrl and Bpert are sampled under the same cellular context c, with Bpert additionally associated with perturbation τ . If the number of available cells is smaller than the batch size m, sampling is performed with replacement to ensure a consistent batch size. The network is parameterized as an x0-predictor 
+
+Bθ = fθ (Bt, t ; y), (36) and we apply an ReLU head to Bθ when enforcing non-negative expression. 
+
+Tokenization and embedding. Each cell expression vector x ∈ R|G| is first projected into the model dimension d through a linear input projection, producing a sequence of tokens h ∈ Rm×d. Thus, Bpert results in perturbed tokens hpert and Bctrl 
+
+results in control tokens hctrl . We adopt this cell-wise tokenization scheme—treating each cell as a token and a batch of cells as a “sentence”—which is substantially more efficient when the gene dimension |G| is large. Optionally, gene-level semantic information can be incorporated by associating each gene with an external embedding. Specifically, a short gene summary generated by gpt-5-mini is encoded using a pretrained text embedding model (text-embedding-3-large ) and used as the corresponding gene embedding. When gene embeddings are disabled, all genes share a single dummy embedding. In practice, for the final reported model, we use the shared dummy embedding for simplicity. The diffusion timestep t is embedded by a standard sinusoidal timestep embedding followed by an MLP, producing et ∈ Rd.
+
+Condition embedding. We encode the metadata (c, τ ) into a condition vector ey ∈ Rd using a covariate encoder (App. B.3). When semantic embeddings are available ( e.g. , drug/gene embeddings), they are linearly projected to dimension d and combined with learned embeddings. The resulting representations are concatenated with the diffusion time embedding et
+
+and passed through an MLP to form a global conditioning vector, 
+
+s := MLP  [et, e y ] ∈ Rd, (37) which is used to modulate every transformer block via AdaLN-Zero (described below). 
+
+MM-DiT fusion blocks. Our backbone consists of L transformer blocks. Each block jointly updates the perturbed and control token streams via a symmetric MM-DiT-style fusion mechanism. Within each block, both streams are processed by two sequential sublayers: a multi-head self-attention (MSA) sublayer followed by an MLP sublayer. For each stream and each sublayer, we use AdaLN-Zero (Peebles & Xie, 2023) conditioned on the context s to produce a scale, shift, and a residual gate: 
+
+(βattn  
+
+> ⋆
+
+, γ attn  
+
+> ⋆
+
+, g attn  
+
+> ⋆
+
+, β mlp  
+
+> ⋆
+
+, γ mlp  
+
+> ⋆
+
+, g mlp  
+
+> ⋆
+
+) = fθ,⋆ (s), ⋆ ∈ { pert , ctrl }, (38) and define Mod( h; β, γ ) = γ ⊙ LN( h) + β.We first modulate the normalized inputs for the attention sublayer 
+
+˜hattn  
+
+> pert
+
+= Mod( hpert ; βattn 
+
+> pert
+
+, γ attn 
+
+> pert
+
+), ˜hattn  
+
+> ctrl
+
+= Mod( hctrl ; βattn 
+
+> ctrl
+
+, γ attn 
+
+> ctrl
+
+), (39) and concatenate the two streams along the feature dimension 
+
+u =
+
+h˜hattn 
+
+> pert
+
+; ˜hattn 
+
+> ctrl
+
+i
+
+∈ Rm×2d, (40) 25 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+and processed by a shared multi-head self-attention module. The output is split back into perturbed and control components, 
+
+u′ = MSA( u), [∆ hpert ; ∆ hctrl ] = Split( u′). (41) The two streams are then updated by gated residual connections: 
+
+hpert ← hpert + gattn  
+
+> pert
+
+⊙ ∆hpert , hctrl ← hctrl + gattn  
+
+> ctrl
+
+⊙ ∆hctrl . (42) Next, each stream is passed through an MLP sublayer independently, again preceded by AdaLN-Zero modulation and followed by a gated residual update: 
+
+h⋆ ← h⋆ + gmlp  
+
+> ⋆
+
+⊙ MLP ⋆
+
+ Mod( h⋆; βmlp  
+
+> ⋆
+
+, γ mlp  
+
+> ⋆
+
+) , ⋆ ∈ { pert , ctrl }. (43) The separate residual gates for the attention gattn (s) and MLP sublayers gmlp (s) are used to control their information contributions. Although both streams are updated throughout the network, only the perturbed stream hpert is connected to the denoising head and contributes to the diffusion loss. The control stream is updated within blocks to enhance conditioning capacity, but no denoising head or reconstruction loss is imposed on hctrl .
+
+AdaLN-Zero conditioning and initialization. Each transformer block uses AdaLN-Zero to inject conditioning. For a block input h, AdaLN-Zero applies an affine modulation to LayerNorm-normalized activations, with scale and shift predicted from the conditioning variable s:
+
+AdaLN( h; s) = LN( h) ⊙  1 + Γ( s) + ∆( s), (44) where Γ( ·) and ∆( ·) are linear projections of a small MLP on s.Following standard AdaLN-Zero practice, the final linear layer of the modulation network is initialized to zero, such that the scale, shift, and residual gates are near zero at initialization. As a result, each block is initialized close to an identity mapping, which stabilizes optimization in deep conditional diffusion models. 
+
+Classifier-free guidance compatibility. To support CFG at sampling time (App. B.2), we apply conditional dropout during training: with probability pdrop we drop metadata embeddings ey (while retaining the control context), producing an unconditional branch that shares the same architecture. This enables Eqn. (35) without requiring any auxiliary classifier. 
+
+Covariate Encoder. We implement a covariate encoder ( CovEncoder ) that maps experimental and biological meta-data—including perturbation identity, dosage, cell type, and optional experimental batch information— into dense vectors. Each covariate is embedded independently, and all resulting embeddings are concatenated and linearly projected into the model dimension. 
+
+Perturbation Identity Embeddings. We provide multiple options to encode perturbation identity, depending on the perturbation type (cytokine, drug, or gene) and dataset characteristics. For perturbation identity, we support both semantic embeddings and simple one-hot encodings, allowing flexible choices across datasets. • Cytokine Embeddings (ESM2). For cytokine perturbations, which correspond to protein molecules, we extract semantic embeddings using a pretrained protein language model (ESM2). Cytokine embeddings are loaded from disk, indexed by the cytokien identity. • Drug Semantic Embeddings (ChemBERTa + Dose). For chemical perturbations, we load pre-computed semantic embeddings (e.g., the [CLS] representation from a ChemBERTa-like encoder (Chithrananda et al., 2020)) from disk and construct an embedding table indexed by the drug identity. The control perturbation embedding is set to the mean embedding across all drugs. To model dosage effects, we discretize observed dose values into a vocabulary and learn a corresponding dose embedding. The final perturbation representation is obtained by summing the drug semantic embedding and the associated dose embedding. • Gene Perturbation Embeddings (GenePT / LLM). For gene perturbations, we support loading semantic gene embeddings from disk, including GenePT (Chen & Zou, 2024) embeddings or LLM-derived embeddings ( e.g. ,
+
+text-embedding-3-large ) computed from LLM-generated gene summaries ( gpt-5-mini ). These embed-dings are stored in a frozen lookup table aligned with gene identity, with the “non-targeting” control embedding set to the mean embedding. 26 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+Cell Type Embeddings. We support a frozen semantic cell type embedding loaded from disk, derived from LLM-generated cell type summaries using gpt-5 and encoded by LLM like text-embedding-3-large .
+
+Experimental Batch Embeddings (Optional). If batch covariates are provided, we use a learnable embedding table indexed by experimental batch identity. We assume that the batch IDs are mapped into a contiguous range {0, . . . , N batch − 1} prior to feeding into CovEncoder .
+
+B.4. Score Matching Discussion Details 
+
+We also provide a perspective to interpret our MMD-based distribution alignment objective through the lens of score matching by analyzing its local behavior around a reference cell population. Let x denote a fixed reference cell set ( e.g. ,a batch of training data), and let x′ be a generated cell set produced by the model. We consider the squared MMD, MMD 2
+
+> k
+
+(x′, x ), as a function of x′ and study its Taylor expansion around x′ = x.MMD 2
+
+> k
+
+(x′, x ) = MMD 2
+
+> k
+
+(x, x )+ ⟨x′ − x, ∇x′ MMD 2
+
+> k
+
+(x′, x )|x′=x⟩
+
++ 12 ⟨x′ − x, ∇2 
+
+> x′
+
+MMD 2
+
+> k
+
+(x′, x )|x′=x(x′ − x)⟩
+
++ o(∥x′ − x∥22),
+
+The zeroth-order term is constant with respect to the model parameters and can be ignored during optimization. The first-order term vanishes at x′ = x, since MMD 2
+
+> k
+
+(·, x ) attains its minimum there and behaves locally as a convex, distance-like function. Consequently, the second-order term dominates in a neighborhood of the optimum, yielding the local approximation 
+
+MMD 2
+
+> k
+
+(x′, x ) = || x′ − x|| 2 
+
+> H
+
++ o(|| x′ − x|| 22),
+
+where H := ∇2 
+
+> x′
+
+MMD 2
+
+> k
+
+(x′, x )|x′=x, and ∥x∥2 
+
+> H
+
+:= x⊤Hx . This result shows that, up to second order, minimizing MMD is equivalent to minimizing a matrix-weighted mean squared error, where the weighting matrix H depends on the kernel and the local geometry of the reference population. Unlike a standard Euclidean MSE, this Hessian-induced norm emphasizes directions corresponding to informative higher-order population statistics encoded by the kernel, rather than treating all directions uniformly. This local quadratic structure naturally connects MMD-based distribution alignment to score matching. In particular, minimizing a weighted quadratic deviation between generated and reference samples corresponds to matching the score of the data distribution under a non-Euclidean geometry induced by H. In Section B.4, we formalize this connection by showing that score matching under a general symmetric positive definite norm || · || H admits an equivalent denoising score-matching formulation. To this end, we abstract the local second-order structure of the MMD objective into a generic sample-level matching function. Specifically, let x ∈ Rd be a random variable with density p and let ˜x := αx + βϵ , where (α, β ) ∈ [0 , 1] 2, and ϵ ∼ N (0 , I ).We can factor the joint density as p˜x,x = p˜x|xpx. Note that we can also write the marginal of ˜x as p(˜ x) = R p(˜ x | x)p(x)dx .To simplify the analysis, we introduce a generic smooth matching function M : Rd × Rd → R, which captures the local second-order behavior of the squared MMD objective derived above. Let M be infinitely differentiable. Suppose M only depends on the 2-norm between the two arguments, i.e. M (x, x ′) = M (∥x′ − x∥2). Also suppose M is strongly convex with respect to the first argument with the second argument fixed. Fix some x in the second argument of M , then we can compute the second-order Taylor expansion about x as 
+
+M (x′, x ) = M (x, x ) + ⟨x′ − x, ∇x′ M (x′, x )|x′=x⟩ + 12 ⟨x′ − x, ∇2 
+
+> x′
+
+M (x′, x )|x′=x(x′ − x)⟩ + o(∥x′ − x∥2).
+
+Importantly, from our assumptions, we have that the Hessian ∇2 
+
+> x′
+
+M (x′, x )|x′=x is symmetric and positive definite. Let 
+
+H = ∇2 
+
+> x′
+
+M (x′x)|x′=x.
+
+Proposition B.15 (Augmented Denoising Score Matching) .
+
+arg min 
+
+> θ
+
+E˜x[∥∇ log p(˜ x) − f (˜ x)∥2 
+
+> H
+
+] = arg min 
+
+> θ
+
+E˜x,x [∥∇ ˜x log p(˜ x | x) − f (˜ x)∥2 
+
+> H
+
+]
+
+27 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+Proof. We want to show L(f ) := 12 E˜x[∥∇ log p(˜ x) − f (˜ x)∥2 
+
+> H
+
+] is equal, up to a constant not dependent on f , to L′(f ) =  
+
+> 12
+
+E˜x,x [∥∇ ˜x log p(˜ x | x) − f (˜ x)∥2 
+
+> H
+
+], where ∥x∥2 
+
+> H
+
+= x⊤Hx .We start with L(f ):
+
+L(f ) = 12 E˜x[∥∇ log p(˜ x) − f (˜ x)∥2 
+
+> H
+
+]= 12
+
+Z
+
+f (˜ x)⊤Hf (˜ x)p(˜ x)d˜x −
+
+Z
+
+⟨f (˜ x)H⊤, p (˜ x)∇ log p(˜ x)
+
+| {z }
+
+> =∇p(˜ x)
+
+⟩d˜x + 12
+
+Z
+
+∥∇ log p(˜ x)∥2 
+
+> H
+
+p(˜ x)d˜x
+
+| {z }
+
+> =: C1
+
+= 12 E˜x[f (˜ x)⊤Hf (˜ x)] −
+
+Z
+
+⟨f (˜ x)H⊤, ∇p(˜ x)⟩d˜x + C1
+
+Focusing on the second term, we have 
+
+Z
+
+⟨f (˜ x)H⊤, ∇p(˜ x)⟩d˜x =
+
+Z
+
+⟨f (˜ x)H⊤, ∇˜x
+
+Z| {z } 
+
+> swap
+
+p(˜ x | x)p(x)dx ⟩d˜x
+
+=
+
+Z Z 
+
+⟨f (˜ x)H⊤, ∇˜xp(˜ x | x)
+
+| {z }  
+
+> p(˜ x|x)∇˜xlog p(˜ x|x)
+
+⟩p(x)dxd ˜x
+
+=
+
+Z Z 
+
+⟨f (˜ x)H⊤, ∇˜x log p(˜ x | x)⟩ p(˜ x | x)p(x)
+
+| {z }
+
+> =p(˜ x,x )
+
+dxd ˜x
+
+= E(˜ x,x )
+
+f (˜ x)⊤H(∇˜x log p(˜ x | x)) 
+
+Plugging this back in, and also adding in and subtracting a ‘complete the square’ term, we get 
+
+L(f ) = 12 E[f (˜ x)⊤Hf (˜ x)] − E[f (˜ x)⊤H(∇˜x log p(˜ x | x))] + 12 E[( ∇˜x log p(˜ x | x)) ⊤H(∇˜x log p(˜ x | x))] − 12 E[( ∇˜x log p(˜ x | x)) ⊤H(∇˜x log p(˜ x | x))] 
+
+| {z }
+
+> =: C2
+
++C1
+
+= 12 E[∥f (˜ x) − ∇ ˜x log p(˜ x | x)∥2 
+
+> H
+
+] + C
+
+= L′(f ) + C, 
+
+where C := C1 − C2 doesn’t depend on f , and we are done. ■
+
+## C. Experimental Details 
+
+C.1. Training Details Pretraining and dowmstream data. Detailed discussion for pretraining and dowmstream data composition and preprocess-ing can be found in App. A.2 and App. A.3, respectively. 
+
+Optimization. We optimize all models using AdamW with (β1, β 2) = (0 .9, 0.98) and weight decay 10 −2. The learning rate follows a cosine decay schedule with 200 warmup steps and a minimum plateau at 0.1× the initial learning rate. We use a learning rate of 2 × 10 −4 for PBMC and Tahoe100M, 2 × 10 −3 for Replogle in downstream training and fine-tuning, and 
+
+2 × 10 −4 for pretraining. Gradients are clipped to a maximum global norm of 1.0.
+
+Early stopping for model checkpoint selection (training from scratch / finetuning). As shown in Fig. 7 and Fig. 20, diffusion models are sensitive to the number of training steps, or equivalently, the training compute budget. This behavior is also commonly observed in image diffusion models (Ho et al., 2022; Baptista et al., 2025). To ensure a fair and consistent evaluation, we train all model configurations for a fixed 20k steps and select the best checkpoint based on performance evaluated every 2k steps on validation set. This applies to both training from scratch and finetuning from a pretrained model. 28 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+Model checkpoint selection for pretraining. As shown in Fig. 6, the pretraining dynamics differ across datasets. On PBMC, R 2 steadily improves with training steps, reflecting stable gains in capturing marginal perturbation patterns. In contrast, Replogle shows a sharp drop in R 2 after the first epoch, followed by stagnation. This discrepancy motivates our checkpoint selection strategy: for downstream finetuning, we select the end-of-first-epoch checkpoint, which consistently balances performance and stability across datasets. 
+
+Input/output layer initialization during finetuning. We consider three strategies for transferring the pretrained model to downstream finetuning: (1) directly leveraging the pretrained 12 , 626 -gene input/output layer weights for finetuning; (2) replacing the pretrained input/output layers for the 12 , 626 gene vocabulary with randomly initialized layers; and (3) replacing the pretrained layers with newly initialized input/output layers restricted to a 2k-gene vocabulary. Empirically, we find that strategy strategy (1) performs best on PBMC, strategy (2) on Replogle, and strategy (3) on Tahoe-100M. 
+
+Zero control stream during pretraining. To enable a unified model architecture for both pretraining and finetuning, we simplify the input relative to training from scratch: the control token stream is set to all zeros, and conditioning is restricted to cellular context only. 
+
+Dataset-specific linear transformation layer for pretraining. To project high-dimensional gene expression vectors into a shared low-dimensional feature space, we apply a linear transformation W ∈ R|G|× D, where D denotes the model feature dimension. Because datasets originate from different sources and exhibit distinct expression distributions, we use dataset-specific linear transformations rather than a single shared projection. Concretely, we instantiate separate linear layers for cells from PBMC, Tahoe100M, Replogle, and CellxGene. 
+
+More details. Besides the details above, App. B.2 describes diffusion implementation, and App. B.3 details the architecture. 
+
+C.2. Metrics 
+
+We adopted the R 2 metric from CellFlow (Klein et al., 2025) and the entire evaluation framework Cell-Eval (Adduri et al., 2025) (version 0.6.6) from STATE to comprehensively assess perturbation predictions. This framework addresses a key challenge: since individual cells cannot be directly compared to a specific ground truth (due to biological variability and the destructive nature of sequencing), evaluation must rely on population-level statistics. We categorize the leveraged metrics in two ways: (1) Across the dimension of cells : it measures expression-level accuracy 
+
+by comparing statistical distributions between the population of predicted cells and the population of real observed cells; (2) 
+
+Across the dimension of genes : it assesses biologically meaningful differential patterns by comparing the differentially expressed genes sets derived from predictions versus those derived from ground truth data. To ensure fair comparison, we fix the control cells to be identical across predicted and ground-truth evaluations and across all our methods and baselines, so that differences arise solely from perturbed-cell predictions. 
+
+Notations. Let M be the total number of perturbations. For each perturbation condition λ, we denote by {xpert  
+
+> λ,i
+
+}N λ
+
+> pert
+> i=1
+
+and {xctrl 
+
+> λ,i
+
+}N λ 
+
+> ctrl
+> i=1
+
+the ground-truth expression profiles for perturbed and control cells, respectively, and by {ˆxpert  
+
+> λ,i
+
+}N λ 
+
+> pert
+> i=1
+
+the model-predicted expression profiles for the perturbed cells. Empirically, Cell-Eval chooses N λ 
+
+> ctrl
+
+= N λ
+
+> pert
+
+. We define the 
+
+relative perturbation effects as the difference between the pseudobulk profiles for perturbed and control cells. Specifically, the pseudobulk profiles for ground-truth perturbed and control cells are defined as 
+
+¯xpert  
+
+> λ
+
+= 1
+
+N λ 
+
+> pert
+> Nλ
+> pert
+
+X
+
+> i=1
+
+xpert  
+
+> λ,i
+
+, ¯xctrl  
+
+> λ
+
+= 1
+
+N λ 
+
+> ctrl
+> Nλ
+> ctrl
+
+X
+
+> i=1
+
+xctrl 
+
+> λ,i
+
+, (45) respectively. And the pseudobulk profiles for the predicted perturbed cells are defined as 
+
+¯ˆxpert  
+
+> λ
+
+= 1
+
+N λ 
+
+> pert
+> Nλ
+> pert
+
+X
+
+> i=1
+
+ˆxpert  
+
+> λ,i
+
+. (46) Then we can formally define the ground-truth perturbation effect as 
+
+∆xλ := ¯ xpert  
+
+> λ
+
+− ¯xctrl  
+
+> λ
+
+, (47) 29 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+and the predicted perturbation effect as 
+
+∆ˆ xλ := ¯ˆxpert  
+
+> λ
+
+− ¯xctrl  
+
+> λ
+
+. (48) C.2.1. A VERAGED EXPRESSION ACCURACY 
+
+Coefficient of Determination (R 2). R2 measures the fraction of variance in the ground-truth data explained by model predictions, relative to the empirical mean baseline: 
+
+R2 = 1 −
+
+P
+
+> i
+
+(yi − ˆyi)2
+
+P
+
+> i
+
+(yi − ¯y)2 . (49) Higher values indicate better predictive performance. 
+
+Perturbation Discrimination Score (PDS). To evaluate whether models’s ability to distinguish different perturbations, the PDS score is defined as the normalized rank of the ground truth from the predicted perturbation with respect to all ground truth perturbations: PDS = 1 − 1
+
+M
+
+> M
+
+X
+
+> λ=1
+
+rλ
+
+M , rλ = X
+
+> p̸=λ
+
+1[d(∆ˆ xλ, ∆xp) < d (∆ˆ xλ, ∆xλ)] . (50) Intuitively, the prediction for perturbation λ should be closest to its own ground truth, and farther from the ground truths of other perturbations. A PDS value of 1 indicates perfect discrimination, while a value of approximately 0.5 corresponds to random performance. We report PDS using three distance functions: L1 distance (PDS L1 ), L2 distance (PDS L2 ), and cosine distance (PDS cos ). 
+
+Pearson Delta Correlation (PDCorr). For each perturbation λ, the PDCorr metric evaluates the Pearson correlation coefficient between the predicted and the ground-truth relative perturbation effects: PDCorr = 1
+
+M
+
+> M
+
+X
+
+> λ=1
+
+PearsonR (∆ˆ xλ, ∆xλ). (51) 
+
+Mean Absolute Error (MAE). The MAE metric evaluates how accurately a model preserves the average expression shift induced by each perturbation. Specifically, it measures the discrepancy between the predicted and ground-truth pseudobulk profiles. Formally, for a given perturbation λ, the MAE is defined as: 
+
+MAE = 1
+
+M
+
+> M
+
+X
+
+> λ=1
+
+|| ∆ˆ xλ − ∆xλ|| . (52) 
+
+Mean Squared Error (MSE) . The MSE metric follows the same principle as MAE but penalizes larger deviations more strongly by measuring the squared Euclidean distance between predicted and ground-truth perturbation effects. Formally, the MSE is defined as: 
+
+MAE = 1
+
+M
+
+> M
+
+X
+
+> λ=1
+
+|| ∆ˆ xλ − ∆xλ|| 22. (53) C.2.2. B IOLOGICALLY MEANINGFUL DIFFERENTIAL PATTERNS 
+
+The most important criterion for evaluating generated cells is their biological relevance. Cell-Eval applies a standard differential expression (DE) analysis pipeline based on the Wilcoxon rank-sum test (Hollander et al., 2013). To control for false positives arising from multiple hypothesis testing across thousands of genes, p-values are adjusted using the Benjamini–Hochberg (BH) procedure (Giraud, 2021), which controls the false discovery rate (FDR). This DE analysis is applied independently to both the ground-truth cells and the model-predicted cells. 
+
+Notations related to DEGs. We consider the top 2,000 HVG set used for perturbation prediction as G. And we perform differential expression (DE) analysis on both the ground - truth and the predicted cells for each perturbation λ. For each gene 30 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+g ∈ G , it’s considered significantly differentially expressed if its BH-adjusted p-value padj < 0.05 , where padj denotes the 
+
+p-value after correction for multiple testing. We denote by GDE  
+
+> λ
+
+and ˆGDE  
+
+> λ
+
+the complete sets of significant DE genes detected for the ground-truth and predicted cells, respectively. Furthermore, DE genes can be ranked by the absolute log-fold change 
+
+| log FC λ,g | := | log 2¯xpert    
+
+> λ,g +ϵ
+> ¯xctrl
+> λ,g +ϵ
+
+|, where ¯xpert  
+
+> λ,g
+
+and ¯xctrl  
+
+> λ,g
+
+denote the mean expression of gene g in ground-truth perturbed and control cells, respectively, and ϵ is a small float constant (e.g., 10 −8) added for numerical stability. The same definition is applied to the predicted perturbed cells by replacing ¯xpert  
+
+> λ,g
+
+with the corresponding predicted mean to calculate | \log FC λ,g |.We define Gkλ and ˆGkλ as the top-k differentially expressed (DE) genes identified from the ground-truth and predicted cells, respectively. 
+
+DE Overlap (DEOver). For each perturbation λ, we evaluate the agreement between predicted and ground-truth differen-tially expressed (DE) genes by measuring the overlap among the top-ranked genes. And the DEO metric is defined as the fraction of overlapping genes: 
+
+DEOver k = 1
+
+M
+
+> M
+
+X
+
+> λ=1
+
+Gkλ ∩ ˆGkλ
+
+k . (54) Here, k is chosen as the number of significant DE genes in the ground-truth set, i.e., k = |G DE  
+
+> λ
+
+|, ensuring that the comparison is normalized with respect to the true perturbation signal. 
+
+DE Precision (DEPrec). For each perturbation λ, we evaluate how many of the top k DEGs from the ground truth appear in the top k DEGs from the predicted cells. That is, DEPrec k = 1
+
+M
+
+> M
+
+X
+
+> λ=1
+
+Gkλ ∩ ˆGkλ
+
+| ˆGkλ | . (55) Here, k is chosen as the number of significant DE genes in the predicted set, i.e., k = | ˆGDE  
+
+> λ
+
+|, ensuring that the comparison is normalized with respect to the predicted perturbation signal. 
+
+Direction Agreement (DirAgr). For genes that are identified as differentially expressed in both the ground-truth and predicted cells, we further assess whether the model correctly captures the direction of the perturbation effect. Specifically, DirAgr is defined as the fraction of overlapping DE genes for which the predicted and ground-truth log-fold changes have the same sign. Let G∩ 
+
+> λ
+
+= ˆGDE  
+
+> λ
+
+∩ G DE  
+
+> λ
+
+denote the set of DE genes shared between prediction and ground truth for perturbation 
+
+λ. The DirAgr metric is then defined as 
+
+DirAgr = 1
+
+M
+
+> M
+
+X
+
+> λ=1
+
+n
+
+g ∈ G ∩ 
+
+> λ
+
+: sgn 
+
+ \log FC λ,g 
+
+
+
+= sgn(log FC λ,g )
+
+o
+
+|G ∩ 
+
+> λ
+
+| , (56) where sgn( ·) denotes the sign function. 
+
+Log Fold-change Spearman Correlation (LFCSpear). This metric evaluates how well a model preserves the relative ordering of gene-level perturbation effects. For each perturbation λ, we compute the Spearman rank correlation between the predicted and ground-truth log fold changes over the set of significantly differentially expressed genes identified from the ground truth, and report the average correlation across all perturbations. LFCSpear = 1
+
+M
+
+> M
+
+X
+
+> λ=1
+
+SpearmanR (  log FC λ,g 
+
+
+
+> g∈G DE
+> λ
+
+,   \log FC λ,g 
+
+
+
+> g∈G DE
+> λ
+
+). (57) 
+
+ROC-AUC (AUROC). This metric evaluates the model’s ability to distinguish truly differentially expressed genes from non-differentially expressed ones. For each perturbation λ, genes identified as significant DEGs in the ground truth ( GDE  
+
+> λ
+
+)are treated as positive samples, while all remaining genes are treated as negatives. The predicted gene-level significance scores are given by the negative log-transformed adjusted p-values, and the area under the ROC curve (AUROC) is computed to quantify how well the model separates significant from non-significant genes across all possible thresholds. The final score is obtained by averaging AUROC across perturbations. Essentially, AUROC measures the probability that a randomly chosen true DEG is assigned a higher confidence score than a randomly chosen non-DEG. 31 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+Table 4. Detailed numerical results for perturbation prediction across metrics and datasets (the same as reported in Fig. 3). 
+
+Model R2 DEOver DEPrec ES DirAgr LFCSpear AUPRC AUROC PDCorr MSE MAE PDS L1 PDS L2 PDS cos 
+
+PBMC 
+
+PerturbDiff (Scratch) 0.997 0.564 0.581 0.288 0.751 0.519 0.607 0.603 0.816 1.91e-4 0.006 0.972 0.975 0.986 
+
+PerturbDiff (Finetuned) 0.991 0.533 0.588 0.387 0.701 0.431 0.669 0.647 0.705 3.15e-4 0.008 0.941 0.959 0.972 STATE 0.998 0.512 0.547 -0.363 0.789 0.602 0.547 0.513 0.796 1.41e-4 0.005 0.954 0.943 0.985 Mean 0.959 0.564 0.544 0.011 0.740 0.478 0.545 0.506 0.642 8.49e-4 0.013 0.730 0.777 0.787 CPA 0.919 0.488 0.515 -0.154 0.539 0.369 0.515 0.500 0.181 1.10e-2 0.052 0.576 0.613 0.597 Linear 0.997 0.549 0.581 0.194 0.666 0.366 0.591 0.556 0.646 4.44e-4 0.009 0.658 0.670 0.903 CellFlow 0.994 0.270 0.350 0.042 0.652 0.377 0.354 0.502 0.628 3.58e-4 0.009 0.639 0.689 0.725 Squidiff -218.00 0.359 0.547 NaN 0.379 0.022 0.547 0.500 0.033 4.387 2.062 0.508 0.508 0.508 Mean Variant (per Cell Type) 0.992 0.506 0.542 -0.108 0.635 0.247 0.542 0.500 0.400 6.39e-4 0.009 0.625 0.596 0.612 Mean Variant (per Batch) 0.999 0.554 0.542 0.019 0.727 0.489 0.543 0.501 0.517 5.59e-4 0.007 0.612 0.587 0.655 Mean Variant (Overall) 0.973 0.557 0.542 NaN 0.656 0.250 0.543 0.500 0.408 1.01e-3 0.013 0.508 0.508 0.508 
+
+Tahoe100M 
+
+PerturbDiff (Scratch) 0.963 0.522 0.572 0.531 0.734 0.445 0.584 0.621 0.686 6.30e-4 0.012 0.970 0.978 0.975 
+
+PerturbDiff (Finetuned) 0.893 0.580 0.598 0.478 0.641 0.691 0.618 0.658 0.648 1.04e-3 0.017 0.784 0.883 0.903 STATE 0.807 0.499 0.522 0.301 0.665 0.644 0.520 0.506 0.535 2.11e-3 0.021 0.789 0.846 0.854 Mean 0.703 0.430 0.504 0.350 0.595 0.280 0.506 0.502 0.205 3.09e-3 0.026 0.515 0.508 0.508 CPA 0.946 0.502 0.504 0.190 0.710 0.466 0.505 0.500 0.425 8.89e-4 0.011 0.654 0.593 0.585 Linear 0.993 0.505 0.576 0.382 0.760 0.514 0.605 0.632 0.723 4.15e-4 0.009 0.887 0.881 0.912 CellFlow 0.682 0.183 0.313 0.346 0.638 0.298 0.320 0.500 0.269 3.10e-3 0.027 0.608 0.564 0.550 Squidiff -616.98 0.420 0.581 NaN 0.501 0.276 0.581 0.500 0.011 5.627 2.244 0.505 0.506 0.505 Mean Variant (per Cell Type) 0.976 0.504 0.508 0.023 0.688 0.578 0.508 0.508 0.461 6.96e-4 0.010 0.682 0.694 0.760 Mean Variant (per Batch) 0.705 0.427 0.504 0.475 0.587 0.270 0.505 0.500 0.185 3.11e-3 0.026 0.492 0.496 0.498 Mean Variant (Overall) 0.707 0.429 0.504 0.469 0.591 0.275 0.505 0.500 0.193 3.06e-3 0.026 0.501 0.501 0.501 
+
+Replogle 
+
+PerturbDiff (Scratch) 0.984 0.190 0.174 0.623 0.702 0.342 0.210 0.625 0.340 1.47e-2 0.081 0.690 0.700 0.575 PerturbDiff (Finetuned) 0.988 0.214 0.192 0.762 0.723 0.388 0.257 0.652 0.376 1.46e-2 0.079 0.758 0.762 0.639 STATE 0.998 0.196 0.193 0.818 0.778 0.506 0.239 0.633 0.437 6.40e-3 0.055 0.788 0.802 0.676 
+
+Mean 0.742 0.127 0.094 0.417 0.532 0.077 0.092 0.467 0.048 9.90e-2 0.206 0.582 0.599 0.608 CPA 1.000 0.173 0.087 0.637 0.746 0.499 0.081 0.401 0.418 7.50e-2 0.054 0.582 0.581 0.521 Linear 0.991 0.068 0.074 0.353 0.535 0.056 0.085 0.435 0.058 1.30e-2 0.074 0.519 0.517 0.667 CellFlow 0.757 0.110 0.093 0.442 0.472 -0.033 0.086 0.434 -0.003 9.49e-2 0.205 0.507 0.507 0.495 Squidiff -10.19 0.039 0.091 0.419 0.432 -0.000 0.079 0.366 0.089 4.641 2.077 0.500 0.501 0.501 Mean Variant (per Cell Type) 1.000 0.178 0.087 0.417 0.743 0.492 0.078 0.404 0.412 8.45e-3 0.057 0.502 0.505 0.502 Mean Variant (per Batch) 0.798 0.110 0.092 0.421 0.475 -0.024 0.088 0.450 0.002 6.99e-2 0.174 0.505 0.505 0.506 Mean Variant (Overall) 0.794 0.111 0.093 0.416 0.474 -0.027 0.089 0.453 -0.001 7.11e-2 0.175 0.502 0.503 0.501 
+
+PR-AUC (AUPRC). Besides AUROC, the AUPRC metric is similarly defined to evaluate the model’s ability to prioritize truly differentially expressed genes among all predicted significant genes. For each perturbation λ, genes identified as significant DEGs in the ground truth ( GDE 
+
+λ ) are treated as positive samples, while all remaining genes are treated as negatives. The predicted gene-level significance scores are given by the negative log-transformed adjusted p-values. AUPRC is calculated as the area under the precision-recall (PR) curve, which summarizes the trade-off between precision and recall across all possible thresholds. The final score is obtained by averaging PR-AUC across perturbations. 
+
+Effect sizes (ES). To compare the relative effect sizes of perturbations, this ES metric computes the Spearman rank correlation on the number of differentially expressed genes between predicted and ground-truth for each perturbation. ES = SpearmanR ( |G DE 
+
+λ |Mλ=1 ,  | ˆGDE 
+
+λ |Mλ=1 ). (58) 
+
+C.3. More Perturbation Prediction Results Full numerical results for perturbation prediction performance in Fig. 3. The radar plots in Fig. 3 report the relative comparison across diverse methods and multiple metrics. We provide their corresponding detailed numerical results in Tab. 4 for reference. 
+
+MSE and MAE results. The radar plots in Fig. 3 report higher-is-better metrics, while the lower-is-better metrics (MSE and MAE) are summarized in Tab. 4. Across all three datasets, PerturbDiff (From Scratch) achieves low reconstruction errors comparable to or better than strong baselines, while STATE and Linear remain competitive on MSE/MAE especially in lower-variance settings. 
+
+Mean baseline variants performance. Mean baselines predict perturbed cells by assigning all cells the same averaged expression profile computed from observed data. The averaging can be performed at different levels: (1) Mean - per 32 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+perturbation ( i.e. , the reported “Mean”): average expression across cells sharing the same perturbation and use this mean to predict cells under that perturbation; (2) Mean - per cell type: average across cells of the same cell type and use this mean for corresponding perturbed cells; (3) Mean - per batch: average across cells from the same experimental batch and use this mean for corresponding perturbed cells; (4) Mean - overall: average across all cells and use this global mean for all predictions. Among these variants, “Mean - per perturbation” achieves the best performance and is therefore reported in Sec. 5.2, while performance for all mean baseline variants are summarized in Tab. 4. 
+
+C.4. More Scatter Plot Comparison Results 
+
+Fig. 15 and Fig. 16 report per-perturbation scatter plot comparisons between PerturbDiff (From Scratch) and STATE on PBMC and Tahoe100M, respectively. Each point corresponds to a single perturbation, and the diagonal indicates equal performance. ES and R2 are not included, as they are not defined at the perturbation level. On PBMC, PerturbDiff (From Scratch) consistently outperforms STATE across perturbations on key DE-metrics including PRAUC, DEOver, and DEPrec, with points tightly concentrated above the diagonal. In addition, PerturbDiff (From Scratch) achieves high win rates for distributional metrics, exceeding 88% on PDS L1 , PDS L2 , and PDS cos . These results indicate that our method provides more reliable perturbation-level predictions, particularly in capturing distributional shifts rather than isolated cell-level effects. On the larger and more diverse Tahoe100M dataset, PerturbDiff (From Scratch) similarly demonstrates strong advantages, achieving win rates above 87% on PRAUC, DEPrec, MAE, MSE, and all PDS variants. Moreover, PerturbDiff (From Scratch) attains win rates above 50% on all reported metrics except LFCSpear, indicating broadly consistent improvements across perturbations despite increased dataset heterogeneity. Together, these scatter comparisons show that the gains of PerturbDiff (From Scratch) are not driven by a small subset of perturbations, but instead reflect systematic and robust improvements across diverse perturbation settings, particularly on metrics that emphasize distribution-level response fidelity and perturbation discrimination. 
+
+C.5. More Zero-shot Results 
+
+We further analyze zero-shot behavior under different amounts of marginal pretraining, where inference is performed without access to perturbation labels or control cells, and the model relies solely on the pretrained marginal cell manifold. As shown in Fig. 17 and Fig. 18, metrics such as MAE and MSE remain relatively stable across pretraining steps on both PBMC and Replogle, indicating limited sensitivity of pointwise reconstruction errors to marginal pretraining. In contrast, many distribution- and perturbation-aware metrics ( e.g. , DEOver, DEPrec, LFCSpear, DirAgr, PDCorr, and ES) exhibit a consistent U-shaped trend: zero-shot performance initially degrades as pretraining proceeds, followed by a gradual recovery with increased training steps. This pattern suggests that early stages of marginal pretraining may temporarily distort task-relevant directions, while longer pretraining progressively organizes biologically meaningful structure that can be reused for perturbation inference. Notably, on PBMC, the randomly initialized model attains seemingly non-trivial scores on several metrics ( e.g. , AUPRC, AUROC, DEPrec, and ES), despite the absence of any training. This phenomenon is not observed on Replogle, and likely reflects dataset-specific structure or metric sensitivity rather than genuine perturbation understanding. Indeed, on more stringent metrics—including DEOver, R2, PDCorr, DirAgr, MAE, and MSE—the randomly initialized model substantially underperforms pretrained counterparts. These observations highlight the necessity of multi-metric evaluation when assessing zero-shot perturbation performance, as isolated metrics may overestimate capability in the absence of meaningful biological modeling. 
+
+C.6. More Limited Data Results 
+
+Fig. 19 evaluates few-shot adaptation performance across training steps on downsampled PBMC, comparing training from scratch and finetuning a marginally pretrained model at sample ratios of 1% and 5%. Across all metrics, finetuning consistently leads to faster convergence and substantially improved training stability. In contrast, models trained from scratch exhibit pronounced sensitivity to training steps, with large fluctuations and frequent performance degradation in early and mid training stages, particularly under the 1% sample regime. Finetuned models reach stable performance within fewer training steps and maintain more robust throughout optimization. 33 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling                     
+
+> (a) PRAUC. (b) DEOver. (c) DEPrec. (d) DirAgr.
+> (e) LFCSpear. (f) MAE. (g) MSE. (h) PDCorr.
+> (i) PDS L1 .(j) PDS L2 .(k) PDS cos .
+> Figure 15. Per-metric scatter plot comparison between PerturbDiff (From Scratch) and STATE on PBMC dataset. Each panel corresponds to a different evaluation metric, plotting STATE (x-axis) against PerturbDiff (From Scratch) (y-axis) across held-out perturbations. The dashed diagonal indicates equal performance; points above the diagonal indicate higher performance for PerturbDiff (From Scratch) (reversed for MAE and MSE). Reported win rates denote the fraction of perturbations where PerturbDiff (From Scratch) achieves equal or better performance.
+
+The advantages of finetuning are especially pronounced on many metrics, including DEOver, DEPrec, DirAgr, LFCSpear, and all PDS variants. On these metrics, finetuned models consistently outperform training from scratch across training steps, with larger gaps observed under more extreme low-data settings (ratio=1%). This suggests that marginal pretraining provides a structured initialization that preserves perturbation-relevant geometry, enabling effective reuse of distribution-level information during adaptation. Overall, these results demonstrate that marginal pretraining substantially improves data efficiency, optimization stability, and robustness under low-data regimes. 
+
+C.7. More Scaling Results 
+
+Fig. 20 reports the rest metrics for the scaling behavior of PerturbDiff (From Scratch) by varying both model size and training compute. Overall, scaling exhibits non-monotonic behavior along both model size and compute dimensions. Increasing training compute does not uniformly improve performance. These results indicate that effective perturbation modeling benefits from balanced model capacity and compute, rather than aggressive scaling. 34 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 
+
+(a) PRAUC. (b) DEOver. (c) DEPrec. (d) DirAgr. 
+
+(e) LFCSpear. (f) MAE. (g) MSE. (h) PDCorr. 
+
+(i) PDS L1 . (j) PDS L2 . (k) PDS cos .
+
+Figure 16. Per-metric scatter plot comparison between PerturbDiff (From Scratch) and STATE on Tahoe100M dataset. Each panel corresponds to a different evaluation metric, plotting STATE (x-axis) against PerturbDiff (From Scratch) (y-axis) across held-out perturbations. The dashed diagonal indicates equal performance; points above the diagonal indicate higher performance for PerturbDiff (From Scratch) (reversed for MAE and MSE). Reported win rates denote the fraction of perturbations where PerturbDiff (From Scratch) achieves equal or better performance. 
+
+35 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 20 40 60 
+
+Pretraining steps (k) 
+
+0.54 
+
+0.56 
+
+0.58 
+
+> AUPRC
+
+Zero-shot 
+
+Random 
+
+(a) AUPRC. 20 40 60 
+
+Pretraining steps (k) 
+
+0.50 
+
+0.52 
+
+0.54 
+
+0.56 
+
+> AUROC
+
+Zero-shot 
+
+Random (b) AUROC. 20 40 60 
+
+Pretraining steps (k) 
+
+0.425 
+
+0.450 
+
+0.475 
+
+0.500 
+
+0.525 
+
+> DEOver
+
+Zero-shot 
+
+Random (c) DEOver. 20 40 60 
+
+Pretraining steps (k) 
+
+0.540 
+
+0.545 
+
+0.550 
+
+0.555 
+
+> DEPrec
+
+Zero-shot 
+
+Random (d) DEPrec. 20 40 60 
+
+Pretraining steps (k) 
+
+0.50 
+
+0.52 
+
+0.54 
+
+0.56 
+
+> DirAgr
+
+Zero-shot 
+
+Random 
+
+(e) DirAgr. 20 40 60 
+
+Pretraining steps (k) 
+
+0.0 
+
+0.2 
+
+0.4 
+
+> ES
+
+Zero-shot 
+
+Random (f) ES. 20 40 60 
+
+Pretraining steps (k) 
+
+0.000 
+
+0.025 
+
+0.050 
+
+0.075 
+
+> LFCSpear
+
+Zero-shot 
+
+Random (g) LFCSpear. 20 40 60 
+
+Pretraining steps (k) 
+
+0.00 
+
+0.05 
+
+0.10 
+
+0.15 
+
+0.20 
+
+> PDCorr
+
+Zero-shot 
+
+Random (h) PDCorr. 20 40 60 
+
+Pretraining steps (k) 
+
+0.55 
+
+0.60 
+
+0.65 
+
+> PDS cos
+
+Zero-shot 
+
+Random 
+
+(i) PDS cos .20 40 60 
+
+Pretraining steps (k) 
+
+0.55 
+
+0.60 
+
+> PDS L1
+
+Zero-shot 
+
+Random (j) PDS L1 .20 40 60 
+
+Pretraining steps (k) 
+
+10 1
+
+10 0
+
+> MAE
+
+Zero-shot 
+
+Random (k) MAE. 20 40 60 
+
+Pretraining steps (k) 
+
+10 3
+
+10 2
+
+10 1
+
+10 0
+
+10 1
+
+> MSE
+
+Zero-shot 
+
+Random (l) MSE 
+
+Figure 17. Zero-shot performance on PBMC across pretraining steps, compared to a random baseline. 20 40 60 
+
+Pretraining steps (k) 
+
+0.14 
+
+0.16 
+
+> AUPRC
+
+Zero-shot 
+
+Random 
+
+(a) AUPRC. 20 40 60 
+
+Pretraining steps (k) 
+
+0.58 
+
+0.60 
+
+0.62 
+
+> AUROC
+
+Zero-shot 
+
+Random (b) AUROC. 20 40 60 
+
+Pretraining steps (k) 
+
+0.08 
+
+0.10 
+
+0.12 
+
+> DEOver
+
+Zero-shot 
+
+Random (c) DEOver. 20 40 60 
+
+Pretraining steps (k) 
+
+0.10 
+
+0.11 
+
+0.12 
+
+0.13 
+
+0.14 
+
+> DEPrec
+
+Zero-shot 
+
+Random (d) DEPrec. 20 40 60 
+
+Pretraining steps (k) 
+
+0.50 
+
+0.52 
+
+0.54 
+
+0.56 
+
+0.58 
+
+> DirAgr
+
+Zero-shot 
+
+Random 
+
+(e) DirAgr. 20 40 60 
+
+Pretraining steps (k) 
+
+0.300 
+
+0.325 
+
+0.350 
+
+0.375 
+
+> ES
+
+Zero-shot 
+
+Random (f) ES. 20 40 60 
+
+Pretraining steps (k) 
+
+-0.075 
+
+-0.050 
+
+-0.025 
+
+0.000 
+
+0.025 
+
+> LFCSpear
+
+Zero-shot 
+
+Random (g) LFCSpear. 20 40 60 
+
+Pretraining steps (k) 
+
+0.025 
+
+0.050 
+
+0.075 
+
+0.100 
+
+0.125 
+
+> PDCorr
+
+Zero-shot 
+
+Random (h) PDCorr. 20 40 60 
+
+Pretraining steps (k) 
+
+0.495 
+
+0.500 
+
+> PDS cos
+
+Zero-shot 
+
+Random 
+
+(i) PDS cos .20 40 60 
+
+Pretraining steps (k) 
+
+0.495 
+
+0.500 
+
+0.505 
+
+> PDS L1
+
+Zero-shot 
+
+Random (j) PDS L1 .20 40 60 
+
+Pretraining steps (k) 
+
+10 0
+
+> MAE
+
+Zero-shot 
+
+Random (k) MAE. 20 40 60 
+
+Pretraining steps (k) 
+
+10 1
+
+10 0
+
+10 1
+
+> MSE
+
+Zero-shot 
+
+Random (l) MSE. 
+
+Figure 18. Zero-shot performance on Replogle across pretraining steps, compared to a random baseline. 
+
+36 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 50 100 150 
+
+Training steps (k) 
+
+0.550 
+
+0.575 
+
+0.600 
+
+0.625 
+
+> AUPRC
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned 
+
+(a) AUPRC. 50 100 150 
+
+Training steps (k) 
+
+0.50 
+
+0.55 
+
+0.60 
+
+> AUROC
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned (b) AUROC. 50 100 150 
+
+Training steps (k) 
+
+0.40 
+
+0.45 
+
+0.50 
+
+> DEOver
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned (c) DEOver. 50 100 150 
+
+Training steps (k) 
+
+0.54 
+
+0.56 
+
+0.58 
+
+> DEPrec
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned (d) DEPrec. 50 100 150 
+
+Training steps (k) 
+
+0.4 
+
+0.5 
+
+0.6 
+
+> DirAgr
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned 
+
+(e) DirAgr. 50 100 150 
+
+Training steps (k) 
+
+-0.25 
+
+0.00 
+
+0.25 
+
+> ES
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned (f) ES. 50 100 150 
+
+Training steps (k) 
+
+0.2 
+
+0.4 
+
+> LFCSpear
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned (g) LFCSpear 50 100 150 
+
+Training steps (k) 
+
+0.05 
+
+0.10 
+
+0.15 
+
+> MAE
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned (h) MAE. 50 100 150 
+
+Training steps (k) 
+
+0.00 
+
+0.02 
+
+0.04 
+
+0.06 
+
+> MSE
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned 
+
+(i) MSE. 50 100 150 
+
+Training steps (k) 
+
+0.0 
+
+0.2 
+
+0.4 
+
+> PDCorr
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned (j) PDCorr. 50 100 150 
+
+Training steps (k) 
+
+0.6 
+
+0.7 
+
+0.8 
+
+> PDS cos
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned (k) PDS cos .50 100 150 
+
+Training steps (k) 
+
+0.6 
+
+0.7 
+
+0.8 
+
+> PDS L1
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned (l) PDS L1 .50 100 150 
+
+Training steps (k) 
+
+0.7 
+
+0.8 
+
+> PDS L2
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned 
+
+(m) PDS L2 .50 100 150 
+
+Training steps (k) 
+
+-2 
+
+-1 
+
+0
+
+1
+
+> R2
+
+Sample Ratio=1% 
+
+Sample Ratio=5% 
+
+From Scratch 
+
+Finetuned (n) R2.
+
+Figure 19. Performance on downsampled PBMC (sample ratio 1% and 5%) across training steps for diverse metrics. 
+
+37 PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling 10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.56 
+
+0.58 
+
+0.60 
+
+0.62 
+
+> AUPRC
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M 
+
+(a) AUPRC. 10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.55 
+
+0.60 
+
+> AUROC
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M (b) AUROC. 10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.5 
+
+0.6 
+
+0.7 
+
+> DirAgr
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M (c) DirAgr. 10 16 10 17 
+
+Training compute (FLOPs) 
+
+-0.25 
+
+0.00 
+
+0.25 
+
+0.50 
+
+> ES
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M (d) ES. 10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.3 
+
+0.4 
+
+0.5 
+
+> LFCSpear
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M 
+
+(e) LFCSpear. 10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.010 
+
+0.015 
+
+0.020 
+
+> MAE
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M (f) MAE. 10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.0005 
+
+0.0010 
+
+> MSE
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M (g) MSE. 10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+> PDCorr
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M (h) PDCorr. 10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.90 
+
+0.95 
+
+> PDS cos
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M 
+
+(i) PDS cos .10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.8 
+
+0.9 
+
+> PDS L1
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M (j) PDS L1 .10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.90 
+
+0.95 
+
+> PDS L2
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M (k) PDS L2 .10 16 10 17 
+
+Training compute (FLOPs) 
+
+0.94 
+
+0.96 
+
+0.98 
+
+> R2
+
+Model size: 
+
+31M 
+
+57M 
+
+114M 
+
+239M 
+
+410M (l) R2.
+
+Figure 20. Compute and model-size scaling of PerturbDiff on PBMC for diverse metrics. 
+
+38

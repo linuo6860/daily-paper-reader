@@ -1,0 +1,767 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-22T11:19:48.323826+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 29,
+    "deep_cap": 7,
+    "deep_selected": 7,
+    "quick_candidates": 59,
+    "quick_skim_target": 12,
+    "quick_selected": 12
+  },
+  "deep_dive": [
+    {
+      "id": "2603.04730v1",
+      "title": "Count Bridges enable Modeling and Deconvolving Transcriptomic Data",
+      "abstract": "Many modern biological assays, including RNA sequencing, yield integer-valued counts that reflect the number of molecules detected. These measurements are often not at the desired resolution: while the unit of interest is typically a single cell, many measurement technologies produce counts aggregated over sets of cells. Although recent generative frameworks such as diffusion and flow matching have been extended to non-Euclidean and discrete settings, it remains unclear how best to model integer-valued data or how to systematically deconvolve aggregated observations. We introduce Count Bridges, a stochastic bridge process on the integers that provides an exact, tractable analogue of diffusion-style models for count data, with closed-form conditionals for efficient training and sampling. We extend this framework to enable direct training from aggregated measurements via an Expectation-Maximization-style approach that treats unit-level counts as latent variables. We demonstrate state-of-the-art performance on integer distribution matching benchmarks, comparing against flow matching and discrete flow matching baselines across various metrics. We then apply Count Bridges to two large-scale problems in biology: modeling single-cell gene expression data at the nucleotide resolution, with applications to deconvolving bulk RNA-seq, and resolving multicellular spatial transcriptomic spots into single-cell count profiles. Our methods offer a principled foundation for generative modeling and deconvolution of biological count data across scales and modalities.",
+      "authors": [
+        "Nic Fishman",
+        "Gokul Gowri",
+        "Tanush Kumar",
+        "Jiaqi Lu",
+        "Valentin de Bortoli",
+        "Jonathan S. Gootenberg",
+        "Omar Abudayyeh"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-05T02:09:00+00:00",
+      "link": "https://arxiv.org/pdf/2603.04730v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Computational deconvolution of transcriptomic count data",
+      "llm_evidence_cn": "转录组计数数据的计算去卷积",
+      "llm_evidence": "转录组计数数据的计算去卷积",
+      "canonical_evidence": "转录组计数数据的计算去卷积",
+      "llm_tldr_en": "Introduces Count Bridges for modeling and deconvolving aggregated transcriptomic data into cell-level counts.",
+      "llm_tldr_cn": "引入 Count Bridges 用于对聚合转录组数据进行建模并去卷积为细胞级计数。",
+      "llm_tldr": "引入 Count Bridges 用于对聚合转录组数据进行建模并去卷积为细胞级计数。",
+      "llm_tags": [
+        "query:rna-int"
+      ],
+      "matched_query_tag": "query:rna-int",
+      "matched_query_text": "computational deconvolution of bulk RNA-seq",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2602.18773v1",
+      "title": "LAMMI-Pathology: A Tool-Centric Bottom-Up LVLM-Agent Framework for Molecularly Informed Medical Intelligence in Pathology",
+      "abstract": "The emergence of tool-calling-based agent systems introduces a more evidence-driven paradigm for pathology image analysis in contrast to the coarse-grained text-image diagnostic approaches. With the recent large-scale experimental adoption of spatial transcriptomics technologies, molecularly validated pathological diagnosis is becoming increasingly open and accessible. In this work, we propose LAMMI-Pathology (LVLM-Agent System for Molecularly Informed Medical Intelligence in Pathology), a scalable agent framework for domain-specific agent tool-calling. LAMMI-Pathology adopts a tool-centric, bottom-up architecture in which customized domain-adaptive tools serve as the foundation. These tools are clustered by domain style to form component agents, which are then coordinated through a top-level planner hierarchically, avoiding excessively long context lengths that could induce task drift. Based on that, we introduce a novel trajectory construction mechanism based on Atomic Execution Nodes (AENs), which serve as reliable and composable units for building semi-simulated reasoning trajectories that capture credible agent-tool interactions. Building on this foundation, we develop a trajectory-aware fine-tuning strategy that aligns the planner's decision-making process with these multi-step reasoning trajectories, thereby enhancing inference robustness in pathology understanding and its adaptive use of the customized toolset.",
+      "authors": [
+        "Haoyang Su",
+        "Shaoting Zhang",
+        "Xiaosong Wang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-02-21T09:51:32+00:00",
+      "link": "https://arxiv.org/pdf/2602.18773v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "molecularly informed medical intelligence using spatial transcriptomics",
+      "llm_evidence_cn": "利用空间转录组学的分子知情医学智能",
+      "llm_evidence": "利用空间转录组学的分子知情医学智能",
+      "canonical_evidence": "利用空间转录组学的分子知情医学智能",
+      "llm_tldr_en": "A tool-centric agent framework for molecularly informed pathology analysis using spatial transcriptomics.",
+      "llm_tldr_cn": "一种以工具为中心的智能体框架，利用空间转录组学进行分子知情的病理分析。",
+      "llm_tldr": "一种以工具为中心的智能体框架，利用空间转录组学进行分子知情的病理分析。",
+      "llm_tags": [
+        "query:rna-int:composite"
+      ],
+      "matched_query_tag": "query:rna-int:composite",
+      "matched_query_text": "Papers central to bulk RNA-seq 与 single-cell RNA-seq 整合分析、去卷积及生物标志物发现, especially work that connects or combines: multi-omics integration; cell type composition; computational deconvolution of bulk RNA-seq; transcriptome integration; single-cell transcriptomics reference; bulk transcriptomics data analysis; bulk RNA seq and single cell RNA seq comparative and integrative analysis; studies combining bulk transcriptomics and single cell transcriptomics for biomarker discovery; methods for deconvolving bulk RNA seq using single cell RNA seq reference; papers on bulk RNA seq and single cell RNA seq integration.",
+      "matched_requirement_id": "req-composite-rna-int",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2602.23045v1",
+      "title": "Semiparametric Joint Inference for Sensitivity and Specificity at the Youden-Optimal Cut-Off",
+      "abstract": "Sensitivity and specificity evaluated at an optimal diagnostic cut-off are fundamental measures of classification accuracy when continuous biomarkers are used for disease diagnosis. Joint inference for these quantities is challenging because their estimators are evaluated at a common, data-driven threshold estimated from both diseased and healthy samples, inducing statistical dependence. Existing approaches are largely based on parametric assumptions or fully nonparametric procedures, which may be sensitive to model misspecification or lack efficiency in moderate samples. We propose a semiparametric framework for joint inference on sensitivity and specificity at the Youden-optimal cut-off under the density ratio model. Using maximum empirical likelihood, we derive estimators of the optimal threshold and the corresponding sensitivity and specificity, and establish their joint asymptotic normality. This leads to Wald-type and range-preserving logit-transformed confidence regions. Simulation studies show that the proposed method achieves accurate coverage with improved efficiency relative to existing parametric and nonparametric alternatives across a variety of distributional settings. An analysis of COVID-19 antibody data demonstrates the practical advantages of the proposed approach for diagnostic decision-making.",
+      "authors": [
+        "Siyan Liu",
+        "Qinglong Tian",
+        "Chunlin Wang",
+        "Pengfei Li"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME",
+        "math.ST"
+      ],
+      "published": "2026-02-26T14:28:20+00:00",
+      "link": "https://arxiv.org/pdf/2602.23045v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Inference for sensitivity and specificity of continuous biomarkers",
+      "llm_evidence_cn": "连续生物标志物敏感性和特异性的推断",
+      "llm_evidence": "连续生物标志物敏感性和特异性的推断",
+      "canonical_evidence": "连续生物标志物敏感性和特异性的推断",
+      "llm_tldr_en": "Proposes a semiparametric framework for evaluating diagnostic accuracy of continuous biomarkers.",
+      "llm_tldr_cn": "提出了一种用于评估连续生物标志物诊断准确性的半参数框架。",
+      "llm_tldr": "提出了一种用于评估连续生物标志物诊断准确性的半参数框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "biomarker",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2602.23899v1",
+      "title": "Experience-Guided Self-Adaptive Cascaded Agents for Breast Cancer Screening and Diagnosis with Reduced Biopsy Referrals",
+      "abstract": "We propose an experience-guided cascaded multi-agent framework for Breast Ultrasound Screening and Diagnosis, called BUSD-Agent, that aims to reduce diagnostic escalation and unnecessary biopsy referrals. Our framework models screening and diagnosis as a two-stage, selective decision-making process. A lightweight `screening clinic' agent, restricted to classification models as tools, selectively filters out benign and normal cases from further diagnostic escalation when malignancy risk and uncertainty are estimated as low. Cases that have higher risks are escalated to the `diagnostic clinic' agent, which integrates richer perception and radiological description tools to make a secondary decision on biopsy referral. To improve agent performance, past records of pathology-confirmed outcomes along with image embeddings, model predictions, and historical agent actions are stored in a memory bank as structured decision trajectories. For each new case, BUSD-Agent retrieves similar past cases based on image, model response and confidence similarity to condition the agent's current decision policy. This enables retrieval-conditioned in-context adaptation that dynamically adjusts model trust and escalation thresholds from prior experiences without parameter updates. Evaluation across 10 breast ultrasound datasets shows that the proposed experience-guided workflow reduces diagnostic escalation in BUSD-Agent from 84.95% to 58.72% and overall biopsy referrals from 59.50% to 37.08%, compared to the same architecture without trajectory conditioning, while improving average screening specificity by 68.48% and diagnostic specificity by 6.33%.",
+      "authors": [
+        "Pramit Saha",
+        "Mohammad Alsharid",
+        "Joshua Strong",
+        "J. Alison Noble"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-02-27T10:48:14+00:00",
+      "link": "https://arxiv.org/pdf/2602.23899v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "multi-agent framework for breast cancer diagnosis",
+      "llm_evidence_cn": "用于乳腺癌诊断的多智能体框架",
+      "llm_evidence": "用于乳腺癌诊断的多智能体框架",
+      "canonical_evidence": "用于乳腺癌诊断的多智能体框架",
+      "llm_tldr_en": "A multi-agent framework for breast cancer screening to reduce unnecessary biopsies.",
+      "llm_tldr_cn": "一种用于乳腺癌筛查的多智能体框架，旨在减少不必要的活检。",
+      "llm_tldr": "一种用于乳腺癌筛查的多智能体框架，旨在减少不必要的活检。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.01033v1",
+      "title": "Interpreting Net Survival: What We Estimate Versus What We Think We Estimate",
+      "abstract": "Net survival is conventionally defined as ``survival if cancer were the only possible cause of death'', an estimand corresponding to cancer-specific mortality alone. The Pohar Perme estimator targets this by removing general population other-cause mortality from observed total mortality, but achieves it only when cancer patients experience the same other-cause mortality as the general population. However, cancer patients often experience elevated other-cause mortality due to baseline health differences and treatment-induced effects. Using recent theoretical work decomposing total mortality into four components (cancer deaths, baseline health differences, treatment-induced other-cause deaths, and general population other-cause mortality), we show that the Pohar Perme estimator delivers the sum of cancer deaths, baseline differences, and treatment-induced deaths, falling short of its intended estimand whenever either source of excess is present. From Botta \\textit{et al}, we present empirical evidence showing relative risk of other-cause deaths ranging from 1.0 (colorectal cancer) to 4.0+ (head and neck cancers), and calculations demonstrating that net survival can substantially underestimate cancer-specific survival probability when relative risk exceeds 1.0. Critically, treatment-induced other-cause deaths represent irreducible causal pathways from cancer to death that cannot be eliminated through better stratification. We recommend interpreting net survival as ``survival where general population other-cause mortality is removed'' rather than as a causal counterfactual, and call for more precise language in cancer epidemiology.",
+      "authors": [
+        "Matthew J. Smith"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME",
+        "stat.AP",
+        "stat.OT"
+      ],
+      "published": "2026-03-01T10:18:40+00:00",
+      "link": "https://arxiv.org/pdf/2603.01033v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Theoretical analysis and interpretation of net survival in cancer research",
+      "llm_evidence_cn": "癌症研究中净生存率的理论分析与解释",
+      "llm_evidence": "癌症研究中净生存率的理论分析与解释",
+      "canonical_evidence": "癌症研究中净生存率的理论分析与解释",
+      "llm_tldr_en": "Decomposes total mortality to improve the interpretation and estimation of net survival in cancer patients.",
+      "llm_tldr_cn": "通过分解总死亡率，改进了对癌症患者净生存率的解释和估计。",
+      "llm_tldr": "通过分解总死亡率，改进了对癌症患者净生存率的解释和估计。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "survival analysis",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.01752v2",
+      "title": "Causal Circuit Tracing Reveals Distinct Computational Architectures in Single-Cell Foundation Models: Inhibitory Dominance, Biological Coherence, and Cross-Model Convergence",
+      "abstract": "Motivation: Sparse autoencoders (SAEs) decompose foundation model activations into interpretable features, but causal feature-to-feature interactions across network depth remain unknown for biological foundation models.   Results: We introduce causal circuit tracing by ablating SAE features and measuring downstream responses, and apply it to Geneformer V2-316M and scGPT whole-human across four conditions (96,892 edges, 80,191 forward passes). Both models show approximately 53 percent biological coherence and 65 to 89 percent inhibitory dominance, invariant to architecture and cell type. scGPT produces stronger effects (mean absolute d = 1.40 vs. 1.05) with more balanced dynamics. Cross-model consensus yields 1,142 conserved domain pairs (10.6x enrichment, p < 0.001). Disease-associated domains are 3.59x more likely to be consensus. Gene-level CRISPRi validation shows 56.4 percent directional accuracy, confirming co-expression rather than causal encoding.",
+      "authors": [
+        "Ihor Kendiukhov"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.CB",
+        "q-bio.GN"
+      ],
+      "published": "2026-03-02T11:21:44+00:00",
+      "link": "https://arxiv.org/pdf/2603.01752v2",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "causal circuit tracing in single-cell foundation models like scGPT",
+      "llm_evidence_cn": "单细胞基础模型（如 scGPT）中的因果通路追踪",
+      "llm_evidence": "单细胞基础模型（如 scGPT）中的因果通路追踪",
+      "canonical_evidence": "单细胞基础模型（如 scGPT）中的因果通路追踪",
+      "llm_tldr_en": "Analyzes computational architectures of single-cell foundation models using causal circuit tracing and SAEs.",
+      "llm_tldr_cn": "利用因果电路追踪和稀疏自编码器分析单细胞基础模型的计算架构。",
+      "llm_tldr": "利用因果电路追踪和稀疏自编码器分析单细胞基础模型的计算架构。",
+      "llm_tags": [
+        "query:rna-int"
+      ],
+      "matched_query_tag": "query:rna-int",
+      "matched_query_text": "single-cell transcriptomics reference",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.17380v1",
+      "title": "SCALE:Scalable Conditional Atlas-Level Endpoint transport for virtual cell perturbation prediction",
+      "abstract": "Virtual cell models aim to enable in silico experimentation by predicting how cells respond to genetic, chemical, or cytokine perturbations from single-cell measurements. In practice, however, large-scale perturbation prediction remains constrained by three coupled bottlenecks: inefficient training and inference pipelines, unstable modeling in high-dimensional sparse expression space, and evaluation protocols that overemphasize reconstruction-like accuracy while underestimating biological fidelity. In this work we present a specialized large-scale foundation model SCALE for virtual cell perturbation prediction that addresses the above limitations jointly. First, we build a BioNeMo-based training and inference framework that substantially improves data throughput, distributed scalability, and deployment efficiency, yielding 12.51* speedup on pretrain and 1.29* on inference over the prior SOTA pipeline under matched system settings. Second, we formulate perturbation prediction as conditional transport and implement it with a set-aware flow architecture that couples LLaMA-based cellular encoding with endpoint-oriented supervision. This design yields more stable training and stronger recovery of perturbation effects. Third, we evaluate the model on Tahoe-100M using a rigorous cell-level protocol centered on biologically meaningful metrics rather than reconstruction alone. On this benchmark, our model improves PDCorr by 12.02% and DE Overlap by 10.66% over STATE. Together, these results suggest that advancing virtual cells requires not only better generative objectives, but also the co-design of scalable infrastructure, stable transport modeling, and biologically faithful evaluation.",
+      "authors": [
+        "Shuizhou Chen",
+        "Lang Yu",
+        "Kedu Jin",
+        "Songming Zhang",
+        "Hao Wu",
+        "Wenxuan Huang",
+        "Sheng Xu",
+        "Quan Qian",
+        "Qin Chen",
+        "Lei Bai",
+        "Siqi Sun",
+        "Zhangyang Gao"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "q-bio.QM"
+      ],
+      "published": "2026-03-18T05:51:08+00:00",
+      "link": "https://arxiv.org/pdf/2603.17380v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "foundation model for virtual cell perturbation prediction from single-cell measurements",
+      "llm_evidence_cn": "基于单细胞测量的虚拟细胞扰动预测基础模型",
+      "llm_evidence": "基于单细胞测量的虚拟细胞扰动预测基础模型",
+      "canonical_evidence": "基于单细胞测量的虚拟细胞扰动预测基础模型",
+      "llm_tldr_en": "Presents SCALE, a foundation model for predicting cellular responses to perturbations using single-cell data.",
+      "llm_tldr_cn": "提出了 SCALE，一个利用单细胞数据预测细胞对扰动反应的基础模型。",
+      "llm_tldr": "提出了 SCALE，一个利用单细胞数据预测细胞对扰动反应的基础模型。",
+      "llm_tags": [
+        "query:rna-int"
+      ],
+      "matched_query_tag": "query:rna-int",
+      "matched_query_text": "single-cell transcriptomics reference",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2602.21550v1",
+      "title": "Extending Sequence Length is Not All You Need: Effective Integration of Multimodal Signals for Gene Expression Prediction",
+      "abstract": "Gene expression prediction, which predicts mRNA expression levels from DNA sequences, presents significant challenges. Previous works often focus on extending input sequence length to locate distal enhancers, which may influence target genes from hundreds of kilobases away. Our work first reveals that for current models, long sequence modeling can decrease performance. Even carefully designed algorithms only mitigate the performance degradation caused by long sequences. Instead, we find that proximal multimodal epigenomic signals near target genes prove more essential. Hence we focus on how to better integrate these signals, which has been overlooked. We find that different signal types serve distinct biological roles, with some directly marking active regulatory elements while others reflect background chromatin patterns that may introduce confounding effects. Simple concatenation may lead models to develop spurious associations with these background patterns. To address this challenge, we propose Prism, a framework that learns multiple combinations of high-dimensional epigenomic features to represent distinct background chromatin states and uses backdoor adjustment to mitigate confounding effects. Our experimental results demonstrate that proper modeling of multimodal epigenomic signals achieves state-of-the-art performance using only short sequences for gene expression prediction.",
+      "authors": [
+        "Zhao Yang",
+        "Yi Duan",
+        "Jiwei Zhu",
+        "Ying Ba",
+        "Chuan Cao",
+        "Bing Su"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.GN"
+      ],
+      "published": "2026-02-25T04:16:21+00:00",
+      "link": "https://arxiv.org/pdf/2602.21550v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Integration of multimodal epigenomic signals for gene expression prediction",
+      "llm_evidence_cn": "整合多模态表观基因组信号进行基因表达预测",
+      "llm_evidence": "整合多模态表观基因组信号进行基因表达预测",
+      "canonical_evidence": "整合多模态表观基因组信号进行基因表达预测",
+      "llm_tldr_en": "Demonstrates that integrating proximal multimodal signals is more effective than long sequences for gene prediction.",
+      "llm_tldr_cn": "证明了整合近端多模态信号比长序列建模在基因表达预测中更有效。",
+      "llm_tldr": "证明了整合近端多模态信号比长序列建模在基因表达预测中更有效。",
+      "llm_tags": [
+        "query:rna-int"
+      ],
+      "matched_query_tag": "query:rna-int",
+      "matched_query_text": "multi-omics integration",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2602.18677v1",
+      "title": "Bayesian calendar-time survival analysis with epidemic curve priors and variant-specific infection hazards",
+      "abstract": "In this paper, we develop a Bayesian calendar-time survival model motivated by infectious disease prevention studies occurring during an epidemic, when the risk of infection can change rapidly as the epidemic curve shifts. For studies in which a biomarker is the predictor of interest, we include the option to estimate a threshold of protection for the biomarker. If the intervention is hypothesized to have different associations with several circulating viral variants, or if the infectiousness of the dominant variant(s) changes over the course of the study, we treat infection from different variants as competing risks. We also introduce a novel method for incorporating existing epidemic curve estimates into an informative prior for the baseline hazard function, enabling estimation of the intervention's association with infection risk during periods of calendar time with minimal follow-up in one or more comparator groups. We demonstrate the strengths of this method via simulations, and we apply it to data from an observational COVID-19 vaccine study.",
+      "authors": [
+        "Angela M Dahl",
+        "Elizabeth R Brown"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME",
+        "stat.AP"
+      ],
+      "published": "2026-02-21T01:02:42+00:00",
+      "link": "https://arxiv.org/pdf/2602.18677v1",
+      "tags": [
+        "keyword:BIO CA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Survival analysis with biomarker predictors and infection hazards",
+      "llm_evidence_cn": "包含生物标志物预测因子和感染风险的生存分析",
+      "llm_evidence": "包含生物标志物预测因子和感染风险的生存分析",
+      "canonical_evidence": "包含生物标志物预测因子和感染风险的生存分析",
+      "llm_tldr_en": "Develops a Bayesian survival model for infectious diseases incorporating biomarker thresholds.",
+      "llm_tldr_cn": "开发了一种结合生物标志物阈值的传染病贝叶斯生存模型。",
+      "llm_tldr": "开发了一种结合生物标志物阈值的传染病贝叶斯生存模型。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "survival analysis",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2602.19922v1",
+      "title": "Transfer Learning with Network Embeddings under Structured Missingness",
+      "abstract": "Modern data-driven applications increasingly rely on large, heterogeneous datasets collected across multiple sites. Differences in data availability, feature representation, and underlying populations often induce structured missingness, complicating efforts to transfer information from data-rich settings to those with limited data. Many transfer learning methods overlook this structure, limiting their ability to capture meaningful relationships across sites. We propose TransNEST (Transfer learning with Network Embeddings under STructured missingness), a framework that integrates graphical data from source and target sites with prior group structure to construct and refine network embeddings. TransNEST accommodates site-specific features, captures within-group heterogeneity and between-site differences adaptively, and improves embedding estimation under partial feature overlap. We establish the convergence rate for the TransNEST estimator and demonstrate strong finite-sample performance in simulations. We apply TransNEST to a multi-site electronic health record study, transferring feature embeddings from a general hospital system to a pediatric hospital system. Using a hierarchical ontology structure, TransNEST improves pediatric embeddings and supports more accurate pediatric knowledge extraction, achieving the best accuracy for identifying pediatric-specific relational feature pairs compared with benchmark methods.",
+      "authors": [
+        "Mengyan Li",
+        "Xiaoou Li",
+        "Kenneth D Mandl",
+        "Tianxi Cai"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME"
+      ],
+      "published": "2026-02-23T15:01:57+00:00",
+      "link": "https://arxiv.org/pdf/2602.19922v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Transfer learning for heterogeneous datasets with structured missingness",
+      "llm_evidence_cn": "具有结构化缺失的异构数据集的迁移学习",
+      "llm_evidence": "具有结构化缺失的异构数据集的迁移学习",
+      "canonical_evidence": "具有结构化缺失的异构数据集的迁移学习",
+      "llm_tldr_en": "A framework for transfer learning across sites with different features, applicable to multi-omics integration.",
+      "llm_tldr_cn": "一种跨站点迁移学习框架，适用于具有不同特征的多组学整合场景。",
+      "llm_tldr": "一种跨站点迁移学习框架，适用于具有不同特征的多组学整合场景。",
+      "llm_tags": [
+        "query:rna-int"
+      ],
+      "matched_query_tag": "query:rna-int",
+      "matched_query_text": "multi-omics integration",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2602.22289v1",
+      "title": "What Topological and Geometric Structure Do Biological Foundation Models Learn? Evidence from 141 Hypotheses",
+      "abstract": "When biological foundation models such as scGPT and Geneformer process single-cell gene expression, what geometric and topological structure forms in their internal representations? Is that structure biologically meaningful or a training artifact, and how confident should we be in such claims? We address these questions through autonomous large-scale hypothesis screening: an AI-driven executor-brainstormer loop that proposed, tested, and refined 141 geometric and topological hypotheses across 52 iterations, covering persistent homology, manifold distances, cross-model alignment, community structure, and directed topology, all with explicit null controls and disjoint gene-pool splits.   Three principal findings emerge. First, the models learn genuine geometric structure. Gene embedding neighborhoods exhibit non-trivial topology, with persistent homology significant in 11 of 12 transformer layers at p < 0.05 in the weakest domain and 12 of 12 in the other two. A multi-level distance hierarchy shows that manifold-aware metrics outperform Euclidean distance for identifying regulatory gene pairs, and graph community partitions track known transcription factor target relationships. Second, this structure is shared across independently trained models. CCA alignment between scGPT and Geneformer yields canonical correlation of 0.80 and gene retrieval accuracy of 72 percent, yet none of 19 tested methods reliably recover gene-level correspondences. The models agree on the global shape of gene space but not on precise gene placement. Third, the structure is more localized than it first appears. Under stringent null controls applied across all null families, robust signal concentrates in immune tissue, while lung and external lung signals weaken substantially.",
+      "authors": [
+        "Ihor Kendiukhov"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM",
+        "cs.LG",
+        "q-bio.GN"
+      ],
+      "published": "2026-02-25T14:33:24+00:00",
+      "link": "https://arxiv.org/pdf/2602.22289v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "analysis of biological foundation models like scGPT and Geneformer",
+      "llm_evidence_cn": "分析scGPT和Geneformer等生物基础模型",
+      "llm_evidence": "分析scGPT和Geneformer等生物基础模型",
+      "canonical_evidence": "分析scGPT和Geneformer等生物基础模型",
+      "llm_tldr_en": "Evaluates the internal representations of single-cell biological foundation models through hypothesis screening.",
+      "llm_tldr_cn": "通过大规模假设筛选，评估单细胞生物基础模型内部表示的生物学意义。",
+      "llm_tldr": "通过大规模假设筛选，评估单细胞生物基础模型内部表示的生物学意义。",
+      "llm_tags": [
+        "query:rna-int"
+      ],
+      "matched_query_tag": "query:rna-int",
+      "matched_query_text": "single-cell transcriptomics reference",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2602.19685v1",
+      "title": "PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling",
+      "abstract": "Building Virtual Cells that can accurately simulate cellular responses to perturbations is a long-standing goal in systems biology. A fundamental challenge is that high-throughput single-cell sequencing is destructive: the same cell cannot be observed both before and after a perturbation. Thus, perturbation prediction requires mapping unpaired control and perturbed populations. Existing models address this by learning maps between distributions, but typically assume a single fixed response distribution when conditioned on observed cellular context (e.g., cell type) and the perturbation type. In reality, responses vary systematically due to unobservable latent factors such as microenvironmental fluctuations and complex batch effects, forming a manifold of possible distributions for the same observed conditions. To account for this variability, we introduce PerturbDiff, which shifts modeling from individual cells to entire distributions. By embedding distributions as points in a Hilbert space, we define a diffusion-based generative process operating directly over probability distributions. This allows PerturbDiff to capture population-level response shifts across hidden factors. Benchmarks on established datasets show that PerturbDiff achieves state-of-the-art performance in single-cell response prediction and generalizes substantially better to unseen perturbations. See our project page (https://katarinayuan.github.io/PerturbDiff-ProjectPage/), where code and data will be made publicly available (https://github.com/DeepGraphLearning/PerturbDiff).",
+      "authors": [
+        "Xinyu Yuan",
+        "Xixian Liu",
+        "Ya Shi Zhang",
+        "Zuobai Zhang",
+        "Hongyu Guo",
+        "Jian Tang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-02-23T10:28:56+00:00",
+      "link": "https://arxiv.org/pdf/2602.19685v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Single-cell perturbation modeling and sequencing data mapping",
+      "llm_evidence_cn": "单细胞扰动建模与测序数据映射",
+      "llm_evidence": "单细胞扰动建模与测序数据映射",
+      "canonical_evidence": "单细胞扰动建模与测序数据映射",
+      "llm_tldr_en": "Introduces PerturbDiff for simulating cellular responses to perturbations using single-cell sequencing data.",
+      "llm_tldr_cn": "引入 PerturbDiff，利用单细胞测序数据模拟细胞对扰动的反应。",
+      "llm_tldr": "引入 PerturbDiff，利用单细胞测序数据模拟细胞对扰动的反应。",
+      "llm_tags": [
+        "query:rna-int"
+      ],
+      "matched_query_tag": "query:rna-int",
+      "matched_query_text": "single-cell transcriptomics reference",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2602.22975v1",
+      "title": "permApprox: a general framework for accurate permutation p-value approximation",
+      "abstract": "Permutation procedures are common practice in hypothesis testing when distributional assumptions about the test statistic are not met or unknown. With only few permutations, empirical p-values lie on a coarse grid and may even be zero when the observed test statistic exceeds all permuted values. Such zero p-values are statistically invalid and hinder multiple testing correction. Parametric tail modeling with the Generalized Pareto Distribution (GPD) has been proposed to address this issue, but existing implementations can again yield zero p-values when the estimated shape parameter is negative and the fitted distribution has a finite upper bound.   We introduce a method for accurate and zero-free p-value approximation in permutation testing, embedded in the permApprox workflow and R package. Building on GPD tail modeling, the method enforces a support constraint during parameter estimation to ensure valid extrapolation beyond the observed statistic, thereby strictly avoiding zero p-values. The workflow further integrates robust parameter estimation, data-driven threshold selection, and principled handling of hybrid p-values that are discrete in the bulk and continuous in the extreme tail.   Extensive simulations using two-sample t-tests and Wilcoxon rank-sum tests show that permApprox produces accurate, robust, and zero-free p-value approximations across a wide range of sample and effect sizes. Applications to single-cell RNA-seq and microbiome data demonstrate its practical utility: permApprox yields smooth and interpretable p-value distributions even with few permutations. By resolving the zero-p-value problem while preserving accuracy and computational efficiency, permApprox enables reliable permutation-based inference in high-dimensional and computationally intensive settings.",
+      "authors": [
+        "Stefanie Peschel",
+        "Anne-Laure Boulesteix",
+        "Erika von Mutius",
+        "Christian L. Müller"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME"
+      ],
+      "published": "2026-02-26T13:15:18+00:00",
+      "link": "https://arxiv.org/pdf/2602.22975v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Permutation p-value approximation for bioinformatics hypothesis testing",
+      "llm_evidence_cn": "生物信息学假设检验中的置换 p 值近似",
+      "llm_evidence": "生物信息学假设检验中的置换 p 值近似",
+      "canonical_evidence": "生物信息学假设检验中的置换 p 值近似",
+      "llm_tldr_en": "A general framework for accurate p-value approximation in permutation testing for biological data.",
+      "llm_tldr_cn": "一种用于生物数据置换检验中精确 p 值近似的通用框架。",
+      "llm_tldr": "一种用于生物数据置换检验中精确 p 值近似的通用框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "bioinformatics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2602.22387v1",
+      "title": "Disentangling Shared and Target-Enriched Topics via Background-Contrastive Non-negative Matrix Factorization",
+      "abstract": "Biological signals of interest in high-dimensional data are often masked by dominant variation shared across conditions. This variation, arising from baseline biological structure or technical effects, can prevent standard dimensionality reduction methods from resolving condition-specific structure. The challenge is that these confounding topics are often unknown and mixed with biological signals. Existing background correction methods are either unscalable to high dimensions or not interpretable. We introduce background contrastive Non-negative Matrix Factorization (\\model), which extracts target-enriched latent topics by jointly factorizing a target dataset and a matched background using shared non-negative bases under a contrastive objective that suppresses background-expressed structure. This approach yields non-negative components that are directly interpretable at the feature level, and explicitly isolates target-specific variation. \\model is learned by an efficient multiplicative update algorithm via matrix multiplication such that it is highly efficient on GPU hardware and scalable to big data via minibatch training akin to deep learning approach. Across simulations and diverse biological datasets, \\model reveals signals obscured by conventional methods, including disease-associated programs in postmortem depressive brain single-cell RNA-seq, genotype-linked protein expression patterns in mice, treatment-specific transcriptional changes in leukemia, and TP53-dependent drug responses in cancer cell lines.",
+      "authors": [
+        "Yixuan Li",
+        "Archer Y. Yang",
+        "Yue Li"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-02-25T20:34:07+00:00",
+      "link": "https://arxiv.org/pdf/2602.22387v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Novel bioinformatics method for extracting biological signals from high-dimensional data",
+      "llm_evidence_cn": "从高维数据中提取生物信号的新型生物信息学方法",
+      "llm_evidence": "从高维数据中提取生物信号的新型生物信息学方法",
+      "canonical_evidence": "从高维数据中提取生物信号的新型生物信息学方法",
+      "llm_tldr_en": "bcNMF extracts target-enriched latent topics by factorizing datasets against matched backgrounds.",
+      "llm_tldr_cn": "bcNMF通过对比背景数据集进行矩阵分解，提取目标富集的潜在生物学特征。",
+      "llm_tldr": "bcNMF通过对比背景数据集进行矩阵分解，提取目标富集的潜在生物学特征。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Novel bioinformatics methods and models for cancer research",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2602.22018v1",
+      "title": "Disease Progression and Subtype Modeling for Combined Discrete and Continuous Input Data",
+      "abstract": "Disease progression modeling provides a robust framework to identify long-term disease trajectories from short-term biomarker data. It is a valuable tool to gain a deeper understanding of diseases with a long disease trajectory, such as Alzheimer's disease. A key limitation of most disease progression models is that they are specific to a single data type (e.g., continuous data), thereby limiting their applicability to heterogeneous, real-world datasets. To address this limitation, we propose the Mixed Events model, a novel disease progression model that handles both discrete and continuous data types. This model is implemented within the Subtype and Stage Inference (SuStaIn) framework, resulting in Mixed-SuStaIn, enabling subtype and progression modeling. We demonstrate the effectiveness of Mixed-SuStaIn through simulation experiments and real-world data from the Alzheimer's Disease Neuroimaging Initiative, showing that it performs well on mixed datasets. The code is available at: https://github.com/ucl-pond/pySuStaIn.",
+      "authors": [
+        "Sterre de Jonge",
+        "Elisabeth J. Vinke",
+        "Meike W. Vernooij",
+        "Daniel C. Alexander",
+        "Alexandra L. Young",
+        "Esther E. Bron"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-02-25T15:31:30+00:00",
+      "link": "https://arxiv.org/pdf/2602.22018v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Disease progression and subtype modeling using biomarker data",
+      "llm_evidence_cn": "利用生物标志物数据进行疾病进展和亚型建模",
+      "llm_evidence": "利用生物标志物数据进行疾病进展和亚型建模",
+      "canonical_evidence": "利用生物标志物数据进行疾病进展和亚型建模",
+      "llm_tldr_en": "Mixed-SuStaIn models disease trajectories and subtypes using both discrete and continuous biomarker data.",
+      "llm_tldr_cn": "Mixed-SuStaIn利用离散和连续生物标志物数据对疾病轨迹和亚型进行建模。",
+      "llm_tldr": "Mixed-SuStaIn利用离散和连续生物标志物数据对疾病轨迹和亚型进行建模。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Machine learning studies for prognosis prediction and biomarker discovery in cancer",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2602.23488v1",
+      "title": "A Mathematical Model for Chemotherapy, Immunotherapy and Virotherapy Treatments of Cancer",
+      "abstract": "We continue our study of a model for cancer treatment, constructed in Dutta et. al., 2025, by adding Virotherapy to the Chemotherapy and Immunotherapy studied there. It is a dynamical system model for the spread of cancer in healthy tissue. It allows computer experiments of various combinations of the three modalities, which cannot be performed in the laboratory or experimentally. The novelty is the addition of Virotherapy. The analysis shows that the model solutions exist, are bounded, and nonnegative on each finite time interval, thus biologically feasible. A time-stepping algorithm is constructed and implemented, and computer simulations are presented. The simulations show the development of the disease under various treatment options, including a baseline case without treatment, cases for each of the three treatments separately, and some combinations of the three treatments. These simulations indicate that combinations of treatments are more effective. However, we do not consider any limitation or incompatibilities of the joint application of the three modalities, that may exist in practice. Once validated in the field, the model can be used to design treatment schedules of combinations of the three modalities for improved outcomes.",
+      "authors": [
+        "Tarini Kumar Dutta",
+        "Silmera A Sangma",
+        "Janice Moore",
+        "Meir Shillor"
+      ],
+      "primary_category": "q-bio.OT",
+      "categories": [
+        "q-bio.OT"
+      ],
+      "published": "2026-02-26T20:45:13+00:00",
+      "link": "https://arxiv.org/pdf/2602.23488v1",
+      "tags": [
+        "keyword:BIO CA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Mathematical modeling of cancer treatment modalities",
+      "llm_evidence_cn": "癌症治疗模式的数学建模",
+      "llm_evidence": "癌症治疗模式的数学建模",
+      "canonical_evidence": "癌症治疗模式的数学建模",
+      "llm_tldr_en": "Presents a mathematical model to simulate chemotherapy, immunotherapy, and virotherapy in cancer.",
+      "llm_tldr_cn": "提出了一种模拟癌症化疗、免疫治疗和病毒治疗的数学模型。",
+      "llm_tldr": "提出了一种模拟癌症化疗、免疫治疗和病毒治疗的数学模型。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "cancer",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2602.22955v1",
+      "title": "MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis",
+      "abstract": "Accurate brain tumor diagnosis requires models to not only detect lesions but also generate clinically interpretable reasoning grounded in imaging manifestations, yet existing public datasets remain limited in annotation richness and diagnostic semantics. To bridge this gap, we introduce MM-NeuroOnco, a large-scale multimodal benchmark and instruction-tuning dataset for brain tumor MRI understanding, consisting of 24,726 MRI slices from 20 data sources paired with approximately 200,000 semantically enriched multimodal instructions spanning diverse tumor subtypes and imaging modalities. To mitigate the scarcity and high cost of diagnostic semantic annotations, we develop a multi-model collaborative pipeline for automated medical information completion and quality control, enabling the generation of diagnosis-related semantics beyond mask-only annotations. Building upon this dataset, we further construct MM-NeuroOnco-Bench, a manually annotated evaluation benchmark with a rejection-aware setting to reduce biases inherent in closed-ended question formats. Evaluation across ten representative models shows that even the strongest baseline, Gemini 3 Flash, achieves only 41.88% accuracy on diagnosis-related questions, highlighting the substantial challenges of multimodal brain tumor diagnostic understanding. Leveraging MM-NeuroOnco, we further propose NeuroOnco-GPT, which achieves a 27% absolute accuracy improvement on diagnostic questions following fine-tuning. This result demonstrates the effectiveness of our dataset and benchmark in advancing clinically grounded multimodal diagnostic reasoning. Code and dataset are publicly available at: https://github.com/gfnnnb/MM-NeuroOnco",
+      "authors": [
+        "Feng Guo",
+        "Jiaxiang Liu",
+        "Yang Li",
+        "Qianqian Shi",
+        "Mingkun Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-02-26T12:50:32+00:00",
+      "link": "https://arxiv.org/pdf/2602.22955v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Deep learning for brain tumor diagnosis and multimodal MRI understanding",
+      "llm_evidence_cn": "用于脑肿瘤诊断和多模态MRI理解的深度学习",
+      "llm_evidence": "用于脑肿瘤诊断和多模态MRI理解的深度学习",
+      "canonical_evidence": "用于脑肿瘤诊断和多模态MRI理解的深度学习",
+      "llm_tldr_en": "A large-scale multimodal benchmark for brain tumor MRI diagnosis using instruction-tuning and deep learning.",
+      "llm_tldr_cn": "一个用于脑肿瘤MRI诊断的大规模多模态基准和指令微调数据集。",
+      "llm_tldr": "一个用于脑肿瘤MRI诊断的大规模多模态基准和指令微调数据集。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2602.22236v1",
+      "title": "CrossLLM-Mamba: Multimodal State Space Fusion of LLMs for RNA Interaction Prediction",
+      "abstract": "Accurate prediction of RNA-associated interactions is essential for understanding cellular regulation and advancing drug discovery. While Biological Large Language Models (BioLLMs) such as ESM-2 and RiNALMo provide powerful sequence representations, existing methods rely on static fusion strategies that fail to capture the dynamic, context-dependent nature of molecular binding. We introduce CrossLLM-Mamba, a novel framework that reformulates interaction prediction as a state-space alignment problem. By leveraging bidirectional Mamba encoders, our approach enables deep ``crosstalk'' between modality-specific embeddings through hidden state propagation, modeling interactions as dynamic sequence transitions rather than static feature overlaps. The framework maintains linear computational complexity, making it scalable to high-dimensional BioLLM embeddings. We further incorporate Gaussian noise injection and Focal Loss to enhance robustness against hard-negative samples. Comprehensive experiments across three interaction categories, RNA-protein, RNA-small molecule, and RNA-RNA demonstrate that CrossLLM-Mamba achieves state-of-the-art performance. On the RPI1460 benchmark, our model attains an MCC of 0.892, surpassing the previous best by 5.2\\%. For binding affinity prediction, we achieve Pearson correlations exceeding 0.95 on riboswitch and repeat RNA subtypes. These results establish state-space modeling as a powerful paradigm for multi-modal biological interaction prediction.",
+      "authors": [
+        "Rabeya Tus Sadia",
+        "Qiang Ye",
+        "Qiang Cheng"
+      ],
+      "primary_category": "q-bio.GN",
+      "categories": [
+        "q-bio.GN",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-02-23T19:57:11+00:00",
+      "link": "https://arxiv.org/pdf/2602.22236v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Bioinformatics method for RNA interaction prediction using Mamba",
+      "llm_evidence_cn": "使用Mamba预测RNA相互作用的生物信息学方法",
+      "llm_evidence": "使用Mamba预测RNA相互作用的生物信息学方法",
+      "canonical_evidence": "使用Mamba预测RNA相互作用的生物信息学方法",
+      "llm_tldr_en": "A novel deep learning framework using Mamba for dynamic and accurate RNA interaction prediction.",
+      "llm_tldr_cn": "一种利用Mamba进行动态且准确的RNA相互作用预测的新型深度学习框架。",
+      "llm_tldr": "一种利用Mamba进行动态且准确的RNA相互作用预测的新型深度学习框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "bioinformatics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2602.24201v1",
+      "title": "Flow-Based Density Ratio Estimation for Intractable Distributions with Applications in Genomics",
+      "abstract": "Estimating density ratios between pairs of intractable data distributions is a core problem in probabilistic modeling, enabling principled comparisons of sample likelihoods under different data-generating processes across conditions and covariates. While exact-likelihood models such as normalizing flows offer a promising approach to density ratio estimation, naive flow-based evaluations are computationally expensive, as they require simulating costly likelihood integrals for each distribution separately. In this work, we leverage condition-aware flow matching to derive a single dynamical formulation for tracking density ratios along generative trajectories. We demonstrate competitive performance on simulated benchmarks for closed-form ratio estimation, and show that our method supports versatile tasks in single-cell genomics data analysis, where likelihood-based comparisons of cellular states across experimental conditions enable treatment effect estimation and batch correction evaluation.",
+      "authors": [
+        "Egor Antipov",
+        "Alessandro Palma",
+        "Lorenzo Consoli",
+        "Stephan Günnemann",
+        "Andrea Dittadi",
+        "Fabian J. Theis"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-02-27T17:27:55+00:00",
+      "link": "https://arxiv.org/pdf/2602.24201v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "probabilistic modeling for genomics data distributions",
+      "llm_evidence_cn": "基因组学数据分布的概率建模",
+      "llm_evidence": "基因组学数据分布的概率建模",
+      "canonical_evidence": "基因组学数据分布的概率建模",
+      "llm_tldr_en": "A flow-based density ratio estimation method for comparing complex genomic data distributions.",
+      "llm_tldr_cn": "一种基于流的密度比估计方法，用于比较复杂的基因组数据分布。",
+      "llm_tldr": "一种基于流的密度比估计方法，用于比较复杂的基因组数据分布。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "bioinformatics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

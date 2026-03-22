@@ -1,0 +1,311 @@
+Title: Experience-Guided Self-Adaptive Cascaded Agents for Breast Cancer Screening and Diagnosis with Reduced Biopsy Referrals
+
+URL Source: https://arxiv.org/pdf/2602.23899v1
+
+Published Time: Mon, 02 Mar 2026 01:56:33 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# Experience-Guided Self-Adaptive Cascaded Agents for Breast Cancer Screening and Diagnosis with Reduced Biopsy Referrals 
+
+Pramit Saha 1, Mohammad Alsharid 2, Joshua Strong 1, and J. Alison Noble 1 
+
+> 1
+
+Department of Engineering Science, University of Oxford  
+
+> 2
+
+Department of Computer Science, Khalifa University 
+
+Abstract. We propose an experience-guided cascaded multi-agent frame-work for Breast Ultrasound Screening and Diagnosis, called BUSD-Agent , that aims to reduce diagnostic escalation and unnecessary biopsy referrals. Our framework models screening and diagnosis as a two-stage, selective decision-making process. A lightweight ‘screening clinic’ agent, restricted to classification models as tools, selectively filters out benign and normal cases from further diagnostic escalation when malignancy risk and uncertainty are estimated as low. Cases that have higher risks are escalated to the ‘diagnostic clinic’ agent, which integrates richer perception and radiological description tools to make a secondary de-cision on biopsy referral. To improve agent performance, past records of pathology-confirmed outcomes along with image embeddings, model predictions, and historical agent actions are stored in a memory bank as structured decision trajectories. For each new case, BUSD-Agent re-trieves similar past cases based on image, model response and confi-dence similarity to condition the agent’s current decision policy. This enables retrieval-conditioned in-context adaptation that dynamically ad-justs model trust and escalation thresholds from prior experiences with-out parameter updates. Evaluation across 10 breast ultrasound datasets shows that the proposed experience-guided workflow reduces diagnostic escalation in BUSD-Agent from 84.95% to 58.72% and overall biopsy re-ferrals from 59.50% to 37.08%, compared to the same architecture with-out trajectory conditioning, while improving average screening specificity by 68.48% and diagnostic specificity by 6.33%. 
+
+Keywords: Breast Ultrasound · In-context Trajectory Learning · Experience-conditioned Policy Adaptation · Cascaded Multi-agent Collaboration 
+
+1 Introduction 
+
+Breast cancer is the most commonly diagnosed cancer among women worldwide, with approximately 2.3 million new cases and 670,000 deaths reported glob-ally in 2022 [8]. Breast ultrasound is widely used as a frontline cancer screen-ing and diagnostic tool, particularly for women with dense breast tissue and 
+
+> arXiv:2602.23899v1 [cs.CV] 27 Feb 2026
+
+2 Saha et al. 
+
+(a) 0 250 500 750 1000 1250 1500 1750 
+
+> Number of samples (n)
+> US3M
+> BUET-BUSD
+> BUS-UCLM
+> BUSI
+> BUS-UC
+> BUSI-WHU
+> GDPH&SYSUCC
+> Miccai 2022
+> US breast lesion
+> BUSBRA
+> 248
+> 646
+> 683
+> 780
+> 810
+> 927
+> 1000
+> 1000
+> 1000
+> 1875
+
+(b) BUET-BUSD  
+
+> BUSBRA
+> BUS-UCLM
+> BUSI-WHU
+> BUS-UC
+> BUSI
+> US3M
+> GDPH&SYSUCC
+> Miccai 2022
+> US breast lesion
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Screening
+> BUET-BUSD
+> BUSBRA
+> BUS-UCLM
+> BUSI-WHU
+> BUS-UC
+> BUSI
+> US3M
+> GDPH&SYSUCC
+> Miccai 2022
+> US breast lesion
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Diagnostic Baseline
+> Proposed
+
+(c) 
+
+Fig. 1: BUSD-Agent overview and results. (a) BUSD-Agent Real-time User Interface, (b)# Samples in 10 evaluation datasets, (c) Specificity comparison of baseline vs proposed method for Screening (left) and Diagnostic (right) agents. in resource-constrained settings [3]. However, limited screening specificity fre-quently results in false-positive findings, excessive diagnostic escalation, and un-necessary biopsy referrals [17, 16, 2]. Over the past ten years, referrals to breast diagnostic clinics have increased by nearly 100% [6]. Given that the majority of screened cases are ultimately benign or normal, improving specificity with-out compromising sensitivity is essential to reduce clinical burden, patient anx-iety, and healthcare costs as it imposes substantial economic and operational burdens on healthcare systems [14, 11]. Biopsies are invasive procedures asso-ciated with direct costs and potential complications, as well as indirect costs such as psychological distress [16, 20, 7]. Excessive escalation of low-risk cases to diagnostic clinics increases radiologist workload, prolongs reporting times, and consumes limited specialist resources [5, 4]. As a result, patients with genuinely suspicious findings face delays in evaluation and treatment initiation. In high-volume screening environments, such workflow congestion compromises timely Breast Cancer Screening and Diagnosis Agents 3
+
+care for critical patients. Although prior work has traditionally focused on devel-oping ultrasound-based classification and segmentation models [18, 9, 19, 23, 10, 1, 21, 13, 12, 15], the aforementioned challenges particularly highlight the need for intelligent, safety-aware triage mechanisms that selectively escalate high-risk cases while confidently clearing low-risk cases. To address this need, we introduce a novel experience-guided multi-agent framework called Breast Ultrasound Screening and Diagnostic Agent (BUSD-Agent). Our proposed cascaded system consists of a lightweight screening agent that selectively escalates cases to a more powerful diagnostic agent. Unlike con-ventional systems that rely on fixed decision logic, BUSD-Agent accumulates pathology-confirmed outcomes as structured decision trajectories and conditions its screening and biopsy referral policies on historically relevant prior experi-ences. By integrating stage-wise selective processing with experience-conditioned policy adaptation, the proposed framework is shown to reduce unnecessary di-agnostic escalation and biopsy referrals while preserving sensitivity (see Fig. 1). This design enables self-improving agentic behaviour without parameter updates. 
+
+2 BUSD-Agent 
+
+2.1 A Novel Cascaded Multi-Agent Framework 
+
+Breast ultrasound assessment in clinical practice follows a staged workflow, where initial screening determines whether further diagnostic evaluation is required. Inspired by this, we design a cascaded multi-agent framework in the form of (i) a screening agent that evaluates all cases, and only those deemed suspicious are escalated to (ii) a diagnostic agent for more detailed analysis (see Fig. 2). 
+
+Screening Clinic Agent The screening agent operates using a panel of ultrasound-based breast cancer classification models. Given an ultrasound image x, the screening agent invokes M independently trained classifiers. Each model m pro-duces a class probability distribution over C = {benign , malignant , normal },from which the predicted class ˆym = arg max c∈C pm(c | x) is obtained together with its associated confidence score. To provide a global summary of model agreement, an ensemble tool aggregates individual predictions via majority vot-ing: ˆyens = arg max c∈C 
+
+PMm=1 I(ˆ ym = c) where I(·) denotes the indicator func-tion. The screening toolset returns model predictions, confidence scores, and the ensemble prediction. These structured outputs constitute the complete observa-tion panel available to the screening decision module. The screening agent uses an LLM-based orchestration layer that reconciles these outputs and performs ReAct-style [22] multi-step reasoning to generate a binary screening decision. 
+
+Diagnostic Clinic Agent Cases escalated by the screening agent are processed by a diagnostic clinic agent designed to perform detailed lesion characterization and biopsy decision support. Unlike the screening stage, which relies primarily 4 Saha et al. Benign OR Malignant 
+
+Deep Neural Network- based Classification  Outcome 
+
+Screening Agent 
+
+(a) Existing methods 
+
+Tool Zoo 
+
+(Classification Models) 
+
+Clear 
+
+Diagnostic Agent 
+
+Escalation 
+
+Tool Zoo Detect (bounding box)  Segment+Overlay  Zoom + Analyse      
+
+> BIRADS 4 B
+> Boundary Unclear
+> Edge Irregular
+> Echo Low
+> Calcif ication No
+
+Lesion attributes 
+
+(Multi- task cls) 
+
+> This lesion is not parallel, has indistinct margins and irregular shape, is hypoechoic with absence of calcific
+> deposits. Based on these features, the lesion is classified as BIRADS 4B. The features are consistent with
+> histopathology category: Invasive breast carcinoma (of no special type). Thus this is a malignant lesion.
+
+Radiological Description Generator 
+
+(b) Our Proposed BUSD-Agent 
+
+No Biopsy  Biopsy 
+
+Referral 
+
+> Histology : Invasive breast carcinoma (of no special t y pe),
+> ICD- O: 850 0 / 3, ICD- 10 : null, ICD- 11: null, Gene: null
+
+Routine scan / 
+
+pain / lump 
+
+Fig. 2: Comparison of our BUSD-Agent Framework with existing methods on classification outputs, the diagnostic agent integrates multiple complemen-tary perception, localization, and description tools. Given an escalated ultra-sound image x, the diagnostic agent employs an LLM as an orchestration layer that has access to a set of radiological analysis modules, including (i) multi-label predictors for radiological features viz. , BIRADS category, lesion edge, boundary, calcification, and echogenicity, (ii) a fine-tuned VLM that produces structured textual reports of lesion morphology, direct spatial analysis tools, including: (iii) bounding-box–based object detection module for lesion localiza-tion, (iv) segmentation module that delineates lesion boundaries, (v) zooming and overlay utilities that enable focused inspection of detected or segmented re-gions. These tools allow the agent to refine spatial attention, examine suspicious regions at higher resolution, and incorporate geometric boundary information into downstream reasoning. The LLM consumes the integrated diagnostic out-puts including radiological feature predictions, localization results, segmentation boundaries, descriptive reports, and screening-stage context and engages a Re-Act loop [22], iteratively reasoning over these inputs to decompose the task into structured analytical steps that culminate in a final biopsy referral decision. Breast Cancer Screening and Diagnosis Agents 5Z1                             
+
+> Z2
+> Z3
+> Z4
+> Image Encoder Malignancy Confidence Vector
+> M1M2.... Mn- 1 Mn
+> 0.28 0.75 .... 0.66 0.90
+> 0.70 0.56 .... 0.84 0.51
+> 0.35 0.82 .... 0.69 0.88
+> 0.20 0.63 .... 0.88 0.78
+> BIRADS Boundary Edge Echo Calci Orient Margin Shape Echo Calci Patho Concl
+> Screening
+> Output
+> Query
+> Memory Bank
+> Escalate
+> Escalate
+> Escalate
+
+? 
+
+> Diagnostic
+> Output
+> Pathology
+> Outcome
+> Radiological Descriptor Vector Lesion Attribute Vector
+> No Biopsy
+> No Biopsy
+> Biopsy
+> Benign
+> Benign
+> Malignant
+> Retrieve
+> Image Cosine Similarity Vector Cosine Similarity
+> Which models should I trust?
+> EXPERIENCE TRAJECTORY
+> Which models or features should I select ?
+> Vector Cosine Similarity
+
+?                                        
+
+> 32013
+> 11012
+> 43113
+> 43112
+> 1311220
+> 1123130
+> 1311211
+> 1311210
+> Right
+> Decision
+> Wrong
+> Decision
+> Wrong
+> Decision
+> Wrong
+> Decision
+
+Fig. 3: Our experience-guided in-context adaptation strategy for BUSD-Agent 
+
+2.2 Experience-Guided In-Context Adaptation 
+
+Although the baseline framework applies fixed decision logic uniformly across cases, it does not incorporate feedback from prior outcomes to adapt its be-haviour. Consequently, the static cascade cannot utilize accumulated successes and failures to recalibrate thresholds, adjust model trust, or refine escalation policies. To address this, we extend the framework with an experience-guided in-context adaptation mechanism grounded in pathology-confirmed prior cases. 
+
+Biopsy-Grounded Memory Bank Previous cases with confirmed pathology outcomes are stored as structured decision trajectories in the memory bank. As shown in Fig. 3, each trajectory contains the image embeddings, model pre-dictions, agent decisions, and final biopsy-confirmed labels. This memory bank serves as a repository of historical screening and diagnostic experiences. 
+
+Experience-Conditioned Policy Adaptation for Screening Stage For a new case x, we retrieve the top-K most similar prior cases from the memory bank using a combined similarity metric defined in a joint feature space based on (a) image embedding z(x) and (b) a malignancy confidence vector which we define as: p(x) = ( p1(malignant | x), . . . , p M (malignant | x)) obtained from the 
+
+M screening classifiers. Similarity between a query case x and a stored case xi is computed as: sim screen (x, x i) = λ·cos (z(x), z(xi))+(1 −λ)·cos (p(x), p(xi)) where cos (·, ·) denotes cosine similarity and λ ∈ [0 , 1] is a hyperparameter. The retrieved set NK (x), containing the top-K most similar cases, is formatted as structured in-context exemplar trajectory set and provided as the LLM prior for produc-ing the screening decision. This retrieval mechanism allows the screening agent to examine how visually similar cases with comparable malignancy-confidence profiles were resolved in the past, including whether prior screening decisions aligned with pathology-confirmed outcomes. By conditioning on these exemplar trajectories, the agent can identify which tool outputs or confidence patterns were historically reliable and which led to errors. This allows it to adaptively recalibrate model trust and adjust escalation behaviour for the current case. 6 Saha et al. 
+
+Fig. 4: Screening confusion matrices (%) for 10 datasets comparing baseline (w/o experience-conditioning) and proposed approach (experience-conditioned). Baseline  Proposed  Baseline  Proposed        
+
+> All similar cases were benign , and the decision to recommend escalation to the diagnostic
+> agent based on the outputs of ConvNeXt, Swin, and the ensemble model was not correct .
+> Given the benign recommendations and the consistency with similar
+> benign cases, escalation to the diagnostic agent is not recommended .
+
+Fig. 5: Screening Samples . Left 3 cases were correctly predicted by both. Right 3 cases show harder instances where baseline escalated to diagnostic agent, whereas proposed experience-guided agent correctly identified as benign. 
+
+Experience-Conditioned Policy Adaptation for Diagnostic Stage For cases escalated to the diagnostic stage, retrieval is performed in a richer fea-ture space reflecting the additional diagnostic outputs. Each diagnostic case is represented by its image embedding z(x), multi-label radiological feature predic-tions, and structured categorical outputs derived from the radiological descrip-tion generator as shown in Fig. 3. Similarity is computed in this joint diagnostic representation to retrieve the top-K most relevant exemplar trajectories. Unlike conventional retrieval approaches that rely solely on visual similarity or free-text descriptors, our diagnostic retrieval operates over structured radiological feature representations, enabling retrieval conditioned on clinically interpretable attributes and decision-relevant cues rather than low-level visual resemblance. The retrieved trajectories capture not only similar radiological patterns but also the downstream consequences of prior biopsy referral decisions. By condition-ing on these biopsy-grounded diagnostic experiences, the agent can assess which combinations of radiological features, descriptor patterns, and spatial findings historically led to correct or incorrect biopsy decisions, thereby adaptively refin-ing its biopsy referral policy without parameter updates (see Fig. 3). 
+
+3 Experiments and Results 
+
+Datasets and Implementation Details We evaluate agentic performance across 10 breast ultrasound datasets: BUET-BUSD [18], BUSBRA [9], BUS-UCLM [19], BUSI-WHU [23], BUS-UC [10], BUSI [1], US3M [21], GDPH&SYSUCC Breast Cancer Screening and Diagnosis Agents 7
+
+Fig. 6: Diagnostic Agent confusion matrices (%) across 10 datasets. Table 1: Benchmarking screening and diagnostic agents across BUS-UCLM and BUS-BRA (BAcc = Balanced Accuracy, Sen = Sensitivity, Spec = Specificity).                                                  
+
+> Model Screening Clinic Agent Diagnostic Clinic Agent BUS-UCLM BUS-BRA BUS-UCLM BUS-BRA BAcc Sen Spec BAcc Sen Spec BAcc Sen Spec BAcc Sen Spec
+> Proprietary Models
+> GPT-4o 63.05 60.00 66.09 57.81 27.68 87.93 67.62 38.46 96.77 60.17 20.99 99.35 GPT-4.1 69.64 94.44 44.83 68.56 78.91 58.20 60.20 100.00 20.41 56.99 100.00 13.99 GPT-4o-mini 54.89 16.67 93.10 49.82 0.82 98.82 50.00 100.00 0.00 50.00 100.00 0.00 GPT-4.1-mini 68.31 87.78 48.85 68.97 70.68 67.27 48.89 0.00 97.78 44.59 0.00 89.19 Gemini 2.5 Pro 62.96 100.00 25.93 53.17 94.87 11.48 60.00 100.00 20.00 68.87 100.00 37.74 Gemini 2.5 Flash 53.70 100.00 7.41 50.25 92.31 8.20 50.00 100.00 0.00 50.00 100.00 0.00
+> Open-Source Models
+> Qwen 2.5 VL 32B 61.11 100.00 22.22 52.71 92.31 13.11 59.52 100.00 19.05 52.38 97.22 7.55 Mistral-3.2-24B-Ins 53.70 100.00 7.41 49.68 84.62 14.75 62.00 100.00 24.00 80.77 100.00 61.54 Nemotron-12B-v2-VL 49.16 90.91 7.41 59.73 94.87 24.59 52.00 100.00 4.00 56.52 100.00 13.04 Llama-3.2-11B-V-Ins 50.00 0.00 100.00 52.56 5.013 100.00 42.00 0.00 84.00 37.50 0.00 75.00
+> Ours 78.29 79.75 76.62 98.67 98.96 98.38 71.58 97.78 45.39 88.96 98.02 79.90
+
+[13], MICCAI 2022 BUV [12], and US Breast Lesion [15]. We use GPT-4o as the orchestration module responsible for tool invocation and structured deci-sion integration. The screening agent consists of 14 classification models span-ning CNN- and Transformer-based architectures, including: ConvNeXt (S,T), DeiT (S,T), DenseNet121, EfficientNet-B3, ResNet18, Swin (B,S,T), VGG16, ViT (B,S,T). For the diagnostic stage, the radiological descriptor is implemented using MedGemma-4B fine-tuned with LoRA (r=16) to produce structured ul-trasound reports with predefined fields including orientation, margins, shape, echogenicity, calcification, BIRADS, histopathology, and final conclusion. Lesion segmentation and localization are performed using a U-Net with a ResNet50 en-coder and YOLOv11 (Ultralytics). In addition, a ResNet50 backbone with 5 task-specific heads is used for lesion attribute recognition: (i) BIRADS (2-5), (ii) edge (Regular/Irregular/Partially Regular), (iii) boundary (Clear/Unclear/Somewhat Unclear/Fairly Clear), (iv) calcification (No/Micro/Suspected/Multiple/Multiple Clustered Micro/Coarse), and (v) echo (Low/Heterogeneous/Cystic-Solid Mixed/ Slightly Low). All models were trained on BUS-CoT dataset [24] before integrat-ing into the agentic framework. We select λ = 0 .5, K = 10 via hyperparameter sweep and reserve 20% samples in each dataset to construct the memory bank. 8 Saha et al. 
+
+Performance of Screening Agent As illustrated in Fig. 4, evaluation across 10 breast ultrasound datasets shows that the proposed experience-conditioned policy adaptation consistently reduces false positives while maintaining sensitiv-ity relative to the baseline screening agent. On average, a 25.19% improve-ment in true negative rate is observed, with particularly large gains on BUSBRA (+39.83), BUS-UCLM (+64.13), US Breast Lesion (+31.45), BUSI (+53.75), and US3M (+24.12), reflecting enhanced specificity and more conser-vative case escalation. Importantly, the method achieves an average 41.83% re-duction in escalation rate (i.e. , false positives) without substantial degrada-tion in overall true positive rates (-0.15%), indicating that malignancy detection performance is largely preserved. Representative screening examples are shown in Fig. 5, illustrating cases where the proposed mechanism avoids unnecessary escalation compared to the baseline. 
+
+Performance of Diagnostic Agent The diagnostic agent consistently out-performs the screening agent in malignancy detection, highlighting the added value of radiological analysis tools. For diagnostic stage, as shown in Fig. 6, the proposed experience-conditioned policy adaptation leads to consistent re-ductions in false positive rates in BUS-UCLM (-5.26%), BUS-UC (-6.90%), Miccai 2022 (-9.98%), and US breast lesion (-31.16%), accompanied by cor-responding increases in true negative proportions. Importantly, these gains in specificity do not come at the expense of sensitivity: true positive rates remain stable or improve slightly in BUSBRA (+1.79%), BUSI (+1.43%). Overall, the experience-conditioning in diagnostic agent demonstrates tighter control of false positives while maintaining acceptable true positive rates which leads to fewer unnecessary biopsy referrals. 
+
+Comparison with SOTA VLMs We benchmark BUSD-Agent against pro-prietary and open-source VLMs (Tab. 1). Across both stages, our framework achieves the highest balanced accuracy with better sensitivity–specificity trade-offs. In contrast, VLMs exhibit unstable operating points, often favouring either sensitivity or specificity. This highlights the benefit of tool-assisted reasoning. 2 5 10 15 20        
+
+> K
+> 0.6
+> 0.7
+> 0.8
+> Specificity
+> Screening: K sweep
+> BUS-UC
+> US3M
+> 2510 15 20
+> K
+> 0.44
+> 0.46
+> 0.48 Diagnostic: K sweep
+> BUS-UC
+> US3M
+> BUS-UC US3M
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> Screening: Retrieval ablation
+> BUS-UC US3M
+> 0.0
+> 0.2
+> 0.4
+> Diagnostic: Retrieval ablation
+> Image only
+> Vector only
+> Image + Vector
+
+Fig. 7: Effect of # retrieved exemplars (left) and retrieval strategy (right) 
+
+Ablation Studies We vary the number of retrieved samples K ∈ { 2, 5, 10 , 15 , 20 }
+
+in Fig. 7 (left) and observe that performance improves steadily from K = 2 to Breast Cancer Screening and Diagnosis Agents 9
+
+K = 10 , after which the curve plateaus or exhibits a small drop. This suggests that incorporating a moderate number of relevant exemplar trajectories is suf-ficient for stable decision adaptation, with K = 10 providing the best trade-off between contextual guidance and noise from less similar cases. Additionally, we show the effectiveness of combined retrieval mechanism by comparing it with image-only and vector–only retrieval in Fig. 7 (right). The combined similarity metric consistently yields higher specificity, indicating that jointly leveraging visual representations and malignancy-confidence profiles re-sults in more informative exemplar selection than either signal. 
+
+4 Discussion and Conclusion 
+
+The primary contributions of our paper are fourfold: 1. We introduce BUSD-Agent, a cascaded multi-agent framework that: (i) mim-ics clinical triage by escalating suspicious breast ultrasound cases from screen-ing to diagnostic agent, and (ii) emulates biopsy referral decision by di-recting potentially malignant cases from diagnostic evaluation to pathology confirmation. We train and develop a suite of underlying tools including ma-lignancy classification, lesion detection, segmentation, characterization, and radiological description generation models that enable the framework. 2. We address the issue of excessive false positives in screening and diagnostic stages by proposing an experience-conditioned policy adaptation mechanism. Our approach stores past pathology-confirmed cases, including agent actions, model predictions and confidence scores as structured decision trajectories, and performs stage-specific retrieval based on a joint feature space involv-ing images and tool outputs. This conditioning based on retrieved samples enables the agent to make more informed decisions by adaptively adjusting individual model trust and escalation behaviour using prior experiences. 3. We conduct the first benchmarking of 10 proprietary and open-source VLMs highlighting their limitations in screening and diagnostic decision stages. 4. We demonstrate that conditioning agent-based decision policies on past de-cision trajectories enables adaptive screening and biopsy referral without parameter updates. Empirically, this yields a 25.19% average improvement in true negative rates and a 41.83% reduction in escalation rate at the screen-ing stage. At the diagnostic stage, it further reduces false positives across all datasets without collapsing true positive rates, resulting in more balanced sensitivity–specificity trade-offs and fewer unnecessary biopsy referrals. 
+
+References  
+
+> 1. Al-Dhabyani, W., Gomaa, M., Khaled, H., Fahmy, A.: Dataset of breast ultrasound images. Data in brief 28 , 104863 (2020) 2. Berg, W.A.: Reducing unnecessary biopsy and follow-up of benign cystic breast lesions (2020)
+
+10 Saha et al. 3. Brem, R.F., Lenihan, M.J., Lieberman, J., Torrente, J.: Screening breast ultra-sound: past, present, and future. American Journal of Roentgenology 204 (2), 234– 240 (2015) 4. Dembrower, K., Crippa, A., Colón, E., Eklund, M., Strand, F.: Artificial intelli-gence for breast cancer detection in screening mammography in sweden: a prospec-tive, population-based, paired-reader, non-inferiority study. The Lancet Digital Health 5(10), e703–e711 (2023) 5. Dembrower, K., Wåhlin, E., Liu, Y., Salim, M., Smith, K., Lindholm, P., Ek-lund, M., Strand, F.: Effect of artificial intelligence-based triaging of breast cancer screening mammograms on cancer detection and radiologist workload: a retrospec-tive simulation study. The Lancet Digital Health 2(9), e468–e474 (2020) 6. Ellis, K., Robinson, C., Foster, R., Fatayer, H., Gandhi, A.: Efficient management of new patient referrals to a breast service: the safe introduction of an advanced nurse practitioner-led telephone breast pain service. The Annals of The Royal College of Surgeons of England 106 (4), 359–363 (2024) 7. Fraser, N., Clarke, P.: Cost-effectiveness of breast cancer screening. The Breast 
+
+1(4), 169–172 (1992) 8. Freihat, O., Sipos, D., Kovacs, A.: Global burden and projections of breast can-cer incidence and mortality to 2050: a comprehensive analysis of globocan data. Frontiers in Public Health 13 , 1622954 (2025) 9. Gómez-Flores, W., Gregorio-Calas, M.J., Coelho de Albuquerque Pereira, W.: Bus-bra: A breast ultrasound dataset for assessing computer-aided diagnosis systems. Medical physics 51 (4), 3110–3123 (2024) 10. Iqbal, A., Sharif, M.: Memory-efficient transformer network with feature fusion for breast tumor segmentation and classification task. Engineering Applications of Artificial Intelligence 127 , 107292 (2024) 11. Jahn, B., Todorovic, J., Bundo, M., Sroczynski, G., Conrads-Frank, A., Rochau, U., Endel, G., Wilbacher, I., Malbaski, N., Popper, N., et al.: Budget impact analysis of cancer screening: a methodological review. Applied Health Economics and Health Policy 17 (4), 493–511 (2019) 12. Lin, Z., Lin, J., Zhu, L., Fu, H., Qin, J., Wang, L.: A new dataset and a baseline model for breast lesion detection in ultrasound videos. In: International Conference on Medical Image Computing and Computer-Assisted Intervention. pp. 614–623. Springer (2022) 13. Mo, Y., Han, C., Liu, Y., Liu, M., Shi, Z., Lin, J., Zhao, B., Huang, C., Qiu, B., Cui, Y., et al.: Hover-trans: Anatomy-aware hover-transformer for roi-free breast cancer diagnosis in ultrasound images. IEEE Transactions on Medical Imaging 
+
+42 (6), 1696–1706 (2023) 14. Organization, W.H., et al.: Screening programmes: a short guide. increase effec-tiveness, maximize benefits and minimize harm (2020) 15. Pawłowska, A., Ćwierz-Pieńkowska, A., Domalik, A., Jaguś, D., Kasprzak, P., Matkowski, R., Fura, Ł., Nowicki, A., Żołek, N.: Curated benchmark dataset for ultrasound based breast lesion analysis. Scientific Data 11 (1), 148 (2024) 16. Springfield, D.S., Rosenberg, A.: Biopsy: complicated and risky (1996) 17. Srivastava, S., Koay, E.J., Borowsky, A.D., De Marzo, A.M., Ghosh, S., Wag-ner, P.D., Kramer, B.S.: Cancer overdiagnosis: a biological challenge and clinical dilemma. Nature Reviews Cancer 19 (6), 349–358 (2019) 18. Tasnim, J., Hasan, M.K.: Cam-qus guided self-tuning modular cnns with multi-loss functions for fully automated breast lesion classification in ultrasound images. Physics in Medicine & Biology 69 (1), 015018 (2024) Breast Cancer Screening and Diagnosis Agents 11 19. Vallez, N., Bueno, G., Deniz, O., Rienda, M.A., Pastor, C.: Bus-uclm: Breast ul-trasound lesion segmentation dataset. Scientific Data 12 (1), 242 (2025) 20. Wardle, J., Pope, R.: The psychological costs of screening for cancer. Journal of psychosomatic research 36 (7), 609–624 (1992) 21. Yan, P., Gong, W., Li, M., Zhang, J., Li, X., Jiang, Y., Luo, H., Zhou, H.: Tdf-net: Trusted dynamic feature fusion network for breast cancer diagnosis using incomplete multimodal ultrasound. Information Fusion 112 , 102592 (2024) 22. Yao, S., Zhao, J., Yu, D., Du, N., Shafran, I., Narasimhan, K.R., Cao, Y.: React: Synergizing reasoning and acting in language models. In: The eleventh international conference on learning representations (2022) 23. Ye, Z., Huang, J., Zhang, Y., Deng, J., Zhang, J., Liu, S., Wang, D., Mei, L., Lei, C.: Dflnet: Disentangled feature learning network for breast cancer ultrasound image segmentation. Digital Signal Processing 165 , 105331 (2025) 24. Yu, H., Li, Y., Niu, Z., Zhang, N., Gong, X., Li, H., Zou, Z., Qi, H., Cao, Z., Lan, Z., et al.: A chain-of-thought reasoning breast ultrasound dataset covering all histopathology categories. Scientific Data (2026)

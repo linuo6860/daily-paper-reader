@@ -1,0 +1,1559 @@
+Title: permApprox: a general framework for accurate permutation p-value approximation
+
+URL Source: https://arxiv.org/pdf/2602.22975v1
+
+Published Time: Fri, 27 Feb 2026 02:05:23 GMT
+
+Number of Pages: 52
+
+Markdown Content:
+# permApprox: a general framework for accurate permutation p -value approximation 
+
+Stefanie Peschel ∗1, Anne-Laure Boulesteix 2,3 , Erika von Mutius 4,5,6 , and Christian L. Müller 1,3,7,8 
+
+> 1
+
+Department of Statistics, Ludwig-Maximilians-Universität München, Munich, Germany 
+
+> 2
+
+Institute for Medical Biometry and Epidemiology, Ludwig-Maximilians-Universität München, Munich, Germany 
+
+> 3
+
+Munich Center for Machine Learning, Munich, Germany 
+
+> 4
+
+Institute of Asthma and Allergy Prevention, Helmholtz Munich, Neuherberg, Germany 
+
+> 5
+
+Department of Pediatrics, Dr. von Hauner Children’s Hospital, LMU University Hospital, Ludwig-Maximilians-Universität München, Munich, Germany 
+
+> 6
+
+Comprehensive Pneumology Center Munich, Member of the German Center for Lung Research (DZL), Munich, Germany 
+
+> 7
+
+Institute of Computational Biology, Helmholtz Munich, Neuherberg, Germany 
+
+> 8
+
+Center for Computational Mathematics, Flatiron Institute, New York, USA 
+
+Abstract 
+
+Permutation procedures are common practice in hypothesis testing when distributional assumptions about the test statistic are not met or unknown. With only few permutations, empirical p-values lie on a coarse grid and may even be zero when the observed test statistic exceeds all permuted values. Such zero p-values are statistically invalid and hinder multiple testing correction. Parametric tail modeling with the Generalized Pareto Distribution (GPD) has been proposed to address this issue, but existing implementations can again yield zero p-values when the estimated shape parameter is negative and the fitted distribution has a finite upper bound. We introduce a method for accurate and zero-free p-value approximation in permutation testing, embedded in the permApprox workflow and R package. Building on GPD tail modeling, the method enforces a support constraint during parameter estimation to ensure valid extrapolation beyond the observed statistic, thereby strictly avoiding zero p-values. The workflow further integrates robust parameter estimation, data-driven threshold selection, and principled handling of hybrid p-values that are discrete in the bulk and continuous in the extreme tail. Extensive simulations using two-sample t-tests and Wilcoxon rank-sum tests show that permApprox 
+
+produces accurate, robust, and zero-free p-value approximations across a wide range of sample and effect sizes. Applications to single-cell RNA-seq and microbiome data demonstrate its practical utility: 
+
+permApprox yields smooth and interpretable p-value distributions even with few permutations. By resolving the zero-p-value problem while preserving accuracy and computational efficiency, permApprox 
+
+enables reliable permutation-based inference in high-dimensional and computationally intensive settings. 
+
+Key words: GPD; permutation testing; R package; support constraint; tail modeling; zero p-value 
+
+# 1 Introduction 
+
+Permutation tests are a flexible and widely used alternative to parametric hypothesis tests when the null distribution of a test statistic is unknown or difficult to derive [Fisher, 1935; Pitman, 1937; Good, 2005]. 
+
+> ∗
+
+Correspondence: stefanie.peschel@mail.de 
+
+1
+
+> arXiv:2602.22975v1 [stat.ME] 26 Feb 2026
+
+permApprox: permutation p -value approximation They rely on the exchangeability of labels under the null hypothesis: by repeatedly shuffling the data and recalculating the test statistic, an empirical null distribution is obtained from which a p-value can be computed. Despite their generality, permutation procedures become computationally demanding when accurate estimation of small p-values is required [Segal et al., 2018; He et al., 2019]. A practical challenge arises when the observed test statistic exceeds all values in the permutation distribution, yielding an empirical 
+
+p-value of zero. Although this result indicates strong evidence against the null hypothesis, an exact zero permutation p-value is invalid [Phipson and Smyth, 2010]. This is especially problematic since it remains zero after adjusting for multiplicity. To avoid zero p-values, it has been strongly recommended to include the observed test statistic in the permutation distribution [North et al., 2002; Phipson and Smyth, 2010], which guarantees a strictly positive 
+
+p-value. However, this convention introduces a different limitation: the smallest attainable p-value becomes 
+
+1/(B + 1) , e.g., ≈ 0.001 for B = 1000 permutations. Such coarse resolution can be insufficient in large-scale multiple testing, where even moderately small p-values may not remain significant after correction. Increasing the number of permutations can improve this resolution, but is often computationally prohibitive in practice, particularly in omics or imaging applications involving complex models or high-dimensional data [John et al., 2022]. To overcome the limitations of finite permutation resolution, Knijnenburg et al. [2009] introduced a parametric tail approximation based on the Generalized Pareto Distribution (GPD), which enables accurate extrapolation of small p-values from a limited number of permutations. Their method fits a GPD to the largest subset of permuted test statistics and uses the resulting model to extrapolate beyond the observed permutation range, thereby reducing the number of permutations needed while retaining accuracy in the small-p regime. Building on this idea, Winkler et al. [2016] conducted a systematic comparison of several strategies for accelerating permutation inference in the general linear model, including (i) early stopping with negative binomial modeling, (ii) Gamma distribution fitting to the full permutation distribution, and (iii) GPD fitting restricted to the tail. They recommended the GPD-based tail approximation as a general-purpose choice due to its flexibility and weak distributional assumptions. The authors also emphasized that including or excluding the observed test statistic in the permutation set can systematically shift the resulting p-values, leading either to conservativeness or to “invalid” p-values. A persistent limitation of existing GPD-based approaches lies in handling cases where the estimated shape parameter ξ is negative. In this situation, the fitted GPD has a finite upper endpoint, and if the observed test statistic lies beyond this bound, the extrapolated p-value again collapses to zero. While Knijnenburg et al. [2009] suggested raising all test statistics to a power (e.g., cubing) to avoid negative shape estimates, this ad hoc transformation changes the scale of the statistic and can distort inference. Winkler et al. [2016] acknowledged the issue but did not propose a remedy. To date, no general methodological solution has been established. Consequently, the issue of zeros in GPD-approximated permutation p-values remains largely unresolved. In this work, we propose a new method for accurate p-value approximation in permutation testing based on support-constrained GPD tail modeling, embedded within a comprehensive and robust analysis workflow implemented in the open-source R package permApprox . The proposed method builds on the classical GPD tail approximation but introduces a support constraint during parameter estimation to ensure that the fitted distribution extends beyond the observed statistic, thereby strictly avoiding zero p-values. Beyond resolving this core methodological problem, the permApprox workflow structures the key practical decisions involved in GPD-based permutation inference, including (i) choosing one of the established GPD parameter estimation techniques, (ii) selecting a GPD tail threshold and number of starting exceedances, and (iii) handling the resulting hybrid p-values in downstream inference procedures such as multiple testing correction. In the following, we present the permApprox workflow and explain how the proposed constrained GPD method and its supporting components together enable accurate, zero-free, and computationally efficient 
+
+p-value approximation. We compare the accuracy and robustness of the proposed approach in extensive simulation studies based on classical two-sample tests, including the Student’s t-test and the Wilcoxon rank-sum test, covering both parametric and nonparametric settings. We further showcase the practical 2permApprox: permutation p -value approximation relevance of permApprox in two real-world biological applications that are well suited for permutation-based inference due to their high dimensionality and complex, non-Gaussian data structures. Specifically, we analyze two types of tasks: differential abundance testing in microbiome data and differential distribution testing in single-cell RNA-seq data. These examples demonstrate that the proposed method behaves robustly across heterogeneous biological settings, consistently eliminating zero p-values and yielding smooth, stable tail probabilities even with a limited number of permutations. A summary of the notation used throughout the paper is provided in Appendix A.1. 
+
+# 2 Permutation p-value approximation 
+
+2.1 Permutation testing and empirical p-values 
+
+Permutation tests are a widely used non-parametric approach to hypothesis testing, particularly valuable when the sampling distribution of a test statistic is unknown or difficult to derive analytically. They rely on the assumption that, under the null hypothesis, the labels are exchangeable, so that permutations of the data generate realizations from the null distribution of the test statistic. Given a test statistic T (j)
+
+for test j ∈ { 1, . . . , m }, and its observed value T (j)
+
+> obs
+
+, a permutation test constructs a null distribution 
+
+T (j) = {T ∗(j) 
+
+> b
+
+}Bb=1 by recalculating the test statistic under B random permutations of the data. Throughout this work, we consider right-tailed tests, i.e. small p-values correspond to large test statistics. In settings where a left-tailed or two-sided test is required, the observed and permuted statistics can be transformed (e.g. sign flipping or absolute value) so that tail modeling is always performed on a right tail. To quantify the strength of evidence against the null hypothesis, the empirical p-value of test j is then defined as 
+
+p(j)emp =1 + ∑Bb=1 I
+
+(
+
+T ∗(j) 
+
+> b
+
+≥ T (j)obs 
+
+)
+
+1 + B , (1) where I(·) denotes the indicator function. The addition of 1 to both the numerator and denominator ensures that the empirical permutation p-value is strictly positive, even when the observed test statistic exceeds all values in the permutation distribution. This adjustment has been strongly recommended [North et al., 2002; Phipson and Smyth, 2010], because a permutation p-value can never be exactly zero in principle: the exact permutation p-value is defined over all possible permutations of the data and therefore necessarily includes the observed statistic itself [Phipson and Smyth, 2010]. A zero empirical p-value is thus purely an artefact of using a limited number of permutations and can cause difficulties in practice, especially in multiple testing settings where zero values remain unadjusted. While this correction guarantees strictly positive p-values, it does not change the fundamental limitation that empirical permutation p-values lie on a discrete grid. With B permutations, the attainable values are multiples of 1/(B + 1) . When accurate estimation of very small p-values is required and the number of attainable permutations is limited, the resulting coarse grid can severely restrict inference in the tail. This limitation motivates the use of parametric tail approximations that extrapolate beyond the empirical permutation range. In the following subsection, we describe the approach for permutation p-value approximation based on the Generalized Pareto Distribution (GPD) that underlies the permApprox framework. 
+
+2.2 GPD-based p-value approximation 
+
+To approximate small p-values in the tail of the permutation distribution, we adopt the GPD tail modeling framework originally proposed by Knijnenburg et al. [2009]. This approach is grounded in extreme value theory, which states that, for a sufficiently high threshold u(j), the conditional distribution of excesses over 
+
+u(j) (“peaks-over-threshold“) can be approximated by a Generalized Pareto Distribution [Pickands, 1975; Coles, 2001]. 3permApprox: permutation p -value approximation For each test j, let T (j)obs denote the observed test statistic and {T ∗(j) 
+
+> b
+
+}Bb=1 the corresponding permutation statistics. We select a threshold u(j) that defines the tail region of the permutation distribution. We refer to permutation values satisfying T ∗(j) 
+
+> b
+
+> u (j) as exceedances . Conditional on exceeding the threshold, we define the associated excesses as the amount by which the test statistic exceeds the threshold, 
+
+Y ∗(j) 
+
+> b
+
+= T ∗(j) 
+
+> b
+
+− u(j) ∣∣ T ∗(j) 
+
+> b
+
+> u (j), b = 1 , . . . , B. (2) The collection of permutation excesses is denoted by 
+
+Y(j) = {Y ∗(j) 
+
+> b
+
+}. (3) The observed excess is defined analogously as 
+
+Y (j)obs = T (j)obs − u(j) ∣∣ T (j)obs > u (j). (4) To extrapolate tail probabilities beyond the empirical permutation range, a GPD is fitted to the set of permutation excesses Y(j). The GPD is parameterized by a scale parameter σ > 0 and a shape parameter 
+
+ξ ∈ R, with cumulative distribution function 
+
+F (y; σ, ξ ) = 
+
+
+
+1 −
+
+(
+
+1 + ξy σ
+
+)−1/ξ 
+
+, if ξ̸ = 0 ,
+
+1 − exp (− yσ
+
+) , if ξ = 0 ,y > 0. (5) When ξ < 0, the distribution has a finite upper support boundary at s = −σ/ξ .Let k(j) = |Y (j)| denote the number of permutation excesses above the threshold u(j). The empirical probability of exceeding the threshold is estimated as p(j)exc = k(j) 
+
+> B
+
+. The permutation p-value is approximated by combining this exceedance probability with the GPD tail probability of the observed excess, 
+
+p(j)GPD = p(j)exc × ¯FGPD 
+
+(
+
+Y (j)obs ; ˆ σ(j), ˆξ(j))
+
+, (6) where ¯FGPD = 1 − FGPD denotes the upper tail probability of the fitted GPD. 
+
+Parametrization note. The GPD appears in multiple parametrizations across the literature. We adopt the standard two-parameter convention from extreme value theory with scale σ > 0 and shape ξ ∈ R, which implies bounded support when ξ < 0 [Coles, 2001]. Alternative parametrizations, such as (a, k ) = ( σ, −ξ), are also common, e.g., [Castillo et al., 2005]. The two formulations are directly related through this transformation. 
+
+2.3 Proposed constrained GPD fitting 
+
+The GPD-based tail approximation provides a principled way to refine small permutation p-values beyond the empirical permutation grid. A difficulty arises, however, when the estimated GPD shape parameter is negative. In this case, the fitted GPD has a finite upper support boundary, which can result in zero-valued tail probabilities at extreme observed test statistics. Figure 1 illustrates this issue and our proposed remedy. For clarity, we omit the test index j throughout this section and write all quantities for a fixed test. Let ( ˆσ(U ), ˆξ(U )) denote the parameter estimates obtained from an unconstrained GPD fit to the permutation excesses. When ˆξ(U ) < 0, the fitted GPD has a finite upper support boundary given by ˆs(U ) = − ˆσ(U ) 
+
+> ˆξ(U)
+
+. If the observed excess Yobs lies at or beyond this boundary, the tail approximation assigns zero probability mass to the evaluation point, yielding a zero GPD-based p-value. This behavior is visualized in the upper right panel of Figure 1. 4permApprox: permutation p -value approximation u Tobs Permuta �on distribu �on 
+
+Yobs Constraint 
+
+ε
+
+Proposed GPD tail approxima �on with constraint 
+
+## p > 0 cGPD 
+
+T* 
+
+Permuta �on test sta �s�cs Permuta �on excess Observed test sta �s�c / excess Fi �ed GPD without constraint 
+
+Fi �ed GPD with constraint 
+
+Standard GPD tail approxima �on (if 𝝃 < 0) 
+
+Yobs 
+
+f = 0 GPD p = 0 GPD 
+
+s(U) 
+
+s(U) s (C) (U) 
+
+Figure 1: GPD-based p-value approximation. Left panel: Distribution of the permuted test statistic 
+
+T ∗ with threshold u defining the permutation excesses (orange), and observed test statistic Tobs . Upper right: Standard (unconstrained) GPD tail approximation when the estimated shape parameter is negative ( ˆξ(U ) < 0), resulting in a finite upper support boundary ˆs(U ) = − ˆσ(U ) 
+
+> ˆξ(U)
+
+. If the observed excess Yobs lies beyond this boundary, the tail approximation assigns zero probability mass, yielding a zero GPD-based p-value. 
+
+Lower right: Proposed constrained GPD fit, enforcing that the upper support boundary ˆs(C) lies strictly above the evaluation point, with offset ε. This guarantees a strictly positive tail probability at Yobs .To prevent p-values from being exactly zero, we propose to enforce a support constraint during GPD parameter estimation. Specifically, we require that the upper support boundary of the fitted GPD lies strictly above the evaluation point, 
+
+ˆs(C) > Y obs + ε (7) where ε > 0 is a small, data-dependent safety margin. Enforcing this constraint yields constrained parameter estimates ( ˆσ(C), ˆξ(C)) with corresponding support boundary ˆs(C) = −ˆσ(C)/ ˆξ(C). The resulting constrained GPD fit ensures a strictly positive tail probability at the observed statistic, as illustrated in the lower right panel of Figure 1. The constrained estimates are substituted into the tail-approximation formula in (6) ,yielding the constrained GPD-based p-value pcGPD .
+
+2.4 Data-adaptive selection of the safety margin ε
+
+The safety margin ε determines how far the support constraint extends beyond the observed excess and is therefore central to numerically stable tail evaluation under the constrained GPD fit. If ε is too small, the evaluation point may lie extremely close to the fitted upper endpoint, which can cause numerical instability when computing ¯FGPD . If ε is too large, the constraint pushes the endpoint far into the upper tail and yields overly conservative extrapolation. In principle, ε could be chosen as a simple function of the observed test statistic, for example as a fixed proportion of Tobs . However, exploratory analyses revealed that such ad hoc rules are insufficient: numerical instability may occur not only for extreme test statistics, but already at moderate distances from the tail threshold. A comparison of different ε rules is provided in Appendix A.3. This motivated the development of a data-adaptive construction that (i) is invariant to the scale of the test statistic, (ii) saturates for extreme values, and (iii) provides additional stabilization in the region where tail extrapolation is most sensitive. 5permApprox: permutation p -value approximation We therefore propose the Standardized Lifted Log-Saturation (SLLS) rule. It is constructed on a standardized 
+
+Z-scale and then mapped back to the scale of the test statistic. For test j, let 
+
+Z(j)obs = |T (j)obs − μj |
+
+σj
+
+(8) denote the standardized observed statistic, where μj and σj are the mean and standard deviation of the corresponding permutation distribution. We then define a standardized cap Zcap > 0 to set a common reference range. In multiple testing settings, a natural choice is Zcap = max j Z(j)obs . For single tests, few tests, or robustness against extreme observed statistics, we recommend a permutation-based cap, e.g., a high quantile of the standardized permutation distribution. This yields the scale-free position 
+
+lj = Z(j)obs 
+
+Zcap 
+
+∈ [0 , 1] . (9) The SLLS rule defines a standardized safety margin ε∗ 
+
+> j
+
+as a smooth function of the relative position lj , with sample size-dependent curvature and plateau parameters: 
+
+ε∗ 
+
+> j
+
+= max 
+
+{
+
+ε∗
+
+> max
+
+(n) log (1 + κ(n) lj
+
+)
+
+log (1 + κ(n)) + ρlift ψ(lj ) , ε min 
+
+}
+
+, (10) where the construction combines a logarithmic saturation component with an additional localized lift. The logarithmic term induces a monotone increase in ε∗ 
+
+> j
+
+as lj increases, with smooth saturation at the plateau ε∗
+
+> max
+
+(n) as lj → 1. This reflects the empirical requirement that the safety margin must grow with an increasing observed statistic, while remaining bounded to avoid unnecessary conservativeness for very large values. The curvature of the transition is controlled by κ(n). Larger values lead to a steep initial increase of 
+
+ε∗ 
+
+> j
+
+for small lj , with saturation reached early, whereas smaller values produce a more gradual, approximately linear growth up to the cap. While this saturated logarithmic component stabilizes tail evaluation for extreme statistics, simulation studies showed that it can yield slightly underestimated p-values for test statistics in an intermediate range, where tail extrapolation is already active but saturation has not yet been reached (see also Figure A.1, panels (c) and (d)). To correct this behavior without altering the asymptotic plateau, an additional localized lift is added via the function ψ(lj ). The lift is defined using the compactly supported Wendland C2 kernel from the 
+
+d = 3 Wendland family [Wendland, 1995], 
+
+ψ(l) = (1 − l)4(1 + 4 l), l ∈ [0 , 1] , (11) which is smooth, nonnegative, and vanishes together with its first two derivatives at l = 1 . These properties ensure that the lift increases the safety margin primarily for small to moderate values of lj , while fading out smoothly near the cap and leaving the saturation behavior for extreme statistics unchanged. To adapt both curvature and plateau height to sample size, the parameters are scaled as 
+
+κ(n) = κfactor 
+
+nref 
+
+n , ε∗
+
+> max
+
+(n) = τ nref 
+
+n , (12) where n denotes the per-group sample size and nref is a fixed reference sample size. When group sizes differ, we set n = min (n1, n 2) to obtain a conservative scaling. The reference value nref is fixed to nref = 500 and defines a pivot at which the strength of the regularization transitions from more conservative behavior for smaller samples to weaker regularization for larger samples. The constants κfactor and τ control the curvature and plateau height of the saturation component, respectively, while ρlift determines the magnitude of the lift at lj = 0 . A small lower bound εmin > 0 prevents the margin from vanishing. We propose κfactor = 1000 and 
+
+τ = 0 .25 , which yielded stable behavior across a diverse range of settings. 6permApprox: permutation p -value approximation Finally, the test-specific safety margin on the original scale of the test statistic is obtained by rescaling with the permutation standard deviation, 
+
+εj = σj ε∗ 
+
+> j
+
+. (13) The empirical motivation and stepwise derivation of the SLLS rule, including the role of logarithmic growth, saturation, and the Wendland-based lift, are documented in detail in Appendix A.2. In rare cases, numerical underflow may persist for extreme test statistics. To avoid zero p-values in these cases, ε can be refined via the procedure described in Appendix A.4. 
+
+# 3 The permApprox workflow 
+
+3.1 Overview and scope of the workflow 
+
+The proposed workflow provides a practical framework for approximating small permutation p-values using constrained GPD tail modeling. It is implemented in the open-source permApprox R package. While the statistical core of the approach is the support-constrained GPD fit described in Section 2, accurate permutation-based inference requires a sequence of additional decisions that extend beyond the GPD fitting step itself: (i) which empirical permutation p-values are eligible for tail approximation, (ii) how the tail region of the permutation distribution is defined, (iii) which methods are appropriate for GPD parameter fitting, and (iv) how the support constraint is incorporated. The permApprox workflow integrates these decision points into a coherent and reproducible analysis pipeline. Figure 2 provides a schematic overview of the main steps of the workflow. The following subsections describe how these components are combined into a practical analysis pipeline and outline the methodological options available at each stage. While a recommended default configuration is summarized in Section 3.5, the workflow is implemented as a flexible toolbox that allows users to substitute alternative methods at each stage. 
+
+3.2 Screening for tail approximation 
+
+The first decision in the permApprox workflow concerns whether an empirical permutation p-value should be refined using parametric tail modeling. Empirical permutation p-values are exact under the null hypothesis, but their granularity is limited by the number of permutations B, which primarily affects inference in the extreme tail. Tail approximation is therefore applied only to sufficiently small empirical p-values. Restricting the model to the extreme tail saves computation time and avoids incorporating regions of the permutation distribution that are not well described by a GPD. Accordingly, the workflow applies a screening step (Step 1 in Figure 2) based on the empirical permutation 
+
+p-values. For each test j, an empirical p-value p(j)emp is computed as formalized in (1) . Only tests with 
+
+p(j)emp < p thr are selected for GPD-based tail approximation, where pthr is a user-specified threshold. We follow Winkler et al. [2016], who suggest using twice the chosen significance level: pthr = 2 α. For tests selected for tail approximation, the GPD fitted under the support constraint is used to compute a refined tail p-value 
+
+p(j)cGPD (Step 2 in Figure 2), which replaces the corresponding empirical permutation value. Tests that are not selected retain their empirical p-values. This leads naturally to a hybrid construction that combines empirical and GPD-based components. Specifically, for each test j, we define the hybrid p-value 
+
+p(j) := 
+
+
+
+p(j)emp , if p(j)emp ≥ pthr ,p(j)cGPD , if p(j)emp < p thr .
+
+(14) The resulting vector {p(j)}mj=1 is discrete in the bulk of the distribution, where empirical permutation p-values are sufficiently resolved, and continuous in the extreme tail, where parametric refinement is most beneficial. These hybrid p-values form the primary output of the permApprox workflow. 7permApprox: permutation p -value approximation Threshold detec �on    
+
+> 1.0 0.5 0.0
+> Threshold candidates
+> AD  p-values Selected threshold u(j)
+> AD αlevel
+
+GPD parameter fi� ng 
+
+> u(j)
+> Permuta �on excess Observed excess
+
+Selec �on of ε
+
+Data-adap �ve 
+
+## ε re fi nement  
+
+> p-value s �ll zero?
+> Y(j)
+> obs
+
+Test sta �s�cs   
+
+> m1... B... 1
+
+# Tobs 
+
+Tail approxima �on 
+
+Screening  
+
+> Empirical p-values
+> p< 2 α
+
+Hybrid p-values 
+
+> pp
+
+## 2a 12c 2b  
+
+> ε
+> s(C) (j)
+
+pcGPD 
+
+> (j)
+
+σ ,(C) ξ (C) (j) (j) 
+
+## 2k = 25% LME SLLS robFTR 0
+
+Figure 2: Graphical representation of the permApprox workflow. Input: A vector with observed test statistics 
+
+Tobs and a matrix with permuted test statistics T = T ∗(j) 
+
+> b
+
+for B permutations and m tests. Step 1: Empirical permutation p-values are computed and screened for small values relative to the chosen significance level α
+
+(i.e., pemp < 2α), with selected tests flagged for GPD-based tail approximation. Step 2: For a selected test 
+
+j, the tail approximation stage consists of three main steps: Step 2a: A threshold u(j) is chosen via the Anderson Darling (AD) based test to define the tail region of the permutation distribution. Step 2b: The safety margin ε(j) is selected (with optional refinement in rare cases of machine-underflow). Step 2c: A GPD is fitted to the permutation excesses under a support constraint ensuring valid evaluation beyond the observed excess. The fitted constrained GPD yields refined tail p-values p(j)cGPD , which replace the corresponding empirical values. Output: Vector of hybrid p-values that are discrete in the bulk of the distribution and continuous in the extreme tail. The red flags mark our suggested methods as explained in Section 3.5 
+
+3.3 GPD threshold selection strategies 
+
+Fitting a GPD to the tail of a permutation distribution requires specifying a threshold u above which the exceedances are assumed to follow a GPD. Threshold selection (Step 2a in Figure 2) is a central problem in extreme value theory and involves a well-known bias-variance trade-off: setting u too low may include parts of the bulk that is not well described by a GPD, while setting it too high leave too few exceedances for reliable parameter estimation [Scarrott and MacDonald, 2012; Langousis et al., 2016]. In the permApprox framework, threshold selection naturally separates into two components. First, an initial tail region is defined by specifying a starting threshold u0 or, equivalently, an initial number of exceedances 
+
+k0. This step determines the range of thresholds over which the GPD assumption is evaluated and ensures that a sufficient number of exceedances is available for stable fitting. The impact of different choices for the starting number of exceedances k0, including fixed values and relative proportions of the permutation sample, is systematically investigated in Appendix B.1. In a second step, the final threshold is selected within this candidate range using a data-driven criterion that assesses the adequacy of the GPD approximation. We consider and compare five threshold selection strategies in this work. All rely on fitting the GPD at a range of candidate thresholds and evaluating goodness-of-fit (GoF) statistics or shape parameter stability. 8permApprox: permutation p -value approximation The GoF tests are based on the Anderson-Darling (AD) test statistic tailored for GPDs [Choulakian and Stephens, 2001]. A detailed comparison of the threshold detection strategies based on simulation studies is provided in Appendix B.2. For valid tail extrapolation, the threshold search is restricted to values below the observed test statistic, with the additional requirement that a minimal number of exceedances remains above the threshold. If no candidate threshold satisfies the selection criterion, the empirical permutation p-value is retained as a fallback. The methods are as follows: 
+
+• Failure-to-reject (FTR): A commonly used heuristic in extreme value theory in which candidate thresholds are evaluated in increasing order along the permutation tail. FTR selects the lowest threshold at which the null hypothesis of the AD test is not rejected, under the assumption that a valid GPD fit begins once the GoF test no longer indicates lack of fit [Choulakian and Stephens, 2001]. 
+
+• Robust FTR (robFTR): A stricter variant of FTR in which a threshold is accepted only if the AD test is not rejected at three successive candidate thresholds. This guards against premature acceptance caused by isolated fluctuations in the AD p-values and yields more stable threshold selection. 
+
+• ForwardStop: Inspired by the method of G’Sell et al. [2016] and adapted for threshold selection by Bader et al. [2018], this approach interprets the sequence of ASD p-values as an ordered hypothesis testing problem. We compute the ForwardStop statistic ¯Yk = 1
+
+> k
+
+∑ki=1 − log (1 − pi), and select the smallest index k for which ¯Yk > α . This provides a formal stopping rule while controlling the false discovery rate. 
+
+• GoF p-value change point detection: To detect structural changes in the GoF behavior, we apply change point analysis [Killick et al., 2012] to the sequence of AD p-values. We prepend a set of synthetic small p-values (to simulate poor fits) and use the changepoint R package [Killick et al., 2024] to detect the point at which GoF improves. The first accepted threshold beyond this change point is selected. 
+
+• Shape-variation: An established heuristic in extreme value analysis is to select thresholds where the estimated shape parameter ˆξ stabilizes across increasing thresholds [Scarrott and MacDonald, 2012; Northrop and Coleman, 2014]. This motivates our shape-variation approach, which selects the threshold that minimizes the rolling variance of ˆξ across accepted thresholds. By formalizing the stability principle, the method provides a simple, data-driven alternative to visual inspection. 
+
+3.4 GPD parameter estimation methods 
+
+Once the threshold has been selected and the tail region defined, a test-specific safety margin ε is determined via the SLLS rule to ensure valid tail evaluation under the support constraint, as described in Section 2.4 (Step 2b in Figure 2). In cases of machine-underflow, the ε refinement described in Appendix A.4 can be used to avoid zero p-values. With the exceedances and ε fixed, the final step of the tail approximation stage is to fit a GPD to the resulting excesses (Step 2c in Figure 2). We evaluate several established techniques for GPD parameter estimation, each of which takes the excesses Y
+
+as input and returns parameter estimates ( ˆσ, ˆξ). Our goal is to obtain stable and accurate estimates suitable for tail extrapolation, particularly in the presence of the support constraint introduced in Section 2.3. All methods except the method of moments (MOM) have been adapted to incorporate this constraint. Depending on the estimation approach, the constraint is enforced by restricting the parameter space, modifying the optimization criterion, or adjusting internal candidate values. Below, we summarize the GPD parameter estimation methods considered in this work, together with the abbreviations used throughout the paper. The performance of these methods is evaluated in a dedicated simulation study in Appendix B.3. 9permApprox: permutation p -value approximation 
+
+• Method of Moments [MOM]: Introduced by Hosking and Wallis [1987], this approach estimates GPD parameters by equating theoretical and sample moments. It is simple and computationally efficient but does not involve optimization and cannot incorporate support constraints. We include it only for comparison in the unconstrained setting. 
+
+• Maximum Likelihood Estimation [MLE2D]: The classical two-parameter MLE [Pickands, 1975] maximizes the log-likelihood over both shape and scale. It is widely used in extreme value theory and serves as a standard reference estimator. 
+
+• One-Parameter MLE [MLE1D]: Castillo and Serra [2015] propose a reparametrization based on the upper support boundary s = −σ/ξ . The method reduces estimation to a one-dimensional optimization problem, offering computational advantages and greater numerical stability in some scenarios. 
+
+• Likelihood Moment Estimation [LME]: This hybrid method by Zhang [2007] combines likelihood and moment principles and was specifically developed to improve robustness in small samples and to stabilize estimation near the boundary. 
+
+• Zhang and Stephens Estimator [ZSE]: An extension of LME that incorporates grid-based prior-like stabilization [Zhang and Stephens, 2009], with the goal of improving accuracy and reliability, especially in moderate sample sizes. 
+
+• Two-Step Nonlinear Least Squares Estimator [NLS2]: Proposed by Song and Song [2012], this estimator fits a second-order tail approximation using nonlinear least squares. It was designed to improve performance in small-sample settings and to better handle bounded support. 
+
+• Weighted Nonlinear Log-Least Squares Estimator [WNLLSM]: A two-step estimator introduced by Zhao et al. [2019] that emphasizes accuracy in the tail region by applying weights in a log-transformed least squares framework. 
+
+3.5 Default permApprox configuration and implementation 
+
+The final configuration of the permApprox workflow represents the outcome of several dedicated simulation studies (see Appendix B), each addressing one specific component of the procedure. These studies were conducted to identify the most accurate, robust, and computationally efficient settings for practical use. Our proposed configuration is as follows: 
+
+• Initial number of exceedances: The threshold search starts with the top 25% of permutation values ( k0 = 0 .25 B), but includes at least 250 exceedances to ensure sufficient data for stable fitting. This configuration yielded the lowest bias and variance across simulated scenarios (Supplementary Study B.1). 
+
+• GPD threshold detection: The robFTR method in combination with the Anderson-Darling goodness-of-fit test is employed for threshold selection, as it achieved the best trade-off between robustness to outliers and computational efficiency. A detailed comparison of threshold detection strategies is provided in Supplementary Study B.2. The empirical p-value is used as fall-back, when the test is rejected for all candidate thresholds. 
+
+• Estimator: We use the likelihood moment estimator (LME) as the default method for GPD parameter fitting. While any of the estimators evaluated in this work could, in principle, be applied, LME provides a favorable balance between estimation accuracy, robustness under support constraints, and computational efficiency in our simulation studies (Section B.3). 
+
+• Constraint: The GPD is fitted under the boundary constraint described in Section 2.3, using the standardized lifted log-saturation (SLLS) rule for determining ε. The data-adaptive epsilon refinement procedure (Section A.4) is applied only in the real-world applications, but not in the simulation studies. 10 permApprox: permutation p -value approximation The proposed workflow is implemented in the open-source R package permApprox , which can be accessed at https://github.com/stefpeschel/permApprox . The above configuration defines the package’s default settings, and was applied in the simulation study and real-world application in Sections 4 and 5. Additionally, the package provides all of the alternative p-value approximation, GPD estimation, and threshold detection methods evaluated in this work. This allows users to reproduce, compare, and extend our analyses. 
+
+3.6 Remarks on single and multiple testing 
+
+The permApprox framework can be applied both in single-test settings and in large-scale inference problems involving many parallel hypotheses. In the single-test setting, the output is a single hybrid p-value, whereas in the multiple testing setting it is a vector p(j)mj=1 of hybrid p-values as defined in (14). In multiple testing scenarios, the discreteness of empirical permutation p-values has motivated the development of several false discovery rate (FDR) procedures tailored specifically to discrete p-values [Gilbert, 2005; Jiang et al., 2017]. While classical procedures such as the Benjamini-Hochberg (BH) method [Benjamini and Hochberg, 1995] remain valid in this setting, they can exhibit conservative behavior because discrete null 
+
+p-values tend to be stochastically larger than uniformly distributed ones [Benjamini and Yekutieli, 2001]. The hybrid p-values produced by permApprox retain this discrete structure for moderate and large values, while they provide a smooth, continuous approximation in the extreme tail, where fine resolution is most critical. As a result, the hybrid p-values can often be treated analogously to continuous p-values in downstream inference, i.e., standard multiple testing procedures for continuous tests may be applied directly. An important distinction between single and multiple testing settings arises in the selection of the cap 
+
+Zcap used in the data-adaptive ε rule (Section 2.4). In multiple testing scenarios, the cap is defined by the maximum observed test statistic across all hypotheses, yielding a conservative and robust constraint. For single tests or small numbers of hypotheses, a permutation-based cap is used instead, providing greater stability in the presence of extreme observations. 
+
+# 4 Simulation studies 
+
+In this section, we evaluate the performance of permApprox in comparison to several existing approaches for approximating permutation p-values. We consider both a two-sample t-test on Gaussian data and a Wilcoxon rank-sum test on exponential data, thus covering parametric and nonparametric test settings. The goal is to assess the accuracy of each method’s p-value approximation in finite-sample scenarios, particularly in situations where the true p-values are extremely small but the number of permutations is limited. 
+
+4.1 Compared methods 
+
+The following p-value approximation methods are compared. For all approaches, the fit is applied only to tests with empirical p-values below 0.1, ensuring that the tail approximation is used only when necessary. Empirical p-values are also used as fall-back for the GPD-based methods, if the goodness-of-fit test is rejected for all candidate thresholds. 
+
+• Gamma: A Gamma distribution is fitted to the entire permutation distribution ( Tobs not included), following the approach of Winkler et al. [2016]. The parameters of the Gamma distribution are estimated via MLE. The p-value is obtained as the upper-tail probability of the fitted Gamma distribution evaluated at the observed test statistic. 
+
+• GPD (Knijnenburg): The GPD tail approximation method introduced by Knijnenburg et al. [2009]. The original paper does not specify whether one- or two-parameter maximum likelihood estimation is used. We use MLE1D as it is more stable in practice. Following Knijnenburg et al. [2009], FTR with AD test is used for threshold detection, starting with the top 250 exceedances. 11 permApprox: permutation p -value approximation 
+
+• GPD (Knijnenburg, pow3): Same as above, but all test statistics are raised to the third power prior to fitting, as proposed by Knijnenburg et al. [2009] to address issues arising from negative shape parameters and bounded GPD support. 
+
+• GPD (Winkler, +obs): Winkler et al. [2016] compare GPD tail fits both with and without including the observed test statistic in the permutation distribution. We only evaluate the “+obs” variant here as candidate to strictly avoid zero p-values. The authors use MOM for parameter estimation, which performs very poorly in some scenarios in our simulations (see Appendix B.3). We use the standard one-parameter maximum likelihood estimate (MLE1D) instead. For threshold detection, they also use FTR with AD test, but start with the upper quartile of the permutation distribution. 
+
+• GPD (permApprox): The proposed constrained GPD tail-approximation workflow with default configuration as described in Section 3.5. 
+
+4.2 Two-sample t-test with Gaussian data 
+
+To evaluate the accuracy and stability of permutation-based p-value approximations under controlled condi-tions, we first consider a two-sample t-test applied to Gaussian data. This scenario serves as a benchmark, since the exact theoretical p-values are known and the t-test is optimally suited to the underlying data-generating model. It therefore allows a direct assessment of how well each approximation method reproduces the true p-values when only a limited number of permutations is available. We generated two groups of normally distributed data with equal sample sizes n ∈ { 25 , 50 , 100 , 250 , 500 , 1000 }
+
+and standard deviation σ = 1 . For each n, we considered effect sizes d ∈ { 0.5, 1, 1.5, 2}, corresponding to the standardized mean difference between the two groups. For each configuration, B ∈ { 500 , 1000 , 5000 , 10000 }
+
+random label permutations were performed to generate the null distribution of the test statistic. A total of 1000 independent repetitions were conducted per setting to assess variability. All approximation methods described in Section 4.1 were applied to the simulated data. Figure 3 displays the ratios of approximated permutation p-values to the corresponding theoretical t-test 
+
+p-values for d = 1 and B = 1000 across sample sizes. Ratios close to 1 indicate good agreement with the reference, whereas ratios above 1 correspond to conservative behavior. For small sample sizes, all methods yield ratios centered close to 1. As n increases, however, pronounced differences between the approximation methods emerge. The Gamma approximation exhibits steadily increasing ratios, reflecting its conservative nature due to modeling the full permutation distribution rather than only the tail. Including the observed statistic in the permutation distribution (“GPD (Winkler, +obs)”) further amplifies this effect, leading to even larger ratios at moderate and large sample sizes. The classical GPD approach of Knijnenburg et al. [2009] produces smaller, less conservative p-values, but quickly generates zeros even for moderate sample sizes. Already at 
+
+n = 50 , nearly half of the approximated p-values are zero, and for large n, almost all vanish to zero due to negative shape estimates (the estimated shape values are provided in Supplementary Figure C.1). Raising all test statistics to the third power, as suggested by the authors, largely prevents zero p-values but leads, again, to overly conservative approximations. In contrast, the proposed permApprox workflow strictly avoids zero 
+
+p-values by construction. While its ratios increase moderately with sample size, they remain substantially closer to 1 than those of the competing methods across all settings, indicating comparatively stable behavior relative to the t-test reference. The corresponding p-values for this setting are shown in Supplementary Figure C.2. Additional Supplementary Figures C.3 and C.4 provide p-values and ratios stratified by effect size d and number of permutations B.The results are consistent across different effect sizes, but slightly change with the number of permutations: With more permutations, the number of zero p-values decreases for the classical Knijnenburg approach, but increases when test statistics are raised to the third power. Including the observed test statistic in the null distribution becomes less conservative with increasing B. The Gamma approximation is almost unaffected by B.12 permApprox: permutation p -value approximation 0s=127 0s=1 0s=505 0s=1 0s=758 0s=5 0s=871 0s=7 0s=979 0s=7 0s=991 0s=6 0s=995 0s=7 0s=994 0s=1 01e-120 1e-100 1e-80 1e-60 1e-40 1e-20 1e0 1e20 1e40 1e60 1e80 1e100 1e120 25 50 75 100 250 500 750 1000 npmethod  pt-test Gamma GPD (Knijnenburg) GPD (Knijnenburg, pow3) GPD (Winkler, +obs) 
+
+> GPD (permApprox)
+
+Figure 3: Two-sample t-test with Gaussian data: Ratios of approximated to ground-truth p-values: 
+
+pmethod /p t-test , stratified by sample size n. The horizontal dashed line at 1 indicates perfect agreement with the t-test reference. Effect size and number of permutations are fixed to d = 1 and B = 1000 , respectively. Points indicate individual replicates (1000 per setting). Counts of exact zeros are shown below each group as “0s =x” in the corresponding color. For plotting only, zero p-values are mapped to a small constant floor so they appear at “0” on the y-axis. The y-axis is on a log 10 scale, while tick labels show the original ratios. 
+
+4.3 Wilcoxon rank-sum test with exponential data 
+
+To assess the robustness of the proposed p-value approximation method beyond the Gaussian setting, we repeated the simulation study of Section 4.2 with the nonparametric Wilcoxon rank-sum test (using the Mann-Whitney U statistic). This setting departs from the assumptions of the t-test and involves asymmetric, heavy-tailed data. In this case, inference relies on the permutation null distribution of the Wilcoxon rank-sum statistic, which does not admit a simple parametric form. We generated two-sample data from exponential distributions with means 1 and 1+ d, where d ∈ { 0, 0.5, 1, 1.5, 2} controls the effect size. All five approximation methods considered in the Student’s t-test setting are applied again here, namely the Gamma approximation, the classical GPD method of Knijnenburg et al. [2009], its power-transformed variant (“pow3”), the “ +obs” variant following Winkler et al. [2016], and our proposed permApprox framework. Figure 4 shows the results of two different simulation studies. Panel (a) shows an illustrative simulation scenario with 1000 tests (200 per effect size), generated for a single fixed data configuration using n = 250 
+
+samples per group and B = 1000 permutations. Rather than aggregating results over repeated Monte Carlo replicates, this panel is intended to provide a direct, point-wise comparison of the five approximation methods against the Wilcoxon reference p-values across a range of effect sizes. As in the Gaussian setting, the classical GPD approach produces numerous zero p-values for stronger effects due to GPD support violations. The power-transformed variant largely avoids zero estimates but exhibits pronounced conservativeness. Both the “Winkler, +obs” approach and the Gamma approximation avoid zeros by construction, but yield even more conservative p-values. In contrast, permApprox produces smooth approximations that closely track the Wilcoxon p-values across all effect sizes, without introducing zeros. Panel (b) presents a comprehensive simulation study with 1000 independent replicates per setting. In each replicate, a single test was conducted, with effect size d = 1 , B = 1000 permutations, and varying per-group sample sizes from n = 25 to n = 1000 . Each box summarizes the distribution of ratios of the approximated permutation p-values to the corresponding Wilcoxon p-values across replicates. Ratios close to 1 indicate good agreement with the Wilcoxon reference, while ratios above 1 reflect conservative behavior. Consistent with the t-test results, the classical GPD method produces an increasing number of zero p-value estimates 13 permApprox: permutation p -value approximation 
+
+(a) Single-scenario simulation with 1000 tests (200 per effect size), n = 250 , and B = 1000 .Gamma GPD (Knijnenburg) GPD (Knijnenburg,pow3) GPD (Winkler,+obs) GPD (permApprox)             
+
+> 15K 20K 25K 30K 35K 15K 20K 25K 30K 35K 15K 20K 25K 30K 35K 15K 20K 25K 30K 35K 15K 20K 25K 30K 35K 01e-40 1e-30 1e-20 1e-10 1e-3 Uobs p
+> p-value type: GPD approx Wilcoxon Effect size: 00.5 11.5 2
+
+(b) Simulation with 1000 replicates (1 test per replicate) for d = 1 and B = 1000 .0s=23 0s=1 0s=87 0s=223 0s=3 0s=344 0s=846 0s=961 0s=989 0s=986 01e-50 1e-40 1e-30 1e-20 1e-10 1e0 1e10 1e20 1e30 1e40 1e50 1e60 25 50 75 100 250 500 750 1000 npmethod  pWilcoxon Gamma GPD (Knijnenburg) GPD (Knijnenburg, pow3) GPD (Winkler, +obs) 
+
+> GPD (permApprox)
+
+Figure 4: Wilcoxon rank-sum test with exponential data: Comparison of p-value approximations to the Wilcoxon reference. (a) Illustrative simulation scenario with 1000 tests across five effect sizes (d ∈ { 0, 0.5, 1, 1.5, 2}) at n = 250 samples per group. The x-axis shows the observed Mann-Whitney U
+
+statistic, and points represent individual tests. The y-axis displays p-values on a log 10 scale, while tick labels show the original p-values. (b) Simulation study with 1000 independent replicates per sample size ( d = 1 ,
+
+B = 1000 ). The x-axis indicates the per-group sample size, and the y-axis shows ratios of approximated to Wilcoxon p-values ( pmethod /p Wilcoxon ) on a log 10 scale (tick labels show the original ratios). The horizontal dashed line at 1 indicates agreement with the Wilcoxon reference. Points represent individual replicates (1000 per setting). In panel (b), counts of exact zero p-values produced by each method are shown below each group as “ 0s =x” in the corresponding color. For visualization only, zero p-values are mapped to a small positive constant so they appear at the lower plotting boundary. as n increases, leading to ratios that collapse to zero for a growing fraction of replicates. The remaining approximation methods yield ratios that systematically exceed 1, indicating conservative behavior. In contrast, 
+
+permApprox yields ratios that remain comparatively close to 1 across sample sizes, while strictly avoiding zero 
+
+p-values, suggesting stable behavior across varying test statistic scales and data distributions. Complementary results, including the corresponding p-values for this setting, as well as p-values and ratios stratified by d and 
+
+B, are provided in the Supplementary Figures C.5 to C.7. 14 permApprox: permutation p -value approximation 
+
+# 5 Application 
+
+5.1 Differential abundance analysis in microbiome data 
+
+Microbiome sequencing data are well suited to demonstrate the practical relevance of permApprox . These data are compositional and typically sparse, with a high proportion of zeros, making appropriate preprocessing and normalization steps necessary. As a consequence, the test statistics involved in common tasks such as differential abundance analysis rarely follow standard parametric distributions. Permutation tests are therefore widely used to obtain valid null distributions Brill et al. [2021]; Sommer et al. [2022]; Yang and Chen [2022]. However, in practice these analyses typically rely on empirical permutation p-values, which are directly determined by the number of permutations performed. permApprox can be seamlessly integrated into such workflows to refine these empirical estimates and provide more informative tail probabilities. To illustrate this, we analyzed fecal microbiome profiles aggregated at the bacterial genus level, obtained from 16S rRNA amplicon sequencing in the PASTURE birth cohort [von Mutius et al., 2006]. The PASTURE study is a multi-centre prospective cohort investigating how farming-related exposures and early-life diet shape infant immune development. We focused on samples collected at age two months and compared infants who were exclusively breastfed for at least two months (“EBF” group; n = 485 ) with those who were never exclusively breastfed (“non-EBF” group; n = 212 ). Infant feeding mode is one of the strongest determinants of early-life gut microbiome composition, and exclusive breastfeeding has consistently been associated with characteristic microbial profiles and lower gut microbial diversity during early infancy [Ho et al., 2018; Ma et al., 2020; Odiase et al., 2023]. Consistent with these findings, our own diversity analysis using three common diversity indices (Supplementary Figure D.1) showed lower α-diversity in the EBF group. We performed differential abundance testing with the dacomp R package [Brill et al., 2021] to identify genera that differ between EBF and non-EBF infants at age two months. dacomp , which implements the framework of Brill et al. [2022], performs differential abundance testing by first selecting a set of reference taxa assumed not to change between groups. Each test taxon is then normalized by the aggregated reference set, and a Wilcoxon-type statistic is computed. To assess significance, dacomp generates a permutation distribution of this statistic by repeatedly shuffling the group labels while keeping the microbiome profiles fixed, and computes empirical permutation p-values as defined in equation (1) . Further methodological details are given in Appendix D.1. To illustrate a limited-permutation setting, we ran dacomp with B = 1000 permutations and refined the resulting empirical permutation p-values using permApprox (default configuration; Section 3.5). To assess how well the refined tail probabilities approximate the behavior expected under substantially larger permutation budgets, we additionally ran dacomp with B = 10 6 and B = 10 7 permutations, which serve as high-accuracy empirical references. Throughout, we used dacomp ’s option to test all taxa, whereby each reference taxon is temporarily excluded from the reference set to obtain a test statistic and corresponding permutation p-value. Figure 5 shows the resulting raw (unadjusted) permutation p-values. We deliberately omit multiple testing correction here to isolate the effect of the permutation budget on the p-values themselves. With B = 1000 
+
+permutations (panel (a)), the dacomp p-values are constrained to the grid of multiples of 1/(B + 1) and therefore bounded below by ≈ 1/1000 , producing a pronounced floor that hides differences among the most significant taxa. Increasing the permutation budget to B = 10 6 and B = 10 7 (panels (b) and (c)) progressively resolves the tail, yielding smoother p-value gradients and a more informative ranking, but at a substantial computational cost. On a Linux-based compute node equipped with an Intel Xeon E7-4850 v4 CPU (2.10 GHz) and 170 GB RAM, dacomp run times were 27.72 min for B = 10 6 and 283.07 min for B = 10 7
+
+permutations, respectively, compared to a few seconds for B = 1000 with dacomp + permApprox . All computations were performed on a single CPU core. A comprehensive runtime comparison is provided in Table D.1 and Figure D.2. To assess whether permApprox can recover these high-resolution tail patterns from only B = 1000 permutations, we treat the B = 10 6 and B = 10 7 results as increasingly precise empirical references and compare the trends 
+
+across taxa rather than expecting point-wise equality. For readability of the plots, we restrict attention to 15 permApprox: permutation p -value approximation taxa that attain a raw p-value below 10 −5 in at least one of the three right-most panels ((b)–(d)). Only these taxa are labeled in the plots. The permApprox results (panel (d)) closely track the tail behavior seen at 
+
+B = 10 6–10 7 for the majority of these genera. To illustrate this, taxa whose permApprox p-values follow the trend from B = 10 6 to B = 10 7 are marked with a black outline in the permApprox panel, whereas taxa that deviate from this trend are highlighted with a red outline. -dacomp 10 permutations Runtime: 27.72 min 6dacomp + permApprox 1000 permutations Runtime: 0.06 min dacomp 10 permutations Runtime: 283.07 min 7dacomp 1000 permutations Runtime: 0.03 min (a) (b) (c) (d) Intestinibacter Enterococcus Bifidobacterium Terrisporobacter [Ruminococcus]_gnavugroup [Ruminococcus]_torquegroup Bacteroides Lactococcus [Clostridium]_innocuum_group 
+
+> Intestinibacter Enterococcus Bifidobacterium Terrisporobacter [Ruminococcus]_gnavugroup [Ruminococcus]_torquegroup Bacteroides Lactococcus [Clostridium]_innocuum_group
+> Intestinibacter Enterococcus Bifidobacterium Terrisporobacter [Ruminococcus]_gnavugroup [Ruminococcus]_torquegroup Bacteroides Lactococcus [Clostridium]_innocuum_group
+> Intestinibacter Enterococcus Bifidobacterium Terrisporobacter [Ruminococcus]_gnavugroup [Ruminococcus]_torquegroup Bacteroides Lactococcus [Clostridium]_innocuum_group
+
+Figure 5: Differential abundance analysis in the PASTURE cohort: effect of permutation budget and comparison to permApprox . Volcano plots show log 2 fold-changes (EBF vs. non-EBF) versus raw (unadjusted) permutation p-values for genus-level differential abundance testing with dacomp . Orange points indicate genera enriched in the EBF group and blue points indicate genera enriched in the non-EBF group. The horizontal dashed line marks the significance level α = 0 .01 , and points shown in gray are not significant at this level. (a) dacomp with B = 10 3 permutations: empirical permutation p-values are bounded below by approximately 1/1000 , resulting in a pronounced floor in the tail. (b) dacomp with B = 10 6 permutations and 
+
+(c) dacomp with B = 10 7 permutations: increasing the permutation budget progressively refines tail resolution. 
+
+(d) dacomp with B = 10 3 permutations followed by permApprox (default configuration), yielding refined tail 
+
+p-values that largely reproduce the trends observed at B = 10 6–10 7 at a fraction of the computational cost. For readability, only taxa that attain a raw p-value below 10 −5 in at least one of the three right-most panels ((b)–(d)) are labeled. In panel (d), taxa whose permApprox p-values follow the trend observed from B = 10 6
+
+to B = 10 7 are indicated by a black outline, whereas taxa that deviate from this trend are highlighted by a red outline. Panel headers report runtimes for the respective analyses. Only two genera stand out as noticeable deviations: Bacteroides and the [Clostridium] innocuum group . For the latter, the permutation histogram for B = 1000 permutations (Figure D.6) shows a comparatively coarse permutation distribution, which makes smooth parametric tail extrapolation inherently difficult and may differ from the behavior observed at much larger B values. For Bacteroides , we did not identify a similarly clear distributional explanation. However, the discrepancy is small in magnitude and may plausibly reflect random variability in the extreme tail rather than a systematic limitation of the approximation. While Figure 5 focuses on tail behavior and relative trends in the raw permutation p-values, we additionally summarize the resulting significance decisions across all tested genera in the Appendix. Supplementary Tables D.2 and D.3 report the unadjusted p-values and the corresponding agreement of significance decisions between methods, whereas Tables D.4 and D.5 present the same summaries based on Benjamini-Hochberg adjusted p-values. Using dacomp with B = 10 7 permutations as a high-precision empirical reference, the adjusted results show that the constrained permApprox approach applied to only B = 1000 permutations yields highly concordant significance decisions, identifying 10 of the 11 genera declared significant by dacomp 
+
+at α = 0 .01 across a total of 118 tests. 16 permApprox: permutation p -value approximation We also applied the unconstrained GPD approximation to examine the effect of the support constraint in this real-world application. For Terrisporobacter , the unconstrained fit yielded a zero p-value, caused by a negative GPD shape parameter and the observed test statistic lying above the resulting upper support boundary. The constrained version of permApprox avoids this issue by ensuring that the fitted support extends beyond the observation. Apart from preventing this single zero p-value, the constrained and unconstrained fits produced almost identical results for all other taxa, as reflected in Tables D.2 and D.4 in the Appendix. Additional results, including prevalence-variance diagnostics for dacomp reference selection, stacked bar plots of genus-and phylum-level composition, and distributions of dacomp -rarefied counts for the highly significant genera, are shown in Supplementary Figures D.3 to D.5. Taken together, these results highlight a broader practical implication. Although the primary motivation for 
+
+permApprox is to prevent zero p-values in GPD-based tail approximation, only a single such case arises in this application, and the emphasis here is therefore on the quality of the resulting tail approximation under limited permutation budgets. Even when increasing computational resources have reduced the practical burden of large-scale permutation testing, the results above indicate that there is often little benefit in expending such resources when comparable inference can be obtained at negligible additional cost using permApprox .Moreover, the present example involves only 118 hypothesis tests and is therefore modest in size compared to many contemporary biological applications, which routinely involve thousands of features, further amplifying the computational advantages of approximation-based approaches. 
+
+5.2 Differential distribution analysis in single-cell RNA-seq data 
+
+Differential distribution (DD) analysis provides a flexible framework for detecting differences between two groups that go beyond shifts in the mean. Schefzik et al. [2021] proposed a DD approach based on the 2-Wasserstein distance d2
+
+> W
+
+, which quantifies discrepancies between entire distributions in terms of location, size, shape, and zero proportion. Their method is implemented in the waddR R package. Because the null distribution of the Wasserstein statistic is not available in closed form, waddR relies on a permutation procedure to assess significance. Specifically, the method uses a two-stage scheme in which group labels are permuted for the non-zero expression values, followed by a GPD-based tail approximation to refine very small permutation p-values. A detailed description of the Wasserstein two-stage test and its permutation framework is provided in Appendix D.3. Although the GPD refinement in waddR successfully increases the resolution of small permutation p-values beyond the coarse empirical grid, it simultaneously introduces a substantial number of zero p-values. To demonstrate that permApprox can provide more robust and strictly positive tail probabilities, we revisited the real-data case study presented in the original waddR paper, which compares natural-killer cells from blood and decidua in the scRNA-seq dataset of Vento-Tormo et al. [2018]. For reproducibility, we followed the preprocessing steps provided in the waddR package vignette, which includes a preprocessed and normalized replicate of the same underlying dataset. From these data, we selected the 1000 most prevalent genes and equalized the sample sizes by randomly subsampling from the larger decidua group (3249 cells) to match the number of blood cells. This yielded two equally sized expression matrices, each with dimensions 1000 × 569. A heatmap with gene expressions of the 20 most prevalent genes are provided in Figure D.7. Because waddR does not export permutation statistics, we modified its source code to return the observed and permuted Wasserstein distances. We then applied permApprox to recompute the permutation p-values using two variants: (i) the default constrained workflow described in Section 3.5 ensuring that the evaluation point lies within the GPD support, and (ii) an unconstrained version omitting the support condition, which isolates the specific contribution of the constraint. Both variants were applied only when the empirical permutation 
+
+p-value was below 0.01, in accordance with the original waddR procedure. Figure 6 compares the p-values from the non-zero expression component of waddR with those obtained from the unconstrained and constrained permApprox approaches. The left panel shows that waddR produces a substantial number of zero p-values, arising partly from numerical rounding in the computation of upper-tail 17 permApprox: permutation p -value approximation probabilities as ¯FGPD (Yobs ) = 1 − FGPD (Yobs ) and partly from bounded GPD support when the GPD shape parameter is negative and the observed statistic lies outside this support. The middle panel demonstrates that unconstrained permApprox effectively resolves the first issue (blue triangles), producing positive tail probabilities whenever the original zeros were caused by rounding. However, unconstrained fitting still inherits zeros from bounded GPD tails (orange points), just like waddR .GNLY GSTP1 B2M HLA−B CCL4 FOS COTL1 TXNIP RPS19 
+
+waddR (zeros: 328 / 987) 
+
+waddR + permApprox(U) (zeros: 197 / 996) 
+
+waddR + permApprox(C) (zeros: 0 / 996) 
+
+0 1 2 0 1 2 0 1 2
+
+01e−300 1e−200 1e−100 1e−75 1e−50 1e−25 1e−03 
+
+dW2
+
+> p Non−zero in waddR
+> Zero in waddR −> >0 in permApprox(U)
+> Zero in waddR −> 0 in permApprox(U)
+> NA in waddR
+
+Figure 6: Differential distribution analysis in single-cell RNA-seq data. Comparison of permutation 
+
+p-values from waddR and permApprox for the non-zero expression component of the Wasserstein two-stage test ( B = 1000 ). Each point represents one gene, and the color and shape represent the zero-pattern of its 
+
+waddR and permApprox(U) p-values: non-zero waddR p-values (open circle); genes with p = 0 under waddR but 
+
+p > 0 under permApprox(U) (blue triangle); genes with p = 0 under both methods (orange circle), and genes with undefined ( NA ) waddR p-values (square with cross). Zero p-values are mapped to a small constant floor so they appear at “0” on the y-axis. Left: Standard waddR , showing many zero p-values caused by numerical rounding in upper-tail probability computation and bounded tails when the fitted GPD has negative shape. 
+
+Middle: Unconstrained permApprox (U) removes rounding-induced zeros but still produces zeros when the estimated GPD shape is negative. Right: Constrained permApprox (C) enforces that the evaluation point lies within the GPD support, eliminating all zero p-values. The default permApprox workflow ( permApprox (C) indicating constrained fitting, right panel) eliminates all remaining zeros by enforcing the evaluation point to lie strictly within the estimated GPD support (see also Tables D.6 and D.7 for the corresponding raw and BH-adjusted p-values). Several genes exhibited extremely large Wasserstein distances so that machine-underflow p-values (reported as zero) occurred in the constrained variant. Here, our data-adaptive ε refinement (Section A.4) became active, increasing the target factor τ
+
+from its default value of 0.25 to 29.75, thereby ensuring positive and numerically stable tail probabilities for all genes. Consequently, some p-values increase, yet the number of genes with significant differences remains nearly unchanged (Table D.8). Beyond eliminating spurious zeros, the refined tail probabilities produced by permApprox also change the relative ranking of genes with extremely small p-values. When inspecting the unconstrained panel, one might conclude that genes with very large Wasserstein distances (e.g., those with d2 
+
+> W
+
+> 1) represent the strongest distributional differences. However, the constrained tail approximation reveals that several genes with moderate Wasserstein distances, including HLA-B and B2M , exhibit equally compelling evidence against the null. This is consistent with the distributional patterns seen in the histogram–quantile plot of the top-ranking genes (Figure D.8), where these genes with moderate d2 
+
+> W
+
+show pronounced and systematic shifts between groups in their non-zero expression distributions. 18 permApprox: permutation p -value approximation Together, these results illustrate that effect size and tail probability are not always aligned in the extreme tail, and that accurate p-value approximation is essential for identifying the truly most significant distributional shifts. 
+
+# 6 Discussion 
+
+Accurate inference in permutation-based testing is often limited by the coarse resolution of empirical permutation p-values. Because these values lie on a grid determined by the number of permutations B,extremely small p-values cannot be resolved unless B is very large, which is often computationally infeasible. Parametric tail modeling based on the Generalized Pareto Distribution (GPD) has been proposed to overcome this limitation by extrapolating beyond the empirical permutation range [Knijnenburg et al., 2009]. However, existing GPD-based refinements can yield zero p-values when the estimated shape parameter is negative and the fitted tail has a finite upper bound, a problem that has remained largely unresolved. The central contribution of this work is a constrained GPD tail-fitting strategy that guarantees positive tail probabilities at the observed test statistic. Specifically, we propose to fit the GPD under a support constraint, enforced through a data-adaptive ε rule that balances the trade-off between unrealistically small p-values and overly conservative extrapolation. In combination with a robust threshold-detection procedure and a carefully chosen GPD estimator, this approach yields smooth, strictly positive, and numerically stable tail probabilities even when B is modest. In doing so, permApprox maintains the flexibility and distribution-free validity of permutation testing while substantially improving the resolution and reliability of p-values in the extreme tail. The performance of the proposed workflow was evaluated in two controlled simulation settings reflecting common parametric and nonparametric testing scenarios. In the two-sample t-test with Gaussian data, where the theoretical null distribution is known, permApprox closely matched the true p-values across a wide range of sample sizes and effect sizes. By contrast, the three existing GPD-based refinements considered (i.e., the classical approach of Knijnenburg et al. [2009], its power-transformed variant, and our “ +obs” implementation following Winkler et al. [2016]) frequently produced zero p-values due to negative shape estimates or became markedly conservative as sample size increased. In the nonparametric Wilcoxon rank-sum test with exponential data, which induces highly skewed permutation distributions, constrained GPD fitting again yielded accurate and stable tail probabilities. Competing methods were unable to track the true p-values even for moderate test statistics, either collapsing to zero or again being overly conservative. In contrast, permApprox remained robust across all configurations considered in this study, producing smooth and strictly positive approximations even for extreme test statistics. These findings highlight that the benefits of our proposed constrained tail modeling approach are not limited to idealized Gaussian settings but may extend to distribution-free tests commonly used in practice. Beyond controlled simulations, the two biological applications further demonstrated the practical advantages of constrained tail modeling. In the microbiome differential abundance analysis, empirical permutation 
+
+p-values were limited by the coarse resolution inherent to B = 1000 permutations, obscuring the significance of several strongly differentially abundant genera. permApprox resolved this limitation by producing smoothly varying, strictly positive tail probabilities, enabling meaningful ranking of effects that were indistinguishable under empirical testing. Moreover, the method prevented the zero p-value that arose under unconstrained GPD fitting for Terrisporobacter , illustrating the necessity of enforcing a valid support in real-world settings where negative shape estimates are common. Comparison with substantially larger permutation budgets (B = 10 6 and 10 7) further showed that the permApprox tail estimates closely reproduce the empirical tail trends observed at high resolution for the majority of taxa, at dramatically reduced computational cost. In the single-cell RNA-seq case study, the benefits of constrained approximation were even more pronounced. The original Wasserstein-based differential distribution test implemented in waddR uses a GPD refinement but produces numerous zero p-values due to bounded tails and numerical underflow. By reusing the underlying permutation statistics, permApprox eliminated these zeros while preserving the structure of the permutation 19 permApprox: permutation p -value approximation null. Importantly, the refined p-values revealed additional genes with strong distributional differences that would have been missed with the original implementation. These findings underscore that constrained tail modeling offers clear benefits across complex, non-Gaussian data structures, where permutation tests are essential. Despite its advantages, permApprox has a few practical limitations. First, the approach assumes that the upper tail of the permutation distribution is well approximated by a GPD and that a suitable tail threshold can be identified. In settings where the permutation tail is highly irregular or contains too few exceedances, the chosen goodness-of-fit test may reject the GPD model, in which case tail approximation is inappropriate. We observed such a scenario in a high-throughput chemical genomics application, where the Anderson-Darling test rejected the GPD fit for most tail distributions. Here, permApprox ’s implementation of the Gamma approximation of the full permutation distribution provided a better empirical fit [Feldl et al., 2025]. In cases where no suitable parametric approximation can be identified, the empirical permutation p-value remains the appropriate fallback. Second, although the proposed data-adaptive ε rule performed robustly across both Gaussian and nonparamet-ric simulation settings, it necessarily influences the balance between overly optimistic and overly conservative tail probabilities. In rare cases with exceptionally extreme test statistics, the constraint may require additional refinement to prevent numerical underflow, at the cost of slightly more conservative p-values for other tests. We observed such a situation in the single-cell DD analysis, where the ε refinement slightly increased the 
+
+p-value of the gene GSTP1 under the constrained version. Finally, constrained tail fitting introduces some computational overhead compared to relying solely on empirical permutation p-values, though the additional cost is modest in typical analysis settings and negligible compared to the computational burden of increasing the number of permutations. Taken together, our results suggest that permApprox successfully eliminates the long-standing problem of zero p-values in GPD-based permutation p-value approximation and provides a broadly applicable workflow for refining permutation tails. While parametric tail modeling already offers an effective remedy for the coarse resolution of empirical p-values, existing approaches remain vulnerable to negative shape estimates in combination with support-boundary violations. permApprox addresses these limitations by combining constrained GPD fitting, robust threshold detection, and a data-adaptive ε rule into a coherent framework that integrates seamlessly with standard permutation pipelines. Importantly, permApprox is not tied to any specific test statistic or scientific domain. Any permutation-based method that returns (i) a vector of observed test statistics and (ii) the corresponding matrix of permuted statistics can be directly extended with our workflow. This makes permApprox applicable far beyond the biological examples considered here. Potential use cases include permutation-based inference in association network analysis, where network metrics often lack analytically tractable null distributions [Sommer et al., 2022], gene set and pathway enrichment tests that rely on label permutations [Mishra et al., 2014], genome-wide association studies [John et al., 2022], and permutation-based clustering or classification assessments. 
+
+permApprox is also applicable in permutation-based significance testing in fields beyond life sciences such as economics, social sciences, or environmental studies. By improving the reliability of small p-values in these contexts, permApprox broadens the scope of accurate and computationally feasible permutation-based inference across a wide range of data-analytic applications. 
+
+# Code availability 
+
+All scripts used to produce the simulation studies and applications presented in this paper are publicly available at https://github.com/stefpeschel/permApprox-manuscript . The real-data applications were performed using permApprox (v1.0.2) [Peschel, 2025]. The simulation studies relied on a more flexible development version of permApprox , which comprises additional internal options and is included in the same repository. 20 permApprox: permutation p -value approximation 
+
+# Data availability 
+
+The raw DNA sequence data (demultiplexed 16S rRNA amplicon reads) from the PASTURE cohort have been deposited in the NCBI Sequence Read Archive under accession numbers PRJNA1068358 (2-month data) and PRJNA1068358 (12-month data). In this study, we used genus-level count data derived from the 2-month samples. Access to additional metadata is subject to the PASTURE consortium’s data protection regulations and can be requested from the PASTURE consortium directly. 
+
+# Competing interests 
+
+No competing interests are declared. 
+
+# Funding 
+
+This work was supported by the European Commission [LSHB-CT-2006-018996]; and the European Research Council [ERC-2009-AdG_20090506_250268]. 
+
+# Acknowledgments 
+
+We gratefully acknowledge the PASTURE study team and all participating families for their commitment and contribution to the cohort. We especially thank Martin Depner and Pirkka Kirjavainen for their work on the preprocessing and taxonomic processing of the PASTURE 2-month stool microbiome data, which were used in this study. 
+
+# References 
+
+Bader, B., Yan, J., and Zhang, X. (2018). AUTOMATED THRESHOLD SELECTION FOR EXTREME VALUE ANALYSIS VIA ORDERED GOODNESS-OF-FIT TESTS WITH ADJUSTMENT FOR FALSE DISCOVERY RATE. The Annals of Applied Statistics , 12:310–329. Benjamini, Y. and Hochberg, Y. (1995). Controlling the false discovery rate: a practical and powerful approach to multiple testing. Journal of the Royal statistical society: series B (Methodological) , 57(1):289–300. Benjamini, Y. and Yekutieli, D. (2001). The Control of the False Discovery Rate in Multiple Testing under Dependency. The Annals of Statistics , pages 1165–1188. Brill, B., Amir, A., and Heller, R. (2021). dacomp: Non parametric differential abundance testing for microbiome counts data. R package version 1.26. Brill, B., Amir, A., and Heller, R. (2022). Testing for differential abundance in compositional counts data, with application to microbiome studies. The Annals of Applied Statistics , 16(4):2648–2671. Castillo, E., Hadi, A. S., Balakrishnan, N., and Sarabia, J. M. (2005). Extreme Value and Related Models with Applications in Engineering and Science . Wiley. Castillo, E. and Serra, I. (2015). One-parameter estimation of the generalized Pareto distribution with application to rainfall extremes. Stochastic Environmental Research and Risk Assessment , 29(7):1893–1901. Choulakian, V. and Stephens, M. A. (2001). Goodness-of-fit tests for the generalized Pareto distribution. 
+
+Technometrics , 43(4):478–484. Coles, S. (2001). An Introduction to Statistical Modeling of Extreme Values . Springer, London. Feldl, M., Olayo-Alarcon, R., Amstalden, M. K., Zannoni, A., Peschel, S., Sharma, C. M., Brochado, A. R., and Müller, C. L. (2025). Statistical end-to-end analysis of large-scale microbial growth data with DGrowthR. 
+
+bioRxiv , pages 2025–03. 21 permApprox: permutation p -value approximation Fisher, R. A. (1935). The design of experiments . Oliver and Boyd, Edinburgh. Gilbert, P. B. (2005). A modified false discovery rate multiple-comparisons procedure for discrete data, applied to human immunodeficiency virus genetics. Journal of the Royal Statistical Society Series C: Applied Statistics , 54(1):143–158. Good, P. (2005). Permutation, Parametric, and Bootstrap Tests of Hypotheses . Springer, 3rd edition. G’Sell, M. G., Wager, S., Chouldechova, A., and Tibshirani, R. (2016). Sequential selection procedures and false discovery rate control. Journal of the Royal Statistical Society Series B: Statistical Methodology ,78(2):423–444. He, H. Y., Basu, K., Zhao, Q., and Owen, A. B. (2019). Permutation p-value approximation via generalized Stolarsky invariance. The Annals of Statistics , 47(1):583–611. Ho, N. T., Li, F., Lee-Sarwar, K. A., Tun, H. M., Brown, B. P., Pannaraj, P. S., Bender, J. M., Azad, M. B., Thompson, A. L., Weiss, S. T., et al. (2018). Meta-analysis of effects of exclusive breastfeeding on infant gut microbiota across populations. Nature Communications , 9(1):4169. Hosking, J. R. and Wallis, J. R. (1987). Parameter and quantile estimation for the generalized Pareto distribution. Technometrics , 29(3):339–349. Jiang, L., Amir, A., Morton, J. T., Heller, R., Arias-Castro, E., and Knight, R. (2017). Discrete false-discovery rate improves identification of differentially abundant microbes. MSystems , 2(6):10–1128. John, M., Ankenbrand, M. J., Artmann, C., Freudenthal, J. A., Korte, A., and Grimm, D. G. (2022). Efficient permutation-based genome-wide association studies for normal and skewed phenotypic distributions. 
+
+Bioinformatics , 38(Supplement_2):ii5–ii12. Killick, R., Fearnhead, P., and Eckley, I. A. (2012). Optimal detection of changepoints with a linear computational cost. Journal of the American Statistical Association , 107(500):1590–1598. Killick, R., Haynes, K., and Eckley, I. A. (2024). changepoint: An R package for changepoint analysis. 
+
+https://CRAN.R-project.org/package=changepoint . R package version 2.3. Knijnenburg, T. A., Wessels, L. F., Reinders, M. J., and Shmulevich, I. (2009). Fewer permutations, more accurate P-values. Bioinformatics , 25:161–168. Langousis, A., Mamalakis, A., Puliga, M., and Deidda, R. (2016). Threshold detection for the generalized Pareto distribution: Review of representative methods and application to the NOAA NCDC daily rainfall database. Water Resources Research , 52:2659–2681. Ma, J., Li, Z., Zhang, W., Zhang, C., Zhang, Y., Mei, H., Zhuo, N., Wang, H., Wang, L., and Wu, D. (2020). Comparison of gut microbiota in exclusively breast-fed and formula-fed babies: a study of 91 term infants. 
+
+Scientific Reports , 10(1):15792. Mishra, P., Törönen, P., Leino, Y., and Holm, L. (2014). Gene set analysis: limitations in popular existing methods and proposed improvements. Bioinformatics , 30(19):2747–2756. North, B. V., Curtis, D., and Sham, P. C. (2002). A note on the calculation of empirical p values from Monte Carlo procedures. American Journal of Human Genetics , 71(2):439–441. Northrop, P. J. and Coleman, C. L. (2014). Improved threshold diagnostic plots for extreme value analyses. 
+
+Extremes , 17(2):289–303. Odiase, E., Frank, D. N., Young, B. E., Robertson, C. E., Kofonow, J. M., Davis, K. N., Berman, L. M., Krebs, N. F., and Tang, M. (2023). The gut microbiota differ in exclusively breastfed and formula-fed United States infants and are associated with growth status. The Journal of Nutrition , 153(9):2612–2621. Peschel, S. (2025). permApprox: permutation p-value approximation. https://doi.org/10.5281/zenodo. 17987670 . Version 1.0.2. DOI: 10.5281/zenodo.17987670. 22 permApprox: permutation p -value approximation Phipson, B. and Smyth, G. K. (2010). Permutation P-values Should Never Be Zero: Calculating Exact P-values When Permutations Are Randomly Drawn. Statistical Applications in Genetics and Molecular Biology , 9:1–12. Pickands, J. (1975). Statistical inference using extreme order statistics. The Annals of Statistics , 3(1):119–131. Pitman, E. (1937). Significance Tests Which May be Applied to Samples From any Populations. Journal of the Royal Statistical Society. Supplement , 4:119–130. Scarrott, C. and MacDonald, A. (2012). A review of extreme value threshold estimation and uncertainty quantification. REVSTAT-Statistical journal , 10(1):33–60. Schefzik, R., Flesch, J., and Goncalves, A. (2021). Fast identification of differential distributions in single-cell RNA-sequencing data with waddR. Bioinformatics , 37(19):3204–3211. Segal, B. D., Braun, T., Elliott, M. R., and Jiang, H. (2018). Fast approximation of small p-values in permutation tests by partitioning the permutations. Biometrics , 74(1):196–206. Sommer, A. J., Peters, A., Rommel, M., Cyrys, J., Grallert, H., Haller, D., Müller, C. L., and Bind, M.-A. C. (2022). A randomization-based causal inference framework for uncovering environmental exposure effects on human gut microbiota. PLoS computational biology , 18(5):e1010044. Song, J. and Song, L. (2012). Threshold selection for the generalized Pareto distribution using the second order expansion. Computational Statistics & Data Analysis , 56(12):3951–3961. Vento-Tormo, R., Efremova, M., Botting, R. A., Turco, M. Y., Vento-Tormo, M., Meyer, K. B., Park, J.-E., Stephenson, E., Polański, K., Goncalves, A., et al. (2018). Single-cell reconstruction of the early maternal–fetal interface in humans. Nature , 563(7731):347–353. von Mutius, E., Schmid, S., and Group, P. S. (2006). The PASTURE project: EU support for the improvement of knowledge about risk factors and preventive factors for atopy in Europe. Allergy , 61(4):407–413. Wendland, H. (1995). Piecewise polynomial, positive definite and compactly supported radial functions of minimal degree. Advances in computational Mathematics , 4(1):389–396. Winkler, A. M., Ridgway, G. R., Douaud, G., Nichols, T. E., and Smith, S. M. (2016). Faster permutation inference in brain imaging. NeuroImage , 141:502–516. Yang, L. and Chen, J. (2022). A comprehensive evaluation of microbial differential abundance analysis methods: current status and potential solutions. Microbiome , 10(1):130. Zhang, J. (2007). Maximum likelihood estimation for the generalized pareto distribution using the likelihood moment estimation method. Journal of Statistical Planning and Inference , 137(3):1091–1101. Zhang, J. and Stephens, M. A. (2009). Likelihood-based and Bayesian methods for extreme value analysis. 
+
+Technometrics , 51(3):316–329. Zhao, X., Zhang, Z., Cheng, W., and Zhang, P. (2019). A New Parameter Estimator for the Generalized Pareto Distribution under the Peaks over Threshold Framework. Mathematics 2019, Vol. 7, Page 406 ,7:406. printed. 23 permApprox: permutation p -value approximation 
+
+# A Extended Methods 
+
+A.1 Notation 
+
+Table A.1: Notation used throughout the paper. 
+
+Symbol Meaning General permutation test notation 
+
+n Per-group sample size 
+
+m Number of hypothesis tests (features, genes, taxa) 
+
+B Number of permutations 
+
+b ∈ { 1, . . . , B } Index for permutation replicates 
+
+j ∈ { 1, . . . , m } Index for hypothesis tests 
+
+T (j) 
+
+> obs
+
+Observed test statistic for test jT ∗(j) 
+
+> b
+
+Permuted test statistic for test j in permutation b
+
+T (j) = {T ∗(j) 
+
+> b
+
+}Bb=1 Permutation distribution for test jp-values 
+
+pemp Empirical permutation p-value (Eq. 1) 
+
+pGPD Unconstrained GPD-based p-value (Eq. 6) 
+
+pcGPD Constrained GPD-based p-value 
+
+p Hybrid p-value combining empirical and GPD-based p-values (Eq. 14) 
+
+GPD tail modeling 
+
+pthr GPD tail modeling threshold (on pemp )
+
+u Threshold defining the GPD tail region 
+
+k Number of exceedances above uYobs Observed excess above u
+
+Y = {Y ∗ 
+
+> b
+
+} Permutation excesses above uσ, ξ Scale and shape parameters of the GPD 
+
+s = −σ/ξ Upper support boundary when ξ < 0ˆσ(U ), ˆξ(U ) Unconstrained GPD parameter estimates 
+
+ˆσ(C), ˆξ(C) Constrained GPD parameter estimates 
+
+ˆs(U ), ˆs(C) Unconstrained / constrained support boundaries 
+
+¯FGPD (·) = 1 − FGPD (·) Upper GPD tail probability 
+
+Data-adaptive ε rule (SLLS) 
+
+ε Safety margin ensuring GPD support at Yobs (Eq. 13) 
+
+κfactor Tuning constant controlling curvature in the log-saturation component 
+
+τ Tuning constant controlling plateau height 
+
+ρlift Weighting parameter in lift component 
+
+A.2 Derivation of the SLLS ε rule 
+
+This section summarizes the empirical considerations that guided the construction of the standardized lifted log-saturation (SLLS) rule for selecting the safety margin ε. The presentation follows the sequence of observations made in the exploratory analyses in Section A.3 and makes explicit how the dependence on sample size, effect size, and test statistic magnitude is incorporated into the final rule. The complete exploratory workflow is documented in the reproducible analysis scripts accompanying this manuscript available at https://github. com/stefpeschel/permApprox-manuscript , under explorations/perm_ttest/03_find_eps_rule .
+
+Joint dependence on test statistic and sample size. Simulation studies showed that the safety margin 
+
+ε must increase with the magnitude of the observed test statistic |Tobs | to stabilize constrained GPD tail 24 permApprox: permutation p -value approximation evaluation. A simple linear rule ε = c |Tobs |, however, was inadequate: the factor c varied systematically with sample size n, and no single linear scaling performed well across different n.Moreover, the empirical relationship between the required ε and |Tobs | was clearly nonlinear, exhibiting pronounced curvature across increasing effect sizes. An exemplary visualization for c = 0 .1 is given in Figure A.1 ˙(b). This indicated that linear rules are too restrictive to capture the behavior of the tail region across a broad range of statistics. 
+
+Logarithmic growth and saturation. To accommodate this curvature, sublinear growth in |Tobs | was considered. Among several candidates, logarithmic growth provided a particularly good empirical fit. A rule of the form 
+
+ε ∝ log (1 + c |Tobs |)
+
+increases rapidly for small to moderate statistics while flattening for larger values, yielding substantially more stable tail extrapolation than linear alternatives. However, without further modification, this rule still allowed ε to grow without bound for extreme statistics. To prevent unnecessary inflation, the logarithmic growth was therefore normalized to saturate at a finite upper level, leading to a saturation rule of the form 
+
+ε = εmax 
+
+log (1 + c |Tobs |)
+
+log (1 + c T max 
+
+) ,
+
+where Tmax denotes a reference statistic defining the upper end of the relevant range and εmax > 0 is the maximal safety margin on the scale of the test statistic, i.e., the value approached as |Tobs | reaches the upper end of the relevant range. This normalization preserves the nonlinear increase for moderate statistics while ensuring bounded behavior in the extreme regime. A visualization of the rule at this stage is given in Figure A.1 ˙(c). 
+
+Lift for intermediate statistics. While the saturated log rule yielded stable behavior for very large |Tobs |,systematic comparisons showed a tendency to produce slightly too small p-values for test statistics in an intermediate range (see Figure A.1 ˙(c)). This range corresponds to situations in which tail extrapolation is already required, but the saturation regime has not yet been reached. To correct this localized deviation while preserving the asymptotic behavior for extreme statistics, an additional lift term was incorporated into the safety margin. Specifically, the lift is defined through the function 
+
+ψ(l) = (1 − l)4(1 + 4 l), l ∈ [0 , 1] ,
+
+which is a compactly supported C2 Wendland kernel. Wendland kernels are widely used in scattered data approximation and radial basis function methods due to their smoothness, compact support, and controlled local influence. In the present context, these properties ensure that the lift selectively increases the safety margin for moderate values of the standardized statistic, while vanishing smoothly as l → 1 and leaving the saturation behavior for extreme statistics unchanged. 
+
+Standardization and separation of scale. To obtain a formulation that is comparable across tests and distributions, the dependence on |Tobs | is transferred to a standardized scale. Figure A.2 illustrates the motivation for this step: when the ε rule is applied directly on the raw test statistic scale, its behavior depends strongly on the scale and distribution of the statistic, leading to distorted tail approximations for non-Gaussian tests. Standardization mitigates this effect by expressing the observed statistic relative to its permutation distribution. Let Z(j)obs denote the standardized observed statistic for test j, and let Zcap denote an upper reference bound. Defining 
+
+lj = Z(j)obs 
+
+Zcap 
+
+∈ [0 , 1] (A.1) 25 permApprox: permutation p -value approximation compresses the relevant range of test statistics into a unit interval. The standardized safety margin can then be expressed as a function of lj alone. 
+
+Log-saturation, curvature control, and final rule. The standardized saturation component is defined as 
+
+ε∗(l) = ε∗
+
+> max
+
+log (1 + κl )
+
+log (1 + κ) , l ∈ [0 , 1] ,
+
+which ensures ε∗(0) = 0 and ε∗(1) = ε∗
+
+> max
+
+. The parameter κ > 0 controls the curvature of the transition, while the plateau height ε∗ 
+
+> max
+
+absorbs the sample-size scaling identified above. Adding the Wendland lift yields the standardized lifted log-saturation margin 
+
+ε∗ 
+
+> j
+
+= max 
+
+{
+
+ε∗
+
+> max
+
+log(1 + κ l j )log(1 + κ) + ρlift ψ(lj ), ε min 
+
+}
+
+.
+
+Combining logarithmic saturation, Wendland lift, and rescaling back to the test statistic scale yields the standardized lifted log-saturation (SLLS) rule reported in Section 2.4. Its empirical behavior relative to simpler alternatives is illustrated in Section A.3. 
+
+A.3 Comparison of ε rules 
+
+To illustrate the behavior of constrained GPD p-value approximations under different ε-rules, we simulated Gaussian two-sample data with equal variance ( σ = 1 ), increasing mean differences (effect sizes d ∈{0, 0.5, 1, 1.5, 2}), and varying sample sizes. For each effect size, 200 independent tests were generated, resulting in 1000 tests per setting. Ground-truth p-values were obtained from the classical Student’s t-test, and permutation distributions with B = 1000 replicates were used for the constrained GPD-based approximations. Figure A.1 compares the resulting p-values across four ε-rules for n = 250 (per group). With ε = 0 , the smallest p-values are heavily underestimated, especially for strong effects. The linear 
+
+ε-rule ( ε = 0 .1, |tobs |) improves stability but fails to reproduce the nonlinear curvature of the t-test p-values. The log-saturation rule yields generally well-calibrated results, though the approximated p-values tend to fall slightly below the t-test values for test statistics in the intermediate range ( tobs ≈ 5-12 ). In contrast, the standardized lifted log-saturation (SLLS) rule exhibits the most balanced behavior. Its additional lift component effectively raises the approximated p-values for intermediate test statistics slightly above the corresponding t-test values, while maintaining agreement across all effect sizes. 26 permApprox: permutation p -value approximation (d) (b) (a) (c) 
+
+ε = 0 Log-saturation ε rule Std. lifted log-saturation ε rule 
+
+ε = 0.1 |t || || || || |
+
+Figure A.1: Effect of ε-rules on constrained permutation p-values. Data were simulated under Gaussian two-sample t-tests with n = 250 , σ = 1 , and mean differences d ∈ { 0, 0.5, 1, 1.5, 2}, with 200 tests per effect size ( 1000 in total). Each panel shows p from the constrained GPD approximation (colored points) and p from the two-sided Student’s t-test (open circles) versus the observed statistic tobs . Colors indicate the true effect size. Panels correspond to four choices of the support-constraint margin ε: (a) ε = 0 (no margin); (b) ε = 0 .1 |tobs | (linear-in-t baseline); (c) ε = A log (1 + B|tobs |) (log-saturation rule); and (d) the standardized lifted log-saturation (SLLS) rule, applied on Z-scores and mapped back to the T -scale (with 
+
+kfactor = 1000 and τ = 0 .25 ). The dashed circles indicate the area in which the lift mainly takes effect. The 
+
+y-axis is shown on a log 10 scale with tick labels in the original p-value scale. To emphasize the importance of standardization in the ε-rule, we repeated the analysis using the nonparametric Wilcoxon rank-sum test (with Mann-Whitney U statistic). We simulated two groups of exponentially distributed observations means 1 and 1 + d, corresponding to effect sizes d ∈ { 0, 0.5, 1, 1.5, 2}, and generated 
+
+200 independent tests per effect size ( 1000 in total) for varying sample sizes. The ground-truth p-values were obtained from the classical Wilcoxon test, while permutation distributions with B = 1000 replicates were used for the GPD-based approximations. We compared the lifted log-saturation (LLS) rule, which operates directly on the raw U -statistics, to the standardized lifted log-saturation (SLLS) rule, which applies the same transformation on standardized Z-scores and then maps the resulting ε values back to the original U -scale. For the Wilcoxon test, standardization becomes crucial (Figure A.2). While it has little impact in the Gaussian t-test setting, the absence of standardization leads to strong deviations from the Wilcoxon p-values for nonzero effect sizes. In contrast, the standardized version yields p-values that closely follow the Wilcoxon results across all effect sizes, confirming that this step is essential for the ε-rule to remain robust across test statistics of different scales and distributions. 27 permApprox: permutation p -value approximation 1e−40 1e−30 1e−20 1e−10 1e−3     
+
+> 2000 3000 4000 5000 6000
+
+Uobs 
+
+> p
+
+Lifted log−saturation (LLS)     
+
+> 1e−40 1e−30 1e−20 1e−10 1e−3
+> 2000 3000 4000 5000 6000
+
+Uobs 
+
+> p
+
+Standardized lifted log−saturation (SLLS)         
+
+> P−value type: Constrained GPD Mann−Whitney U Effect size: 00.5 11.5 2
+
+Figure A.2: Effect of standardization on constrained permutation p-values for the Wilcoxon test. 
+
+Data were generated from exponential distributions with means 1 and 1 + d (d ∈ { 0, 0.5, 1, 1.5, 2}), using equal group sizes ( n = 100 ) and 200 tests per effect size ( 1000 in total). Each panel shows the constrained GPD 
+
+p-values (colored points) versus the observed Mann-Whitney U statistic, compared to the “ground-truth” 
+
+p-values from the Wilcoxon test (open circles). Colors indicate the true effect size. The left panel uses a non-standardized ε-rule, based on the U -statistics itself, while the right panel uses our proposed standardized version (SLLS), which operates on Z-scores. 
+
+A.4 Data-adaptive ε refinement 
+
+Even with the SLLS ε-rule, machine-underflow p-values (reported as zero) may still occur for negative shape estimates ( ˆξ < 0), either because the test statistic is extremely large or because the fitted upper support is very close to the constraint, causing the tail probability to fall below machine precision. We therefore employ a data-adaptive refinement for the target factor τ , one of the SLLS tuning parameters, to identify the minimum τ value that eliminates underflow zeros while preserving moderate cases. Let ε(tobs ; τ ) denote the SLLS epsilon produced at target factor τ and define the index set of underflowing tests at τ as 
+
+Z(τ ) = {j : ˆpj (τ ) ≤ .Machine.double.xmin }. (A.2) We seek the minimal τ ⋆ = inf {τ : |Z (τ )| = 0 }. Assuming monotonicity of the “no-underflow” event with increasing τ (empirically observed), we use a two-phase search: 
+
+• Phase 1 (expansion / bracketing): Starting at τ0 (default 0.25), we step additively by s and inflate the step geometrically s ← s · ρ until |Z (τ )| = 0 is achieved, producing a bracket [τlo , τ hi ] with underflow at τlo and none at τhi . To reduce cost, at each try we fit the GPD only for tests currently in Z(τ ).
+
+• Phase 2 (bisection / refinement): Bisection of [τlo , τ hi ] until the width falls below a numerical tolerance, returning τ ⋆ ≈ τhi . During bisection we again refit only the currently underflowing subset. Finally, we perform one full refit for all selected tests at τ ⋆ and report the resulting p-values. 
+
+Defaults and stopping 
+
+Expansion step sinit = 10 , growth ρ = 1+ √52 ≈ 1.618 , at most 20 expansion steps; bisection tolerance 0.1 with at most 30 iterations. The procedure logs τ and |Z (τ )| per iteration for transparency. If expansion hits its 28 permApprox: permutation p -value approximation cap with |Z (τ )| > 0, we return the best τ found and flag this in the messages (users can increase step_init ,
+
+grow , or the iteration caps). 
+
+Computational notes 
+
+The search is subset-aware: only tests with underflow are refit during exploration, yielding substantial speedups when zeros are rare. The final results are obtained from a single full refit at τ ⋆, so intermediate exploration does not affect the reported estimates. Progress bars (optional) mirror those used in threshold detection. This refinement aims to eliminate, up to machine precision, all reported zeros due to underflow while keeping 
+
+τ as small as possible, thereby preserving power and avoiding overly conservative inflation of ε in routine cases. If the expansion phase hits its iteration cap with remaining underflowing tests, the best available τ is returned and this is flagged in the output. 29 permApprox: permutation p -value approximation 
+
+# B Simulation studies to find a default permApprox configuration 
+
+The simulation studies in this section serve to determine an optimal configuration for permApprox , with the goal of estimating small p-values for a limited number of permutations as accurately as possible. 
+
+B.1 Study on the number of starting exceedances 
+
+This analysis investigates how the number of starting exceedances used in the GPD tail modeling, denoted by 
+
+k0, affects the stability and accuracy of permutation-based p-value approximation. The simulated data are identical to those described in Section 4.2, consisting of two-sample t-test statistics based on Gaussian data with n = 100 observations per group and an effect size of d = 1 . Permutation-based test statistics were computed for varying numbers of permutations ( B ∈ { 500 , 1000 , 5000 , 10000 }), and the resulting permutation distributions were used to assess the influence of k0 on GPD fitting and p-value approximation. Five strategies were compared: a fixed number of 100 and 250 exceedances, and relative fractions of 10%, 25%, and 50% of all permutations. All fits were obtained using permApprox with the proposed constrained GPD fitting approach (with LME as estimator and FTR for threshold detection). Figure B.1 displays the ratios of approximated permutation p-values to the parametric t-test reference (pmethod /p t-test ) across different B. For B = 500 , using k0 = 250 (corresponding to 50% of B) resulted in 
+
+p-values slightly above those of the t-test but with substantially lower variation than smaller k0 values. For 
+
+B = 1000 , both k0 = 250 and k0 = 500 yielded acceptable variance, while the median of k0 = 250 was closest to the t-test reference. For larger B, the variation decreased up to k0 = 25% of B and increased thereafter, with the median remaining closest to the t-test values at 25%. We chose k0 = max (0 .25 B, 250) as the default starting point in permApprox because it is a good tradeoff between bias and stability across all numbers of permutations. B = 500 B = 1000 B = 5000 B = 10000 
+
+> 50 (1%) 100 (2%) 125 (25%)
+> 250*
+> (5%)
+> 100 (1%) 250
+> (25%)*
+> 500 (5%)
+> 100 (2%) 250 (5%) 500 (1%) 1250
+> (25%)*
+> 2500 (5%)
+> 100 (1%) 250 (2.5%) 1000 (1%) 2500
+> (25%)*
+> 5000 (5%)
+> 1e−10 1e−5 111e5 1e10
+
+Number (percentage) of start exceedances 
+
+> p method  p ttest
+
+Method GPD(100ex) GPD(250ex) GPD(10%ex) GPD(25%ex) GPD(50%ex) 
+
+Figure B.1: Ratio of approximated permutation p-values to the parametric t-test reference ( pmethod /p t-test )for different numbers of permutations ( B). Each facet corresponds to one B, and boxplots summarize the distribution of ratios across 1000 simulation replicates. On the x-axis, the numbers denote the starting exceedances k0, while the percentages refer to fractions of B, used to initiate the FTR-based threshold detection. The starred methods denote the default choice in permApprox (k0 = max(0 .25 B, 250) ). 30 permApprox: permutation p -value approximation 
+
+B.2 Comparison of threshold detection methods 
+
+This analysis compares the performance of different threshold detection methods. We used the same simulation setup as described in Section 4.2, applying the constrained GPD fitting procedure (with LME as estimator and the SLLS rule for the support constraint) to approximate permutation-based p-values for a range of sample sizes ( n ∈ { 50 , 100 , 500 , 1000 }). The number of permutations was fixed to B = 1000 and the threshold search was initiated with k0 = 0 .25 B = 250 .All threshold methods described in Section 3.3 were evaluated. For the FTR-based methods (FTR, robFTR), a step size of 10 was used for scanning candidate thresholds. For the remaining methods (FwdStop, GOF-CP, Shape-Var), the search was performed over all possible thresholds above k0 (step size 1). Figure B.2 summarizes the results. The left panel shows the ratio between the approximated permutation 
+
+p-values and the parametric t-test reference. All methods yield nearly identical p-values, with only the Shape-Var method producing values slightly closer to the reference. This method also selects thresholds with much higher variability, as seen in the right panel, which shows the number of exceedances selected by each method. For the other methods, the chosen number of exceedances is either exactly or close to the initial number of exceedances, which is 250. Due to their comparable accuracy, we base the default choice on computational considerations. The FTR methods are substantially faster because they (i) perform reliably even with a coarser threshold grid (step size 10), and (ii) stop the search early once the Anderson–Darling (AD) test is not rejected. Among them, we select robFTR as the default in permApprox , as it is more robust to outliers in the AD p-value distribution, while maintaining the speed advantage of early stopping. 1e−20 11e20 1e40 1e60 1e80 1e100    
+
+> 50 100 500 1000
+
+n   
+
+> p method  p ttest
+> 050 100 150 200 250
+> 50 100 500 1000
+
+n
+
+> number of exceedances
+
+Method FTR robFTR* FwdStop GOF−CP Shape−Var 
+
+Figure B.2: Comparison of threshold detection methods. Left: Ratios of approximated permutation p-values to the parametric t-test reference ( pmethod /p t-test ). Right: Number of exceedances selected by each method. Each panel shows jittered boxplots across simulation replicates, grouped by sample size ( n) on the x-axis and colored by threshold detection method. The p-value approximations were obtained using constrained LME fitting with the SLLS ε-rule. All methods started with k0 = 250 exceedances. k0 was iteratively increased by 10 for FTR and robFTR, and by 1 for the other methods. The starred method (robFTR*) is the default method in permApprox .31 permApprox: permutation p -value approximation 
+
+B.3 Comparison of GPD parameter estimation methods 
+
+In this section, we evaluate the GPD parameter estimation methods explained in Section 3.4 in terms of accuracy, robustness, and runtime. The evaluated methods are the Method of Moments (MOM), the one-and two-parameter maximum likelihood estimators (MLE1D and MLE2D), the likelihood moment estimator (LME), the Zhang-Stephens estimator (ZSE), the two-step nonlinear least squares estimator (NLS2), and the weighted nonlinear log-least squares estimator (WNLLSM). These estimators form the foundation of our approach, as all subsequent steps in the permApprox pipeline rely on reliable estimation of the GPD scale ( σ)and shape ( ξ) parameters. Our goal in this section is to identify a default estimator that performs consistently well across different conditions and can be efficiently adapted to the support constraint introduced in Section 2.3. We therefore examine the behavior of the methods under both unconstrained and constrained estimation settings. 
+
+B.3.1 Tolerance selection for GPD optimization methods 
+
+All optimization-based GPD estimators in permApprox depend on a numerical tolerance parameter that determines the convergence criterion of the underlying optimization routine. Because each method minimizes a different objective function (e.g., log-likelihood or least-squares loss), the same tolerance value does not correspond to the same numerical or statistical accuracy across estimators. To ensure comparability and numerical stability across the optimization-based GPD parameter estimation methods, we systematically investigated the influence of the optimization tolerance ( tol ) on the fitted densities at a given evaluation point above the true boundary. For each method, we fitted the GPD to simulated data with shape parameter 
+
+ξ = −0.2 and scale parameter σ = 1 , resulting in a true boundary at s = −σ/ξ = 5 . The GPD was fitted under a boundary constraint at the evaluation point Xeval = 7 , and the corresponding probability density at this point, fGPD (Xeval ), was evaluated across a range of tolerances ( 10 −5–10 −15 ). Figure B.3 illustrates that some methods produce a wide range of density values depending on the optimization tolerance, i.e., the density can become extremely small for MLE1D, LME, and NLS2, while MLE1D and WNLLSM becomes stable for certain tolerance values and won’t get any smaller. Such variation would considerably affect the tail probability and thus the resulting permutation p-value approximation within the 
+
+permApprox workflow. To decide on an optimal tolerance value for each method, we first identified the most numerically stable estimator across tolerances. The one-dimensional maximum likelihood estimator (MLE1D) showed the smallest variation in fGPD (Xeval ) and was therefore used as a ground truth reference . For all other methods, we computed the mean absolute error (MAE) of the log-transformed densities at Xeval relative to the MLE1D reference across repetitions and tolerance values. Instead of selecting the tolerance with the absolute minimum MAE, we applied a plateau criterion: among all tolerances yielding an MAE within 0.005 of the minimum value (on the log scale), we selected the largest tolerance value. This strategy favors numerically stable yet computationally efficient settings, ensuring that further tightening of tol would not meaningfully change the estimates. The selected tolerance values for each method are summarized in Table B.1, and were used consistently in all subsequent simulation studies and applications. 32 permApprox: permutation p -value approximation 1e−100 1e−79 1e−58 1e−37 1e−16               
+
+> 12345678910
+> Repetition (first 10)
+> fGPD (xeval )
+> tol
+> 1e−6
+> 1e−7
+> 1e−8
+> 1e−9
+> 1e−10
+> 1e−11
+> 1e−12
+> 1e−13
+> method MLE1D MLE2D LME NLS2 WNLLSM
+> Highlighted = chosen tolerance per method: MLE1D: 1e−10 | MLE2D: 1e−10 | LME: 1e−7 | NLS2: 1e−9 | WNLLSM: 1e−9
+
+Boundary density across tolerances with side−by−side methods 
+
+Figure B.3: GPD densities at an evaluation point ( Xeval = 7) above the true boundary ( −σ/ξ = 5 )across repetitions and optimization tolerances ( 10 −6–10 −13 ). GPD parameters were fitted with constraint 
+
+−σ/ξ > X eval . Each point represents one simulation repetition, colored by tolerance and shaped by method. Highlighted points mark the chosen tolerance for each method. Table B.1: Chosen optimization tolerances for each GPD parameter estimation method. The ZSE method is not optimization-based and therefore does not require a tolerance parameter. 
+
+Method Selected tolerance 
+
+LME 1e-07 MLE1D 1e-10 MLE2D 1e-10 NLS2 1e-09 WNLLSM 1e-09 ZSE — (no optimization) 
+
+B.3.2 Approximation accuracy 
+
+We next evaluate each estimator’s ability to recover the true GPD parameters from synthetic exceedances generated without any boundary constraint. Samples were drawn as 
+
+Yi ∼ GPD( σ0 = 1 , ξ 0), ξ0 ∈ {− 0.6, −0.4, −0.2, 0, 0.2, 0.4, 0.6}, (B.1) with sample sizes 
+
+n ∈ { 25 , 50 , 75 , 100 , 250 , 500 , 750 , 1000 }, (B.2) and 500 independent replicates per configuration. For each replicate, parameter estimates ( ˆσ, ˆξ) were obtained using fit_gpd() from the permApprox package. Estimation accuracy was quantified by the empirical root mean squared error (RMSE) across simulation replicates: 
+
+RMSE( ξ) = 
+
+√√√√ 1
+
+R
+
+> R
+
+∑
+
+> r=1
+
+( ˆξr − ξ0)2, RMSE( σ) = 
+
+√√√√ 1
+
+R
+
+> R
+
+∑
+
+> r=1
+
+(ˆ σr − σ0)2, (B.3) 33 permApprox: permutation p -value approximation where R = 500 is the number of replicates. Lower RMSE values indicate higher estimation accuracy. Figures B.4 and B.5 summarize the results for the shape and scale parameters, respectively, across all estimators, sample sizes, and true shape values. In both panels, the color scale represents the absolute RMSE values, ranging from the minimum to the maximum observed across all scenarios, thereby allowing a direct comparison of estimation accuracy between methods and parameter settings. The distribution of absolute estimation errors for ξ0 = −0.4 across sample sizes is shown in Figure B.6. 0.336 0.250 0.637 0.415 0.354 0.285 0.235 0.222 0.157 0.228 0.217 0.230 0.179 0.143 0.181 0.123 0.156 0.160 0.173 0.136 0.112 0.158 0.100 0.109 0.134 0.145 0.110 0.090 0.097 0.059 0.058 0.066 0.083 0.063 0.051 0.066 0.040 0.036 0.038 0.058 0.044 0.034 0.055 0.032 0.029 0.029 0.048 0.035 0.026 0.047 0.028 0.024 0.024 0.041 0.030 0.023 
+
+0.237 0.277 0.328 0.320 0.363 0.303 0.257 0.171 0.188 0.206 0.206 0.263 0.202 0.179 0.140 0.152 0.163 0.163 0.225 0.165 0.147 0.118 0.127 0.132 0.132 0.198 0.141 0.123 0.077 0.077 0.077 0.077 0.130 0.087 0.075 0.059 0.055 0.054 0.054 0.094 0.062 0.053 0.050 0.046 0.045 0.045 0.079 0.053 0.044 0.044 0.040 0.039 0.039 0.070 0.046 0.038 
+
+0.286 0.260 0.480 0.373 0.352 0.299 0.244 0.199 0.161 0.190 0.208 0.232 0.185 0.153 0.159 0.125 0.134 0.161 0.191 0.143 0.117 0.131 0.098 0.102 0.123 0.157 0.114 0.091 0.078 0.059 0.056 0.061 0.095 0.068 0.052 0.054 0.041 0.036 0.036 0.066 0.047 0.034 0.045 0.033 0.028 0.028 0.056 0.039 0.027 0.039 0.028 0.024 0.024 0.046 0.032 0.023 
+
+0.314 0.333 0.387 0.379 0.421 0.348 0.301 0.218 0.216 0.228 0.228 0.306 0.232 0.205 0.180 0.173 0.178 0.178 0.250 0.186 0.166 0.162 0.144 0.149 0.149 0.214 0.154 0.140 0.116 0.090 0.091 0.091 0.132 0.096 0.090 0.091 0.061 0.061 0.061 0.096 0.068 0.061 0.080 0.048 0.048 0.048 0.077 0.053 0.048 0.073 0.041 0.041 0.041 0.068 0.046 0.041 
+
+0.241 0.243 0.380 0.335 0.349 0.289 0.237 0.153 0.153 0.173 0.181 0.225 0.178 0.147 0.117 0.115 0.125 0.131 0.177 0.133 0.112 0.106 0.100 0.104 0.109 0.150 0.113 0.094 0.062 0.059 0.055 0.055 0.100 0.069 0.054 0.043 0.041 0.038 0.038 0.070 0.047 0.037 0.037 0.034 0.031 0.031 0.061 0.040 0.030 0.030 0.028 0.026 0.026 0.051 0.033 0.026 
+
+0.384 0.350 0.379 0.379 0.446 0.368 0.326 0.308 0.249 0.257 0.257 0.331 0.261 0.236 0.274 0.201 0.206 0.206 0.280 0.214 0.194 0.250 0.168 0.171 0.171 0.244 0.182 0.164 0.211 0.103 0.104 0.104 0.157 0.111 0.102 0.186 0.072 0.072 0.072 0.110 0.077 0.071 0.175 0.060 0.060 0.060 0.086 0.062 0.059 0.168 0.051 0.051 0.051 0.074 0.054 0.051 
+
+ξ0 = 0.2 ξ0 = 0.4 ξ0 = 0.6 
+
+ξ0 = −0.6 ξ0 = −0.4 ξ0 = −0.2 
+
+> LME*
+> MLE1D MLE2D MOM NLS2 WNLLSM ZSE
+> LME*
+> MLE1D MLE2D MOM NLS2 WNLLSM ZSE
+> LME*
+> MLE1D MLE2D MOM NLS2 WNLLSM ZSE
+
+25 50 75 100 250 500 750 1000 
+
+25 50 75 100 250 500 750 1000 
+
+Method 
+
+> n
+
+RMSE 
+
+0.2 0.4 0.6 
+
+Figure B.4: Root mean squared error (RMSE) of the estimated GPD shape parameter ˆξ compared to the true value ξ0 across sample sizes n, estimation methods, and true shape values ξ0 ∈ {− 0.6, −0.4, −0.2, 0.2, 0.4, 0.6}.The color scale represents absolute RMSE values, ranging from the minimum to the maximum observed across all scenarios. Lighter colors correspond to lower RMSE and thus higher estimation accuracy. The starred method (LME*) is the default estimator in permApprox .0.330 0.280 0.816 0.470 0.311 0.288 0.245 0.220 0.186 0.289 0.250 0.208 0.195 0.169 0.183 0.152 0.199 0.189 0.167 0.158 0.140 0.156 0.126 0.138 0.151 0.141 0.131 0.116 0.097 0.077 0.078 0.081 0.086 0.080 0.071 0.066 0.053 0.051 0.052 0.060 0.056 0.049 0.054 0.043 0.040 0.040 0.049 0.045 0.038 0.047 0.037 0.035 0.035 0.043 0.039 0.034 
+
+0.363 0.370 0.475 0.439 0.347 0.356 0.323 0.243 0.244 0.268 0.268 0.247 0.243 0.228 0.198 0.197 0.209 0.209 0.211 0.203 0.187 0.172 0.170 0.175 0.175 0.188 0.179 0.161 0.098 0.096 0.095 0.095 0.116 0.106 0.093 0.073 0.067 0.066 0.066 0.082 0.074 0.065 0.062 0.058 0.056 0.056 0.069 0.063 0.056 0.055 0.049 0.049 0.049 0.060 0.054 0.048 
+
+0.311 0.295 0.625 0.431 0.313 0.304 0.264 0.225 0.200 0.245 0.245 0.225 0.212 0.188 0.180 0.158 0.172 0.188 0.185 0.169 0.150 0.153 0.133 0.138 0.152 0.154 0.142 0.126 0.090 0.081 0.080 0.082 0.092 0.086 0.076 0.062 0.056 0.054 0.054 0.065 0.060 0.052 0.050 0.045 0.042 0.042 0.053 0.048 0.040 0.044 0.038 0.036 0.036 0.045 0.041 0.035 
+
+0.524 0.414 0.481 0.470 0.380 0.391 0.354 0.389 0.272 0.288 0.288 0.273 0.264 0.254 0.309 0.208 0.215 0.215 0.219 0.210 0.199 0.264 0.172 0.177 0.177 0.185 0.174 0.166 0.181 0.110 0.111 0.111 0.120 0.113 0.109 0.141 0.080 0.081 0.081 0.088 0.084 0.080 0.123 0.064 0.064 0.064 0.071 0.067 0.064 0.114 0.055 0.055 0.055 0.062 0.058 0.055 
+
+0.304 0.307 0.541 0.434 0.318 0.312 0.271 0.208 0.209 0.245 0.245 0.219 0.217 0.195 0.158 0.158 0.174 0.177 0.171 0.167 0.151 0.146 0.142 0.149 0.152 0.152 0.149 0.134 0.087 0.086 0.083 0.083 0.099 0.092 0.080 0.061 0.060 0.059 0.059 0.069 0.064 0.057 0.051 0.049 0.047 0.047 0.058 0.053 0.046 0.043 0.042 0.040 0.040 0.050 0.046 0.040 
+
+1.371 0.446 0.475 0.475 0.416 0.422 0.389 0.964 0.293 0.298 0.298 0.302 0.295 0.273 0.781 0.233 0.236 0.236 0.256 0.244 0.223 0.721 0.196 0.198 0.198 0.220 0.208 0.190 0.518 0.117 0.118 0.118 0.135 0.125 0.116 0.495 0.082 0.082 0.082 0.093 0.086 0.081 0.465 0.067 0.067 0.067 0.074 0.069 0.066 0.422 0.058 0.058 0.058 0.064 0.060 0.058 
+
+ξ0 = 0.2 ξ0 = 0.4 ξ0 = 0.6 
+
+ξ0 = −0.6 ξ0 = −0.4 ξ0 = −0.2 
+
+> LME*
+> MLE1D MLE2D MOM NLS2 WNLLSM ZSE
+> LME*
+> MLE1D MLE2D MOM NLS2 WNLLSM ZSE
+> LME*
+> MLE1D MLE2D MOM NLS2 WNLLSM ZSE
+
+25 50 75 100 250 500 750 1000 
+
+25 50 75 100 250 500 750 1000 
+
+Method 
+
+> n
+
+RMSE 
+
+0.5 1.0 
+
+Figure B.5: Root mean squared error (RMSE) of the estimated GPD scale parameter ˆσ compared to the true value σ0 = 1 across sample sizes n, estimation methods, and true shape values ξ0 ∈{− 0.6, −0.4, −0.2, 0.2, 0.4, 0.6}. The color scale represents absolute RMSE values, ranging from the minimum to the maximum observed across all scenarios. Lighter colors correspond to lower RMSE and thus higher estimation accuracy. The starred method (LME*) is the default estimator in permApprox .34 permApprox: permutation p -value approximation 0.0 0.5 1.0 1.5        
+
+> 25 50 75 100 250 500 750 1000
+
+n
+
+> |ξ
+> ^ − ξ 0 |
+
+Method 
+
+> MOM
+> LME*
+> MLE1D
+> MLE2D
+> NLS2
+> WNLLSM
+> ZSE
+
+ξ0 = −0.4 
+
+Figure B.6: Absolute estimation errors of the GPD shape parameter ( | ˆξ − ξ0|) for ξ0 = −0.4 across sample sizes. Boxplots summarize the distribution of absolute errors across 500 replicates per setting, with colors indicating the estimation methods. The starred method (LME*) is the default estimator in permApprox .As expected, absolute errors and RMSE values generally decrease with increasing sample size for all estimators, reflecting the asymptotic consistency of the methods. Across all shape parameters, the Zhang–Stephens estimator (ZSE) achieved the lowest or near-lowest RMSE within each sample size, occasionally surpassed by the method of moments (MOM) for shape values close to zero. The likelihood moment estimator (LME) exhibited comparably high accuracy and closely followed the performance of ZSE across the entire range of 
+
+ξ0 and n. Both maximum-likelihood estimators (MLE1D and MLE2D) converged to LME’s performance for large n ≥ 250 but were less accurate for small samples ( n ≤ 50 ). MOM performed best when ξ0 ∼ 0
+
+but deteriorated quickly for nonzero ξ0, particularly for positives shapes. By contrast, NLS2 consistently produced the largest RMSE values for both parameters. Overall, ZSE and LME emerged as the most reliable estimators for unconstrained GPD fitting in terms of both shape and scale recovery. 
+
+B.3.3 Robustness under support constraints 
+
+To examine robustness under constrained tail fitting, each estimator is evaluated in a setting where the fitted GPD must satisfy a support constraint at an evaluation point above the true boundary. Data are generated from a bounded GPD with σ0 = 1 and ξ0 = −0.2, implying a true boundary at s0 = −σ0/ξ 0 = 5 . For each sample size n ∈ { 25 , 50 , 75 , 100 , 250 , 500 , 750 , 1000 }, the evaluation point is set to 
+
+xeval = s0 + ε with ε ∈ { 1, 2, 3} (⇒ xeval ∈ { 6, 7, 8}), (B.4) and each estimator is fitted under the constraint ˆs = −ˆσ/ ˆξ > x eval .In this setting, direct comparison of parameter estimates to their true values is not meaningful, as the imposed support constraint introduces a deliberate model misspecification ( s0 < x eval < ˆs). A suitable default estimator for permApprox should produce densities that are not only stable across samples but also sufficiently small to yield accurate approximations of small p-values. We therefore assess the stability of the fitted density at the evaluation point, f [GPD (xeval ), which reflects the numerical robustness of the fit and directly impacts the resulting tail probabilities. Figure B.7 presents the results for ε = 2 (corresponding to xeval = 7 ), which are representative of all evaluated 35 permApprox: permutation p -value approximation settings, as the cases ε ∈ { 1, 3} showed qualitatively similar behavior with differences only in magnitude. The grouped boxplots display the fitted densities f [GPD (xeval ) across sample sizes and estimation methods. 1e−100 1e−79 1e−58 1e−37 1e−16        
+
+> 25 50 75 100 250 500 750 1000
+
+n
+
+> f GPD (xeval )
+
+Method 
+
+> LME*
+> MLE1D
+> MLE2D
+> NLS2
+> WNLLSM
+> ZSE
+
+GPD density at evaluation point (constraint active) | e = 2 
+
+Figure B.7: Constrained fits at xeval = 7 (ε = 2 ): grouped boxplots of the fitted density values f [GPD (xeval )
+
+across sample sizes n and estimation methods. Only repetitions where the constraint ˆs = −ˆσ/ ˆξ > x eval was active are shown. The y-axis is on a log10 scale, while tick labels show the original p-values. The starred method (LME*) is the default in permApprox .Although ZSE yields by far the lowest variability in f [GPD (xeval ), its resulting density values are extremely large across all settings. Since such inflated values translate into overly conservative p-value approximations, ZSE is not a suitable candidate for the default configuration in permApprox . MLE2D shows substantial variability in both spread and magnitude across sample sizes, indicating instability under the support constraint. Among the remaining methods, variability is low and consistent. Within each sample size, the standard deviations follow the consistent order: SD n(WNLLSM ) < SD n(LME ) < SD n(MLE1D ) < SD n(NLS2 ),
+
+though the differences are small. These standard deviations are visualized for all three ε values in Figure B.8. 
+
+B.3.4 Runtime comparison of GPD fitting methods 
+
+To assess the computational efficiency of the GPD parameter estimation approaches, we benchmarked all methods under different sample sizes ( n = 200 and n = 1000 ) and boundary settings (with and without constraint). Each combination was evaluated 50 times per method, and runtimes were recorded in milliseconds (Figure B.9). Overall, the runtime of all methods increased with sample size. NLS2 and WNLLSM were by far the slowest methods across all scenarios, reflecting their iterative nature and two-step optimization procedures. The runtime of the remaining methods was comparable, with one fastest method depending on the setting: LME was fastest for small n and unconstrained fitting, ZSE was fastest for small n in the constrained case, and MLE2D was generally the fastest for large sample sizes. 36 permApprox: permutation p -value approximation 22.014 22.729 32.494 27.705 20.308 0.805 15.838 17.819 47.967 18.476 14.751 0.709 12.757 14.163 52.758 16.697 12.115 0.810 10.623 11.773 69.991 15.918 10.621 0.737 6.591 8.576 52.443 12.169 6.236 0.722 4.908 6.959 46.147 11.066 4.696 0.787 3.696 6.701 42.141 10.697 3.627 0.820 3.525 5.879 31.699 10.124 3.320 0.868 
+
+25.908 27.204 34.610 31.967 23.976 0.863 18.775 19.758 41.052 22.455 16.702 0.777 14.767 16.850 47.473 20.108 13.939 0.882 12.424 14.572 64.463 18.364 12.252 0.839 7.601 10.496 62.423 14.028 7.269 0.864 5.605 8.177 67.305 12.869 5.392 0.954 4.739 8.609 62.866 13.082 4.218 0.968 4.283 7.323 53.021 11.456 3.820 0.924 
+
+29.954 30.961 36.733 35.943 27.417 0.857 21.013 22.830 37.653 25.172 19.010 0.842 16.988 19.054 45.743 20.954 15.720 0.950 14.371 16.264 59.454 22.522 13.718 0.941 8.737 12.201 70.102 15.898 8.285 1.031 6.496 11.159 79.744 14.960 6.176 1.114 5.329 10.045 75.855 13.705 4.821 1.050 4.744 9.259 76.042 12.779 4.340 0.972 
+
+ε = 1 ε = 2 ε = 3
+
+> LME*
+> MLE1D MLE2D NLS2 WNLLSM ZSE
+> LME*
+> MLE1D MLE2D NLS2 WNLLSM ZSE
+> LME*
+> MLE1D MLE2D NLS2 WNLLSM ZSE
+
+25 50 75 100 250 500 750 1000 
+
+Method 
+
+> n
+
+SD 
+
+20 40 60 
+
+Figure B.8: Standard deviation of the fitted density values f [GPD (xeval ) across 500 replicates per setting, shown for ε ∈ { 1, 2, 3} (⇒ xeval ∈ { 6, 7, 8}). Color intensity reflects standard deviation (SD) of the density: √(Var (f [GPD (xeval ))) , with darker shades indicating higher variability. The starred method (LME*) is the default in permApprox n: 1000 
+
+unconstrained 
+
+n: 1000 
+
+boundary=5 
+
+n: 200 
+
+unconstrained 
+
+n: 200 
+
+boundary=5 
+
+> LME*
+> MLE1D MLE2D NLS2 WNLLSM ZSE
+> LME*
+> MLE1D MLE2D NLS2 WNLLSM ZSE
+
+1310 30 100 1000 
+
+1310 30 100 1000 
+
+Method 
+
+> Runtime (ms)
+
+Each box shows 50 runs per method × boundary setting 
+
+Runtime distribution of GPD fitting methods 
+
+Figure B.9: Runtime distribution of GPD fitting methods across sample sizes ( n = 200 , 1000 ) and boundary settings (with vs. without boundary constraint). Each box represents 50 runs per method and scenario. The starred method (LME*) is the default estimator in permApprox .37 permApprox: permutation p -value approximation 
+
+B.3.5 Decision for a default estimation method 
+
+Although, in principle, all evaluated estimators are compatible with the permApprox framework, our choice of a default value is based on the following criteria: balance between estimation accuracy, robustness under support constraints, and computational efficiency. The likelihood moment estimator (LME) offers the most favorable combination of these criteria. In the unconstrained setting, it performs nearly as well as ZSE, which showed the lowest RMSE overall. However, under the support constraint, ZSE produces highly inflated density values at the evaluation point. This would result in overly conservative p-value approximations, making it unsuitable as a default. Among the remaining methods, MLE2D shows considerable variability in the constrained setting and unstable behavior across sample sizes. WNLLSM achieves slightly lower variability than LME but is between 15 and 80 times slower in our runtime benchmarks, which limits its practical use in large-scale applications. MLE1D performs comparably to LME but tends to be slightly more variable. NLS2 is consistently the least accurate and one of the slowest methods. Taken together, LME provides a reliable and computationally efficient solution that performs well across scenarios. It is therefore chosen as the default estimator in permApprox , while the other methods remain accessible for comparative or specialized use. 38 permApprox: permutation p -value approximation 
+
+# C Material to supplement the simulation studies -0.5 0.0 0.5 25 50 75 100 250 500 750 1000 n
+
+> x^
+
+GPD (Knijnenburg) GPD (Knijnenburg, pow3) GPD (Winkler, +obs) GPD (permApprox) 
+
+Figure C.1: Two-sample t-test with Gaussian data: Estimated GPD shape values across sample sizes for the compared GPD-based methods. Effect size and number of permutations are fixed to d = 1 and B = 1000 ,respectively. Points indicate individual replicates (1000 per setting). 0s=127 0s=1 0s=505 0s=1 0s=758 0s=5 0s=871 0s=7 0s=979 0s=7 0s=991 0s=6 0s=995 0s=7 0s=994 0s=1 01e-120 1e-100 1e-80 1e-60 1e-40 1e-20 1e-3 25 50 75 100 250 500 750 1000 npGamma GPD (Knijnenburg) GPD (Knijnenburg, pow3) GPD (Winkler, +obs) 
+
+> GPD (permApprox) Ground truth (t-test)
+
+Figure C.2: Two-sample t-test with Gaussian data: p-values produced with the different approximation methods, in comparison to Student’s t-test p-values across varying sample sizes. Effect size and number of permutations are fixed to d = 1 and B = 1000 , respectively. Points indicate individual replicates (1000 per setting). Counts of exact zeros are shown below each group as “ 0s =x” in the corresponding color. Zero 
+
+p-values are mapped to a small constant floor so they appear at “0” on the y-axis. The y-axis is on a log10 scale, while tick labels show the original p-values. 39 permApprox: permutation p -value approximation 0s=186 0s=1 0s=871 0s=7 0s=971 0s=4 0s=989 0s=7 01e-60 1e-50 1e-40 1e-30 1e-20 1e-10 1e-3 0.5 1 1.5 2dp      
+
+> 0s=957 0s=6 0s=871 0s=7 0s=672 0s=12 0s=602 0s=27 01e-100 1e-90 1e-80 1e-70 1e-60 1e-50 1e-40 1e-30 1e-20 1e-10 1e-3 500 1000 5000 10000
+
+BpGamma GPD (Knijnenburg) GPD (Knijnenburg, pow3) GPD (Winkler, +obs) 
+
+GPD (permApprox) Ground truth (t-test) 
+
+Figure C.3: Two-sample t-test with Gaussian data: Approximated permutation p-values, stratified by effect size d (left panel) and number of permutations B (right panel). Fixed values (if not stratified): n = 100 ,
+
+d = 1 and B = 1000 . Points indicate individual replicates (1000 per setting). Counts of exact zeros are shown below each group as “ 0s =x” in the corresponding color. For plotting only, zero p-values are mapped to a small constant floor so they appear at “0” on the y-axis. The y-axis is on a log10 scale, while tick labels show the original p-values. 0s=186 0s=1 0s=871 0s=7 0s=971 0s=4 0s=989 0s=7 01e-60 1e-50 1e-40 1e-30 1e-20 1e-10 1e0 1e10 1e20 1e30 1e40 0.5 1 1.5 2dp method  p t-test       
+
+> 0s=957 0s=6 0s=871 0s=7 0s=672 0s=12 0s=602 0s=27 01e-100 1e-90 1e-80 1e-70 1e-60 1e-50 1e-40 1e-30 1e-20 1e-10 1e0 1e10 1e20 500 1000 5000 10000
+
+Bp method  p t-test Gamma GPD (Knijnenburg) GPD (Knijnenburg, pow3) GPD (Winkler, +obs) GPD (permApprox) 
+
+Figure C.4: Two-sample t-test with Gaussian data: Ratios of approximated to ground-truth p-values: 
+
+pmethod /p t-test , stratified by effect size d (left panel) and number of permutations B (right panel). Fixed values (if not stratified): n = 100 , d = 1 and B = 1000 . Points indicate individual replicates (1000 per setting). Counts of exact zeros are shown below each group as “ 0s =x” in the corresponding color. For plotting only, zero p-values are mapped to a small constant floor so they appear at “0” on the y-axis ratios. 40 permApprox: permutation p -value approximation 0s=23 0s=1 0s=87 0s=223 0s=3 0s=344 0s=846 0s=961 0s=989 0s=986 001e-50 1e-40 1e-30 1e-20 1e-10 1e0 25 50 75 100 250 500 750 1000 npGamma GPD (Knijnenburg) GPD (Knijnenburg, pow3) GPD (Winkler, +obs) 
+
+> GPD (permApprox) Ground truth (Wilcoxon)
+
+Figure C.5: Wilcoxon rank-sum test with exponential data: Approximated permutation p-values, stratified by sample size n. Fixed values: d = 1 and B = 1000 . Points indicate individual replicates (1000 per setting). Counts of exact zeros are shown below each group as “ 0s =x” in the corresponding color. For plotting only, zero p-values are mapped to a small constant floor so they appear at “0” on the y-axis. The y-axis is on a log10 scale, while tick labels show the original p-values. 0s=41 0s=344 0s=649 0s=2 0s=804 0s=7 01e-40 1e-30 1e-20 1e-10 1e0 0.5 1 1.5 2dp    
+
+> 0s=500 0s=6 0s=344 0s=144 0s=6 0s=105 0s=4 01e-25 1e-20 1e-15 1e-10 1e-5 1e0 500 1000 5000 10000
+
+BpGamma GPD (Knijnenburg) GPD (Knijnenburg, pow3) GPD (Winkler, +obs) 
+
+> GPD (permApprox) Ground truth (Wilcoxon)
+
+Figure C.6: Wilcoxon rank-sum test with exponential data: Approximated permutation p-values, stratified by effect size d (left panel) and number of permutations B (right panel). Fixed values (if not stratified): n = 100 , d = 1 and B = 1000 . Points indicate individual replicates (1000 per setting). Counts of exact zeros are shown below each group as “ 0s =x” in the corresponding color. For plotting only, zero 
+
+p-values are mapped to a small constant floor so they appear at “0” on the y-axis. The y-axis is on a log10 scale, while tick labels show the original p-values. 41 permApprox: permutation p -value approximation 0s=41 0s=344 0s=649 0s=2 0s=804 0s=7 01e-40 1e-30 1e-20 1e-10 1e0 1e10 1e20 0.5 1 1.5 2dpmethod  p Wilcoxon       
+
+> 0s=500 0s=6 0s=344 0s=144 0s=6 0s=105 0s=4 01e-25 1e-20 1e-15 1e-10 1e-5 1e0 1e5 1e10 500 1000 5000 10000
+
+Bpmethod  p Wilcoxon Gamma GPD (Knijnenburg) GPD (Knijnenburg, pow3) GPD (Winkler, +obs) GPD (permApprox) 
+
+Figure C.7: Wilcoxon rank-sum test with exponential data: Ratios of approximated to ground-truth 
+
+p-values: pMethod /p Wilcoxon , stratified by effect size d (left panel) and number of permutations B (right panel). Fixed values (if not stratified): n = 100 , d = 1 and B = 1000 . Points indicate individual replicates (1000 per setting). Counts of exact zeros are shown below each group as “ 0s =x” in the corresponding color. For plotting only, zero p-values are mapped to a small constant floor so they appear at “0” on the y-axis. The y-axis is on a log10 scale, while tick labels show the original ratios. 42 permApprox: permutation p -value approximation 
+
+# D Material to supplement the application sections 
+
+D.1 Differential abundance analysis - The dacomp framework 
+
+We performed differential abundance (DA) testing with the dacomp R package [Brill et al., 2021], which implements the framework of Brill et al. [2022]. A central idea of dacomp is that, in compositional microbiome data, differential abundance of an individual taxon cannot be inferred from its raw counts alone, because the sequencing depth is arbitrary and the counts of all taxa are constrained to sum to this depth. Instead, 
+
+dacomp tests each taxon relative to a set of reference taxa whose absolute abundances are assumed to not change with the phenotype. The reference set B is constructed by identifying taxa whose log-ratios relative to all other taxa vary minimally across samples. For each taxon j, dacomp computes 
+
+log 10 
+
+( Xij + 1 
+
+Xik + 1 
+
+)
+
+, k̸ = j, (D.1) and summarizes their sample variability by a median score Sj . Taxa with Sj ≤ Scrit form the reference set, where Scrit is chosen to ensure that the total reference counts per sample remain within a practical range. For each taxon j / ∈ B , dacomp performs a rarefaction-based test. Let Ri = ∑ 
+
+> ℓ∈B
+
+Xiℓ denote the total reference abundance in sample i and define the rarefaction depth λj = min i Ri. For each sample i, a rarefied count Zij ∼ Hypergeometric( λj , X ij , R i) is drawn by sampling λj reads without replacement from the pool consisting of taxon j and the reference taxa. The test statistic for taxon j is the Wilcoxon rank-sum statistic applied to the rarefied counts, 
+
+Tj = ∑
+
+> i:Yi=1
+
+rank( Zij ), (D.2) and its permutation distribution {T ∗(b) 
+
+> j
+
+}Bb=1 is obtained by shuffling group labels. Both Tj and the permuted statistics are exported by dacomp and can therefore be used directly as input to permApprox .
+
+D.2 Differential abundance analysis - Additional results p = 0.0574 020 40 60 Richness (genera) 
+
+> p = 4.3e-15 012Shannon index
+> p = 5.71e-13 0.00 0.25 0.50 0.75 1.00 Gini–Simpson index group non-EBF EBF
+
+Figure D.1: Microbiome study: Alpha diversity in exclusively breastfed (EBF, n = 485 ) and non-EBF infants ( n = 212 ) at age 2 months. Richness (number of genera), Shannon diversity, and Gini–Simpson diversity were compared using Wilcoxon rank-sum tests ( p-values above panels). Across all three measures, EBF infants exhibited lower diversity than non-EBF infants, consistent with recent findings in early-life microbiome studies. 43 permApprox: permutation p -value approximation Table D.1: Microbiome study: Runtime comparison for differential abundance testing with dacomp and 
+
+permApprox under varying permutation budgets. Reported are wall-clock runtimes for increasing numbers of permutations B, measured in seconds, minutes, and hours. Experiments were conducted on a Linux-based compute node equipped with an Intel Xeon E7-4850 v4 CPU (2.10 GHz) and 170 GB RAM. Method B Time (s) Time (min) Time (h) 
+
+dacomp only 10 3 1.84 0.03 0.001 
+
+dacomp only 10 4 19.06 0.32 0.005 
+
+dacomp only 10 5 169.21 2.82 0.047 
+
+dacomp only 10 6 1663.48 27.72 0.462 
+
+dacomp only 10 7 16984.33 283.07 4.718 
+
+dacomp + permApprox (SLLS, k0 = 250 ) 10 3 3.69 0.06 0.001 
+
+dacomp + permApprox (SLLS, k0 = 250 ) 10 4 20.51 0.34 0.006 
+
+dacomp + permApprox (SLLS, k0 = 250 ) 10 5 171.43 2.86 0.048 
+
+dacomp + permApprox (SLLS, k0 = 0 .25 B) 10 3 3.46 0.06 0.001 
+
+dacomp + permApprox (SLLS, k0 = 0 .25 B) 10 4 25.67 0.43 0.007 
+
+dacomp + permApprox (SLLS, k0 = 0 .25 B) 10 5 407.11 6.79 0.113 00
+
+Figure D.2: Microbiome study: Visualization of the runtime results reported in Table D.1. Shown is the runtime as a function of the number of permutations B for genus-level differential abundance analysis in the PASTURE cohort using dacomp alone (black) and dacomp combined with permApprox using the SLLS rule with two threshold settings: a fixed number of starting exceedances ( k0 = 250 ; orange) and a relative number of starting exceedances ( k0 = 0 .25 B; blue). Runtimes are displayed on a logarithmic scale in seconds (left axis) with a secondary axis in minutes (right). 44 permApprox: permutation p -value approximation Erysipelotrichaceae_UCG−003 Akkermansia Anaerostipes Bifidobacterium Agathobacter Blautia 
+
+1.0 1.5 2.0 2.5 
+
+0% 25% 50% 75% 100% 
+
+Prevalence (proportion of samples with count > 0) 
+
+> dacomp median SD score
+
+test 
+
+reference 
+
+Prevalence vs dacomp score (genus level) 
+
+Figure D.3: Microbiome study: Prevalence versus dacomp median SD score Sj (see Equation D.1) on genus level. Each point represents one genus. Green points indicate taxa selected as reference by dacomp ,while gray points represent genera to be tested. 0.00 0.25 0.50 0.75 1.00  
+
+> EBF non−EBF
+> Relative abundance (mean across samples)
+> Phylum
+> Actinobacteriota
+> Bacteroidota
+> Desulfobacterota
+> Firmicutes
+> Fusobacteriota
+> Proteobacteria
+> Verrucomicrobiota
+
+Mean phylum composition 
+
+(a) Mean phylum composition by feeding group. 0.00 0.25 0.50 0.75 1.00  
+
+> EBF non−EBF
+> Relative abundance (mean across samples)
+> Genus
+> Bifidobacterium
+> Escherichia−Shigella
+> Streptococcus
+> Bacteroides
+> Enterococcus
+> Enterobacteriaceae(F)
+> [Ruminococcus]_gnavugroup
+> Other
+
+Mean genus composition (top 7 genera) (b) Mean genus composition by feeding group (top 7 genera). 
+
+Figure D.4: Microbiome study: Mean relative gut microbiome composition in exclusively breastfed (EBF) and non-EBF infants at age 2 months, shown at (a) phylum level and (b) genus level. 45 permApprox: permutation p -value approximation Bacteroides Lactococcus [Clostridium]_innocuum_group 
+
+Terrisporobacter [Ruminococcus]_gnavugroup [Ruminococcus]_torquegroup 
+
+Intestinibacter Enterococcus Bifidobacterium 
+
+1e−05 1e−03 1e−01 
+
+1e−05 1e−03 1e−01 
+
+1e−05 1e−03 1e−01 
+
+1e−05 1e−03 1e−01 
+
+1e−05 1e−03 1e−01 
+
+1e−05 1e−03 1e−01 
+
+1e−05 1e−03 1e−01 
+
+1e−06 1e−05 1e−04 1e−03 1e−02 
+
+1e−05 1e−03 1e−01 
+
+> dacomp−rarefied counts
+
+group non−EBF EBF 
+
+Figure D.5: Microbiome study: dacomp -rarefied counts for the nine genera discussed in the main section. Each panel shows the distribution of dacomp -normalized counts for one genus, grouped by feeding mode (exclusively breastfed (EBF) for at least two months vs no exclusive breast feeding). Bacteroides (dacomp stat = 18.75) 
+
+Lactococcus (dacomp stat = 25.85) 
+
+[Clostridium]_innocuum_group (dacomp stat = 19.21) 
+
+Terrisporobacter (dacomp stat = 17.80) 
+
+[Ruminococcus]_gnavugroup (dacomp stat = 28.33) 
+
+[Ruminococcus]_torquegroup (dacomp stat = 17.42) 
+
+Intestinibacter (dacomp stat = 62.69) 
+
+Enterococcus (dacomp stat = 73.15) 
+
+Bifidobacterium (dacomp stat = 37.65)                                   
+
+> 0510 15 010 20 0510 15 20
+> 0510 15 010 20 30 0510 15
+> 020 40 60 020 40 60 010 20 30 40
+> 0100 200 300 400 500
+> 0100 200 300
+> 0100 200 300 400
+> 0200 400 600
+> 0100 200 300 400
+> 0100 200 300 400 500
+> 0200 400 600
+> 0100 200 300 400
+> 0100 200 300 400
+
+Permutation test statistic 
+
+> Frequency
+
+Figure D.6: Microbiome study: Histograms of the dacomp test statistics for the nine genera discussed in the main section. Each panel shows the distribution of permutation test statistics for 1000 permutations, together with the observed test statistic for that genus. 46 permApprox: permutation p -value approximation Table D.2: Microbiome study: Unadjusted p-values for genera that are significant in at least one of the reported methods at level α = 0 .01 . For each genus, the table reports the dacomp test statistic Tdacomp 
+
+and the corresponding p-values obtained with dacomp for different permutation budgets B, and with the unconstrained (U) and constrained (C) permApprox approach for B = 1000 . Asterisks indicate p-values below 
+
+α = 0 .01 .
+
+Genus Tdacomp dacomp dacomp dacomp permApprox(U) permApprox(C) (B = 1000 ) (B = 10 6) (B = 10 7) (B = 1000 ) (B = 1000 )Enterococcus 67.42 9.99e-04* 1.00e-06* 1.00e-07* 4.25e-13* 4.25e-13* Intestinibacter 45.20 9.99e-04* 1.00e-06* 1.00e-07* 1.97e-18* 1.97e-18* Bifidobacterium 45.12 9.99e-04* 1.00e-06* 1.00e-07* 2.18e-11* 2.18e-11* [Ruminococcus]_gnavugroup 24.16 9.99e-04* 1.00e-06* 4.00e-07* 1.06e-07* 1.06e-07* [Clostridium]_innocuum_group 26.41 9.99e-04* 1.00e-06* 8.00e-07* 1.07e-03* 1.07e-03* Bacteroides 20.71 9.99e-04* 1.37e-04* 4.50e-06* 2.93e-05* 2.93e-05* Terrisporobacter 22.09 9.99e-04* 1.04e-04* 1.02e-05* 0.00e+00* 2.52e-09* Lactococcus 17.77 9.99e-04* 4.00e-06* 1.55e-05* 4.08e-05* 4.08e-05* Streptococcus 13.75 9.99e-04* 3.99e-04* 2.02e-04* 2.07e-04* 2.07e-04* [Ruminococcus]_torquegroup 13.39 9.99e-04* 7.78e-03* 2.31e-04* 3.35e-06* 3.35e-06* Granulicatella 10.24 7.99e-03* 4.10e-05* 1.28e-03* 7.99e-03* 7.99e-03* Clostridium_sensu_strict1 9.55 9.99e-04* 2.54e-03* 1.97e-03* 4.97e-05* 4.97e-05* Sellimonas 7.64 1.80e-02 9.89e-02 2.63e-03* 2.25e-02 2.25e-02 Blautia 8.89 9.99e-04* 2.60e-04* 2.84e-03* 5.94e-05* 5.94e-05* Haemophilus 8.47 2.90e-02 7.70e-04* 3.17e-03* 2.80e-02 2.80e-02 uncultured18 9.64 2.10e-02 5.69e-02 3.22e-03* 2.86e-02 2.86e-02 Tyzzerella 8.22 4.00e-03* 2.11e-03* 3.72e-03* 2.02e-03* 2.02e-03* Leuconostoc 9.19 2.70e-02 9.21e-02 8.33e-03* 2.70e-02 2.70e-02 Coprobacillus 9.19 2.90e-02 8.42e-03* 8.38e-03* 2.90e-02 2.90e-02 Collinsella 5.69 9.99e-04* 3.39e-04* 1.70e-02 3.30e-04* 3.30e-04* Gordonibacter 6.88 4.37e-01 2.60e-03* 2.79e-02 4.37e-01 4.37e-01 Clostridioides 3.49 9.99e-03* 1.98e-03* 3.90e-02 5.59e-03* 5.59e-03* 22_Lachnospiraceae(F) 3.81 3.19e-01 7.43e-03* 6.17e-02 3.19e-01 3.19e-01 Holdemanella 2.78 5.30e-01 3.34e-03* 6.55e-02 5.30e-01 5.30e-01 Paeniclostridium 4.58 8.99e-03* 8.38e-03* 9.21e-02 8.99e-03* 8.99e-03* Epulopiscium 2.08 2.60e-02 3.97e-02 2.62e-01 6.62e-03* 6.62e-03* Veillonella 1.18 3.70e-02 3.73e-03* 2.78e-01 3.94e-02 3.94e-02 
+
+Table D.3: Microbiome study: Summary of agreement between dacomp with B = 10 7 permutations and the constrained permApprox approach ( permApprox(C) , B = 1000 ) based on raw, unadjusted p-values at significance level α = 0 .01 . Results are shown for all 118 genus-level hypothesis tests. 
+
+Metric Value 
+
+Total number of tests 118 Significant genera identified by dacomp (B = 10 7) 19 Significant genera identified by permApprox(C) (B = 1000 ) 18 Shared significant genera 14 Sensitivity of permApprox(C) relative to dacomp 73.7% Precision of permApprox(C) relative to dacomp 77.8% Overall agreement rate 92.4% 47 permApprox: permutation p -value approximation Table D.4: Same as Table D.2 but with BH-adjusted p-values.                                                                                                                      
+
+> Genus Tdacomp dacomp dacomp dacomp permApprox(U) permApprox(C) (B= 1000 )(B= 10 6)(B= 10 7)(B= 1000 )(B= 1000 )Enterococcus 67.42 5.30e-03* 9.60e-06* 1.47e-06* 1.51e-11* 2.27e-11* Intestinibacter 45.20 5.30e-03* 9.60e-06* 1.47e-06* 1.05e-16* 2.10e-16* Bifidobacterium 45.12 5.30e-03* 9.60e-06* 1.47e-06* 5.83e-10* 7.77e-10* [Ruminococcus]_gnavugroup 24.16 5.30e-03* 9.60e-06* 4.62e-06* 2.27e-06* 2.27e-06* [Clostridium]_innocuum_group 26.41 5.30e-03* 9.60e-06* 7.56e-06* 8.77e-03* 8.77e-03* Bacteroides 20.71 5.30e-03* 8.44e-04* 3.69e-05* 4.48e-04* 4.48e-04* Terrisporobacter 22.09 5.30e-03* 7.26e-04* 7.32e-05* 0.00e+00* 6.74e-08* Lactococcus 17.77 5.30e-03* 3.32e-05* 9.58e-05* 5.46e-04* 5.46e-04* Streptococcus 13.75 5.30e-03* 1.93e-03* 1.23e-03* 2.01e-03* 2.01e-03* [Ruminococcus]_torquegroup 13.39 5.30e-03* 2.64e-02 1.36e-03* 5.97e-05* 5.97e-05* Granulicatella 10.24 3.96e-02 3.16e-04* 7.29e-03* 5.03e-02 5.03e-02 Clostridium_sensu_strict1 9.55 5.30e-03* 1.08e-02 1.01e-02 5.91e-04* 5.91e-04* Haemophilus 8.47 8.41e-02 3.72e-03* 1.43e-02 1.07e-01 1.07e-01 Blautia 8.89 5.30e-03* 1.55e-03* 1.43e-02 6.36e-04* 6.36e-04* Tyzzerella 8.22 1.97e-02 8.85e-03* 1.55e-02 1.54e-02 1.54e-02 Collinsella 5.69 5.30e-03* 1.82e-03* 6.18e-02 2.94e-03* 2.94e-03* Clostridioides 3.49 4.57e-02 8.85e-03* 1.12e-01 3.98e-02 3.98e-02
+
+Table D.5: Microbiome study: Summary of agreement between dacomp with B = 10 7 permutations and the constrained permApprox approach ( permApprox(C) , B = 1000 ) based on Benjamini–Hochberg–adjusted 
+
+p-values at significance level α = 0 .01 . Results are shown for all 118 genus-level hypothesis tests. 
+
+Metric Value 
+
+Total number of tests 118 Significant genera identified by dacomp (B = 10 7) 11 Significant genera identified by permApprox(C) (B = 1000 ) 13 Shared significant genera 10 Sensitivity of permApprox(C) relative to dacomp 90.9% Precision of permApprox(C) relative to dacomp 76.9% Overall agreement rate 96.6% 
+
+D.3 Differential distribution analysis - The waddR approach 
+
+Differential distribution (DD) analysis was performed with the waddR package [Schefzik et al., 2021]. The framework proposed by Schefzik et al. [2021] can be summarized as follows: For a given gene, let ˆFA and 
+
+ˆFB denote the empirical distribution functions of the expression values in groups A and B. Testing for distributional differences between the two groups can be formulated as 
+
+H0 : FA = FB versus H1 : FA̸ = FB . (D.3) To quantify distributional differences, waddR uses the squared 2-Wasserstein distance 
+
+d2 
+
+> W
+
+( ˆFA, ˆFB ) = 
+
+∫ 10
+
+( ˆF −1 
+
+> A
+
+(u) − ˆF −1 
+
+> B
+
+(u))2 du, (D.4) where u ∈ [0 , 1] denotes the quantile level. (D.4) is non-negative and equals zero if and only if the two distributions are identical. Using this metric, the hypothesis can equivalently be expressed as the one-sided test 
+
+H0 : d2 
+
+> W
+
+= 0 versus H1 : d2 
+
+> W
+
+> 0. (D.5) 48 permApprox: permutation p -value approximation Under H0, the non-zero expression values are exchangeable across groups, and the null distribution of d2 
+
+> W
+
+is obtained by repeatedly permuting the group labels. The resulting permutation distribution is then used to compute an empirical p-value. To improve the resolution of very small p-values, waddR applies a semi-parametric tail approximation: if the number of permutation statistics exceeding Tobs is smaller than 10, a generalized Pareto distribution is fitted to the upper tail of the permutation distribution and used to refine the tail probability. Since the principle of GPD-based tail approximation is already described in Section 2.2, we refer the reader to that subsection for details. It is important to note that waddR employs a two-stage procedure for differential distribution testing. The first stage addresses the excess zeros via a “differential proportions of zero expression” test, which models the probability of zero expression in groups A and B using a Bayesian logistic regression model. This yields a p-value for detecting differences in the zero-expression proportions. The second stage applies the semi-parametric Wasserstein permutation test to the non-zero expression values and is therefore the only component that relies on permutation statistics and potential tail modeling. Hence, our comparison focuses exclusively on this non-zero component, and we follow the same rule as waddR : whenever the number of exceedances is below 10, we apply permApprox in place of the original semi-parametric refinement to ensure a fair and methodologically aligned comparison. 
+
+D.4 Differential distribution analysis - Additional results Gene expression (Top 20 genes)  
+
+> B2M TMSB4X MALAT1 HLA−A ACTB RPS19 RPL10 RPL41 RPS27 HLA−B FTL RPLP1 NKG7 RPL13A TMSB10 EEF1A1 RPL13 RPS18 RPS27A FTH1
+> tissue tissue
+> blood decidua
+> 00.5 11.5 2
+
+Figure D.7: scRNA-seq study: Heatmap of log-transformed expression values for the 20 genes with the highest overall prevalence across blood and decidua samples. Each column represents a single cell and each row a gene. Cells are annotated by tissue of origin, and rows and columns are shown without clustering to highlight the global differences in expression levels between the two tissues. 49 permApprox: permutation p -value approximation 025 50 75             
+
+> 050 100 150
+> 025 50 75 100
+> HLA−B (d = 0.498; p = 2.73e−308)
+> TXNIP (d = 2.13; p = 2.79e−247)
+> B2M (d = 0.274; p = 1.27e−216)
+> RPS19 (d = 0.453; p = 1.05e−167)
+> 2350.5 1.0 3.0 5.0 457235
+> 030 60 90 120
+
+Expression value                    
+
+> Count
+> 235
+> 457
+> 0.5 1.0 3.0
+> 0.00 0.25 0.50 0.75 1.00 0.00 0.25 0.50 0.75 1.00 0.00 0.25 0.50 0.75 1.00 0.00 0.25 0.50 0.75 1.00
+> 235
+
+Cumulative probability             
+
+> Expression value
+> 050 100
+> 050 100 150
+> 050 100 150 200 250
+> 0.000 0.005 0.010 0.00 0.02 0.04 0.06 0.005 0.010 0.000 0.005 0.010 0.015
+> 025 50 75 100 125
+
+d W2
+
+> Permutation count
+
+blood decidua blood decidua 
+
+Figure D.8: scRNA-seq study: Histograms (top row), empirical quantile functions (middle row), and permutation distributions (bottom row) of the non-zero expression counts for the four genes with smallest 
+
+permApprox (constrained) p-values ( B = 1000 ). Strip titles report the TS Wasserstein statistic d and the constrained permApprox p-value. The top and middle panels illustrate the observed distributional differences between blood and decidua that contribute to the 2-Wasserstein distance. The bottom panels show the corresponding permutation distributions of d2 
+
+> W
+
+. For all four genes, the observed test statistic lies far beyond the most extreme permutation test statistic. 50 permApprox: permutation p -value approximation Table D.6: scRNA-seq study: p-values for the top 20 genes, ordered by the constrained permApprox (C) 
+
+p-values (bold). For each gene, the table reports the 2-Wasserstein distance d2 
+
+> W
+
+and the p-values obtained from three approaches: the original waddR method, and permApprox(U) and permApprox(C) , which recompute the tail p-values from the same waddR permutation test statistics using unconstrained or constrained GPD fitting, respectively. ˆξwaddR denotes the shape parameter estimate from the waddR tail-refinement step, and 
+
+ˆξ(U ) and ˆξ(C) are the corresponding shape estimates from the unconstrained and constrained permApprox fits. 
+
+Gene d2 
+
+> W
+
+pwaddR ppermApprox(U) ppermApprox(C) ˆξwaddR ˆξ(U) ˆξ(C) 
+
+HLA-B 0.498 0.00e+00 0.00e+00 2.73e-308 0.003 -0.018 -0.003 TXNIP 2.127 0.00e+00 0.00e+00 2.79e-247 0.022 -0.029 -0.004 B2M 0.274 0.00e+00 0.00e+00 1.27e-216 0.007 -0.072 -0.004 RPS19 0.453 NA 1.05e-167 1.05e-167 0.005 -0.003 -0.003 GSTP1 0.612 0.00e+00 1.07e-301 9.53e-162 0.025 -0.006 -0.005 FOS 1.544 0.00e+00 0.00e+00 1.85e-158 0.043 -0.092 -0.006 CCL4 1.298 0.00e+00 0.00e+00 3.11e-141 0.028 -0.169 -0.006 CD99 0.267 0.00e+00 0.00e+00 3.22e-134 0.003 -0.016 -0.006 KLRF1 0.625 0.00e+00 0.00e+00 2.33e-125 0.010 -0.021 -0.006 APMAP 0.336 0.00e+00 0.00e+00 2.51e-123 0.006 -0.052 -0.006 AES 0.483 0.00e+00 0.00e+00 3.89e-118 0.006 -0.027 -0.007 GMFG 0.325 0.00e+00 0.00e+00 4.89e-114 0.003 -0.025 -0.007 COTL1 2.304 0.00e+00 0.00e+00 2.64e-112 0.042 -0.088 -0.007 ZFP36L2 0.595 0.00e+00 0.00e+00 7.06e-110 0.030 -0.100 -0.007 TRAF3IP3 0.432 0.00e+00 0.00e+00 8.88e-108 0.006 -0.057 -0.007 TMSB10 0.191 0.00e+00 0.00e+00 6.05e-105 0.001 -0.056 -0.007 CD63 0.228 0.00e+00 0.00e+00 4.00e-98 0.016 -0.056 -0.007 CDC42 0.246 0.00e+00 0.00e+00 4.35e-94 0.003 -0.013 -0.008 TPST2 0.326 0.00e+00 0.00e+00 8.87e-91 0.006 -0.015 -0.008 CTSW 0.258 0.00e+00 0.00e+00 3.41e-90 0.004 -0.023 -0.008 
+
+Table D.7: Same as Table D.6 but with BH-adjusted p-values. 
+
+Gene d2 
+
+> W
+
+pwaddR ppermApprox(U) ppermApprox(C) ˆξwaddR ˆξ(U) ˆξ(C) 
+
+HLA-B 0.498 0.00e+00 0.00e+00 2.72e-305 0.003 -0.018 -0.003 TXNIP 2.127 0.00e+00 0.00e+00 1.39e-244 0.022 -0.029 -0.004 B2M 0.274 0.00e+00 0.00e+00 4.22e-214 0.007 -0.072 -0.004 RPS19 0.453 NA 5.27e-167 2.62e-165 0.005 -0.003 -0.003 GSTP1 0.612 0.00e+00 5.39e-301 1.90e-159 0.025 -0.006 -0.005 FOS 1.544 0.00e+00 0.00e+00 3.07e-156 0.043 -0.092 -0.006 CCL4 1.298 0.00e+00 0.00e+00 4.43e-139 0.028 -0.169 -0.006 CD99 0.267 0.00e+00 0.00e+00 4.01e-132 0.003 -0.016 -0.006 KLRF1 0.625 0.00e+00 0.00e+00 2.58e-123 0.010 -0.021 -0.006 APMAP 0.336 0.00e+00 0.00e+00 2.50e-121 0.006 -0.052 -0.006 AES 0.483 0.00e+00 0.00e+00 3.52e-116 0.006 -0.027 -0.007 GMFG 0.325 0.00e+00 0.00e+00 4.06e-112 0.003 -0.025 -0.007 COTL1 2.304 0.00e+00 0.00e+00 2.02e-110 0.042 -0.088 -0.007 ZFP36L2 0.595 0.00e+00 0.00e+00 5.03e-108 0.030 -0.100 -0.007 TRAF3IP3 0.432 0.00e+00 0.00e+00 5.90e-106 0.006 -0.057 -0.007 TMSB10 0.191 0.00e+00 0.00e+00 3.77e-103 0.001 -0.056 -0.007 CD63 0.228 0.00e+00 0.00e+00 2.34e-96 0.016 -0.056 -0.007 CDC42 0.246 0.00e+00 0.00e+00 2.41e-92 0.003 -0.013 -0.008 TPST2 0.326 0.00e+00 0.00e+00 4.65e-89 0.006 -0.015 -0.008 CTSW 0.258 0.00e+00 0.00e+00 1.70e-88 0.004 -0.023 -0.008 
+
+51 permApprox: permutation p -value approximation Table D.8: scRNA-seq study: Summary statistics for the three approaches compared in the application. 
+
+waddR refers to the original method, whereas permApprox(U) and permApprox(C) re-use the same waddR permutation test statistics but recompute the p-values via unconstrained or constrained GPD fitting, re-spectively. The column n_tests reports the number of genes with a non-NA test statistic (out of 1,000). 
+
+n_zero denotes the number of zero p-values, and the remaining columns list the number of p-values below the indicated significance thresholds α.
+
+Method n_tests n_zero α = 0 .05 α = 0 .01 α = 0 .001 
+
+waddR 987 328 959 940 915 waddR + permApprox(U) 996 197 967 949 923 waddR + permApprox(C) 996 0 967 949 922 52

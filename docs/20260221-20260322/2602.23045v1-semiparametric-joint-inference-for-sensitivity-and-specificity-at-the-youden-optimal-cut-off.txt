@@ -1,0 +1,588 @@
+Title: Semiparametric Joint Inference for Sensitivity and Specificity at the Youden-Optimal Cut-Off
+
+URL Source: https://arxiv.org/pdf/2602.23045v1
+
+Published Time: Fri, 27 Feb 2026 01:58:41 GMT
+
+Number of Pages: 23
+
+Markdown Content:
+# Semiparametric Joint Inference for Sensitivity and Specificity at the Youden-Optimal Cut-Off 
+
+## Siyan Liu 1, Qinglong Tian 1, Chunlin Wang ∗2 and Pengfei Li 1 
+
+> 1
+
+Department of Statistics and Actuarial Science, University of Waterloo, N2L 3G1, Ontario, Canada  
+
+> 2
+
+Department of Statistics and Data Science, School of Economics and Wang Yanan Institute for Studies in Economics, Xiamen University, 361005, Xiamen, China 
+
+Abstract 
+
+Sensitivity and specificity evaluated at an optimal diagnostic cut-off are funda-mental measures of classification accuracy when continuous biomarkers are used for disease diagnosis. Joint inference for these quantities is challenging because their esti-mators are evaluated at a common, data-driven threshold estimated from both diseased and healthy samples, inducing statistical dependence. Existing approaches are largely based on parametric assumptions or fully nonparametric procedures, which may be sensitive to model misspecification or lack efficiency in moderate samples. We pro-pose a semiparametric framework for joint inference on sensitivity and specificity at the Youden-optimal cut-off under the density ratio model. Using maximum empiri-cal likelihood, we derive estimators of the optimal threshold and the corresponding sensitivity and specificity, and establish their joint asymptotic normality. This leads to Wald-type and range-preserving logit-transformed confidence regions. Simulation studies show that the proposed method achieves accurate coverage with improved effi-ciency relative to existing parametric and nonparametric alternatives across a variety 
+
+> ∗
+
+Corresponding author. Email: wangc@xmu.edu.cn 
+
+1 
+
+> arXiv:2602.23045v1 [stat.ME] 26 Feb 2026 of distributional settings. An analysis of COVID-19 antibody data demonstrates the practical advantages of the proposed approach for diagnostic decision-making.
+> Keywords :confidence region, density ratio model, diagnostic accuracy, empirical likelihood, joint statistical inference, Youden-optimal cut-off point
+
+# 1 Introduction 
+
+In medical diagnostics, a continuous biomarker is often converted into a binary decision rule by selecting a cut-off point that classifies individuals as diseased or healthy (Zhou et al. ,2011; Pepe, 2003; Nakas et al. , 2024). Two quantities play a central role in evaluating the classification accuracy of such a diagnostic rule: sensitivity , the probability of correctly iden-tifying a diseased subject, and specificity , the probability of correctly identifying a healthy subject. Both depend critically on the chosen cut-off point and are inherently linked through the underlying biomarker distributions of diseased and healthy populations. Among various criteria for selecting an “optimal” threshold, the Youden index remains one of the most widely adopted due to its intuitive interpretation and ease of use (Youden, 1950; Schisterman et al. , 2005; Yuan et al. , 2021; Sun et al. , 2025). By maximizing the sum of sensitivity and specificity, the Youden index identifies the cut-off that achieves the highest overall correct classification rate. Let F0 and F1 denote the cumulative distribution functions (CDFs) of the healthy and diseased populations, respectively. Following Yin and Tian (2014) and Hu et al. (2023), we assume that biomarker values are stochastically larger in the diseased group and that an individual is classified as diseased when the biomarker value exceeds a threshold x. Under this classification rule, the sensitivity and specificity at the cut-off point x are defined as 
+
+η(x) = 1 − F1(x), τ (x) = F0(x),
+
+respectively. The Youden index is defined as 
+
+J = max  
+
+> x
+
+{η(x) + τ (x) − 1} = max  
+
+> x
+
+{F0(x) − F1(x)}, (1) 2and the corresponding optimal cut-off point is 
+
+c = arg max  
+
+> x
+
+{F0(x) − F1(x)}. (2) The sensitivity and specificity evaluated at this optimal cut-off are 
+
+η+ = η(c) = 1 − F1(c), τ + = τ (c) = F0(c).
+
+Although the Youden index provides a convenient scalar summary of diagnostic accuracy, clinical decisions depend more directly on the pair (η+, τ +) evaluated at the selected cut-off (Pepe, 2003; Nakas et al. , 2024). Different biomarkers may yield the same Youden index yet exhibit substantially different trade-offs between sensitivity and specificity, underscoring the necessity of valid joint statistical inference (Yin and Tian, 2014; Bantis et al. , 2014; Adimari 
+
+et al. , 2024). Importantly, the optimal cut-off point c is estimated from both diseased and healthy samples, so sensitivity and specificity are evaluated at a common, data-driven threshold. Consequently, the resulting estimators of ( η+, τ +) are statistically dependent, and this dependence must be properly accounted for when constructing joint confidence regions. Existing inference procedures for ( η+, τ +) largely rely on either parametric or nonpara-metric frameworks. Parametric methods, such as the generalized pivotal method and the Box–Cox–based delta method (Yin and Tian, 2014; Bantis et al. , 2014), typically assume that the original biomarkers, or the biomarkers after a Box–Cox transformation (Box and Cox, 1964), in the healthy and diseased groups follow the same parametric distribution family. These approaches are computationally convenient and can perform well when distributional assumptions are approximately correct, but their performance may deteriorate under model misspecification. Nonparametric approaches, including smoothed bootstrap procedures (Yin and Tian, 2014), avoid distributional assumptions but may yield unstable or overly conser-vative confidence regions when sample sizes are small or the data are highly skewed. More recently, Adimari et al. (2024) proposed likelihood-type confidence regions based on empirical likelihood (EL) formulations, allowing for greater flexibility and avoiding prespecified ellipti-cal shapes. While these methods represent an important advance, numerical studies indicate that their finite-sample performance may be unstable in certain settings, particularly when the estimated likelihood critical value becomes large or when the resulting region is poorly 3defined. Moreover, fully nonparametric approaches do not exploit structural similarities that often exist between healthy and diseased populations in biomedical applications, potentially resulting in inefficient inference. To date, joint inference for ( η+, τ +) within a semiparametric framework that leverages such information has not been systematically developed. To address this gap, we adopt a semiparametric modeling approach that relates the biomarker distributions in the two populations through a low-dimensional structure. In many applications, it is reasonable to assume that the diseased and healthy groups are connected through such a structural relationship rather than being completely unrelated (Chen and Liu, 2013). Our proposal is built on modeling the density ratio of the diseased and healthy groups, which can be constructed naturally from the logistic regression model. Specifically, we link disease status D (D = 0 for healthy and D = 1 for diseased) and biomarker value 
+
+X through the logistic regression model: 
+
+P (D = 1 | X = x) = exp {α∗ + β⊤q(x)}
+
+1 + exp {α∗ + β⊤q(x)}, (3) where q(x) is a prespecified p-dimensional basis function, α∗ is an unknown scalar parameter, and β is a vector of unknown parameters. Then, recall that we have F0(x) = P (X ≤ x |
+
+D = 0) and F1(x) = P (X ≤ x | D = 1). By Bayes’ formula, model (3) is equivalent to 
+
+f1(x) = exp {α + β⊤q(x)} f0(x) = exp {θ⊤Q(x)} f0(x), (4) where α = α∗ − log {P (D = 1) /P (D = 0) }, θ = ( α, β⊤)⊤, Q(x) = (1 , q(x)⊤)⊤, and f0
+
+and f1 denote the density functions of F0 and F1, respectively. Model (4), known as the density ratio model (DRM; Anderson, 1979; Qin and Zhang, 1997; Qin, 2017), quantifies the relationship between the two densities through a low-dimensional parametric component. The DRM is semiparametric because the baseline distribution F0 is left unspecified, while the density ratio is modeled parametrically. This structure (4) combines interpretability with flexibility and encompasses many distributions commonly encountered in receiver operating characteristic (ROC) analysis (Hu et al. , 2023). For example, setting q(x) = log( x) accom-modates lognormal and beta families with shared shape characteristics, whereas q(x) = x
+
+covers the normal and exponential families with common variance or rate. The DRM has been successfully applied to ROC analysis and to inference on summary indices such as the 4area under the ROC curve (Qin and Zhang, 2003) and the Youden index (Yuan et al. , 2021), demonstrating improved efficiency relative to fully nonparametric methods while retaining robustness to distributional misspecification. These properties make the DRM particularly appealing for joint inference on sensitivity and specificity at the Youden-optimal cut-off. Despite these developments, joint statistical inference for ( η+, τ +) under the DRM re-mains largely unexplored. Existing DRM-based work has primarily focused on scalar per-formance measures, whereas clinical interpretation and regulatory decisions often hinge on understanding the joint uncertainty of sensitivity and specificity. In this paper, we aim to develop a semiparametric framework for joint inference on ( η+, τ +) under the DRM. Our contributions are summarized as follows. First, we develop a semiparametric frame-work for joint inference on ( η+, τ +) under the DRM and employ the maximum EL principle for estimation. We show that the optimal cut-off estimator can be obtained by solving a sim-ple estimating equation whose solution exists within the observed data range and is unique under mild conditions, including cases where q(x) is a monotone scalar function of x. Sec-ond, we establish the joint asymptotic distribution of the resulting estimators of ( η+, τ +), thereby yielding a statistically valid Wald-type confidence region for ( η+, τ +). Third, ex-tensive simulation studies demonstrate accurate coverage and improved efficiency across a broad range of distributional settings. An application to COVID-19 antibody data further illustrates the practical relevance of the proposed methods for diagnostic decision-making. The remainder of this paper is organized as follows. Section 2 introduces the maximum empirical likelihood estimators (MELEs) of ( η+, τ +), establishes their joint asymptotic nor-mality, and constructs confidence regions for ( η+, τ +). Section 3 presents simulation results, and Section 4 contains a real-data application. Section 5 concludes with a discussion of the findings. For clarity of exposition, all technical details are deferred to the Supplementary Material. 52 Semiparametric inference procedure 
+
+## 2.1 Problem setup and point estimation 
+
+We now describe the proposed estimation procedure under the DRM. Let {X01 , . . . , X 0n0 } ∼ 
+
+F0(x) and {X11 , . . . , X 1n1 } ∼ F1(x) denote two independent random samples from the healthy and diseased populations, respectively, with total sample size n = n0 + n1. Our objective is to make inference on ( η+, τ +) based on these two samples under model (3), or equivalently, (4). Based on the observed data, the full likelihood can be written as 
+
+> n0
+
+Y
+
+> j=1
+
+f0(X0j ) ·
+
+> n1
+
+Y
+
+> j=1
+
+f1(X1j ) = 
+
+> 1
+
+Y
+
+> i=0
+> ni
+
+Y
+
+> j=1
+
+f0(Xij ) ·
+
+> n1
+
+Y
+
+> j=1
+
+exp {θ⊤Q(X1j )},
+
+where the equality follows from the DRM (4). Following the EL principle of Owen (2001), we represent the unknown baseline distribu-tion F0 by discrete probability weights assigned to the pooled observations. Specifically, we set pij = f0(Xij ) for i = 0 , 1 and j = 1 , . . . , n i. The resulting EL function is 
+
+Ln =
+
+> 1
+
+Y
+
+> i=0
+> ni
+
+Y
+
+> j=1
+
+pij ·
+
+> n1
+
+Y
+
+> j=1
+
+exp {θ⊤Q(X1j )},
+
+where the weights {pij } satisfy 
+
+pij ≥ 0,
+
+> 1
+
+X
+
+> i=0
+> ni
+
+X
+
+> j=1
+
+pij = 1 ,
+
+> 1
+
+X
+
+> i=0
+> ni
+
+X
+
+> j=1
+
+pij exp {θ⊤Q(Xij )} = 1 . (5) The first two constraints ensure that F0 is a valid CDF, while the last constraint guarantees that F1, defined through the DRM (4), is also a valid CDF. Let p = ( p01 , . . . , p 0n0 , p 11 , . . . , p 1n1 )⊤. The MELEs of ( θ, p), denoted by ( bθ, bp), are defined as ( bθ, bp) = arg max   
+
+> θ,p
+
+Ln
+
+subject to the constraints in (5). The numerical computation of ( bθ, bp) is described in Sec-tion 1 of the Supplementary Material. Once ( bθ, bp) is obtained, the MELEs of F0 and F1 are 
+
+bF0(x) = 
+
+> 1
+
+X
+
+> i=0
+> ni
+
+X
+
+> j=1
+
+bpij 1(Xij ≤ x), bF1(x) = 
+
+> 1
+
+X
+
+> i=0
+> ni
+
+X
+
+> j=1
+
+bpij exp { bθ⊤Q(Xij )}1(Xij ≤ x),
+
+6where 1(·) denotes the indicator function. Note that they are estimated based on the two-sample pooled data to gain efficiency. Recall the definition of the optimal cut-off in (2). The optimal threshold c satisfies 
+
+f1(c) = f0(c),
+
+which, under the DRM (4), is equivalent to 
+
+θ⊤Q(c) = 0 .
+
+Replacing θ with its MELE bθ, the estimator bc is defined as the solution to 
+
+bθ⊤Q(x) = bα + bβ⊤q(x) = 0 . (6) The corresponding plug-in MELEs of sensitivity and specificity at the optimal cut-off are 
+
+bη+ = 1 − bF1(bc), bτ + = bF0(bc). (7) The following proposition establishes that bc is well defined and lies within the observed data range. 
+
+Proposition 1. Let X(1) = min {Xij : i = 0 , 1, j = 1 , . . . , n i} and X(n) = max {Xij : i =0, 1, j = 1 , . . . , n i}. Assume that q(x) is continuous in x.(i) The equation bα + bβ⊤q(x) = 0 has at least one solution in [X(1) , X (n)].(ii) If bα+ bβ⊤q(x) is strictly monotone in x, then the equation bα+ bβ⊤q(x) = 0 has a unique solution in [X(1) , X (n)].
+
+Part (i) of Proposition 1 guarantees that bc lies within the observed data range. In practice, 
+
+bc is computed by solving (6) over [ X(1) , X (n)] using standard one-dimensional root-finding algorithms. If multiple solutions arise, we select the one that maximizes bF0(x) − bF1(x), in accordance with the definition of the Youden index in (1). When q(x) is a monotone scalar function (e.g., q(x) = log( x) or q(x) = x) and bβ̸ = 0, the solution of bc is unique. Once bc is obtained, ( bη+, bτ +) follow directly from (7). 72.2 Asymptotic properties 
+
+In this subsection, we establish the joint asymptotic normality of ( bη+, bτ +). We begin by introducing some notation. Let ρ = n1/n and assume that ρ is a fixed constant in (0 , 1). This assumption is adopted for notational simplicity and does not affect the asymptotic results. We denote the true values of η+, τ +, and the optimal threshold c by η+∗, τ +∗, and c∗, respectively. Let θ∗
+
+denote the true value of θ, and define 
+
+h1(x) = ρ exp {(θ∗)⊤Q(x)}
+
+1 − ρ + ρ exp {(θ∗)⊤Q(x)}.
+
+Finally, let q′(x) denote the derivative of q(x) with respect to x.The following theorem establishes the joint asymptotic normality of ( bη+, bτ +). A proof is provided in Section 3 of the Supplementary Material. 
+
+Theorem 1. Suppose that Conditions C1–C4 in the Appendix hold. As n → ∞ ,
+
+√n
+
+ bη+ − η+∗
+
+bτ + − τ +∗
+
+ −→ N( 0, Σ),
+
+in distribution, where 0 is a vector of zeros and Σ = HVH ⊤, with 
+
+H =
+
+
+
+{ρ−1B0 + (1 − ρ)−1B1}B−12 0 −1(1 − ρ)−1(B0 − B1)B−12 1 0
+
+ ,
+
+and 
+
+B0 = −
+
+Z c∗
+
+> −∞
+
+h1(x)Q⊤(x) d F0(x), B1 = f0(c∗)Q⊤(c∗)
+
+β⊤q′(c∗) , B2 =
+
+Z ∞−∞ 
+
+h1(x)Q(x)Q⊤(x) d F0(x).
+
+The explicit form of V is given in Lemma S2 of the Supplementary Material. 
+
+The proof of Theorem 1 is nontrivial because both bη+ and bτ + depend on bc, and bc appears inside the indicator function. This leads to nonsmooth functionals and complicates the asymptotic analysis. Our proof combines EL theory under the DRM with empirical process techniques to address this issue; we refer to Section 3 of the Supplementary Material for details. The asymptotic variance-covariance matrix Σ explicitly accounts for the dependence and additional variability introduced by estimating the optimal cut-off and forms the basis for constructing joint confidence regions in the next subsection. 82.3 Joint inference procedure 
+
+In this subsection, we construct a confidence region for ( τ +, η +). Based on the joint asymp-totic normality established in Theorem 1, a Wald-type confidence region can be constructed. To estimate the variance-covariance matrix Σ, we replace the unknown quantities by their consistent estimators. Specifically, we replace ( θ∗, η +∗, τ +∗, F 0, F 1, c ∗) with their MELEs ( bθ, bη+, bτ +, bF0, bF1, bc), and estimate f0(c∗) and f1(c∗) using kernel methods. Given bF0 and bF1, the density functions f0 and f1 are estimated by 
+
+bf0(x) = 
+
+Z ∞−∞ 
+
+Kh0 (x − u) d bF0(u), bf1(x) = 
+
+Z ∞−∞ 
+
+Kh1 (x − u) d bF1(u),
+
+where Kh(x) = K(x/h )/h and K(·) is the standard normal kernel. The bandwidths are selected according to Silverman’s rule of thumb (Silverman, 1986): 
+
+h0 = 1 .06 n−1/5 min( dIQR 0, bσ0), h1 = 1 .06 n−1/5 min( dIQR 1, bσ1),
+
+where dIQR i and bσ2 
+
+> i
+
+denote the interquartile range and variance estimators based on bFi,respectively, for i = 0 , 1. Recall that the optimal cut-off c∗ in (2) satisfies f0(c∗) = f1(c∗). However, in finite samples, bf0(bc) and bf1(bc) may not coincide. We therefore estimate f0(c∗) and f1(c∗) by 12
+
+n bf0(bc) + bf1(bc)
+
+o
+
+.
+
+Let bΣ denote the estimator of Σ obtained by replacing ( θ∗, η +∗, τ +∗, F 0, F 1, c ∗, f 0(c∗), f 1(c∗)) with their corresponding estimators. Then it can be verified that bΣ is a consistent estimator of Σ.
+
+Theorem 2. Under the conditions of Theorem 1, bΣ −→ Σ in probability as n → ∞ .
+
+Let μ = ( η+, τ +)⊤, μ∗ = ( η+∗, τ +∗)⊤, and bμ = ( bη+, bτ +)⊤. Combining Theorems 1 and 2, we obtain 
+
+n( bμ − μ∗)⊤ bΣ−1( bμ − μ∗) −→ χ22,
+
+in distribution as n → ∞ . Accordingly, an asymptotic 100(1 − γ)% Wald-type confidence region for μ is 
+
+CWald =
+
+n
+
+μ : n( bμ − μ)⊤ bΣ−1( bμ − μ) ≤ χ22, 1−γ
+
+o
+
+, (8) 9where χ22, 1−γ denotes the (1 − γ)-quantile of the chi-square distribution with two degrees of freedom. The Wald-type confidence region (8) is not range-preserving. Since ( η+, τ +) ∈ (0 , 1) ×
+
+(0 , 1), CWald may extend beyond the admissible parameter space, particularly when the true values are close to the boundary or the sample size is moderate. To address this issue, we consider the logit transformation logit( x) = log {x/ (1 − x)} and construct the confidence region based on the transformed parameters. Let 
+
+g(μ) = logit( μ) =  logit( η+), logit( τ +)⊤.
+
+By the delta method, 
+
+√n {g( bμ) − g(μ∗)} −→ N 0, Σlogit 
+
+,
+
+in distribution as n → ∞ , where 
+
+Σlogit = M(μ∗) Σ M (μ∗)and 
+
+M(μ∗) = 
+
+ {η+∗(1 − η+∗)}−1 00 {τ +∗(1 − τ +∗)}−1
+
+ .
+
+Replacing μ∗ and Σ by their corresponding estimators bμ and bΣ yields 
+
+bΣlogit = M( bμ) bΣ M ⊤( bμ).
+
+It follows that 
+
+n {g( bμ) − g(μ∗)}⊤ bΣ−1logit {g( bμ) − g(μ∗)} −→ χ22,
+
+in distribution as n → ∞ . Hence, the 100(1 − γ)% confidence region for μ based on the logit transformation is 
+
+Clogit =
+
+n
+
+μ : n {g( bμ) − g(μ∗)}⊤ bΣ−1logit {g( bμ) − g(μ∗)} ≤ χ22, 1−γ
+
+o
+
+. (9) The confidence region Clogit is range-preserving by construction, as it is obtained through a monotone logit transformation that maps (0 , 1) onto R. Consequently, Clogit ⊂ (0 , 1) ×
+
+(0 , 1), ensuring that all admissible parameter values remain within the natural parameter space. Our simulation studies further indicate that Clogit exhibits improved coverage accuracy compared with CWald . Therefore, Clogit is adopted in all subsequent numerical investigations. 10 Remark 1. The proposed estimators in (7) and the joint confidence region in (9) are de-rived under the DRM (4) . In practice, it is therefore important to examine whether this semiparametric modeling strategy provides an adequate description of the data. For a given choice of q(x), one may assess the fit of (4) using the goodness-of-fit proce-dures of Qin and Zhang (1997). Specifically, consider 
+
+∆n0 = sup 
+
+> x
+
+| bF0(x) − eF0(x)| or ∆n1 = sup 
+
+> x
+
+bF1(x) − eF1(x) ,
+
+where 
+
+eF0(x) = 1
+
+n0
+
+> n0
+
+X
+
+> i=1
+
+1(X0i ≤ x), eF1(x) = 1
+
+n1
+
+> n1
+
+X
+
+> i=1
+
+1(X1i ≤ x)
+
+denote the empirical distribution functions of the healthy and diseased samples, respectively. Bootstrap resampling was suggested to approximate the null distribution and obtain a test 
+
+p-value. Since ∆n0 = ρ∆n1/(1 − ρ), the two statistics lead to equivalent conclusions. In practice, it is sufficient to report one of them, for example, ∆n0.
+
+# 3 Simulation study 
+
+## 3.1 Simulation design 
+
+In this section, we conduct simulation studies to evaluate the finite-sample performance of the proposed point estimators in (7) and the confidence region in (9) for ( η+, τ +). The proposed procedures are compared with the following five competing methods: 
+
+• GPQ : the parametric generalized pivotal method incorporating a Box–Cox transfor-mation (Yin and Tian, 2014); 
+
+• BTATII : a nonparametric smoothed bootstrap procedure based on the arcsine–square-root transformation, centered at the observed estimates (Yin and Tian, 2014); 
+
+• Delta BC : the parametric delta method with a Box–Cox transformation and bootstrap-based variance estimation (Bantis et al. , 2014); 
+
+• Emp BC : the empirical likelihood pivot approach combined with a Box–Cox trans-formation (Adimari et al. , 2024); 11 • Emp NP : the fully nonparametric empirical likelihood method employing Gaussian kernel estimation (Adimari et al. , 2024). All competing methods are primarily designed for constructing confidence regions for ( η+, τ +). Each method also provides corresponding point estimators. Accordingly, our comparison as-sesses both point estimation accuracy and confidence region performance. We consider three distributional settings: (1) f0 ∼ LN (a0, b 0) and f1 ∼ LN (a1, b 1); (2) f0 ∼ Gamma (a0, b 0) and f1 ∼ Gamma (a1, b 1); (3) f0 ∼ Beta (a0, b 0) and f1 ∼ Beta (a1, b 1). Here, LN (a, b ) denotes the lognormal distribution with mean a and variance b on the log scale; Gamma (a, b ) denotes the gamma distribution with shape parameter a and rate pa-rameter b (so that the scale parameter equals 1 /b ); and Beta (a, b ) denotes the beta dis-tribution with shape parameters a and b, corresponding to x and (1 − x), respectively. For each distributional setting, f0 is fixed, while the parameters of f1 are chosen so that the resulting true Youden index, denoted by J∗, equals 0.3, 0.5, or 0.7, representing low, moderate, and high discriminative ability of a biomarker, respectively. The detailed param-eter configurations are reported in Table 1. We examine four sample-size configurations, (n0, n 1) ∈ { (50 , 50) , (100 , 100) , (50 , 100), (100 , 50) }. Each scenario is replicated 1000 times. For all three distributions considered, the DRM (4) holds with q(x) = log( x), consistent with the specification suggested in the real-data analysis in Section 4. We observe that the performance patterns under unequal sample sizes, ( n0, n 1) = (50 , 100) and ( n0, n 1) = (100 , 50), are similar to those under equal sample sizes, ( n0, n 1) = (50 , 50) and ( n0, n 1) = (100 , 100). Therefore, we report only the results for equal sample sizes in the main text and present the results for unequal sample sizes in Section 4 of the Supplementary Material. 
+
+## 3.2 Comparison of point estimation 
+
+Tables 2 and 3 report the relative bias (RB, in %) and mean squared error (MSE, multiplied by 100) for the point estimators of η+ and τ +, respectively; “Our” refers to the proposed 12 Table 1: Parameter configurations for the three distributional settings. Distribution J∗ η+∗ τ +∗ a0 b0 a1 b1
+
+Lognormal 0.3 0.65 0.65 0 1 0.77 10.5 0.75 0.75 0 1 1.35 10.7 0.85 0.85 0 1 2.07 1Gamma 0.3 0.697 0.604 1.5 1 2.47 10.5 0.786 0.714 1.5 1 3.39 10.7 0.874 0.826 1.5 1 4.81 1Beta 0.3 0.727 0.573 1.5 3 2.77 30.5 0.814 0.686 1.5 3 4.25 30.7 0.896 0.804 1.5 3 7.09 3semiparametric method. Let bη+( l), l = 1 , . . . , L , denote the l-th simulated estimate of η+.The RB (in percentage) and MSE are defined as RB( bη+) = 
+
+> 1
+> L
+
+PLl=1 bη+( l) − η+∗
+
+η+∗ × 100 , MSE( bη+) = 1
+
+L
+
+> L
+
+X
+
+> l=1
+
+ bη+( l) − η+∗2 .
+
+The RB and MSE for the other estimators of η+, as well as for all estimators of τ +, are computed analogously. Overall, the proposed method achieves the smallest MSE in most scenarios while main-taining consistently low RB across all distributions and sample sizes. Both GPQ and Delta BC exhibit moderately larger MSEs. Their biases become more pronounced under the beta distribution, particularly at larger values of the Youden index. BTATII tends to show sub-stantially higher bias and variability when the sample sizes are small, although its perfor-mance improves as the sample size increases. Among the empirical likelihood–based ap-proaches, Emp BC produces relatively stable results but generally yields larger MSEs than the proposed method. In contrast, Emp NP displays noticeable fluctuations in both RB and MSE across settings, indicating limited numerical stability. 13 Table 2: RB (%) and MSE ( ×100) for the six estimators of η+.
+
+Our GPQ BTATII Delta BC Emp BC Emp NP 
+
+Distribution (n0, n 1) J∗ RB MSE RB MSE RB MSE RB MSE RB MSE RB MSE Lognormal (50, 50) 0.3 0.26 0.23 0.49 0.59 -16.68 2.64 0.36 0.63 0.22 0.84 -13.29 1.30 0.5 0.15 0.20 0.13 0.27 -11.44 1.29 0.43 0.28 0.34 0.31 -12.20 1.18 0.7 0.19 0.13 -0.17 0.14 -9.48 1.07 0.27 0.13 0.09 0.17 -11.68 1.22 (100, 100) 0.3 0.28 0.11 0.64 0.31 -12.23 1.45 0.64 0.33 0.57 0.38 -10.35 0.81 0.5 0.33 0.09 0.35 0.14 -8.81 0.75 0.51 0.14 0.25 0.16 -9.70 0.74 0.7 0.31 0.06 0.07 0.07 -7.10 0.58 0.29 0.07 0.16 0.09 -9.94 0.85 Gamma (50, 50) 0.3 0.31 0.19 1.04 0.50 -9.25 1.57 1.20 0.53 1.98 0.61 -6.74 1.40 0.5 0.45 0.14 1.01 0.22 -6.48 0.76 1.24 0.23 1.61 0.25 -4.26 0.61 0.7 0.42 0.10 0.71 0.10 -4.39 0.42 1.03 0.10 1.22 0.11 -2.81 0.27 (100, 100) 0.3 0.17 0.10 0.82 0.28 -7.44 1.06 0.89 0.29 1.22 0.32 -4.86 0.98 0.5 0.15 0.08 0.82 0.13 -4.84 0.46 0.93 0.13 1.03 0.14 -2.81 0.38 0.7 0.17 0.05 0.62 0.06 -2.65 0.21 0.77 0.06 0.80 0.06 -1.81 0.17 Beta (50, 50) 0.3 0.00 0.17 0.33 0.44 -3.58 1.31 0.50 0.46 1.34 0.39 -3.45 1.50 0.5 -0.09 0.11 2.13 0.21 -2.73 0.48 2.32 0.22 1.90 0.16 -1.64 0.53 0.7 -0.04 0.07 3.01 0.13 -2.31 0.22 3.20 0.13 1.65 0.07 -1.10 0.19 (100, 100) 0.3 0.14 0.08 1.01 0.21 -1.73 0.73 1.12 0.22 1.51 0.17 -1.96 0.98 0.5 0.09 0.06 2.69 0.13 -0.93 0.24 2.79 0.14 2.03 0.09 -0.31 0.31 0.7 0.08 0.03 3.29 0.11 -0.71 0.10 3.38 0.12 1.53 0.04 0.18 0.12 
+
+## 3.3 Comparison of confidence regions 
+
+We now compare the proposed joint confidence region for μ = ( η+, τ +)⊤ with those ob-tained from the five competing methods. The nominal confidence level is set at 95%. The performance of a confidence region is assessed by the coverage probability (CP, in %) and the average area of the confidence region (ACR), defined as 
+
+CP = 1
+
+L
+
+> L
+
+X
+
+> l=1
+
+1 μ∗ ∈ I (l) × 100 , ACR = 1
+
+L
+
+> L
+
+X
+
+> l=1
+
+C(l),
+
+14 Table 3: RB (%) and MSE ( ×100) for the six estimators of τ +.
+
+Our GPQ BTATII Delta BC Emp BC Emp NP 
+
+Distribution (n0, n 1) J∗ RB MSE RB MSE RB MSE RB MSE RB MSE RB MSE Lognormal (50, 50) 0.3 0.12 0.22 0.74 0.61 14.88 1.62 0.88 0.63 1.28 0.83 14.59 1.60 0.5 0.43 0.18 0.28 0.29 7.72 0.66 0.58 0.30 0.95 0.33 10.70 0.96 0.7 0.38 0.13 -0.09 0.15 3.80 0.26 0.34 0.15 0.74 0.16 5.56 0.35 (100, 100) 0.3 0.17 0.12 0.32 0.32 11.50 1.03 0.29 0.34 0.42 0.39 11.86 1.03 0.5 0.30 0.09 0.21 0.15 7.11 0.50 0.36 0.15 0.70 0.17 9.35 0.69 0.7 0.20 0.06 0.01 0.07 4.32 0.24 0.23 0.07 0.46 0.08 6.08 0.36 Gamma (50, 50) 0.3 0.70 0.25 1.32 0.60 10.44 1.48 1.08 0.64 0.61 0.77 8.04 1.56 0.5 0.58 0.23 0.44 0.29 4.30 0.57 0.82 0.30 0.82 0.33 3.67 0.67 0.7 0.62 0.17 -0.14 0.16 0.01 0.24 0.39 0.16 0.51 0.16 1.19 0.27 (100, 100) 0.3 0.29 0.14 0.58 0.33 9.04 1.02 0.48 0.34 0.55 0.39 5.93 1.06 0.5 0.25 0.13 0.14 0.16 3.70 0.36 0.34 0.16 0.50 0.18 2.26 0.41 0.7 0.24 0.08 -0.13 0.08 0.65 0.14 0.15 0.08 0.26 0.09 0.87 0.16 Beta (50, 50) 0.3 0.13 0.28 1.84 0.49 4.69 1.46 1.56 0.52 4.43 0.60 5.43 1.64 0.5 0.45 0.28 0.47 0.26 0.17 0.58 0.91 0.27 4.21 0.34 1.49 0.67 0.7 0.67 0.20 0.43 0.16 -2.23 0.33 1.10 0.17 2.54 0.17 0.25 0.30 (100, 100) 0.3 0.23 0.15 0.90 0.24 3.22 0.87 0.77 0.25 4.48 0.30 3.58 1.05 0.5 0.48 0.14 0.48 0.13 0.08 0.34 0.71 0.14 4.30 0.21 0.65 0.43 0.7 0.37 0.11 0.72 0.08 -1.35 0.19 1.06 0.09 2.63 0.11 -0.29 0.19 
+
+where I(l) denotes the confidence region for μ obtained from the l-th simulation run, and 
+
+C(l) represents its area. Table 4 reports the empirical CPs and ACRs for all methods, where “Our” refers to the proposed method. We note that the Emp NP method may produce numerical errors in some simulation repetitions and therefore fails to construct a confidence region for μ in those cases. The number of such failures (out of 1000 repetitions) in each scenario is recorded and reported in the last column, denoted by “#Err”. Across all settings, the proposed method attains coverage probabilities close to the nom-15 inal 95% level while maintaining the smallest or near-smallest ACRs. The coverage of the GPQ method generally decreases as the Youden index increases, with the decline being par-ticularly pronounced under the beta distribution. BTATII tends to exhibit the opposite pattern in several settings, with coverage improving as the Youden index increases, although this trend is not strictly monotone across all distributions and sample sizes. Delta BC demonstrates intermediate performance, with coverage probabilities typically lying between those of the proposed method and the GPQ approach. However, its coverage deteriorates substantially under the beta distribution and, to a lesser extent, under the gamma distribu-tion when the Youden index is large. This suggests that Delta BC may perform poorly when the Box–Cox transformation model is misspecified, especially at high discriminative levels. Among the two EL methods, Emp BC achieves reasonably stable nominal coverage (approx-imately 90%–96%) but produces substantially larger confidence regions than the proposed method. In contrast, Emp NP exhibits frequent computational failures. The number of fail-ures (reported in the last column of Table 4) reaches as high as 442 out of 1000 simulations in the lognormal setting with a Youden index of 0.7. 
+
+# 4 Real data analysis 
+
+We illustrate the proposed method and compare it with five competing approaches using the COVID-19 antibody dataset analyzed by Bantis et al. (2024). The data consist of receptor-binding domain (RBD)–specific IgG antibody titers measured in healthcare workers following the second dose of the Pfizer–BioNTech BNT162b2 mRNA vaccine. Antibody titers (denoted by x), expressed in arbitrary units per milliliter (AU/mL), are available for 100 healthcare workers, including 42 infection-positive and 58 infection-negative individuals, representing the immune response approximately two weeks after the second vaccination dose. The dataset is available in the Supporting Information of Bantis et al. (2024). Without having to specify a fully parametric distribution, the only component that needs to be specified in our approach is the basis function q(x) in the DRM (4). As no specific functional form for q(x) was prescribed a priori, we considered a range of candidate specifi-cations, including x, log( x), x2, {log( x)}2, and their combinations. Model selection criteria 16 Table 4: CP (%) and ACR ( ×100) for the six 95% confidence regions of ( η+, τ +). 
+
+Our GPQ BTATII Delta BC Emp BC Emp NP 
+
+Distribution (n0, n 1) J∗ CP ACR CP ACR CP ACR CP ACR CP ACR CP ACR #Err Lognormal (50, 50) 0.3 95.2 3.94 89.9 9.99 54.9 6.71 91.7 9.52 91.0 15.9 71.3 20.4 23 0.5 95.7 3.31 87.6 4.60 69.1 7.33 91.2 4.98 93.1 6.85 63.5 12.1 77 0.7 95.4 2.39 82.7 1.94 77.8 6.67 91.7 2.49 95.8 4.16 73.3 7.21 442 (100, 100) 0.3 94.3 1.99 91.5 4.85 53.2 3.81 93.6 4.90 93.2 8.07 71.0 14.8 10.5 96.2 1.65 88.5 2.22 61.4 4.12 92.6 2.60 94.1 3.75 62.2 8.17 10.7 96.3 1.16 81.0 0.90 79.6 3.95 93.5 1.28 95.4 2.40 67.5 4.62 38 Gamma (50, 50) 0.3 96.0 3.93 89.1 9.40 59.3 7.12 92.2 8.86 91.1 14.1 91.4 29.1 20.5 95.6 3.22 86.6 4.30 82.1 7.63 91.8 4.54 93.0 6.37 92.6 14.9 40.7 95.5 2.22 81.8 1.78 96.1 7.17 90.8 2.14 93.5 3.70 94.0 7.05 52 (100, 100) 0.3 93.8 1.99 90.2 4.61 56.7 3.90 92.3 4.54 93.6 7.22 91.5 22.2 00.5 94.2 1.62 86.1 2.11 80.1 4.19 91.8 2.39 93.1 3.38 93.1 10.2 00.7 94.8 1.10 80.6 0.85 96.9 4.04 89.9 1.11 93.0 1.93 95.0 4.22 0Beta (50, 50) 0.3 95.3 3.93 92.8 9.16 61.7 6.97 94.0 8.26 96.1 10.9 95.5 31.7 16 0.5 95.4 3.24 83.3 3.75 87.7 7.48 90.2 4.00 95.0 5.67 95.8 15.1 33 0.7 95.6 2.23 58.1 1.23 98.5 6.89 73.2 1.56 95.1 3.55 96.1 6.37 160 (100, 100) 0.3 95.5 1.99 92.3 4.31 59.4 3.83 93.6 4.02 96.5 5.17 94.4 23.5 00.5 95.2 1.62 79.7 1.74 88.6 4.13 87.3 1.96 94.8 2.88 93.9 10.1 00.7 95.9 1.09 34.6 0.56 97.6 3.96 59.9 0.74 94.2 1.77 95.2 3.89 6
+
+> #Err: number of times the Emp NP method fails to construct a confidence region (out of 1000 repetitions).
+
+based on the AIC and BIC, as summarized in Table 5, consistently favored the specification 
+
+q(x) = log( x). To further assess model adequacy, we applied the goodness-of-fit procedure described in Remark 1 using 1000 bootstrap samples. The resulting p-value of 0.76 provides no evidence against the DRM under q(x) = log( x). Figure 1 compares the MELEs ( bF0, bF1)with the corresponding empirical distribution functions ( eF0, eF1). The close agreement be-tween the two further supports the adequacy of the selected basis specification. 17 Table 5: Model selection results for the COVID-19 antibody data. 
+
+q(x) AIC BIC log( x) 907.95 913.16 
+
+{log( x)}2 908.18 913.39 log( x) + {log( x)}2 909.63 917.45 
+
+x + log( x) 909.85 917.67 
+
+x + x2 + {log( x)}2 909.93 920.35 log( x) + x2 909.95 917.77 
+
+x + {log( x)}2 909.98 917.79 
+
+x + log( x) + x2 910.00 920.42 
+
+x2 + {log( x)}2 910.15 917.97 log( x) + x2 + {log( x)}2 910.44 920.86 
+
+x + log( x) + {log( x)}2 910.76 921.18 
+
+x 911.41 916.62 
+
+x + x2 + log( x) + {log( x)}2 911.54 924.57 
+
+x + x2 912.13 919.95 
+
+x2 914.92 920.13 Table 6 presents the point estimates of ( η+, τ +), together with the corresponding areas (×100) of the 95% joint confidence regions obtained from the competing methods. Among these, Emp NP yields the largest confidence region, whereas the proposed method produces the smallest area (3 .889 × 10 −2). The Delta BC, Emp BC, BTATII, and GPQ procedures yield intermediate region sizes. These findings are consistent with the simulation results. Figure 2 displays the corresponding 95% joint confidence regions for ( η+, τ +). The region obtained from the proposed method is largely nested within those produced by the alternative approaches, indicating a higher degree of joint precision. In contrast, Emp NP generates the most diffuse region. These graphical results align with the numerical comparisons in Table 6 and further illustrate the relative efficiency of the proposed procedure. 18 10000 30000 50000 0.0  0.2  0.4  0.6  0.8  1.0                
+
+> F^0vs. F~0Cumulative distribution function
+> x
+> F~0F^0
+> 20000 40000 60000 80000 0.0  0.2  0.4  0.6  0.8  1.0
+> F^1vs. F~1Cumulative distribution function
+> x
+> F~1F^1
+
+Figure 1: Comparison of the MELEs ( bF0, bF1) with the corresponding empirical distribution functions ( eF0, eF1) for the COVID-19 antibody data. Table 6: Point estimates (PEs) of ( η+, τ +) and areas ( ×100) of the corresponding 95% confidence regions (CRs) for the COVID-19 antibody data. Method PE of η+ PE of τ + Area of 95% CR Our 0.694 0.641 3.889 GPQ 0.724 0.616 8.427 BTATII 0.696 0.613 7.168 Delta BC 0.731 0.612 7.993 Emp BC 0.654 0.676 8.764 Emp NP 0.688 0.604 40.605 
+
+# 5 Discussion 
+
+This paper develops semiparametric procedures for joint statistical inference on sensitivity and specificity at the Youden-optimal cut-off under the DRM. We show that the estimator of the optimal cut-off can be obtained by solving a simple estimating equation whose solution is guaranteed to lie within the observed data range and is unique when q(x) is a monotone scalar function. We further establish the joint asymptotic normality of the resulting estimators 19 Sensitivity Specificity         
+
+> 0.2 0.4 0.6 0.8 1.0 0.0  0.2  0.4  0.6  0.8  1.0
+> 0.2 0.4 0.6 0.8 1.0 0.0  0.2  0.4  0.6  0.8  1.0
+> Our GPQ BTATII Delta BC Emp BC Emp NP
+
+Figure 2: Plots of the 95% confidence regions for ( η+, τ +) based on the COVID-19 antibody data. and construct a statistically valid confidence region for sensitivity and specificity at the Youden-optimal cut-off. Simulation studies and the analysis of the COVID-19 antibody data demonstrate the favorable finite-sample performance and practical utility of the proposed methods. While this article focuses on the two-class setting, the proposed procedures under the DRM (4) can be extended to multi-class problems. In the three- and general k-class cases, diagnostic accuracy is characterized by ROC surfaces or manifolds and the associated vector of true class fractions (TCFs) (Bantis et al. , 2017; Wang et al. , 2024). Because our framework provides joint inference for a vector of accuracy measures and properly accounts for the correlation induced by data-driven cut-off estimation, the same principles can be applied to the multi-dimensional TCF parameters arising from optimal multi-threshold selection. We leave the development of these extensions to future research. 20 A Regularity conditions 
+
+The asymptotic results in Theorems 1 and 2 are established under the following regularity conditions. C1. The total sample size n = n0 + n1 → ∞ , and ρ = n1/n converges to a constant in (0 , 1). C2. The two distribution functions F0 and F1 satisfy the DRM (4). In addition, 
+
+B2 =
+
+Z ∞−∞ 
+
+h1(x)Q(x)Q⊤(x) d F0(x)is positive definite. Moreover, for θ in a neighborhood of θ∗,
+
+Z ∞−∞ 
+
+exp θ⊤Q(x) dF0(x) < ∞.
+
+C3. For any ϵ > 0, 
+
+Jϵ = sup 
+
+> |x−c∗|>ϵ
+
+{F0(x) − F1(x)} < J ∗.
+
+C4. For i = 0 , 1, the distribution function Fi is twice continuously differentiable in a neigh-borhood of c∗, with first and second derivatives denoted by fi and f ′ 
+
+> i
+
+, respectively. Furthermore, f0(c∗) = f1(c∗) > 0 and f ′
+
+> 0
+
+(c∗) < f ′
+
+> 1
+
+(c∗). Condition C1 ensures that n0 and n1 diverge at the same rate as the total sample size. Condition C2 guarantees the identifiability of the DRM parameters and, together with C1, ensures the asymptotic normality of bθ. Conditions C3 and C4 ensure the uniqueness and identifiability of the Youden-optimal cut-off c∗.
+
+# References 
+
+Adimari, G., To, D.-K., Chiogna, M., Scatozza, F., and Facchiano, A. (2024). Likelihood-type confidence regions for optimal sensitivity and specificity of a diagnostic test. Computational Statistics & Data Analysis , 189 , 107840. Anderson, J. A. (1979). Multivariate logistic compounds. Biometrika , 66 , 17–26. 21 Bantis, L. E., Nakas, C. T., and Reiser, B. (2014). Construction of confidence regions in the ROC space after the estimation of the optimal Youden index-based cut-off point. 
+
+Biometrics , 70 , 212–223. Bantis, L. E., Nakas, C. T., Reiser, B., Myall, D., and Dalrymple-Alford, J. C. (2017). Construction of joint confidence regions for the optimal true class fractions of receiver operating characteristic (ROC) surfaces and manifolds. Statistical Methods in Medical Research , 26 , 1429–1442. Bantis, L. E., Brewer, B., Nakas, C. T., and Reiser, B. (2024). Statistical inference for Box–Cox based receiver operating characteristic curves. Statistics in Medicine , 43 , 6099– 6122. Box, G. E. and Cox, D. R. (1964). An analysis of transformations. Journal of the Royal Statistical Society Series B: Statistical Methodology , 26 , 211–243. Chen, J. and Liu, Y. (2013). Quantile and quantile-function estimations under density ratio model. The Annals of Statistics , 41 , 1669–1692. Hu, D., Yuan, M., Yu, T., and Li, P. (2023). Statistical inference for the two-sample problem under likelihood ratio ordering, with application to the ROC curve estimation. Statistics in Medicine , 42 , 3649–3664. Nakas, C. T., Bantis, L. E., and Gatsonis, C. A. (2024). ROC Analysis for Classification and Prediction in Practice . FL: CRC Press, Boca Raton. Owen, A. B. (2001). Empirical Likelihood . FL: CRC Press, Boca Raton. Pepe, M. S. (2003). The Statistical Evaluation of Medical Tests for Classification and Pre-diction . UK: Oxford University Press, Oxford. Qin, J. (2017). Biased Sampling, Over-Identified Problems and Beyond . Singapore: Springer. Qin, J. and Zhang, B. (1997). A goodness-of-fit test for logistic regression models based on case-control data. Biometrika , 84 , 609–618. 22 Qin, J. and Zhang, B. (2003). Using logistic regression procedures for estimating receiver operating characteristic curves. Biometrika , 90 , 585–596. Schisterman, E. F., Perkins, N. J., Liu, A., and Bondell, H. (2005). Optimal cut-point and its corresponding Youden index to discriminate individuals using pooled blood samples. 
+
+Epidemiology , 16 , 73–81. Silverman, B. W. (1986). Density Estimation for Statistics and Data Analysis . NY: CRC Press. Sun, A., Li, Y., and Zhou, X.-H. (2025). Biomarker combination based on the Youden index with and without gold standard. Statistics in Medicine , 44 , e70189. Wang, J., Yin, J., and Tian, L. (2024). Evaluating joint confidence region of hypervolume under ROC manifold and generalized Youden index. Statistics in Medicine , 43 , 869–889. Yin, J. and Tian, L. (2014). Joint inference about sensitivity and specificity at the optimal cut-off point associated with Youden index. Computational Statistics & Data Analysis ,
+
+77 , 1–13. Youden, W. J. (1950). Index for rating diagnostic tests. Cancer , 3, 32–35. Yuan, M., Li, P., and Wu, C. (2021). Semiparametric inference of the Youden index and the optimal cut-off point under density ratio models. The Canadian Journal of Statistics , 49 ,965–986. Zhou, X.-H., McClish, D. K., and Obuchowski, N. A. (2011). Statistical Methods in Diag-nostic Medicine . New York: Wiley, 2nd edition. 23

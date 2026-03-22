@@ -1,0 +1,1545 @@
+Title: MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis
+
+URL Source: https://arxiv.org/pdf/2602.22955v1
+
+Published Time: Fri, 27 Feb 2026 02:03:28 GMT
+
+Number of Pages: 25
+
+Markdown Content:
+# MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis 
+
+## Feng Guo ∗
+
+guofeng@gdiist.cn Guangdong Institute of Intelligence Science and Technology Hengqin, China 
+
+## Jiaxiang Liu ∗
+
+liujiaxiang@gdiist.cn Guangdong Institute of Intelligence Science and Technology Hengqin, China 
+
+## Yang Li 
+
+liyang@gdiist.cn Guangdong Institute of Intelligence Science and Technology Hengqin, China 
+
+## Qianqian Shi 
+
+qqshi@mail.tsinghua.edu.cn Center for Brain-Inspired Computing Research (CBICR), Department of Precision Instrument, Tsinghua University Beijing, China 
+
+## Mingkun Xu †
+
+xumingkun@gdiist.cn Guangdong Institute of Intelligence Science and Technology Hengqin, China 
+
+## Abstract 
+
+Accurate brain tumor diagnosis requires models to not only de-tect lesions but also generate clinically interpretable reasoning grounded in imaging manifestations, yet existing public datasets remain limited in annotation richness and diagnostic semantics. To bridge this gap, we introduce MM-NeuroOnco , a large-scale multimodal benchmark and instruction-tuning dataset for brain tumor MRI understanding, consisting of 24,726 MRI slices from 20 data sources paired with approximately 200,000 semantically enriched multimodal instructions spanning diverse tumor subtypes and imaging modalities. To mitigate the scarcity and high cost of diagnostic semantic annotations, we develop a multi-model collab-orative pipeline for automated medical information completion and quality control, enabling the generation of diagnosis-related seman-tics beyond mask-only annotations. Building upon this dataset, we further construct MM-NeuroOnco-Bench , a manually annotated evaluation benchmark with a rejection-aware setting to reduce bi-ases inherent in closed-ended question formats. Evaluation across ten representative models shows that even the strongest baseline, Gemini 3 Flash, achieves only 41.88% accuracy on diagnosis-related questions, highlighting the substantial challenges of multimodal brain tumor diagnostic understanding. Leveraging MM-NeuroOnco, we further propose NeuroOnco-GPT , which achieves a 27% abso-lute accuracy improvement on diagnostic questions following fine-tuning. This result demonstrates the effectiveness of our dataset  
+
+> ∗These authors contributed equally to this work.
+> †Corresponding author. Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+> Conference acronym ’XX, Woodstock, NY
+> ©2018 Copyright held by the owner/author(s). Publication rights licensed to ACM. ACM ISBN 978-1-4503-XXXX-X/2018/06 https://doi.org/XXXXXXX.XXXXXXX
+
+and benchmark in advancing clinically grounded multimodal di-agnostic reasoning. Code and dataset are publicly available at: https://github.com/gfnnnb/MM-NeuroOnco. 
+
+## CCS Concepts 
+
+• Computing methodologies → Natural language processing ;
+
+Computer vision ; Machine learning ; • Applied computing →
+
+Life and medical sciences ; • Information systems → Data mining .
+
+## Keywords 
+
+Instruction Dataset, Medical Benchmark, Multimodal Large Lan-guage Models, Neuro-Oncology 
+
+ACM Reference Format: 
+
+Feng Guo, Jiaxiang Liu, Yang Li, Qianqian Shi, and Mingkun Xu. 2018. MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis. In Proceedings of Make sure to enter the correct conference title from your rights confirmation email (Conference acronym ’XX). 
+
+ACM, New York, NY, USA, 25 pages. https://doi.org/XXXXXXX.XXXXXXX 
+
+## 1 Introduction 
+
+Brain tumors are a highly lethal class of diseases arising within the central nervous system [ 9, 53 ]. Clinical practice indicates that reliable differential diagnosis cannot be achieved through lesion localization alone, but instead requires holistic reasoning grounded in multi-dimensional imaging semantics [ 15 ]. In recent years, deep learning has achieved remarkable progress in brain tumor segmen-tation tasks, with paradigms such as the BraTS challenge series con-tinuously advancing pixel-level lesion modeling capabilities [ 45 ]. However, these segmentation-centric approaches primarily empha-size spatial boundary delineation, while largely overlooking the medical semantic modeling and diagnostic reasoning that are essen-tial for clinical decision-making [ 57 ]. High segmentation accuracy does not necessarily translate into correct understanding of tumor invasiveness, cross-modal discrepancies, or pathological implica-tions, leaving existing models with notable limitations in real-world clinical scenarios.  
+
+> 1
+> arXiv:2602.22955v1 [cs.CV] 26 Feb 2026 Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu
+
+· 20 public datasets 
+
+· 4 MRI modalities 
+
+· 8 tumor types + healthy 
+
+· 73226 MRI slices (full po ol) 
+
+· 70K open-ended VQA pairs 
+
+· 130K closed-ended VQA pairs 
+
+· 24726 curated slices (silver-labeled) 
+
+· 1K benchmark images ＆3k VQA pairs 
+
+...... 
+
+Close d-Ended QA 
+
+Diagnosis 
+
+> Which pathology is
+> shown on T2 MRI?
+> A: Glioma
+> B: Meningioma
+> C: Glioblastoma
+> D: Metastasis
+> A) Glioma
+
+Margins  
+
+> How are the marg-
+> ins characterized?
+> A: Sharp
+> B: Indistinct
+> C: Calcified
+> D: Enhancing rim
+> B) Indistinct
+
+Signal Intensity 
+
+> What is the lesion's
+> T2 signal?
+> A: Hypointense
+> B: Isointense
+> C: Hyperintense
+> D: Mixed
+> C) Hyperintense
+
+Edema 
+
+> How is the edema
+> characterized?
+> A: Absent
+> B: Mild
+> C: Moderate
+> D: Extensive
+> D) Extensive
+
+Shape 
+
+> What is the lesion's
+> shape?
+> A: Round
+> B: Ovoid
+> C: Irregular
+> D: Linear
+> C) Irregular
+
+Attribute ＆ CoT            
+
+> Explanation (CoT) ：
+> The lesion's irregular shape ,and extensive edema on
+> T2 MRI reflect the infiltrative growth pattern
+> characteristic of glioma .
+> Q:What imaging features
+> support the diagnosis of
+> glioma?
+> A：The diagnosis of
+> glioma is supported by
+> T2 hyperintensity ,an
+> irregular infiltrative
+> lesion with indistinct
+> margins , and extensive
+> surrounding edema.
+> Golden-Label ：Glioma ，T2-
+> weighted MRI
+> Silver-Label ：Irregular Shape ，
+> Extensive Edema
+
+Open-Ended QA 
+
+> Brain MRI Slice
+
+## MM-NeuroOnco 
+
+Figure 1: Overview of MM-NeuroOnco. The benchmark curates 24,726 slices from 20 diverse datasets. Standard diagnostic labels are augmented with fine-grained semantic attributes to construct explicit Chain-of-Thought (CoT) reasoning. This structure enables a multi-grained evaluation paradigm, covering both holistic open-ended diagnosis and targeted closed-ended Question Answering across multiple clinical categories. 
+
+In routine clinical workflows, radiologists typically base brain tu-mor diagnosis on a small set of highly informative two-dimensional slices, interpreted through cross-modal comparison across MRI sequences, rather than exhaustive voxel-wise analysis of full three-dimensional volumes. This slice-centered diagnostic paradigm is particularly aligned with auxiliary diagnosis and clinical settings requiring rapid diagnosis, and more closely reflects how human clinicians perform diagnostic reasoning in practice. By contrast, directly operating on full 3D volumes, while offering richer spa-tial context, often incurs substantial computational overhead and inference latency, limiting its practicality in efficient clinical de-ployment [16]. To address these limitations, as illustrated in Figure 1, we con-struct a multimodal instruction-tuning dataset and benchmark tai-lored for brain tumor MRI understanding. Distinct from prior works that emphasize visual recognition or coarse-grained question an-swering, our design focuses on high-density diagnostic semantics and structured reasoning supervision. By organizing diagnosis-relevant attributes into explicit intermediate reasoning steps, we enable models to follow clinically grounded diagnostic logic, while a more robust evaluation protocol facilitates faithful assessment of model capability boundaries and reliability in high-stakes diagnos-tic settings. The main contributions of this work are threefold: 
+
+• Comprehensive Benchmark & Dataset: We construct 
+
+MM-NeuroOnco , a large-scale multimodal resource com-prising 24,726 MRI slices across four modalities, covering eight tumor subtypes and healthy controls. It features approx-imately 200,000 semantically enriched instruction samples and includes MM-NeuroOnco-Bench , a manually anno-tated subset for rigorous evaluation. 
+
+• Automated Semantic Completion Pipeline: We propose a novel data construction framework that leverages multi-model collaboration to generate diagnosis-relevant attributes from sparse annotations. This pipeline effectively alleviates the semantic gap and the prohibitive costs associated with large-scale expert labeling. 
+
+• Specialized Model & Robust Evaluation: We develop 
+
+NeuroOnco-GPT , validating the practical value of our dataset. Furthermore, we introduce a rejection-aware evaluation pro-tocol to mitigate the “forced-choice” bias inherent in closed-ended questions, enabling a more faithful assessment of model reliability and capability boundaries in high-stakes diagnostic tasks. 
+
+## 2 Related Work 2.1 Brain Tumor Datasets and Benchmarks 
+
+Brain tumor MRI analysis has long been a focal point of medi-cal imaging research, leading to the establishment of numerous representative public datasets and evaluation benchmarks. Early efforts concentrated predominantly on the segmentation and quan-titative analysis of tumor regions, with the BraTS (Brain Tumor                      
+
+> 2MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Ⅰ.Curation & Indexing
+> Public Brain MRI Data
+> Ⅱ.Semantics & Descriptions
+> Mask To Medical Semantic
+> SIze
+> Shape
+> Spread
+> Location
+> Ⅲ.Refinement & QC
+> Extracted Silver-label Information
+> Shape: Irregular
+> Margins: Well-defined
+> Texture: Heterogeneous
+> Enhancement: null
+> Edema: Extensive
+> Signal_intensity: Isointense
+> STEP1 STEP2 STEP3
+> Ⅳ.Instruction Construction
+> Explanation （CoT ）：
+> Irregular shape,
+> Heterogeneity, Extensive
+> edema, T2 MRI .
+> Visual QA Generation
+> CoT &Open-Ended QA are
+> LLM-synthesized from Silver
+> Labels and Ground Truth. Local
+> LLM
+> Q:Why diagnose pituitary
+> adenoma?
+> A: Due to its central sellar
+> location, suprasellar
+> extension, and T2 isointensity.
+> Coarse
+> Description Text
+> CoT ＆
+> Open-
+> Ended
+> JSON
+> Map ping
+> Conflict
+> Processing steps JSON to Text Descriptions
+> Multi-model Processing Pipeline
+> Generation Strategy
+> Size: Small
+> Shape: Round
+> Spread: Solitary Lesion
+> Location: Center JSON
+> Medical_
+> Semantics
+> Deduplica-
+> tion
+> Quality
+> filtering
+> Field
+> cleaning
+> Mask ＆
+> Golden_Labe l
+
+Figure 2: The MM-NeuroOnco dataset curation pipeline, which consists of four sequential steps transforming raw MRI data into semantically enriched multimodal instructions. 
+
+Segmentation) challenge series emerging as the most influential ini-tiative [ 2, 6 , 8 , 45 ]. By consistently releasing multi-year datasets fea-turing multi-modal MRI scans (e.g., T1, T2, FLAIR, T1ce) alongside fine-grained pixel-level annotations, BraTS has become the gold standard benchmark for brain tumor segmentation research [ 45 ]. Beyond BraTS, The Cancer Imaging Archive (TCIA) aggregates a diverse array of brain tumor-related MRI collections. Spanning various tumor types, imaging protocols, and clinical contexts, these resources have been extensively utilized for tumor segmentation, classification, and multimodal image analysis research [14]. Furthermore, the systematic curation and analysis of large-scale medical imaging datasets provide essential context for brain tumor research. For instance, Project Imaging-X conducted a systematic review of over 1,000 open medical imaging datasets, performing statistical analyses across dimensions such as modality, task, and anatomical site [ 54 ]. Overall, these rich resources have provided essential data support for research in this field, significantly pro-pelling its general advancement. 
+
+## 2.2 Challenges in Medical Evaluation Paradigms 
+
+The choice of evaluation paradigm fundamentally dictates how model capabilities are characterized, yet finding a robust metric for medical reasoning remains an open challenge [ 29 , 43 ]. Closed-ended evaluation (e.g., multiple-choice) is widely adopted due to its reproducibility and straightforward metrics. However, this for-mat is inherently reductionist: it collapses complex clinical rea-soning into discrete options. Consequently, models often learn to exploit statistical biases in option distributions or language priors rather than grounding their answers in imaging evidence, leading to inflated performance scores that do not reflect true diagnostic capability [69, 71]. Conversely, open-ended generation offers a broader response space better suited for assessing reasoning coherence. Yet, it suffers from metric instability. Determining semantic equivalence between a model’s output and a reference answer is notoriously difficult, and standard metrics (such as BLEU or ROUGE) correlate poorly with clinical accuracy [ 28 , 36 ]. Furthermore, generative models are prone to “hallucinations”—fabricating convincing but factually incorrect medical details—which undermines trust in automated scoring [51, 65]. Prior works have attempted to bridge this divide by introducing structured constraints, auxiliary supervision, or explicit reasoning traces [ 22 , 42 , 63 ]. Despite these efforts, faithfully characterizing diagnostic reasoning while maintaining evaluation reproducibility remains an unresolved bottleneck, particularly in brain tumor sce-narios where imaging semantics are highly specialized and subtle. 
+
+## 3 MM-NeuroOnco Dataset Construction 
+
+The construction of MM-NeuroOnco follows a rigorous four-stage pipeline designed to transform raw, heterogeneous MRI collections into a semantically dense instruction-tuning dataset. The overall workflow is illustrated in Figure 2. 
+
+## 3.1 Data Curation & Standardization 
+
+We aggregated a massive corpus of over 100,000 brain MRI scans from disparate public repositories, including Kaggle, Zenodo, and TCIA. Raw data from these sources suffered from severe heterogenei-ty—ranging from inconsistent modality tagging and chaotic file structures to non-standardized diagnostic labels. To resolve this, we designed a Unified Metadata Schema, converting all samples into a standardized JSON index format. This step effectively eliminates structural discrepancies, establishing a single, consistent access point for diverse data sources. Following strict deduplication and quality filtering, we estab-lished a “Full Master Index” containing 73,226 valid samples, of which 19,086 are paired with pixel-level segmentation masks. This Master Index underpins semantic completion and task sampling, forming the basis of both the MM-NeuroOnco training set and the evaluation benchmark.   
+
+> 3Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu Diagnosis
+> Location Size
+> Shape Spread
+> Qwen3-VL-8B
+> NeuroOnco-GPT
+> NeuroOnco-GPT （CoT ）
+
+Figure 3: Radar chart comparing the performance of the base model and different fine-tuning strategies on MM-NeuroOnco-Bench. 
+
+## 3.2 Semantic Attribute Extraction 
+
+A core challenge in medical VQA is bridging the gap between low-level pixel cues and high-level linguistic reasoning. To address this, we implement an annotation-based semantic conversion pipeline inspired by Vepa et al. [48]. We translate pixel-level tumor masks into structured semantic attributes via a deterministic geometric mapping. Specifically, we extract morphology, localization, and spatial spread descriptors as follows. 
+
+Morphology. We quantify lesion shape compactness using the circularity metric:     
+
+> 𝐶 =4𝜋𝐴 𝑃 2,(1)
+
+where 𝐴 and 𝑃 denote the lesion area and perimeter, respectively. Lower values of 𝐶 indicate increased shape irregularity. 
+
+Localization. The lesion centroid is computed from spatial image moments as:       
+
+> 𝐶 𝑥 =𝑀 1,0
+> 𝑀 0,0
+> ,𝐶 𝑦 =𝑀 0,1
+> 𝑀 0,0
+> ,(2)
+
+where the (𝑝, 𝑞 )-th order moment is defined as       
+
+> 𝑀 𝑝𝑞 =∑︁
+> 𝑥 ∑︁ 𝑦
+> 𝑥 𝑝 𝑦 𝑞 𝐼 (𝑥, 𝑦 ),(3)
+
+with 𝐼 (𝑥, 𝑦 ) denoting the binary lesion mask. This descriptor en-codes the spatial position of the lesion within the imaging plane. 
+
+Spatial Spread. To capture lesion multifocality, we define the dominant component ratio:     
+
+> 𝑓 𝑐𝑜𝑟𝑒 =𝐴 max
+> Í𝑖 𝐴 𝑖
+> ,(4)
+
+where 𝐴 𝑖 denotes the area of the 𝑖 -th connected component and 
+
+𝐴 max corresponds to the largest one. Lower values indicate in-creased spatial dispersion. Based on standardized thresholds (e.g., 𝐶 < 0.5 for irregular morphology), these metrics yield quantitative descriptors of tumor shape, location, and spread. Importantly, these structured attributes serve as verifiable intermediate evidence, grounding the model’s reasoning in physical image properties rather than statistical hallu-cinations. Building on these attributes, we synthesize natural language descriptions by integrating imaging modalities, tumor subtypes, and the extracted geometric features. Crucially, we adopt an ex-plicit indication strategy for missing metadata: instead of omitting unavailable fields, we explicitly mark them as “unknown.” This design guides the downstream multimodal model to acknowledge data gaps and actively infer missing diagnostic cues from visual ev-idence. Ultimately, this pipeline establishes a reliable mapping from Pixel Masks → Semantic Evidence → Textual Prompts , forming the foundational input for subsequent LLM-based reasoning.The complete mapping rules and implementation details are provided in the Appendix. 
+
+## 3.3 Multi-Model Refinement & Quality Control 
+
+While segmentation masks are available for some samples, raw multi-source MRI datasets severely lack the descriptive radiological attributes essential for clinical reasoning—such as enhancement patterns, edema severity, and intratumoral textures. To generate reliable “silver-standard” annotations at scale, we devise an auto-mated Multi-Model Collaborative Pipeline, as illustrated in Stage III of Figure 2. This framework operates on a “Dual-Path Extraction – Consensus Fusion – Visual Verification” mechanism, explicitly designed to mitigate hallucinations through cross-validation among heterogeneous large models. 
+
+Stage 1: Dual-Path Independent Extraction. We leverage two heterogeneous and powerful commercial Vision-Language Models (VLMs) to independently analyze each MRI slice and extract medical semantics into a unified structured format. 
+
+Stage 2: Consensus-Based Fusion. We apply a rigorous field-level fusion strategy to merge the dual outputs. Fields with exact matches are directly retained. For minor discrepancies in degree descriptions, we adopt a downgrade strategy: for instance, conflicts such as “mild” vs. “moderate” are unified into a broader label of “Present.” Conversely, significant semantic conflicts are set to null, thereby maximizing the reduction of hallucination risks introduced by large models. 
+
+Stage 3: Visual Final Review and Quality Control. To further intercept subtle errors, we introduce a third high-performance visual model to conduct a final review of the candidate labels. This stage strictly enforces a “subtraction-only” mechanism: the model is permitted only to reject untrustworthy fields or discard high-risk samples entirely, but is strictly prohibited from adding new information. This design blocks the propagation of hallucinations, ensuring the high confidence of the final data. Through this pipeline, we bridge the semantic gap in the raw data and extract structured medical evidence, forming the foundation of our multimodal instruction dataset. Detailed extraction prompts and explanations are provided in the Appendix. 
+
+## 3.4 Instruction Data Construction 
+
+Our instruction generation pipeline is fundamentally grounded in verifiable supervision signals rather than open-ended generation. We anchor the process in two reliable data sources: (i) Golden Labels (tumor type, modality, segmentation masks) provided by the origi-nal datasets; and (ii) Silver Labels (structured radiological attributes) derived from our multi-model pipeline. By treating these labels as    
+
+> 4MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY (a) The category distribution of the MM-NeuroOnco dataset. (b) The statistics of question types in the training set.
+> Close 64%
+> OPEN
+> CLOSE
+> Dataset Category
+> 0.8%
+> 1.4%
+> 1.8%
+> 2.6%
+> 5.9%
+> 11.8%
+> 12.1%
+> 12.2%
+> 17.4%
+> 34.1%
+> 15.7%
+> 15.1%
+> 13.7%
+> 12.5%
+> 11.3%
+> 11.0%
+> 8.3%
+> 6.7%
+> 5.8%
+
+Figure 4: Statistical distributions of the MM-NeuroOnco dataset. 33.3    
+
+> 36.0
+> 31.1
+> 33.4
+> 13.8
+> 29.6
+> 7.0
+> 3.7
+> T1_CE T1 T2 FLAIR
+> Ratio(%)
+
+Figure 5: Modality distribution of the MM-NeuroOnco dataset and benchmark.The figure compares the proportional distri-butions of different MRI modalities in the dataset and the benchmark. 
+
+immutable facts, we ensure that the subsequent CoT reasoning is evidence-based, effectively mitigating the hallucinations common in medical text generation. Furthermore, the category distribution of the dataset and the distribution of question types are illustrated in Figure 4(a) and Figure 4(b), respectively. We employ a locally deployed Qwen3-Next-80B to synthesize these labels into VQA instances.Adversarial Construction for Closed-Ended QA: For multiple-choice tasks, we leverage the LLM’s medi-cal knowledge to construct diverse questions and hard negatives— distractors that are visually or pathologically similar to the ground truth (e.g., confusing glioblastoma with solitary metastasis due to similar ring enhancement). This adversarial design prevents models from achieving artificially high scores through simple elimination shortcuts. Evidence-Driven CoT: To construct high-quality CoT, we synthe-size the structured silver attributes with deterministic geometric features (e.g., location, size) calculated from segmentation masks. By explicitly injecting these verified facts into the reasoning path, we force the model to mimic the standardized clinical workflow: identifying modality → localizing the lesion → analyzing morphol-ogy → deducing the pathology. This approach ensures that the generated reasoning is grounded in objective evidence rather than open-ended hallucination. 
+
+## 4 MM-NeuroOnco Dataset Analysis 4.1 Instruction Dataset Statistics 
+
+We applied our multi-model semantic pipeline to process over 20,000 samples. During sampling, instead of enforcing artificial class balance, we deliberately preserved the authentic epidemiologi-cal distribution of brain tumors. As shown in Figure 4 (a), the dataset generally aligns with real-world clinical incidence rates [ 9 ]. By re-taining this long-tail distribution, we enable models to learn robust representations that reflect the true prevalence priors encountered in complex clinical scenarios. Following post-processing—including downgrade mapping and structural flattening—we obtained a semantically rich dataset fea-turing an average of 2.4 fine-grained medical attributes (e.g., en-hancement patterns, edema) per sample. 
+
+## 4.2 Benchmark Composition 
+
+To establish a rigorous evaluation standard, we constructed MM-NeuroOnco-Bench by independently sampling 1,000 images from the raw pool; its modality distribution is illustrated in Figure 5. 
+
+Ground Truth Integrity. Unlike the training set, we enforced a strict “No-LLM-Inference” policy for the benchmark’s ground truth. All attribute labels are derived exclusively via human anno-tation or mask mapping. We explicitly excluded any predictions or completions from large models, thereby fundamentally eliminating evaluation bias stemming from model hallucinations. 
+
+Question Diversity. While the ground truth is immutable, we utilized a local Qwen3-Next-80B to diversify the linguistic phras-ing of questions. The resulting benchmark comprises over 2,000 closed-ended and 1,000 open-ended questions.These questions com-prehensively cover multidimensional clinical features, providing a robust yardstick for assessing specialized medical MLLMs.  
+
+> 5Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu
+
+Table 1: Overall performance comparison on the closed-ended benchmark. Best results are highlighted in bold, and second-best results are underlined . Colored deltas indicate performance changes introduced by Chain-of-Thought (CoT) supervision. Qwen3-VL-8B is evaluated in a zero-shot setting as an open-source baseline.                                                                                        
+
+> Model Diagnosis Size Shape Spread Location Overall
+> General-Purpose LVLMs
+> GPT-5.1 37.0 32.3 21.2 58.0 38.1 37.2 Gemini-3-Flash 41.9 29.8 30.8 57.9 41.8 40.9 Claude-Sonnet-4.0 33.2 34.5 28.3 54.4 35.5 35.9 Qwen3-VL-8B 24.3 31.6 30.0 47.2 30.6 30.1
+> Medical Specialist LVLMs
+> HuLuMed-32B 38.2 27.7 32.9 52.1 33.2 37.3 Lingshu-7B 39.2 30.0 32.9 45.0 37.5 37.6 Lingshu-32B 36.0 28.3 26.1 52.8 33.9 35.6 HuLuMed-7B 36.4 30.3 40.7 28.0 29.0 34.0 MedGemma-27B 33.1 29.0 32.9 33.2 27.7 31.8 MedGemma-1.5-4B 26.9 28.0 28.0 23.5 25.1 26.5
+> Ours (Domain-Adapted LVLMs)
+> NeuroOnco-GPT [Ours] 40.6 42.0 27.7 34.5 53.8 40.0
+> NeuroOnco-GPT (CoT) [Ours] 51.4 (+10.8) 42.4 (+0.4) 40.4 (+12.7) 70.4 (+35.9) 52.1 (−1.7) 51.4 (+11.4)
+
+Table 2: Ablation study on the rejection mechanism. N de-notes the standard option setting, while R denotes the setting with an explicit rejection mechanism. Colored deltas indicate performance changes relative to the 4-N setting. 
+
+Model 4-N 5-N 5-R 
+
+HuLuMed-32B 59.56 56.90 (−2.66) 49.40 (−10.16) 
+
+Lingshu-32B 57.21 55.77 (−1.44) 46.93 (−10.28) 
+
+GPT-5.1 59.03 56.74 (−2.29) 49.62 (−9.41) 
+
+Average 58.60 56.47 (−2.13) 48.65 (−9.95) 
+
+## 5 MM-NeuroOnco Bench 5.1 Rejection-Aware Evaluation Strategy 
+
+Existing medical VQA benchmarks often suffer from naive distrac-tor construction. Distractors frequently exhibit obvious visual or anatomical discrepancies from the ground truth (e.g., pairing a Brain Tumor query with Lung Nodule options). This allows mod-els to rely on "Shortcut Learning"—solving questions via simple elimination rather than genuine pathological comprehension. More-over, traditional evaluations adhere to a "Forced-Choice Paradigm," presupposing that the correct answer is invariably present. This fundamentally contradicts real-world clinical practice, where diag-nosis is a rigorous process of hypothesis exclusion, often requiring a physician to withhold judgment when evidence is insufficient. To simulate this authentic decision-making environment, we introduce a Rejection-Aware Evaluation Strategy. We uniformly append a fifth option—"None of the above"—to every closed-ended question. This simple mechanism forces the model to verify its inter-nal knowledge against the provided options rather than exploiting probability distributions. As shown in Table 2, the experimental results indicate that this mechanism leads to a ∼10% drop in accuracy for Large Language Models compared to the standard four-option setting. To confirm this decline stems from increased difficulty rather than just option quantity, we conducted rigorous ablation studies. Even compared to a five-option setting with conventional distractors, our refusal strategy induces an additional 8% performance drop. This gap indi-cates that previous "State-of-the-Art" scores were inflated by test-taking tricks. By forcing models to scrutinize their own knowledge boundaries, this protocol offers a far more objective yardstick for diagnostic evaluation. 
+
+## 5.2 Evaluation Metrics 
+
+We adopt two evaluation metrics tailored for closed-ended and open-ended questions, respectively.For Closed-Ended Questions, we use Accuracy as the standard evaluation metric. For Open-Ended Questions, following previous works [ 25 , 26 ], we construct a specialized prompt and leverage a locally deployed Qwen3-80B-Instruct to assist with the evaluation. Within the prompt, we incorporate a Hierarchical Scoring Rubric that assigns a score ranging from 0 to 10 based on each sample’s input question, ground truth, and model output. Crucially, to ensure clinical rigor, this rubric enforces a penalty mechanism that strictly caps scores for critical safety errors (e.g., laterality confusion or hallucinations). The full details of the evaluation prompt can be found in the sup-plementary materials. 
+
+## 6 Experiments 6.1 Experimental Setup 
+
+To delineate the capability boundaries of current technology, we benchmark 10 representative LVLMs, stratified into two distinct clusters: (1) General-Purpose Giants: we select state-of-the-art closed-source models, GPT-5.1, Gemini-3-Flash, and Claude-Sonnet-4.0, representing the current pinnacle of general multimodal rea-soning; and (2) Medical Specialists: we include open-source vertical domain models ranging from 1.5B to 32B parameters, such as Hu-LuMed, Lingshu, and MedGemma. These models were continually pre-trained or fine-tuned for biomedical tasks. Implementation Protocols. Closed-source models are accessed via official APIs. Open-source models are evaluated on a server node  
+
+> 6MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+(a) The word cloud for Closed-ended question s (b) The word cloud for Open-ended question s (c) The word cloud for Benchmark 
+
+Figure 6: Word cloud visualizations illustrating the linguistic distributions of (a) closed-ended questions, (b) open-ended questions, and (c) the evaluation benchmark. Model Performance Analysis 
+
+> GPT-5.1
+> NeuroOnco-GPT (CoT)
+> Gemini-3-Flash
+> Claude-Sonnet-4
+> Qwen3-VL-8B
+> HuLuMed-32B
+> Lingshu-7B
+> Lingshu-32B
+> HuLuMed-7B
+> MedGemma-27B
+> MedGemma-1.5-4B
+> NeuroOnco-GPT
+> Diagnosis
+> Size
+> Shape
+> Spread
+> Location
+> Overall
+
+Figure 7: Heatmap comparing the performance of multiple LVLMs on closed-ended QA tasks across different dimen-sions. 
+
+with 4× NVIDIA H100 (80G) GPUs. For evaluation, we use Accuracy as the evaluation metric for closed-ended tasks. For open-ended inquiries, we employ the LLM-as-a-Judge paradigm described in Section 4.2, using Qwen3-80B-Instruct as the impartial judge. Validation via SFT. To demonstrate the efficacy of our instruction data, we perform Supervised Fine-Tuning (SFT) on a Qwen3-VL-8B base model. We utilize the LLaMA-Factory framework with a LoRA strategy. All hyperparameters are kept at their default values, and the training is conducted for a single epoch. The resulting model is named NeuroOnco-GPT .
+
+## 6.2 Evaluation Results 
+
+Based on the overall performance on MM-NeuroOnco-Bench (Ta-ble 1), together with the rejection ablation study (Table 2), we sum-marize three key insights into the current state of neuro-oncology AI: 
+
+• General Intelligence is Not Enough. MM-NeuroOnco-Bench proves to be a challenging benchmark for existing LVLMs. Even Gemini-3-Flash, the strongest commercial general-purpose model in our evaluation, achieves only 40.9% overall accuracy. This result indicates that brain tumor diagnosis— which requires integrating subtle visual cues with structured anatomical reasoning—remains a difficult problem that is not adequately addressed by general-purpose multimodal intelligence alone. 
+
+• The “Medical” Label Does Not Guarantee Superior Per-formance. Surprisingly, medical-specialized LVLMs do not exhibit a consistent advantage over general-purpose models. For example, the best-performing specialist, HuLuMed-32B (37.3%), as well as Lingshu-7B (37.6%), remain notably behind Gemini-3-Flash (40.9%). This observation suggests that sim-ply exposing models to biomedical data is insufficient when such data lacks the semantic density and explicit reasoning structure required for reliable MRI interpretation. 
+
+• Rejection-Aware Evaluation Increases Task Difficulty and Reveals Capability Boundaries. Traditional multiple-choice evaluation settings may partially obscure model un-certainty by implicitly assuming that a correct answer always exists. Under such settings, models can often achieve rela-tively high scores through the elimination of implausible options, without fully grounding their decisions in imag-ing evidence. After introducing an explicit rejection option, the average accuracy drops by an additional 7.82% , indicat-ing a clear increase in task difficulty. This result suggests that rejection-aware evaluation provides a more conserva-tive and informative perspective for assessing model capa-bility boundaries in scenarios that more closely resemble real-world clinical decision-making. 
+
+## 6.3 Ablation Study 
+
+We conduct two targeted ablation studies to examine the rigor of our evaluation protocol and the impact of reasoning-oriented supervision. 
+
+Distinguishing Comprehension from Guessing. To charac-terize model behavior under different evaluation settings, we com-pare three configurations (Table 2): a standard four-choice setting, a five-choice setting with a conventional distractor, and a five-choice setting with an explicit rejection option. Results show that adding a conventional distractor leads to only a minor performance decrease (−2.13% ), whereas introducing the rejection mechanism results in a larger accuracy drop of 9.95% , corresponding to an additional 7.82% 
+
+decrease relative to the normal five-choice setting. These findings indicate that when models are required to explicitly consider the                        
+
+> 7Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu (a) Closed-Ended QA (b) Open-Ended QA (c) Open-Ended QA
+> Q:Based on the imaging findings, the most likely
+> diagnosis is:
+> Options:
+> A: Glioma
+> B: Meningioma
+> C: Metastasis
+> D: Abscess
+> ID: 8294 Attribute
+> The irregular shape ,indistinct margins , and
+> heterogeneous ring enhancement on T1CE
+> suggest high-grade infiltrative glioma, reflecting
+> angiogenesis and necrosis.
+> irregular
+> shape,indistinct
+> margins,heterogeneous
+> ring
+> enhancement,T1CE
+> Reasoning(CoT):
+> ID:1071
+> Q: Analyze the key imaging features and
+> determine the pathology.
+> A: "This case demonstrates an irregular,
+> heterogeneously textured mass with i ndistinct
+> margins located in the central brain region,
+> exhibiting isointense signal on T1-weighted
+> imaging. Additional findings include strong
+> contrast enhancement and associated
+> ventricular dilation, with the mass extending
+> into the suprasellar region, suggesting
+> infiltrative growth and mass effect."
+> Attribute
+> irregular,heterogeneo-
+> sly textured,indistinct
+> margins,in the central
+> brain region,T1-
+> weighted
+> ID:561 Attribute
+> Q: What imaging features support the diagnosis
+> of meningioma in this case?
+> A:"Key features supporting meningioma include
+> avid T1 enhancement and a central location
+> suggesting a dural origin . Although irregular
+> shape and indistinct margins are atypical for
+> benign meningioma, they are consistent with an
+> atypical variant. The heterogeneous texture
+> may reflect necrosis, or vascularity. Collectively,
+> these findings favor meningioma over glioma or
+> metastasis, despite morphologic atypia."
+> T1-weighted, irregular
+> shape,indistinct
+> margins,heterogene-
+> ous texture
+> Dimension: Diagnosis
+> Dimension: Analysis Dimension: Analysis
+
+Figure 8: Three representative case studies for closed-ended and open-ended QA. 
+
+possibility that none of the provided options is correct, the evalu-ation becomes more challenging and helps to better characterize model capability boundaries in diagnostic tasks. 
+
+The Effect of CoT Supervision. We further evaluate the role of CoT data in a low-resource fine-tuning setting (Table 2). Com-pared to fine-tuning with instruction data that does not include CoT, incorporating explicit CoT reasoning paths leads to a further performance improvement, with an overall gain of 11 .4% . This re-sult indicates that guiding models through a structured clinical workflow (Observation → Reasoning → Decision) is more effective than training them to memorize shallow image–label associations. 
+
+## 6.4 Case Study 
+
+Figure 8 presents three representative case studies from our instruc-tion dataset. In the closed-ended example (Figure 8a), each sample includes extracted medical attributes, LLM-constructed questions and options, as well as an attribute-based CoT that explicitly ar-ticulates the diagnostic logic. For open-ended tasks (Figure 8b and Figure 8c), the pipeline generates QA pairs in which the answers are logically synthesized from the underlying medical attributes. These examples demonstrate that our pipeline effectively transforms dis-crete metadata into structured, hallucination-free instructions, pro-viding high-quality supervision signals for model training. 
+
+## 7 Conclusion 
+
+In this work, we introduce MM-NeuroOnco , a large-scale multi-modal instruction dataset and evaluation benchmark designed to enrich fine-grained medical semantics and mitigate the long-tail distribution issues inherent in brain tumor MRI data. To overcome the prohibitive costs of manual annotation, we devise an automated Multi-Model Collaborative Pipeline that supplements raw scans with verifiable diagnostic attributes, effectively transforming pixel-level data into evidence-driven reasoning chains. Building on this foundation, we further develop NeuroOnco-GPT and validate its effectiveness through a rigorous Rejection-Aware Evaluation strat-egy. Our experimental results show that this mechanism can, to a certain extent, alleviate the “illusion of competence” induced by shortcut learning, thereby providing a more objective reference for assessing the capability boundaries of multimodal large language models in specialized medical domains. 
+
+## 8 Limitations and Ethical Considerations 
+
+While this work provides a systematic benchmark and dataset for neuro-oncology VQA, several limitations remain.First, the current benchmark is primarily constructed based on single 2D MRI slices. Although this setting is effective for validating fundamental pat-tern recognition capabilities, it lacks the volumetric context that is essential in real-world clinical practice. Given the substantial computational overhead associated with full 3D models, future work will explore a multi-slice joint diagnosis paradigm, enabling models to collaboratively reason over a compact set of key slices. This design aims to better approximate the radiologist’s workflow while avoiding the redundancy and cost of full volumetric pro-cessing.Second, some diagnostic semantics in MM-NeuroOnco rely on automated data generation pipelines. Despite careful quality control, the resulting attributes may still be affected by noise origi-nating from imperfect image quality or inaccuracies in the original annotations of public datasets. Addressing these issues will require more robust data curation strategies and continued refinement of the semantic extraction process. From an ethical perspective, all data used in this study are sourced from publicly available brain tumor MRI datasets, follow-ing data usage paradigms consistent with established benchmarks such as BraTS. These datasets are released in a de-identified form by their original providers and contain no personally identifiable or protected health information. All samples used in this work are fully traceable to their original sources, and their usage strictly complies with the corresponding data usage agreements and licenses. 
+
+> 8
+
+MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+## References 
+
+[1] Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge Akkaya, Floren-cia Leoni Aleman, Diogo Almeida, Janko Altenschmidt, Sam Altman, Shyamal Anadkat, et al . 2023. Gpt-4 technical report. arXiv preprint arXiv:2303.08774 
+
+(2023). [2] Maruf Adewole, Jeffrey D Rudie, Anu Gbdamosi, Oluyemisi Toyobo, Confidence Raymond, Dong Zhang, Olubukola Omidiji, Rachel Akinola, Mohammad Abba Suwaid, Adaobi Emegoakor, et al . 2023. The brain tumor segmentation (brats) challenge 2023: Glioma segmentation in sub-saharan africa patient population (brats-africa). ArXiv (2023), arXiv–2305. [3] Anthropic. 2024. Introducing the Next Generation of Claude. https://www. anthropic.com/news/claude-3-family Accessed: 2026-02-07. [4] Stanislaw Antol, Aishwarya Agrawal, Jiasen Lu, Margaret Mitchell, Dhruv Batra, C Lawrence Zitnick, and Devi Parikh. 2015. Vqa: Visual question answering. In 
+
+Proceedings of the IEEE international conference on computer vision . 2425–2433. [5] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, Kai Dang, Peng Wang, Shijie Wang, Jun Tang, et al . 2025. Qwen2. 5-vl technical report. arXiv preprint arXiv:2502.13923 (2025). [6] Ujjwal Baid, Satyam Ghodasara, Suyash Mohan, Michel Bilello, Evan Calabrese, Errol Colak, Keyvan Farahani, Jayashree Kalpathy-Cramer, Felipe C Kitamura, Sarthak Pati, et al . 2021. The rsna-asnr-miccai brats 2021 benchmark on brain tumor segmentation and radiogenomic classification. arXiv preprint arXiv:2107.02314 (2021). [7] Spyridon Bakas, Hamed Akbari, Aristeidis Sotiras, Michel Bilello, Martin Rozycki, JS Kirby, JB Freymann, Keyvan Farahani, and Christos Davatzikos. 2017. Segmen-tation labels and radiomic features for the pre-operative scans of the TCGA-LGG collection [Data Set]. The Cancer Imaging Archive. Version (2017). [8] Spyridon Bakas, Hamed Akbari, Aristeidis Sotiras, Michel Bilello, Martin Rozycki, Justin S Kirby, John B Freymann, Keyvan Farahani, and Christos Davatzikos. 2017. Advancing the cancer genome atlas glioma MRI collections with expert segmentation labels and radiomic features. Scientific data 4, 1 (2017), 1–13. [9] Freddie Bray, Mathieu Laversanne, Hyuna Sung, Jacques Ferlay, Rebecca L Siegel, Isabelle Soerjomataram, and Ahmedin Jemal. 2024. Global cancer statistics 2022: GLOBOCAN estimates of incidence and mortality worldwide for 36 cancers in 185 countries. CA: a cancer journal for clinicians 74, 3 (2024), 229–263. [10] Hu Cao, Yueyue Wang, Joy Chen, Dongsheng Jiang, Xiaopeng Zhang, Qi Tian, and Manning Wang. 2022. Swin-unet: Unet-like pure transformer for medical image segmentation. In European conference on computer vision . Springer, 205–218. [11] Jun Cheng. 2017. Brain Tumor Dataset. doi:10.6084/m9.figshare.1512427.v8 [12] Junlong Cheng, Bin Fu, Jin Ye, Guoan Wang, Tianbin Li, Haoyu Wang, Ruoyu Li, He Yao, Junren Cheng, JingWen Li, et al . 2025. Interactive medical image segmentation: A benchmark dataset and baseline. In Proceedings of the Computer Vision and Pattern Recognition Conference . 20841–20851. [13] Jun Cheng, Wei Yang, Meiyan Huang, Wei Huang, Jun Jiang, Yujia Zhou, Ru Yang, Jie Zhao, Yanqiu Feng, Qianjin Feng, et al . 2016. Retrieval of brain tumors by adaptive spatial pooling and fisher vector representation. PloS one 11, 6 (2016), e0157112. [14] Kenneth Clark, Bruce Vendt, Kirk Smith, John Freymann, Justin Kirby, Paul Koppel, Stephen Moore, Stanley Phillips, David Maffitt, Michael Pringle, et al .2013. The Cancer Imaging Archive (TCIA): maintaining and operating a public information repository. Journal of digital imaging 26, 6 (2013), 1045–1057. [15] Csaba Csutak, Paul-Andrei S, tefan, Lavinia Manuela Lenghel, Cezar Octavian Moro s, anu, Roxana-Adelina Lupean, Larisa S, imonca, Carmen Mihaela Mihu, and Andrei Lebovici. 2020. Differentiating high-grade gliomas from brain metastases at magnetic resonance: the role of texture analysis of the peritumoral zone. Brain Sciences 10, 9 (2020), 638. [16] Felix J Dorfner, Jay B Patel, Jayashree Kalpathy-Cramer, Elizabeth R Gerstner, and Christopher P Bridge. 2025. A review of deep learning for brain tumor analysis in MRI. NPJ Precision Oncology 9, 1 (2025), 2. [17] Thomas Dubail. 2020. Brain Tumors 256x256. https://www.kaggle.com/datasets/ thomasdubail/brain-tumors-256x256 Accessed: 2026-01-28. [18] Amirreza Fateh, Yasin Rezvani, Sara Moayedi, Sadjad Rezvani, Fatemeh Fateh, and Mansoor Fateh. 2025. BRISC: Annotated Dataset for Brain Tumor Segmentation and Classification with Swin-HAFNet. arXiv preprint arXiv:2506.14318 (2025). [19] Fernando Feltrin. 2022. Brain Tumor MRI Images 17 Classes. https://www.kaggle. com/datasets/fernando2rad/brain-tumor-mri-images-17-classes Accessed: 2026-01-28. [20] Fernando Feltrin. 2022. Brain Tumor MRI Images 44C. https://www.kaggle.com/ datasets/fernando2rad/brain-tumor-mri-images-44c Accessed: 2026-01-28. [21] Xiaotang Gai, Jiaxiang Liu, Yichen Li, Zijie Meng, Jian Wu, and Zuozhu Liu. 2025. 3D-RAD: A Comprehensive 3D Radiology Med-VQA Dataset with Multi-Temporal Analysis and Diverse Diagnostic Tasks. arXiv preprint arXiv:2506.11147 
+
+(2025). [22] Xiaotang Gai, Chenyi Zhou, Jiaxiang Liu, Yang Feng, Jian Wu, and Zuozhu Liu. 2024. Medthink: Explaining medical visual question answering via multimodal decision-making rationale. arXiv preprint arXiv:2404.12372 (2024). [23] Shubham Gajjar. 2023. Brain Tumor Classification 2D. https://www.kaggle.com/ datasets/shubhamgajjar/brain-tumor-classification-2d Accessed: 2026-01-28. [24] Ahmed Hamada. 2020. Brain Tumor Detection. https://www.kaggle.com/ datasets/ahmedhamada0/brain-tumor-detection Accessed: 2026-01-28. [25] Jing Hao, Yuxuan Fan, Yanpeng Sun, Kaixin Guo, Lizhuo Lin, Jinrong Yang, Qi Yong H Ai, Lun M Wong, Hao Tang, and Kuo Feng Hung. 2025. Towards better dental ai: A multimodal benchmark and instruction dataset for panoramic x-ray analysis. arXiv preprint arXiv:2509.09254 (2025). [26] Jing Hao, Yuci Liang, Lizhuo Lin, Yuxuan Fan, Wenkai Zhou, Kaixin Guo, Zanting Ye, Yanpeng Sun, Xinyu Zhang, Yanqi Yang, et al . 2025. OralGPT-Omni: A Versatile Dental Multimodal Large Language Model. arXiv preprint arXiv:2511.22055 (2025). [27] Kaiming He, Georgia Gkioxari, Piotr Dollár, and Ross Girshick. 2017. Mask r-cnn. In Proceedings of the IEEE international conference on computer vision . 2961–2969. [28] Xuehai He, Yichen Zhang, Luntian Mou, Eric Xing, and Pengtao Xie. 2020. Pathvqa: 30000+ questions for medical visual question answering. arXiv preprint arXiv:2003.10286 (2020). [29] Zexue He, Yu Wang, An Yan, Yao Liu, Eric Chang, Amilcare Gentili, Julian McAuley, and Chun-Nan Hsu. 2023. Medeval: A multi-level, multi-task, and multi-domain medical benchmark for language model evaluation. In Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing .8725–8744. [30] Waseem Nagah Henes. 2024. Brain Tumor for 14 Classes. https://www.kaggle. com/datasets/waseemnagahhenes/brain-tumor-for-14-classes Accessed: 2026-01-28. [31] Yuxin Hong, Xiao Zhang, Xin Zhang, and Joey Tianyi Zhou. 2024. Evolution-aware variance (EVA) coreset selection for medical image classification. In Pro-ceedings of the 32nd ACM International Conference on Multimedia . 301–310. [32] Yutao Hu, Tianbin Li, Quanfeng Lu, Wenqi Shao, Junjun He, Yu Qiao, and Ping Luo. 2024. Omnimedvqa: A new large-scale comprehensive evaluation benchmark for medical lvlm. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 22170–22183. [33] Songtao Jiang, Yuan Wang, Sibo Song, Tianxiang Hu, Chenyi Zhou, Bin Pu, Yan Zhang, Zhibo Yang, Yang Feng, Joey Tianyi Zhou, et al . 2025. Hulu-med: A trans-parent generalist model towards holistic medical vision-language understanding. 
+
+arXiv preprint arXiv:2510.08668 (2025). [34] Alistair EW Johnson, Tom J Pollard, Seth J Berkowitz, Nathaniel R Greenbaum, Matthew P Lungren, Chih-ying Deng, Roger G Mark, and Steven Horng. 2019. MIMIC-CXR, a de-identified publicly available database of chest radiographs with free-text reports. Scientific data 6, 1 (2019), 317. [35] Akhil Kondepudi, Melike Pekmezci, Xinhai Hou, Katie Scotford, Cheng Jiang, Akshay Rao, Edward S Harake, Asadur Chowdury, Wajd Al-Holou, Lin Wang, et al . 2025. Foundation models for fast, label-free detection of glioma infiltration. 
+
+Nature 637, 8045 (2025), 439–445. [36] Jason J Lau, Soumya Gayen, Asma Ben Abacha, and Dina Demner-Fushman. 2018. A dataset of clinically generated visual questions and answers about radiology images. Scientific data 5, 1 (2018), 1–10. [37] Gabriel Leyva. 2025. Brain Tumor MRI Classification Dataset 2025. https://www.kaggle.com/datasets/gabrielleyva307/brain-tumor-mri-classification-dataset-2025 Accessed: 2026-01-28. [38] Chunyuan Li, Cliff Wong, Sheng Zhang, Naoto Usuyama, Haotian Liu, Jianwei Yang, Tristan Naumann, Hoifung Poon, and Jianfeng Gao. 2023. Llava-med: Train-ing a large language-and-vision assistant for biomedicine in one day. Advances in Neural Information Processing Systems 36 (2023), 28541–28564. [39] Cheng-Yi Li, Kao-Jung Chang, Cheng-Fu Yang, Hsin-Yu Wu, Wenting Chen, Hritik Bansal, Ling Chen, Yi-Ping Yang, Yu-Chun Chen, Shih-Pin Chen, et al .2025. Towards a holistic framework for multimodal LLM in 3D brain CT radiology report generation. Nature Communications 16, 1 (2025), 2258. [40] Murtoza Likhon. 2023. Brain Tumor Multimodal Image (CT and MRI). https://www.kaggle.com/datasets/murtozalikhon/brain-tumor-multimodal-image-ct-and-mri Accessed: 2026-01-28. [41] Bo Liu, Li-Ming Zhan, Li Xu, Lin Ma, Yan Yang, and Xiao-Ming Wu. 2021. Slake: A semantically-labeled knowledge-enhanced dataset for medical visual question answering. In 2021 IEEE 18th international symposium on biomedical imaging (ISBI) . IEEE, 1650–1654. [42] Jiaxiang Liu, Yuan Wang, Jiawei Du, Joey Tianyi Zhou, and Zuozhu Liu. 2024. Medcot: Medical chain of thought via hierarchical expert. arXiv preprint arXiv:2412.13736 (2024). [43] Mianxin Liu, Weiguo Hu, Jinru Ding, Jie Xu, Xiaoyang Li, Lifeng Zhu, Zhian Bai, Xiaoming Shi, Benyou Wang, Haitao Song, et al . 2024. Medbench: A compre-hensive, standardized, and reliable benchmarking system for evaluating chinese medical large language models. Big Data Mining and Analytics 7, 4 (2024), 1116– 1128. [44] Zijie Meng, Jin Hao, Xiwei Dai, Yang Feng, Jiaxiang Liu, Bin Feng, Huikai Wu, Xiaotang Gai, Hengchuan Zhu, Tianxiang Hu, et al . 2025. Dentvlm: A multimodal vision-language model for comprehensive dental diagnosis and enhanced clinical practice. arXiv preprint arXiv:2509.23344 (2025). [45] Bjoern H Menze, Andras Jakab, Stefan Bauer, Jayashree Kalpathy-Cramer, Keyvan Farahani, Justin Kirby, Yuliya Burren, Nicole Porz, Johannes Slotboom, Roland 9Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu 
+
+Wiest, et al . 2014. The multimodal brain tumor image segmentation benchmark (BRATS). IEEE transactions on medical imaging 34, 10 (2014), 1993–2024. [46] David Molina, Julián Pérez-Beteta, Belén Luque, Elena Arregui, Manuel Calvo, José M Borrás, Carlos López, Juan Martino, Carlos Velasquez, Beatriz Asenjo, et al .2016. Tumour heterogeneity in glioblastoma assessed by MRI texture analysis: a potential marker of survival. The British journal of radiology 89, 1064 (2016), 20160242. [47] Msoud Nickparvar. 2021. Brain Tumor MRI Dataset. doi:10.34740/KAGGLE/DSV/ 2645886 [48] Arvind Murari Vepa, Yannan Yu, Jingru Gan, Anthony Cuturrufo, Weikai Li, Wei Wang, Fabien Scalzo, and Yizhou Sun. 2025. A Multimodal LLM Approach for Visual Question Answering on Multiparametric 3D Brain MRI. arXiv e-prints 
+
+(2025), arXiv–2509. [49] Hai-Dang Nguyen, Minh-Anh Dang, Minh-Tan Le, and Minh-Tuan Le. 2025. MedXplain-VQA: Multi-Component Explainable Medical Visual Question An-swering. arXiv preprint arXiv:2510.22803 (2025). [50] Sophie Ostmeier, Justin Xu, Zhihong Chen, Maya Varma, Louis Blankemeier, Christian Bluethgen, Arne Edward Michalson Md, Michael Moseley, Curtis Lan-glotz, Akshay S Chaudhari, et al . 2024. Green: Generative radiology report evaluation and error notation. In Findings of the association for computational linguistics: EMNLP 2024 . 374–390. [51] Ankit Pal, Logesh Kumar Umapathi, and Malaikannan Sankarasubbu. 2023. Med-halt: Medical domain hallucination test for large language models. arXiv preprint arXiv:2307.15343 (2023). [52] Jonggwon Park, Soobum Kim, Byungmu Yoon, Jihun Hyun, and Kyoyun Choi. 2025. M4CXR: exploring multitask potentials of multimodal large language models for chest X-ray interpretation. IEEE Transactions on Neural Networks and Learning Systems (2025). [53] Mackenzie Price, Christine Ballard, Julia Benedetti, Corey Neff, Gino Cioffi, Kristin A Waite, Carol Kruchko, Jill S Barnholtz-Sloan, and Quinn T Ostrom. 2024. CBTRUS statistical report: primary brain and other central nervous system tumors diagnosed in the United States in 2017–2021. Neuro-oncology 26, Suppl 6 (2024), vi1. [54] Project Imaging-X Contributors. 2025. Project Imaging-X: A Survey of 1000+ Open-Access Medical Imaging Datasets for Foundation Model Development. https://github.com/uni-medical/Project-Imaging-X [55] Md Mizanur Rahman. 2024. Brain Cancer - MRI Dataset. doi:10.17632/ mk56jw9rns.1 Accessed: 2026-01-28. [56] Andrew Sellergren, Sahar Kazemzadeh, Tiam Jaroensri, Atilla Kiraly, Madeleine Traverse, Timo Kohlberger, Shawn Xu, Fayaz Jamil, Cían Hughes, Charles Lau, et al . 2025. Medgemma technical report. arXiv preprint arXiv:2507.05201 (2025). [57] Nurhuda Hendra Setyawan, Lina Choridah, Hanung Adi Nugroho, Rusdy Ghazali Malueka, and Ery Kus Dwianingsih. 2024. Beyond invasive biopsies: using VASARI MRI features to predict grade and molecular parameters in gliomas. 
+
+Cancer Imaging 24, 1 (2024), 3. [58] Alam Shihab. 2024. Brain Tumor MRI Dataset For Deep Learning. https://www.kaggle.com/datasets/alamshihab075/brain-tumor-mri-dataset-for-deep-learning Accessed: 2026-01-28. [59] Gemini Team, Rohan Anil, Sebastian Borgeaud, Jean-Baptiste Alayrac, Jiahui Yu, Radu Soricut, Johan Schalkwyk, Andrew M Dai, Anja Hauth, Katie Millican, et al . 2023. Gemini: a family of highly capable multimodal models. arXiv preprint arXiv:2312.11805 (2023). [60] Tinashri. 2022. Brain Tumor Dataset Includes the Mask and Im-ages. https://www.kaggle.com/datasets/tinashri/brain-tumor-dataset-includes-the-mask-and-images Accessed: 2026-01-28. [61] Sana Tonekaboni, Shalmali Joshi, Melissa D McCradden, and Anna Goldenberg. 2019. What clinicians want: contextualizing explainable machine learning for clinical end use. In Machine learning for healthcare conference . PMLR, 359–380. [62] Javier E Villanueva-Meyer, Marc C Mabray, and Soonmee Cha. 2017. Current clinical brain tumor imaging. Neurosurgery 81, 3 (2017), 397–415. [63] Yuan Wang, Jiaxiang Liu, Shujian Gao, Bin Feng, Zhihang Tang, Xiaotang Gai, Jian Wu, and Zuozhu Liu. 2025. V2t-cot: From vision to text chain-of-thought for medical reasoning and diagnosis. In International Conference on Medical Image Computing and Computer-Assisted Intervention . Springer, 658–668. [64] Chaoyi Wu, Xiaoman Zhang, Ya Zhang, Hui Hui, Yanfeng Wang, and Weidi Xie. 2025. Towards generalist foundation model for radiology by leveraging web-scale 2d&3d medical data. Nature Communications 16, 1 (2025), 7866. [65] Peng Xia, Ze Chen, Juanxi Tian, Yangrui Gong, Ruibo Hou, Yue Xu, Zhenbang Wu, Zhiyuan Fan, Yiyang Zhou, Kangyu Zhu, et al . 2024. Cares: A comprehensive benchmark of trustworthiness in medical vision language models. Advances in Neural Information Processing Systems 37 (2024), 140334–140365. [66] Yunfei Xie, Ce Zhou, Lang Gao, Juncheng Wu, Xianhang Li, Hong-Yu Zhou, Sheng Liu, Lei Xing, James Zou, Cihang Xie, et al . 2024. Medtrinity-25m: A large-scale multimodal dataset with multigranular annotations for medicine. arXiv preprint arXiv:2408.02900 (2024). [67] Weiwen Xu, Hou Pong Chan, Long Li, Mahani Aljunied, Ruifeng Yuan, Jianyu Wang, Chenghao Xiao, Guizhen Chen, Chaoqun Liu, Zhaodonghui Li, et al .2025. Lingshu: A Generalist Foundation Model for Unified Multimodal Medical Understanding and Reasoning. arXiv preprint arXiv:2506.07044 (2025). [68] Yongcheng Yao, Yongshuo Zong, Raman Dutt, Yongxin Yang, Sotirios A Tsaf-taris, and Timothy Hospedales. 2025. MedVision: Dataset and Benchmark for Quantitative Medical Image Analysis. arXiv preprint arXiv:2511.18676 (2025). [69] Jin Ye, Guoan Wang, Yanjun Li, Zhongying Deng, Wei Li, Tianbin Li, Haodong Duan, Ziyan Huang, Yanzhou Su, Benyou Wang, et al . 2024. Gmai-mmbench: A comprehensive multimodal evaluation benchmark towards general medical ai. 
+
+Advances in Neural Information Processing Systems 37 (2024), 94327–94427. [70] Suhao Yu, Haojin Wang, Juncheng Wu, Cihang Xie, and Yuyin Zhou. 2025. Med-FrameQA: A Multi-Image Medical VQA Benchmark for Clinical Reasoning. arXiv preprint arXiv:2505.16964 (2025). [71] Xiang Yue, Yuansheng Ni, Kai Zhang, Tianyu Zheng, Ruoqi Liu, Ge Zhang, Samuel Stevens, Dongfu Jiang, Weiming Ren, Yuxuan Sun, et al . 2024. Mmmu: A massive multi-discipline multimodal understanding and reasoning benchmark for expert agi. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 9556–9567. [72] Chenghanyu Zhang, Zekun Li, Peipei Li, Xing Cui, Shuhan Xia, Weixiang Yan, Yiqiao Zhang, and Qianyu Zhuang. 2025. SpineBench: Benchmarking Multimodal LLMs for Spinal Pathology Analysis. In Proceedings of the 33rd ACM International Conference on Multimedia . 12729–12736. [73] Xiaoman Zhang, Chaoyi Wu, Ziheng Zhao, Weixiong Lin, Ya Zhang, Yanfeng Wang, and Weidi Xie. 2023. Pmc-vqa: Visual instruction tuning for medical visual question answering. arXiv preprint arXiv:2305.10415 (2023). [74] Mu Zhou, Jacob Scott, Baishali Chaudhury, Lawrence Hall, Dmitry Goldgof, Kristen W Yeom, Michael Iv, Yangming Ou, Jayashree Kalpathy-Cramer, Sandy Napel, et al . 2018. Radiomics in brain tumor: image assessment, quantitative feature descriptors, and machine-learning approaches. American Journal of Neuroradiology 39, 2 (2018), 208–216. 10 MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+# MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-based Brain Tumor Diagnosis Supplementary Material 
+
+## Contents 
+
+A Details on Training Data Construction 12 
+
+A.1 Multi-Source Data Aggregation and Standardization . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12 A.2 Medical Semantic Mapping . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12 A.3 Automated Coarse Description Generation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12 A.4 Dual-MLLM Visual Sign Extraction Framework . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13 A.5 Train–Benchmark Split Protocol . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14 
+
+B Process Monitoring and Hallucination Mitigation 14 
+
+B.1 Process Monitoring via Average Information Rate (AIR) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14 B.2 Hallucination Mitigation via Multi-Model Cross-Validation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15 B.3 Silver Annotation Quality Audit . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15 
+
+C Task and Evaluation Design 16 
+
+C.1 Automated QA Generation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16 C.2 Rationale for Feature Selection and Clinical Relevance . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16 C.3 Open-Ended Evaluation: LLM-as-a-Judge Protocol . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17 
+
+D Supplementary Implementation and Qualitative Analysis 17 
+
+D.1 Supplementary Figures . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17  
+
+> 11 Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu
+
+## A Details on Training Data Construction 
+
+A.1 Multi-Source Data Aggregation and Standardization. 
+
+To establish a comprehensive and clinically representative bench-mark, we aggregated 20 distinct datasets, spanning diverse samples from multi-center challenges (e.g., BraTS) to open-source reposito-ries. The specific sources and distribution of the datasets are detailed in Table 3 and Figure 9.Confronting the significant heterogeneity in storage formats across these sources—encompassing 3D NIfTI vol-umes, 2D DICOM sequences, and various non-standard annotation formats such as YOLO/XML—we engineered seven specialized data processing scripts. These pipelines systematically executed direc-tory parsing, modality alignment, and annotation conversion, with a particular focus on rasterizing vector-based YOLO normalized coordinates into unified binary masks. After standardization, we conducted a large-scale duplicate re-moval procedure to enhance data integrity. Specifically, pixel-level comparison was performed after unified preprocessing, and MRI slices with identical pixel matrices were considered duplicates. This process eliminated approximately 29,000 redundant images, reduc-ing the dataset size from over 100,000 raw slices to more than 70,000 unique MRI slices. All duplicate removal was conducted globally across the aggregated data pool prior to dataset partition-ing to prevent cross-source redundancy.Through this standardiza-tion and integrity filtering workflow, we transformed a disordered, multi-source, and heterogeneous brain tumor dataset into a unified, structured index optimized for downstream multimodal instruction construction and benchmark evaluation. Distribution of tumor types ＆ modalities 
+
+> Tumor Type
+> MRI Modality
+
+Figure 9: Distribution of tumor types and modalities.The outer ring shows the distribution of brain tumor types, while the inner ring displays the distribution of MRI modalities. A.2 Medical Semantic Mapping. 
+
+Since the aggregated datasets comprise diverse, unregistered MRI scan planes (e.g., axial, coronal, sagittal), traditional anatomical localization is prone to ambiguity. To address this, we developed a 
+
+Purely Visual Morphological Pipeline that maps binary masks into structured semantic labels across four distinct dimensions: (1) Relative Tumor Size. To quantify tumor burden, we calculate the relative area ratio 𝑅 area :
+
+𝑅 area = 𝑁 tumor 
+
+𝐻 × 𝑊 (5) Based on empirical clinical thresholds, lesions are categorized as: 
+
+• Small/Focal: 𝑅 area < 1% 
+
+• Medium: 1% ≤ 𝑅 area < 5% 
+
+• Large/Extensive: 𝑅 area ≥ 5% 
+
+(2) Morphological Characterization. Adhering to the IBSI guide-lines, we employ Circularity ( 𝐶 ) and Elongation ( 𝐸 ) to charac-terize invasive features. 
+
+𝐶 measures the deviation from a perfect circle: 
+
+𝐶 = 4𝜋𝐴 𝑃 2 (6) 
+
+𝐸 represents the ratio of major to minor axes derived via PCA: 
+
+𝐸 = 𝜆 major 
+
+𝜆 minor 
+
+(7) 
+
+Classification Logic: 
+
+• Irregular/Spiculated: 𝐶 < 0.5
+
+• Round/Oval: 𝐶 ≥ 0.8 and 𝐸 ≤ 1.5
+
+• Lobulated: Intermediate cases (3) Spread and Multiplicity. We utilize Connected Component Analysis (CCA) to identify the number of independent lesion components ( 𝑁 𝑐 ) and the core dominance ratio 𝑓 core :
+
+𝑓 core = 𝐴 max 
+
+Í 𝐴 𝑖 
+
+(8) Classifications include: 
+
+• Solitary: 𝑁 𝑐 = 1
+
+• Dominant with Satellites: 𝑁 𝑐 > 1 and 𝑓 core ≥ 0.7
+
+• Scattered/Multifocal: 𝑁 𝑐 > 1 and 𝑓 core < 0.7
+
+(4) Grid-Based Visual Localization. We calculate the geometric centroid (𝐶 𝑥 , 𝐶 𝑦 ) of the lesion and discretize it into a 3 × 3
+
+spatial grid (generating descriptors such as “Upper-Left” or “Center”). This explicit visual coordinate system, independent of anatomical priors, effectively guides the VLM’s attention to the pixel distribution of the pathology. 
+
+A.3 Automated Coarse Description Generation. 
+
+To transform the extracted structured metadata into textual for-mats ingestible by Large Language Models (LLMs), we designed a robust, rule-based Natural Language Generation (NLG) engine. This engine serializes image metadata and semantic attributes into coherent natural language descriptions, strictly adhering to a three-part hierarchical template: 𝐷 = [𝑇 base ,𝑇 pathology ,𝑇 morphology ]. The overall generation workflow and template instantiation are illus-trated in Figure 10.First, the generator constructs the Imaging Con-text ( 𝑇 base ) based on modality fields; it specifies the exact sequence when known (e.g., “a T1-weighted brain MRI scan” ) or falls back to a generic description with an explicit “unknown” status when the modality is missing, thereby ensuring factual accuracy. Subse-quently, the system appends a Pathology Statement ( 𝑇 pathology ): for healthy samples, it outputs “no visible pathological findings” and terminates generation; for tumor samples, it dynamically gener-ates diagnostic descriptions ranging from specific (e.g., “signs of  
+
+> 12 MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+Table 3: Inventory of the 20 original data sources incorporated in MM-NeuroOnco. 
+
+ID Dataset Name Samples Key Characteristics Link 
+
+01 Brain Tumor Classification (MRI) 3,264 4-class MRI tumor classification (glioma, meningioma, pituitary, no tumor). URL 02 Br35H: Brain Tumor Detection 2020 1,500 Binary tumor classification; balanced dataset. URL 03 Brain Tumor MRI Dataset 7,023 4-class tumor classification; MRI modality unspecified. URL 04 Brain Cancer MRI Dataset 6,056 Glioma, meningioma, pituitary tumor cases. URL 05 BRISC: Brain Tumor Seg. Dataset 6,000 T1-weighted MRI; 4-class labels; segmentation masks. URL 06 Jun Cheng Brain Tumor Dataset 3,064 T1-weighted contrast-enhanced MRI; three tumor subtypes. URL 07 Figshare Brain Tumor Dataset 3,000 T1-weighted contrast-enhanced MRI; benchmark subset. URL 08 Brain Tumor MRI Images (44 Classes) 4,478 Multimodal MRI (T1/T1CE/T2); 44 fine-grained tumor classes. URL 09 Brain Tumor MRI Images (17 Classes) 4,449 Multimodal MRI (T1/T1CE/T2); 17 fine-grained tumor classes. URL 10 Brain Tumor Classification 2D 6,813 Multimodal MRI (T1/T1CE/T2/FLAIR); pixel-level segmentation masks. URL 11 Brain Tumor Classification (14 Classes) 4,455 14-class brain tumor subtype classification. URL 12 Brain Tumor Classification (15 Classes) 4,288 15-class brain tumor subtype classification. URL 13 Brain Tumor Multimodal Image Dataset 9,618 Mixed CT and MRI modalities; common tumor types. URL 14 Brain Tumor MRI Dataset for DL 9,257 4-class MRI tumor classification for deep learning. URL 15 Brain Tumor Segmentation Dataset 3,064 T1-weighted contrast-enhanced MRI; binary segmentation masks. URL 16 RSNA–MICCAI BraTS 2021 8,330 Multimodal MRI (T1/T1CE/T2/FLAIR); expert-annotated segmentation labels. URL 17 Brain Tumors 256 ×256 Dataset 3,096 4-class tumor classification; standardized spatial resolution. URL 18 Brain Tumor Dataset (Images and Masks) 6,129 Unspecified tumor subtypes; segmentation masks provided. URL 19 Medical Image Dataset: Detection 3,903 4-class medical image detection; bounding-box annotations (YOLO). URL 20 Brain Tumor MRI Classification 2025 5,000 Binary MRI tumor classification; recent dataset. URL 
+
+Glioma” ) to generalized (e.g., “an abnormal mass” ) based on the granularity of the available labels. Following the baseline diagnosis, the engine assesses the avail-ability of pixel-level annotations to construct Morphological De-tails ( 𝑇 morphology ). For samples containing segmentation masks, the system populates syntactic slots with the size, location, shape, and spread attributes extracted in Appendix A.2, generating fine-grained descriptions such as “The mass is large and located in the upper-left region.” Crucially, for the substantial portion of samples lacking mask annotations, the engine automatically generates an explicit disclaimer indicating that morphological details are unavail-able. This strategy of knowledge boundary definition prevents the multimodal model from hallucinating features in unlabeled regions during subsequent training, ensuring consistency and credibility of the generated text across varying data quality conditions. 
+
+A.4 Dual-MLLM Visual Sign Extraction Framework. 
+
+To extract fine-grained radiological signs from 2D MRI slices, we constructed an automated multimodal analysis pipeline that inte-grates two heterogeneous state-of-the-art models via API services: GPT-5.1 and Claude-Sonnet-4.0. Considering the differences in their underlying architectures and instruction-following behaviors, we applied targeted System Prompt adaptations to improve reasoning consistency and performance. Despite these model-specific adjust-ments, the overall framework is governed by a unified radiological CoT protocol. Specifically, both models are instantiated as conservative neu-roradiologists adhering to evidence-based principles, with a core ethic of “Omission over Fabrication” to mitigate hallucination and ensure that outputs remain grounded in verifiable visual evidence. “A {modality} brain MRI scan showing signs of 
+
+{tumor_type}. The mass is {size} and located in the 
+
+{location}. It presents as a {shape} structure and 
+
+appears as a {spread} lesion.” 
+
+size shape 
+
+spread location   
+
+> MRI images ＆mask
+
+Figure 10: Coarse-grained text description template con-verted from structured JSON fields into natural language. 
+
+To maintain reasoning controllability, we enforce a Default Null Pol-icy in which all diagnostic fields are initialized as null and can only be updated after satisfying a structured “Location–Appearance– Certainty” validation (i.e., where the lesion is located, what visual characteristics it presents, and why the conclusion is justified). Ad-ditionally, a Pixel Authority Principle prioritizes visual signals over textual priors. To address grayscale ambiguity and modality-specific uncertainty, we further impose domain constraints, including the NAWM baseline (using contralateral normal-appearing white mat-ter as the signal reference) and MRI physics consistency rules (e.g., cerebrospinal fluid must appear hypointense on T1), thereby reduc-ing artifact-induced misinterpretation. 
+
+> 13
+
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu Input 
+
+2D Brain MRI 
+
+Slice 
+
+GPT5.1 Claude4.0 
+
+Step 1: Double-Blind Visual 
+
+Extraction       
+
+> "predicted_modality":
+> "T1",
+> "predicted_location":
+> "Center",
+> "lesion_found": "True"},
+> "structured_signs": {
+> "shape": "Round",
+> "margins": "Well-
+> circumscribed",
+> "texture":
+> "Homogeneous",
+> "enhancement": null,
+> "edema": null,
+> "signal_intensity":
+> "Isointense"}
+> "predicted_modality":
+> "T1",
+> "predicted_location":
+> "Center",
+> "lesion_found": "True"},
+> "structured_signs": {
+> "shape": "Lobulated",
+> "margins": "Well-
+> circumscribed",
+> "texture":
+> "Homogeneous",
+> "enhancement": "null",
+> "edema": "null",
+> "signal_intensity":
+> "Hyperintense"}
+> "predicted_modality":
+> "T1",
+> "predicted_location":
+> "Center",
+> "lesion_found": "True"},
+> "structured_signs": {
+> "shape": "Round",
+> "margins": "Well-
+> circumscribed",
+> "texture":
+> "Homogeneous",
+> "enhancement": null,
+> "edema": null,
+> "signal_intensity":
+> "Isointense"}
+
+null 
+
+null = Uncertain/Unknown 
+
+Step 2: Fusion ＆ Filtering 
+
+conflict   
+
+> "predicted_modality":
+> "T1",
+> "predicted_location":
+> "Center",
+> "lesion_found":
+> "True"},
+> "structured_signs": {
+> "shape": "null" ,
+> "margins": "Well-
+> circumscribed",
+> "texture":
+> "Homogeneous",
+> "enhancement":
+> "null",
+> "edema": "null",
+> "signal_intensity":
+> "null" }
+
+Step 3: Final Visual Review 
+
+＆ QC 
+
+Gemini 3 
+
+Flash 
+
+subtraction 
+
+only     
+
+> "predicted_modality":
+> "null"
+> "predicted_location":
+> "null" ,
+> "structured_signs": {
+> "shape": "null" ,
+> "margins": "null" ,
+> "texture": "null" ,
+> "enhancement":
+> "null",
+> "edema": "null",
+> "signal_intensity":
+> "null" }
+
+Discard risky 
+
+samples     
+
+> "predicted_modality":
+> "T1",
+> "predicted_location":
+> "null",
+> "lesion_found": "True"
+> "shape": "null",
+> "margins": "Well-
+> circumscribed",
+> "texture":"Homogeneo
+> us",
+> "enhancement": "null",
+> "edema": "null",
+> "signal_intensity": "null",
+
+Final Output 
+
+> "meta_info": {
+> "predicted_modality":
+> "t1",
+> "predicted_location":
+> "Center",
+> "lesion_found": "True"
+> },
+> "structured_signs": {
+> "shape": "Round",
+> "margins": "Well-
+> circumscribed",
+> "texture":
+> "Homogeneous",
+> "enhancement": "null",
+> "edema": "null",
+> "signal_intensity":
+> "null"
+> }
+
+Semantically Rich 
+
+Samples 
+
+MM-NeuroOnco 
+
+NeuroOnco-GPT 
+
+Figure 11: Multi-model Assisted Automated Medical Information Extraction and Quality Control Process. A.5 Train–Benchmark Split Protocol. 
+
+To ensure rigorous evaluation and minimize potential data leakage, we establish structured isolation between the instruction dataset and MM-NeuroOnco-Bench. Global pixel-level deduplication is per-formed prior to partitioning, where MRI slices with identical pixel matrices after unified preprocessing are removed across the aggre-gated data pool to ensure that no exact duplicate images appear across splits. For volumetric datasets (e.g., brain tumor segmenta-tion benchmarks), only a single representative 2D slice is extracted from each 3D volume, such that each volumetric case contributes at most one sample; this design implicitly enforces volume-level isolation and prevents cross-slice correlations from the same 3D case appearing across training and evaluation sets. After deduplication and single-slice sampling, we perform strati-fied partitioning based on tumor categories and imaging modali-ties to maintain balanced distribution across splits, with detailed statistics shown in Figure 12. For datasets originally provided as independent 2D slices without reliable patient- or case-level iden-tifiers, strict patient-level grouping cannot be enforced; in such cases, we rely on pixel-level deduplication combined with stratified partitioning to guarantee slice-level disjointness while preserving distributional balance. Collectively, this protocol ensures that no identical images and no multi-slice correlations from the same vol-umetric case appear across splits, while maintaining fair and stable benchmarking conditions. 
+
+## B Process Monitoring and Hallucination Mitigation 
+
+B.1 Process Monitoring via Average Information Rate (AIR). 
+
+To dynamically monitor the information flow within the extraction pipeline and quantitatively assess the degree of conservatism ex-ercised under the “Default Null Policy,” we introduce a statistical control metric termed the Average Information Rate (AIR) .AIR measures the proportion of non-null core radiological at-tributes extracted per valid tumor sample. For each sample 𝑥 𝑖 , the information extraction rate 𝑅 (𝑥 𝑖 ) is calculated as follows: 
+
+𝑅 (𝑥 𝑖 ) = 1
+
+|𝑆 |∑︁ 𝑠 ∈𝑆 
+
+I(𝑠 ≠ null ) (9) Here, 𝑆 denotes the set of six predefined core radiological signs (Shape, Margin, Texture, Enhancement, Edema, Signal Intensity), where |𝑆 | = 6, and I(·) is the indicator function.The dataset-level AIR is computed as the mean of 𝑅 (𝑥 𝑖 ) over all samples identified as positive (Lesion Found = True).Importantly, AIR is not designed to maximize information density. Instead, it functions as a calibration signal to balance extraction coverage and factual reliability. Em-pirically, we observed that aggressively increasing attribute recall tends to elevate hallucination risk, whereas overly conservative configurations suppress clinically meaningful evidence.Extremely low AIR values (e.g., < 10% ) indicate excessive conservatism and po-tential loss of valid diagnostic information. Conversely, implausibly high values (e.g., > 90% ) suggest over-generation and possible viola-tion of modality constraints—for example, reporting “enhancement” 
+
+14 MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+Table 4: Brief description of the four sub-datasets in MM-NeuroOnco and their corresponding data sizes. Dataset Sub-Dataset Description Size MM-NeuroOnco 
+
+Image Pool Curated collection of 2D MRI slices from 20 public datasets processed via unified indexing, deduplication, and normalization. 73,226 Attributes Integrates 9 LLM-extracted silver labels (e.g., edema and enhancement) alongside human-annotated gold labels such as tumor type. 24,726 VQA Pairs Featuring 130k+ closed-ended QA pairs with challenging distractors and CoT reasoning, supplemented by 70k+ open-ended pairs. 200k+ Benchmark A high-quality evaluation subset containing 1,000 images annotated with 2k+ closed-ended and 1k+ open-ended questions. 3k+ 
+
+Table 5: Overall performance comparison on the open-ended benchmark. Best results are highlighted in bold, and second-best results are underlined.                                             
+
+> Model Detail Location Reasoning Overall
+> General-Purpose LVLMs
+> GPT-5.1 71.15 63.99 86.17 72.72
+> Gemini 3 Flash 65.71 49.22 82.02 65.67 Qwen3-VL-8B 58.94 59.59 44.28 56.14
+> Medical-Specialized LVLMs
+> HuLuMed-32B 60.80 46.58 78.23 61.44 Lingshu-7B 57.42 55.10 80.29 61.53 Lingshu-32B 54.06 47.86 81.15 58.24 HuLuMed-7B 48.27 28.97 72.14 49.14 MedGemma-27B 55.79 17.08 62.76 49.44 MedGemma-1.5-4B 50.89 20.78 71.15 48.92
+> Ours (Domain-Adapted LVLMs)
+> NeuroOnco-GPT 52.51 84.77 68.40 62.14
+
+in non-contrast T1 scans—thereby introducing hallucinations.To ensure that increases in AIR reflect meaningful semantic extrac-tion rather than hallucination amplification, each prompt or policy adjustment was followed by manual audits on randomly sampled subsets. Only configurations that improved information coverage without degrading factual correctness were retained.Through this iterative calibration process, AIR serves as a quantitative mecha-nism for maintaining an appropriate balance between information richness and authenticity, while strictly adhering to the ethical principle of “Omission over Fabrication.” 
+
+B.2 Hallucination Mitigation via Multi-Model Cross-Validation. 
+
+To mitigate hallucination risks during medical semantic extrac-tion, we incorporate multiple layers of structural and procedural safeguards into the pipeline.First, we employ two heterogeneous commercial multimodal LLMs to independently extract medical semantic attributes from the same visual input. Rather than relying on a single model’s output, extracted attributes are retained only when supported by cross-model agreement. This redundancy-based design reduces the likelihood of systematic over-generation and sup-presses model-specific idiosyncratic errors, leading to more robust semantic extraction compared to single-model inference.Second, we introduce a third heterogeneous LLM as an external verifier to perform a final consistency check over the extracted semantic fields. The verifier operates under a strictly constrained policy: it is permitted only to remove or nullify uncertain or unsupported attributes, and is explicitly prohibited from introducing any new information. This asymmetric verification mechanism ensures that the final stage can reduce spurious attributes but cannot amplify or introduce hallucinated content. Third, prior to semantic extraction, all medical attribute fields are initialized to null . Information is populated only when sufficiently strong and explicit visual evidence is identified. This default-empty strategy enforces conservative behavior and aligns the extraction process with clinical reasoning norms, where uncertainty favors omission rather than speculation.Finally, to empirically evaluate the reliability of the overall pipeline, we conduct random manual audits at two critical stages: (1) after the initial dual-model extraction, and (2) following the final verification stage. The audits assess whether extracted attributes are visually supported and clinically plausible. Results from these inspections confirm that the multi-stage de-sign effectively suppresses unsupported attribute generation while preserving clinically meaningful diagnostic information. 
+
+B.3 Silver Annotation Quality Audit. 
+
+To assess the reliability of the automatically extracted silver su-pervision used for instruction tuning, we conducted a manual audit on a randomly sampled subset of the instruction dataset. In total,    
+
+> 15 Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu 27.1%
+> 26.2%
+> 18.7%
+> 28.0%
+> 3.7%
+> 7.4%
+> 7.4%
+> 11.1%
+> 11.1%
+> 11.1%
+> 11.1%
+> 11.1%
+> 14.8%
+> 11.3%
+> （a）Distribution of Open-Ended Question Types （b）Extraction Rate of Medical Attribute Information （c）Distribution of Tumor Categories in the Benchmark
+
+Figure 12: Data Distribution and Information Extraction Rate. Table 6: Silver Annotation Quality Audit Results.     
+
+> Metric Value
+> Reviewed Attribute Fields 136 Attribute-level Precision 89.70% Information Omission Rate 17.65%
+
+136 structured medical attribute fields were reviewed across multi-ple MRI slices. As summarized in Table 6, the extraction pipeline achieved an attribute-level precision of 89.7%, indicating high fac-tual correctness among predicted attributes. The observed informa-tion omission rate is 17.65%, reflecting the conservative extraction policy in which uncertain attributes are intentionally left as null 
+
+rather than aggressively inferred. These results demonstrate that the silver supervision signals maintain strong factual reliability while adhering to the omission-first design principle. 
+
+## C Task and Evaluation Design 
+
+C.1 Automated QA Generation. 
+
+We adopt distinct generation paradigms for the instruction dataset and the evaluation benchmark to ensure functional separation be-tween data synthesis and assessment.For the instruction dataset, we utilize Qwen3-Next-80B to synthesize a linguistically diverse cor-pus of instruction-style QA data. To reduce template overfitting and enhance expressive variability, the model is explicitly instructed to introduce natural phrasing variations during question construc-tion. The QA format is tailored to diagnostic categories: binary classification questions are generated for healthy samples, while multiple-choice questions with carefully designed distractors are constructed for confirmed tumor cases. This design encourages broad exposure to clinically relevant reasoning patterns during training. In contrast, the evaluation benchmark is constructed using GPT-5.1 under a stricter control protocol to ensure independence from the instruction data generation process. To prevent textual information leakage, we exclude descriptive cues related to lesion size, morphology, or other diagnostic hints from the question stems, thereby requiring models to rely exclusively on visual evidence. Moreover, distractors are not randomly sampled; instead, radio-logically mimetic pathologies are selected as adversarial options (e.g., using Lymphoma as a distractor for Glioma). This adversarial distractor design enables fine-grained assessment of visual dis-crimination capability while minimizing shortcut reasoning. No benchmark question is directly reused or paraphrased from the instruction dataset. 
+
+C.2 Rationale for Feature Selection and Clinical Relevance. 
+
+Clinical diagnosis in brain tumor imaging relies on the integra-tion of multiple complementary imaging attributes rather than isolated cues. Prior studies have demonstrated that morphology, margins, texture, enhancement patterns, signal intensity, and edema play critical roles in tumor classification and grading [ 74 ]. These attributes collectively reflect tumor geometry, tissue interaction, biological activity, and microenvironmental response.Specifically, shape and margins characterize geometric configuration and bound-ary definition, where irregular contours or indistinct margins are frequently associated with infiltrative or high-grade lesions. Texture captures intratumoral heterogeneity, while signal intensity encodes modality-specific contrast patterns in T1- and T2-weighted MRI sequences that are diagnostically informative. Enhancement re-flects blood–brain barrier disruption and tumor vascular activity, and edema indicates peritumoral infiltration and mass effect, often correlating with aggressiveness [62]. Importantly, feature selection is aligned with the evaluation pro-tocol. Since our benchmark operates on single-slice 2D MRI inputs, we intentionally exclude attributes that require three-dimensional or temporal context, such as volumetric measurements, cross-slice growth patterns, or longitudinal progression [ 74 ]. The selected fea-tures are those that are visually identifiable within a single slice and clinically meaningful, thereby ensuring consistency between input modality and evaluative criteria while maintaining diagnostic relevance. 
+
+C.3 Open-Ended Evaluation Protocol. 
+
+Given the limitations of traditional n-gram metrics (e.g., BLEU and ROUGE) in capturing clinically grounded reasoning, we fol-low the LLM-as-a-judge evaluation paradigm adopted in recent medical multimodal benchmarks [ 25 ] to assess open-ended re-sponses.Specifically, we use Qwen3-Next-80B as an automated clinical assessor. The evaluation prompt (Figure 18) follows the  
+
+> 16 MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+structured scoring scheme described in prior work, assessing re-sponses along clinically relevant dimensions such as factual consis-tency, spatial correctness, safety compliance, and reasoning coher-ence.Critical errors (e.g., laterality conflicts or unsupported patho-logical claims) are penalized according to the predefined scoring rules, while acceptable semantic variations in radiological descrip-tions are tolerated to avoid over-penalization due to minor lexical differences.This setup provides a structured and clinically aligned evaluation of open-ended diagnostic reasoning, consistent with existing LLM-based assessment practices. 
+
+## D Supplementary Implementation and Qualitative Analysis 
+
+D.1 Supplementary Figures. 
+
+This section provides additional implementation details and qual-itative demonstrations to enhance transparency, interpretability, and reproducibility of the proposed framework. Specifically, we present the full attribute extraction algorithm, detailed prompt templates used at different stages of the pipeline, and representa-tive examples from both the instruction dataset and the evaluation benchmark. These materials complement the quantitative results in the main text by illustrating the structured design of the extraction process, the controllability of the prompting strategy, and the prac-tical characteristics and difficulty of the constructed benchmark. All figures are organized as full-width, two-column illustrations to facilitate side-by-side comparison and detailed inspection.  
+
+> 17 Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu
+
+Algorithm 1: Knowledge-Guided 2D MRI Brain Tumor Attribute Extraction 
+
+Input : 2D MRI image 𝐼 , clinical context text 𝐶 txt 
+
+Output : Meta-info 𝑀 , extracted signs/attributes 𝑆 
+
+/* Step 1: Initialization */  
+
+> 1
+
+𝑀 ← { predicted _modality : null , lesion _found : null , loc : null }; 
+
+> 2
+
+𝑆 ← { signal : null , enhance : null , edema : null , shape : null , margins : null };
+
+/* Step 2: Modality Determination & Validation */  
+
+> 3
+
+𝑀 . predicted _modality ← InferModality (𝐼, 𝐶 txt );; // Uses text first, falls back to intensity heuristics; vetoes invalid T1CE /* Step 3: Lesion Detection (“Pixel Authority”) */  
+
+> 4
+
+if Healthy ∈ 𝐶 txt then  
+
+> 5
+
+𝑀 . lesion _found ← False ; 
+
+> 6
+
+return {𝑀, 𝑆 }; 
+
+> 7
+
+𝑅 ← DetectLesion (𝐼 );; // Scan + spatial coherence filtering  
+
+> 8
+
+if 𝑅 = ∅ then  
+
+> 9
+
+𝑀 . lesion _found ← False ; 
+
+> 10
+
+return {𝑀, 𝑆 }; 
+
+> 11
+
+𝑀 . lesion _found ← True ; 
+
+> 12
+
+𝑀 . loc ← Localize (𝑅 );
+
+/* Step 4: Establish Reference (NAWM) */  
+
+> 13
+
+𝑃 ref ← SelectRef (𝐼 );; // Contralateral normal-appearing white matter /* Step 5: Attribute Extraction */  
+
+> 14
+
+𝑆 ← ExtractAttrs (𝑅, 𝑃 ref , 𝑀. predicted _modality );; // Signal/shape/margins + modality-specific logic /* Step 6: Consistency Check */  
+
+> 15
+
+𝑆 ← ResolveContr (𝑆, 𝑀. predicted _modality );; // Revert contradictory fields to null  
+
+> 16
+
+return {𝑀, 𝑆 };
+
+> 18
+
+MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Glioma 
+
+Meningioma 
+
+Pituitary 
+
+Schwannoma 
+
+Embryonal 
+
+Ependymoma 
+
+Neuronal 
+
+Healthy 
+
+Figure 13: Sample Images of Meningioma, Glioma, Pituitary Tumors, and Others. 
+
+19 Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu SYSTEM_PROMPT = r""" 
+
+### 1. ROLE & MISSION 
+
+You are a Neuroradiologist specialized in **2D MRI brain tumor diagnosis **.
+
+**CORE PRINCIPLES: **
+
+* **Initialize to null: ** Default all fields to `null`. 
+
+* **Evidence-Based: ** Only modify `null` if it satisfies the **"3W Rule" **.
+
+* **Omission is professional; fabrication is a medical error. **
+
+### 2. INPUT DATA 
+
+- **IMAGE: ** A single 2D MRI slice (Primary Evidence). 
+
+- **TEXT: ** Clinical context containing known facts or missing info (Guidance Hint). 
+
+### 3. BEHAVIORAL CONSTRAINTS & VETOS 
+
+1. **Pixel Authority: ** **Image pixels are the ultimate diagnostic authority **.
+
+2. **Mandatory Detection for Non-Healthy Samples: ** If the TEXT indicates a tumor, you MUST set 
+
+`lesion_found`="True". Do NOT reject the image or set `lesion_found`="False" due to low contrast, 
+
+blurry pixels, or indistinct margins. **If specific features are unreadable, keep those specific fields 
+
+as `null`, but do NOT veto the entire sample. **
+
+3. **Anatomy Filter: ** Exclude normal structures (Vessels, Sinuses, Choroid Plexus, symmetric 
+
+anatomy). 
+
+4. **Unknown Lock: ** If modality is "Unknown", force `signal_intensity`=null (also keep 
+
+`edema`/`enhancement` null as usual). 
+
+### 4. MEDICAL PRIOR & MODALITY ANCHORS 
+
+- **T1: ** CSF is Dark; White Matter (WM) is brighter than Gray Matter. (Lock: Edema/Enhancement 
+
+= null). 
+
+- **T2: ** CSF is Bright/White. 
+
+- **FLAIR: ** CSF is Dark; Edema/Inflammation is Bright. 
+
+- **T1_Contrast (T1CE): ** Vessels/Sinuses MUST be Bright/White. 
+
+* **Veto: ** If vessels are dark, treat as T1; force `enhancement`=null. 
+
+* **Lock: ** On confirmed T1CE, force `signal_intensity`=null (use `enhancement` field instead). 
+
+### 5. ENHANCED MODALITY RECOGNITION FOR T1 
+
+- **In T1 Modality: ** If a lesion is detected, **enhancement ** and **edema ** fields should only 
+
+remain null if no evidence of enhancement or swelling is observed in the image. If there are 
+
+suspicious bright regions (possible enhancement), fill `enhancement` as **Present **.
+
+- **Edema in T1: ** If there is a visually discernible expansion or blurred boundary (possible edema), 
+
+fill `edema` as **Present **. 
+
+> Figure 14: Prompt for the Medical Information Extraction Process
+> 20 MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+### 6. UNIFIED LABELING DICTIONARY (Mandatory Anchor: Healthy WM) 
+
+**All brightness judgments MUST use contralateral normal-appearing deep White 
+
+Matter (NAWM) in the same slice as the ZERO reference (avoid cortex/GM ribbon and 
+
+CSF). **
+
+- **Signal Intensity: **
+
+- **Hyperintense: ** Visually **brighter/whiter ** than healthy WM. 
+
+- **Hypointense: ** Visually **darker/grayer ** than healthy WM. 
+
+- **Isointense: ** Signal is **nearly identical ** to healthy WM. 
+
+- **Mixed: ** Both Hyper and Hypo signals are present, each occupying >30%. 
+
+- **Texture: ** Homogeneous | Heterogeneous. 
+
+- **Enhancement (T1CE only): ** Solid | Ring | Patchy. 
+
+- **Edema (T2/FLAIR only): ** Mild | Extensive. 
+
+- **Margins: ** Well-circumscribed | Ill-defined. 
+
+- **Shape: ** Round | Oval | Irregular | Lobulated. 
+
+### 7. DYNAMIC EXECUTION WORKFLOW 
+
+**STEP 1: Initialization ** - Set all fields to `null`. 
+
+**STEP 2: Healthy Short-Circuit ** - Set `lesion_found`="False" ONLY if text says 
+
+"Healthy" OR the image is 100% normal with NO localized signal shift. **If TEXT says 
+
+there is a tumor, you MUST skip the Veto and proceed to STEP 3. **
+
+**STEP 3: Modality Determination ** - **Adopt text hint if provided. ** Otherwise, 
+
+identify via Section 4. 
+
+**STEP 4: Localization ** - **Focus on text-hinted location. ** Any localized asymmetry 
+
+or slight grey-scale shift vs. contralateral NAWM satisfies this. 
+
+**STEP 5: Fine-Grained Extraction ** - Extract signs via Section 5. **If a specific sign is 
+
+truly invisible due to quality, keep it `null` but do NOT revert `lesion_found` to False. **
+
+**STEP 6: Self-Reflection Audit ** - Verify physics. If the logic chain for signs is weak, 
+
+revert signs to `null`, but **if the clinical text confirmed a tumor, `lesion_found` MUST 
+
+remain "True". **
+
+### 8. OUTPUT (STRICT JSON ONLY) 
+
+{
+
+"meta_info": { 
+
+"predicted_modality": "T1 | T2 | FLAIR | T1_Contrast | Unknown", 
+
+"predicted_location": "Upper-Left | Upper-Center | Upper-Right | Center-Left | Center | 
+
+Center-Right | Lower-Left | Lower-Center | Lower-Right | null", 
+
+"lesion_found": "True | False" 
+
+}, 
+
+"structured_signs": { 
+
+"shape": "Option | null", 
+
+"margins": "Option | null", 
+
+"texture": "Option | null", 
+
+"enhancement": "Option | null", 
+
+"edema": "Option | null", 
+
+"signal_intensity": "Option | null" 
+
+}
+
+}
+
+""" 
+
+Figure 15: Continuation of the Prompt for the Medical Information Extraction Process.  
+
+> 21 Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu
+
+SYSTEM_PROMPT = r""" 
+
+You are an experienced Neuroradiologist Auditor. 
+
+**Task: ** "Sanity Check" Step 2 Labels against the MRI slice. 
+
+**Mindset: ** Step 2 labels are your baseline. Be a conservative auditor. Only correct CLEAR and 
+
+GROSS errors. 
+
+### 1. Audit Logic (Strict Decision Tree) 
+
+#### A. Location (Threshold: "Gross Violation Only") 
+
+* **Rule: ** Location is binary (Right or Wrong). No middle ground. 
+
+* **KEEP: ** If there is ANY overlap, proximity, or the lesion is small/faint at the site. 
+
+* **ERASE: ** ONLY for Gross Geographical Errors (e.g., Label says "Left Hemisphere", Image shows 
+
+lesion on "Right"). 
+
+* **Note: ** Do NOT downgrade location. 
+
+#### B. Modality (Physics Check - CRITICAL) 
+
+* **Goal: ** Verify if the "Predicted Modality" matches the image physics. 
+
+* **T1 vs T1CE (Contrast) Differentiation: **
+
+* **LOOK FOR: ** 1. **Nasal Turbinates/Mucosa ** (Best Indicator), 2. Dural Venous Sinuses (e.g., 
+
+Sagittal Sinus), 3. Choroid Plexus. 
+
+* **T1 (Non-Contrast): ** These structures appear **DARK ** or Isointense. 
+
+* **T1CE (Contrast): ** These structures MUST be **BRIGHT WHITE ** (Hyperintense). 
+
+* **ACTIONS: **
+
+* **KEEP: ** If physics match or image is ambiguous. 
+
+* **DOWNGRADE: ** If label is "T1_Contrast" BUT nasal turbinates/sinuses are clearly DARK -> 
+
+Change to "T1". 
+
+* **ERASE: ** If label is "T2" but CSF is DARK (physically impossible). 
+
+#### C. Signs (Visual Cleaning & De-specification) 
+
+* **Goal: ** Validate specific visual features. 
+
+* **KEEP: ** If the sign is visible OR suggestive. (Benefit of the doubt). 
+
+* **ERASE: ** Only if the sign is **100% absent ** (Hallucination). 
+
+* **DOWNGRADE (De-specification): ** * **Definition: ** The feature exists (True Positive), but the 
+
+Step 2 description is **too specific ** or **wrongly detailed **.
+
+* **Logic: ** "I see the abnormality, but I don't see *that specific * pattern." 
+
+* **Examples: **
+
+* Label="Ring-Enhancing" -> Image shows blurry white blob -> Action: **DOWNGRADE ** (to 
+
+generic "Enhancing"). 
+
+* Label="Spiculated Margins" -> Image shows fuzzy edges -> Action: **DOWNGRADE ** (to 
+
+generic "Indistinct"). 
+
+* Label="Necrotic Center" -> Image is solid gray -> Action: **DOWNGRADE ** (to generic 
+
+"Heterogeneous"). 
+
+### 2. Output Format (FULL JSON REQUIRED) 
+
+{
+
+"final_decision": "ACCEPT", 
+
+"field_actions": { 
+
+"predicted_modality": "KEEP|ERASE|DOWNGRADE", // DOWNGRADE only for T1CE -> T1 
+
+correction 
+
+"predicted_location": "KEEP|ERASE", // NO DOWNGRADE allowed 
+
+"shape": "KEEP|ERASE|DOWNGRADE", 
+
+"margins": "KEEP|ERASE|DOWNGRADE", 
+
+"texture": "KEEP|ERASE|DOWNGRADE", 
+
+"enhancement": "KEEP|ERASE|DOWNGRADE", 
+
+"edema": "KEEP|ERASE|DOWNGRADE", 
+
+"signal_intensity": "KEEP|ERASE" // NO DOWNGRADE allowed (Signal is objective: Bright 
+
+or Dark) 
+
+}, 
+
+"additional_findings": "Max 3 words (e.g., 'Artifact present', 'Wrong orientation'), null if none." 
+
+}
+
+""" 
+
+Figure 16: Prompt for Visual Final Review and Quality Control.  
+
+> 22 MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+SYSTEM_PROMPT = """ 
+
+You are a Board-Certified Neuroradiologist. Your task is to transform MRI metadata into 
+
+professional, VARIED, and IMAGE-BASED MCQs. 
+
+### 1. Style & Diversity Guidance (CRITICAL): 
+
+* **DIVERSITY **: Do NOT use the exact same sentence template for every case. Vary your phrasing 
+
+naturally. 
+
+- *Example Diagnosis *: "What is the primary diagnosis?" / "Identify the pathology shown." / "Based 
+
+on the findings, the most likely diagnosis is:" 
+
+- *Example Features *: "How are the margins described?" / "Describe the observed internal texture." 
+
+/ "The enhancement pattern is best characterized as:" 
+
+* **NO CLINICAL HISTORY **: Strictly FORBIDDEN to invent patient age, gender, symptoms, or 
+
+medical history. 
+
+* **BRIEF & VISUAL **: Keep questions concise (under 20 words). Focus only on imaging features. 
+
+* **STRICT SOURCE **: Use ONLY provided metadata. IGNORE 'additional_clues'. 
+
+### 2. Case Logic (Benchmark Consistent): 
+
+* **CASE A: Healthy / Normal (lesion_found is False) **:
+
+* Generate a **Binary (2-Option) Question **.
+
+* Question: "Is there a pathological lesion present in this MRI?" (or similar phrasing). 
+
+* Options: {"A": "Tumor / Abnormal", "B": "Healthy / Normal"}. 
+
+* Answer: "B". 
+
+* **CASE B: Generic Tumor ** (e.g., "Tumor", "Mass"): 
+
+* Generate a **Binary (2-Option) Question **.
+
+* Options: {"A": "Tumor / Abnormal", "B": "Healthy / Normal"}. 
+
+* Answer: "A". 
+
+* **CASE C: Specific Pathology ** (e.g., "Meningioma", "Glioma"): 
+
+* Generate a **4-Option MCQ **.
+
+* Distractors: Must be specific pathologies (e.g., Glioblastoma, Metastasis). 
+
+### 3. Feature Logic (Strict Exclusion Rule): 
+
+* **IF Healthy / Normal **:
+
+- **STOP HERE **. Only generate the Diagnosis and Modality MCQs. 
+
+* **IF Pathological (Tumor) **:
+
+- Generate a standard **4-Option MCQ ** for EACH provided field: (modality, location, shape, 
+
+margins, texture, signal_intensity, enhancement, edema). 
+
+### Output JSON Format (Strict Structure): 
+
+{
+
+"questions": [ 
+
+{
+
+"question_type": "diagnosis", 
+
+"question": "varied_brief_question_text", 
+
+"options": {"A": "...", "B": "...", "C": "...", "D": "..."}, 
+
+"answer": "A" 
+
+}
+
+]
+
+}
+
+"""""" 
+
+Figure 17: Prompt for Automatic Generation of Questions and Options Based on LLM.  
+
+> 23 Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Guo, Liu, Yang, and Xu
+
+### Medical Scoring Rubric (Revised for Ambiguity) 
+
+**Step 1: Check for CRITICAL SAFETY ERRORS (The "Kill" Switch) **
+
+If ANY of the following exist, the Maximum Score is **2**.
+
+1. **Direct Laterality Conflict: ** Explicitly saying **"Left" ** when GT says **"Right" ** (or vice versa). 
+
+*⚠️ **EXCEPTION: ** If GT is "Central/Midline", confusing it with "Left" or "Right" is **NOT ** a
+
+critical error (treat as Step 3 ambiguity). 
+
+*⚠️ **EXCEPTION: ** If GT is "Bilateral", saying "Left" or "Right" is incomplete but **NOT ** a
+
+critical error. 
+
+2. **Pathology Hallucination: ** Inventing critical features (hemorrhage/necrosis) explicitly denied 
+
+by GT. 
+
+3. **Missed Diagnosis: ** Failing to find the tumor or answering "I don't know". 
+
+**Step 2: Check for MAJOR DIAGNOSTIC ERRORS **
+
+If Step 1 is passed, deduct **3-4 points **. (Max Score: 6). 
+
+1. **Wrong Anatomical Region (Distant): ** "Frontal lobe" vs "Occipital lobe" (Far apart). 
+
+2. **Wrong Enhancement: ** "Ring-enhancing" vs "Non-enhancing" (Clinical mismatch). 
+
+* Note: Overlapping regions (e.g., "Frontal" vs "Fronto-parietal") are **NOT ** major errors. 
+
+**Step 3: Check for MINOR / SPATIAL AMBIGUITY **
+
+If Steps 1 & 2 are passed, deduct **0-2 points **. (Score range: 8-10). 
+
+1. **Spatial Ambiguity (Acceptable): ** - "Central" vs "Upper Left/Right" (Common variance in visual 
+
+interpretation). 
+
+- "Frontal" vs "Anterior cerebrum". 
+
+- **Action: ** If the general location is correct, **DO NOT DEDUCT POINTS ** or deduct max 1 point. 
+
+2. **Imprecise Margins: ** "Irregular" vs "Lobulated". 
+
+3. **Missing Secondary Features: ** Missed mild edema or slight mass effect. 
+
+**Step 4: CLINICAL EQUIVALENCE (Perfect Score) **
+
+**Score 10 ** if: 
+
+- The clinical diagnosis is correct. 
+
+- Location is roughly consistent (e.g., "Left Frontal" matches "Upper Left"). 
+
+- No hallucinations. 
+
+---
+
+### Evaluation Protocol: 
+
+1. **Strictly punish ** Left vs Right contradictions (Score = 2). 
+
+2. **Be tolerant ** of "Central" vs "Paramedian/Lateral" ambiguities (Score 8-10). 
+
+3. **Be tolerant ** of "Lobe" boundaries (e.g., Frontal vs Fronto-Parietal). 
+
+Output strictly in JSON format: 
+
+{{ 
+
+"score": <int 0-10>, 
+
+"reasoning": "<Explain reasoning. Explicitly state if spatial ambiguity was forgiven.>" 
+
+}} 
+
+"""   
+
+> Figure 18: Prompt for LLM-assisted Open Question Scoring.
+> 24 MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Closed-Ended QA (c) O
+
+Q:Identify the pathology shown on this T1-
+
+weighted MRI. 
+
+Options: 
+
+A: Meningioma 
+
+B: Glioblastoma 
+
+C: Metastasis 
+
+D: Pituitary adenoma 
+
+ID: 21175 Attribute 
+
+The irregular, enhancing lower-left skull base 
+
+lesion with indistinct margins is consistent with 
+
+a meningioma, characteristic of its dural origin 
+
+and vascular nature. 
+
+irregular 
+
+shape,indistinct 
+
+margins,Avid contrast 
+
+enhancement, Meningio 
+
+ma 
+
+Reasoning(CoT): 
+
+Figure 19: Sample Examples of Closed-ended and Open-ended Question Answering from the Instruction Dataset. Closed-Ended QA (c) O 
+
+Q:What is the most likely diagnosis? 
+
+Options: 
+
+A: Meningioma 
+
+B: Glioblastoma 
+
+C: Metastasis 
+
+D: Pituitary adenoma 
+
+E: None of the above 
+
+ID: 3 Attribute 
+
+FLAIR,glioma,Large/ 
+
+Extensive,Lobulated, 
+
+Solitary 
+
+lesion,Center of the 
+
+image 
+
+Figure 20: Sample Examples of Closed-ended and Open-ended Question Answering from the Benchmark.

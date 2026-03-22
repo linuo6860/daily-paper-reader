@@ -1,0 +1,1419 @@
+Title: Disentangling Shared and Target-Enriched Topics via Background-Contrastive Non-negative Matrix Factorization
+
+URL Source: https://arxiv.org/pdf/2602.22387v1
+
+Published Time: Fri, 27 Feb 2026 01:13:15 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+# Disentangling Shared and Target-Enriched Topics via Background-Contrastive Non-negative Matrix Factorization 
+
+Yixuan Li 1,2, Archer Y. Yang 1,2,3,∗, Yue Li 2,3,∗
+
+> 1
+
+Department of Mathematics and Statistics, McGill University, Montreal, QC, Canada 
+
+> 2
+
+Mila – Quebec AI Institute, Montreal, QC, Canada 
+
+> 3
+
+School of Computer Science, McGill University, Montreal, QC, Canada 
+
+> ∗
+
+Correspondence: archer.yang.yi@gmail.com; yueli@cs.mcgill.ca 
+
+Abstract 
+
+Biological signals of interest in high-dimensional data are often masked by dominant variation shared across conditions. This variation, arising from baseline biological structure or technical effects, can prevent standard dimensionality reduction methods from resolving condition-specific structure. The challenge is that these confounding topics are often unknown and mixed with biological signals. Existing background correction methods are either unscalable to high dimensions or not interpretable. We introduce background contrastive Non-negative Matrix Factorization ( bcNMF ), which extracts target-enriched latent topics by jointly factorizing a target dataset and a matched background using shared non-negative bases under a contrastive objective that suppresses background-expressed structure. This approach yields non-negative components that are directly interpretable at the feature level, and explicitly isolates target-specific variation. bcNMF is learned by an efficient multiplicative update algorithm via matrix multiplication such that it is highly efficient on GPU hardware and scalable to big data via minibatch training akin to deep learning approach. Across simulations and diverse biological datasets, 
+
+bcNMF reveals signals obscured by conventional methods, including disease-associated programs in postmortem depressive brain single-cell RNA-seq, genotype-linked protein expression patterns in mice, treatment-specific transcriptional changes in leukemia, and TP53-dependent drug responses in cancer cell lines. 
+
+# 1 Introduction 
+
+High-dimensional data has become ubiquitous across biological and biomedical research, driven by advances in high-throughput measurement technologies, such as single-cell RNA sequencing, large-scale gene expression profiling, chromatin accessibility assays, multimodal single-cell platforms (e.g., CITE-seq) and electronic health records. These datasets routinely comprise thousands of features per sample and are used to study complex biological processes including cell identity, disease progression, and response to perturbation. A central challenge in analyzing such data is to extract latent structure that reflects biologically meaningful variation and is disentangled from technical bias and other sources of unwanted variation. In practice, biologically relevant signals are often weak relative to dominant background effects, making exploratory analysis and interpretation difficult [1, 2]. Dimensionality reduction is a critical step in the analysis of high-dimensional biological data, serving as the foundation for visualization, clustering, and downstream statistical modeling. Effective low-dimensional 1
+
+> arXiv:2602.22387v1 [cs.LG] 25 Feb 2026
+
+representations must balance two competing requirements: they should accurately capture structure relevant to the scientific question of interest, and they should remain interpretable at the level of individual genes, proteins, or clinical variables. Linear dimensionality reduction methods are particularly attractive in biological applications because they preserve additive structure and allow direct interpretation of feature loadings. As a result, principal component analysis (PCA) [3] and non-negative matrix factorization (NMF) [4] have become standard tools across genomics and systems biology [5, 6]. PCA identifies orthogonal directions that maximize explained variance in the data, providing compact summaries that are often effective for visualization and noise reduction. NMF, by contrast, constrains both basis vectors and coefficients to be non-negative, yielding additive, parts-based representations that are particularly well suited for gene expression, imaging, and count-based data [4, 5]. These properties have made PCA and NMF foundational methods for exploratory analysis in biology. However, both approaches are fundamentally variance-driven: they prioritize directions or topics that explain the largest overall variation, regardless of whether that variation is biologically meaningful. In many biological settings, the dominant sources of variance are not aligned with the signal of interest. Instead, leading topics often reflect technical artifacts, batch effects, cell-type composition, or baseline biological variability shared across experimental conditions. For example, in single-cell RNA sequencing (scRNA-seq) studies, PCA frequently separates cells by cell type while failing to resolve disease-associated transcriptional programs within a given cell type; similarly, in differential expression or perturbation studies, background heterogeneity can overwhelm subtle but systematic condition-specific effects [7, 8]. As a consequence, standard dimensionality reduction methods can fail to recover rare or condition-specific patterns, even when those patterns are reproducible and biologically meaningful. These limitations have motivated the development of contrastive learning approaches, which aim to isolate structure that is enriched in a target dataset relative to a reference or background dataset. Con-trastive ideas appear broadly across machine learning and statistics, including classical hypothesis testing and likelihood-based comparisons, as well as noise-contrastive estimation, which frames representation learning as a discrimination task between observed data and a reference distribution [9]. More recently, modern contrastive objectives such as InfoNCE have become central to representation learning, where embeddings are learned by distinguishing foreground samples from negative or background examples [10]. While these methods have proven effective for learning transferable representations in vision, language, and multimodal settings [11, 12], they are typically implemented using nonlinear encoders and implicit objectives. As a result, the learned representations are difficult to interpret at the feature level, limiting their suitability for exploratory biological analysis where transparency and direct attribution to genes or molecular features are essential. In parallel, contrastive principles have been explicitly adapted to dimensionality reduction by comparing a target dataset against a background reference to suppress shared variation. Contrastive principal component analysis (cPCA) identifies linear directions that maximize variance in a target dataset while penalizing variance explained in a background dataset through a contrastive strength parameter α [7]. While computationally efficient and easy to implement, cPCA is limited to linear structure, requires careful tuning of α, and produces unconstrained topics that can be difficult to interpret for non-negative biological data. Probabilistic contrastive PCA (PCPCA) extends this framework within a linear Gaussian latent variable model, enabling likelihood-based inference and uncertainty quantification, but retains the need for hyperparameter tuning and Gaussian assumptions [13]. Related contrastive latent variable models explicitly decompose variation into shared and target-specific topics using probabilistic formulations, but remain sensitive to latent dimension choices and are typically restricted to Gaussian likelihoods [14]. 2To capture more complex structure, nonlinear contrastive generative models have been proposed. Contrastive variational autoencoders (cVAE) introduce separate latent spaces for salient and irrelevant variation using deep neural networks [15]. ContrastiveVI further specializes this approach for single-cell RNA sequencing by modeling shared and condition-specific latent variables under negative binomial or zero-inflated negative binomial likelihoods and incorporating batch covariates [16]. Although effective in practice, these models are computationally intensive, require careful hyperparameter tuning, and yield representations that are difficult to interpret at the feature level. Recently, contrastive independent component analysis (cICA) extended independent component analysis to the contrastive setting by decomposing higher-order cumulant tensors of foreground and background data, providing increased expressivity and strong identifiability guarantees without assuming a Gaussian structure [17]. However, cICA relies on higher-order moment estimation and tensor decomposition, which can be computationally demanding and less naturally suited to count-based biological data. Collectively, these approaches demonstrate the value of explicitly modeling background structure, while highlighting persistent trade-offs among interpretability, modeling flexibility, and computational complexity. In this study, we introduce background contrastive non-negative matrix factorization ( bcNMF ), a con-trastive dimensionality reduction method designed for interpretable comparative analysis of high-dimensional data. In bcNMF , a target dataset and a matched background dataset are jointly factorized using a shared set of non-negative basis vectors, while maintaining separate coefficient matrices for each dataset. The method explicitly minimizes a contrastive objective that favors topics active in the target dataset while suppressing those expressed in the background. This formulation preserves the additive, parts-based structure of NMF, supports flexible divergence functions suitable for continuous and count-based data, and yields low-dimensional representations that are directly interpretable at the feature level. We validate bcNMF 
+
+through a series of synthetic and real-world experiments. Using simulated image data with structured background confounding, we show that bcNMF reliably recovers target-specific patterns where standard dimensionality reduction methods fail. We evaluate bcNMF on several biological datasets, including protein expression data from mice, single-cell RNA-seq from leukemia patients, and large-scale perturbation data from cancer cell lines, where bcNMF recovers condition-specific programs such as the canonical p53 transcriptional response while resolving dataset-specific heterogeneity. Finally, we apply bcNMF to single-cell transcriptomic data from major depressive disorder (MDD) brain samples, demonstrating its ability to isolate disease-associated programs obscured by dominant background variation. Together, these results establish bcNMF as a transparent and effective framework for contrastive dimensionality reduction in high-dimensional biological data. 
+
+# 2 Results 
+
+2.1 bcNMF method overview 
+
+Given a non-negative target data matrix X ∈ RM ×NX 
+
+> ≥0
+
+, and a non-negative background data matrix 
+
+Y ∈ RM ×NY 
+
+> ≥0
+
+, bcNMF jointly factorizes both datasets using a shared non-negative basis matrix W ∈ RM ×K 
+
+> ≥0
+
+,together with dataset-specific coefficient matrices HX ∈ RK×NX 
+
+> ≥0
+
+and HY ∈ RK×NY 
+
+> ≥0
+
+(Fig. 1). Here, M
+
+corresponds to features (e.g., genes, proteins, or pixels), NX and NY correspond to samples, and K
+
+denotes the number of latent topics used to represent the data. This formulation enforces a common set of latent topics across datasets while allowing their activations to differ between the target and the 3Topics 
+
+bcNMF 
+
+# W
+
+# XY      
+
+> ▪Visualization
+> ▪Clustring
+> ▪Subgroup Analysis ▪Topic Analysis
+> ▪Feature Detection
+> Samples Samples
+> Samples
+> Samples
+> Features Features
+> Features
+> Topics Topics
+> Direction of bcNMF
+> 1D Projection onto bcNMF's Direction Direction of Largest Variation
+
+Figure 1: Schematic overview of the bcNMF framework. The figure illustrates the joint factorization of target and background datasets using bcNMF , with both datasets decomposed into shared non-negative topics. Each sample is represented by its topic activations. background. The factorization is obtained by minimizing a contrastive objective function: 
+
+min    
+
+> W,H X,H Y≥0
+
+L (X, W H X ) − αL (Y, W H Y ) ,
+
+where L(·, ·) denotes a loss function corresponding to an appropriate negative data likelihood, and α
+
+controls the strength of background suppression. Depending on the data modality, L may represent a squared reconstruction loss (Gaussian), a negative Poisson log-likelihood, or a negative (zero-inflated) negative binomial log-likelihood. By jointly encouraging accurate reconstruction of the target data and suppressing reconstruction of the background, bcNMF emphasizes latent topics that are specific to X
+
+relative to Y . Unlike the standard NMF, which optimizes reconstruction of a single dataset, bcNMF explicitly incorporates a background reference into the objective, enabling direct suppression of the shared back-ground structure during factorization. For scalability to large datasets, we also optimize the model using mini-batch training S2. 
+
+2.2 Evaluation on simulated image data 
+
+To assess the ability of bcNMF to recover target-specific structure under strong background confounding, we constructed a simulation using handwritten digit images from MNIST [18] and natural images from ImageNet [19]. We focused initially on digits 0 and 1, sampling approximately one tenth of the MNIST training set in a stratified manner, yielding 690 images of digit 0 and 787 images of digit 1 (Fig. 2a). Each image was resized to 28 × 28 pixels and reshaped into a vector of length 784. As background, we sampled 650 grayscale images from a single ImageNet category (flowers), resized and center-cropped to the same resolution. Using a single ImageNet category ensured that background variation dominated the overall variance while maintaining coherent structure across background samples. Target images were generated by superimposing a randomly selected MNIST digit onto a randomly chosen ImageNet background patch. The composite image was formed using an element-wise maximum 4Target Dataset Background Dataset 
+
+# W H
+
+NMF 
+
+bcNMF 
+
+# Dataset   
+
+> Scatter Plot Scatter Plot
+> Topic 1 Topic 2
+> Topic 1 Topic 2
+> UMAP Visualization of H Matric from NMF UMAP Visualization of H Matric from bcNMF
+> Comparison of ARI Scores Across Methods by Dataset
+
+## a bc dFigure 2: Simulation results on blended MNIST-ImageNet data. a Schematic illustrating the construction of the target and background datasets. The target dataset comprises MNIST digits superimposed on ImageNet background patches, while the background dataset contains only natural images processed identically. b UMAP visualization of the coefficient matrix HX learned from standard NMF (top) and bcNMF 
+
+(bottom) on the ten-digit dataset. c Interpretability of bcNMF topics. Each column of the basis matrix W is visualized as a 28 × 28 image (left), with topic usage for each digit represented as bubble plots (center). The mean reconstructed image for each digit, obtained by combining W with the corresponding average topic vector, is shown on the right. d Quantitative comparison of clustering performance. ARI scores for NMF, cPCA, and bcNMF on the binary and ten-digit tasks, with error bars indicating bootstrap standard errors estimated from repeated subsampling of the test data. of the digit and background, with background pixel intensities scaled by a factor of 0.8 to preserve visible digit structure while introducing substantial background variation. This construction produces images in which foreground and background features are both prominent. Pixel values were normalized to the range 
+
+[0 , 1] . The resulting target dataset consists of digit images embedded in structured natural backgrounds (Fig. 2a, top), while the background dataset comprises ImageNet images processed identically but without superimposed digits (Fig. 2a, bottom). We applied standard NMF and our bcNMF to the target and background datasets using K = 2 topics. For both methods, we plotted the target coefficients HX directly in two dimensions, with each point representing a sample and coordinates given by its two topic coefficients. In the NMF embedding, samples corresponding 5to digits 0 and 1 overlap extensively, forming a single diffuse cluster (Fig. 2a, right). In contrast, bcNMF yields two well-separated groups aligned with the true digit labels, indicating that incorporation of background information enables recovery of digit identity despite strong background variation. We next extended the simulation to all ten MNIST digits. In this setting, the target dataset contains digits 0-9, each composited with an ImageNet background as above. We used K = 16 topics for both NMF and 
+
+bcNMF to enable flexible representations, where individual topics capture substructures rather than entire digits. To visualize the resulting embeddings, we projected the coefficient matrix HX into two dimensions using UMAP with default parameters and a fixed random seed (Fig. 2b). In the NMF embedding, samples corresponding to different digits largely overlap. By contrast, bcNMF produces visually distinct clusters corresponding to individual digits, consistent with improved separation in the latent space. Beyond clustering performance, bcNMF preserves the interpretability of NMF. Each column of the basis matrix W corresponds to a spatial pattern that can be reshaped into a 28 × 28 image. To summarize how digits are composed of these patterns, we computed the mean coefficient vector for each digit class and normalized it to sum to one, yielding topic proportions. These compositions are visualized in Fig. 2c (center), and multiplication of the mean topic vectors with W reconstructs representative images for each digit (Fig. 2c, right), confirming that distinct digits arise from different combinations of shared latent patterns. To quantitatively evaluate clustering performance, we computed the adjusted Rand index (ARI) [20] between predicted clusters and true digit labels for both the two-digit and ten-digit settings (Fig. 2d). Clusters were obtained using k-means applied to the coefficient matrix HX , with K = 2 or K = 10 as appropriate, and all methods were initialized randomly. For bcNMF , the contrastive parameter α was selected to minimize reconstruction error. In the binary task, cPCA and bcNMF achieved high ARI values (0.8569 and 0.8628, respectively), whereas NMF performed poorly (ARI = 0.0298). In the ten-digit setting, cPCA and bcNMF again substantially outperformed NMF (ARI = 0.3743 and 0.3699 versus 0.0201). The error bars are small relative to the gap between NMF and the contrastive methods in both tasks, indicating that the near-random performance of NMF and the strong separation achieved by cPCA and bcNMF are stable under data resampling. 
+
+2.3 Unraveling protein expression topics specific to Down syndrome 
+
+We next evaluated bcNMF on a protein expression dataset derived from mice subjected to shock therapy [21, 22]. The target dataset consists of protein abundance measurements from shocked mice, including both mice carrying the Down syndrome (DS) genotype and non-DS mice. The DS status was treated as hidden ground truth, withheld during the analysis, and used only for post hoc evaluation. We seek to assess whether latent variation within the shocked mice population can be identified in an unsupervised manner and whether this variation distinguishes DS from non-DS mice. We initially applied NMF with K = 2 topics to the shocked mice dataset and visualized the corresponding coefficient matrix H, with each data point representing an individual mouse (Fig. 3a). DS and non-DS mice exhibited substantial overlap, with no clear separation between subgroups. This suggests that the major sources of variation among the shocked mice are likely driven by natural biological differences, such as sex or age, rather than DS genotype. We then used a background dataset consisting of protein expression measurements from a separate set of control mice that had not been exposed to shock therapy. These control mice are expected to share similar sources of natural biological variability (e.g., age, sex, baseline physiology). We applied 
+
+bcNMF with K = 2 topics using both the target and background datasets and visualized the corresponding 6a
+
+bc
+
+> bcNMF Scatter Plot for Mice protein expression
+> NMF Scatter Plot for Mice protein expression
+> Down syndrome vs Non-DS
+
+d bcNMF Loadings 
+
+> Protein Significance
+
+Figure 3: Down syndrome-associated protein expression in mice. a UMAP embedding of NMF topic usage for mouse protein expression data, colored by Down syndrome (DS) status. b UMAP embedding of bcNMF topic usage using control mice as background, colored by DS status. c Bar plot of ARI for DS classification using PCA, cPCA, NMF and bcNMF . Error bars indicate bootstrap standard errors estimated from 20 subsamples with replacement (300 target and 200 background samples per subsample). d Top ten proteins for each of the two most significant bcNMF topics. Heatmaps show protein loadings (left) and signed − log 10 p values from Welch’s two-sample t-tests comparing DS and non-DS groups (right). coefficient matrix of the target data ( HX ), with each data point representing an individual mouse (Fig. 3b). In contrast to standard NMF, the bcNMF embedding showed reduced overlap between DS and non-DS mice, indicating improved separation of latent structure associated with DS status when background information is incorporated. To quantitatively assess the subgroup separation, we clustered the topic coefficients using k-means with K = 2 and computed the ARI with respect to the withheld DS labels (Fig. 3c). PCA showed negligible alignment with DS status (ARI = 0.0061), while cPCA (ARI = 0.176) and NMF (ARI = 0.108) achieved modest improvements. bcNMF attained a substantially higher ARI of 0.789, indicating stronger concordance between the unsupervised clusters and DS genotype under this evaluation protocol. To investigate the molecular content of the latent dimensions identified by bcNMF , we examined the distribution of the two topics and their association with DS (Fig. 3d). For each topic, we selected the top ten proteins with the largest topic scores. At the topic level, association with DS status was evaluated using 7logistic regression of the binary DS label on topic usage HX across samples, yielding − log 10 p values of 15.85 and 15.65 for the two topics. We also assessed associations between individual protein abundances and DS status using univariate logistic regression at the sample level. Many of the high-loading proteins are also significantly associated with DS status (Fig. 3d). Notably, SOD1 appeared among the top contributors to both topics, consistent with its established role in DS-related oxidative stress. Additional proteins with strong loadings include synaptic and signaling regulators such as PSD95 and pCAMKII, as well as regulators of growth, stress, and apoptotic pathways including S6, AKT, p38, and IL-1 β. Together, these results indicate that bcNMF 
+
+captures latent protein expression patterns that are coherently associated with DS genotype and align with known biological features of Down syndrome. 
+
+2.4 Identifying stem cell transplantation effects in leukemia 
+
+We next applied bcNMF to an scRNA-seq dataset generated from bone marrow mononuclear cells (BMMCs) collected from a leukemia patient before and after stem cell transplantation, enabling within-patient compar-ison of treatment-associated transcriptional changes [23]. As a background reference, we incorporated scRNA-seq data from healthy donor BMMCs derived from the same 10x Genomics platform, thereby capturing baseline hematopoietic heterogeneity independent of treatment. The healthy background dataset comprised approximately 12,000 cells from a single donor. No explicit batch correction was performed, as both patient samples and background samples were generated using comparable experimental protocols. We chose the top 3,000 highly variable protein-coding genes for all downstream factorization analyses. We applied standard NMF and bcNMF with K = 10 topics to the leukemia data. The resulting lower dimensional representations ( H for NMF and HX for bcNMF ) were projected using UMAP with default parameters and a fixed random seed (Fig. 4a,b). In the NMF embedding (Fig. 4a), pre- and post-transplant cells exhibited substantial overlap and were distributed along partially intermingled manifolds. In contrast, the bcNMF embedding (Fig. 4b) showed reduced overlap and visually clearer separation between pre- and post-treatments. This difference is consistent with the contrastive objective suppressing variation shared with healthy background samples, thereby revealing treatment-specific gene expression programs. We then quantified the separation between conditions by the ARI of k-means clustering ( K = 2 ) with respect to the transplant status (Fig. 4c). NMF showed the lowest agreement with the transplant status (ARI = 0.336) trailing PCA (ARI = 0.395). Both cPCA (ARI = 0.603) and bcNMF (ARI = 0.591) achieved higher alignment than PCA and NMF. We identified topics associated with the treatment using Welch’s two-sample t-tests comparing topic usage between pre- and post-transplant cells. Four topics exhibit significant condition specificity: two enriched in pre-transplant cells (Topics 8 and 6) and two enriched in post-transplant cells (Topics 10 and 1) (Fig. 4d). For each topic, the top genes exhibited concordant directionality and condition-specific enrichment, indicating consistency between topic-level structure and gene-level association. Notably, Topic 8 showed higher usage in pre-transplant cells, whereas Topic 10 was elevated in post-transplant cells (Fig. 4e). The observed shifts in usage distributions were consistent across large numbers of cells and aligned with the directionality indicated by the t-tests. The pre-transplant topics (Topics 8 and 6) were dominated by hemoglobin genes including HBG2 , HBG1 , HBA2 , HBA1 , and HBB , consistent with an erythroid-associated transcriptional program. While hemoglobin expression can reflect erythroid lineage activity, we note that single-cell RNA-seq datasets may also capture erythroid-related signals arising from ambient RNA or lineage composition shifts. In contrast, post-transplant topics (Topics 10 and 1) 8were characterized by genes such as MXD1 , CLEC2B , SAT1 , DLK1 , and GATA2 , suggesting altered differentiation and immune-related programs following transplantation. These interpretations are based on gene-level enrichment patterns and should be viewed as hypothesis-generating rather than definitive functional assignments. Collectively, these analyses indicate that bcNMF identifies two opposing, condition-aligned transcrip-tional programs—one preferentially enriched prior to transplantation and one enriched afterward—while retaining gene-level interpretability and improving resolution of treatment-associated variation in the latent representation. T8 T6 T10 T1 
+
+abcd ebcNMF Loadings Gene Significance 
+
+Figure 4: bcNMF resolves condition-specific programs in single-cell RNA-seq from a leukemia transplant patient. a UMAP embedding of NMF topic usage ( K = 10), colored by condition (pre-transplant, blue; post-transplant, orange). b UMAP embedding of bcNMF topic usage using healthy bone marrow as background, colored by condition. c ARI for transplant status classification using PCA, cPCA, NMF and bcNMF . Error bars denote bootstrap standard errors from 20 stratified subsamples ( n = 6,000 cells per subsample). d
+
+Top five genes for each of the four most significant bcNMF topics. Heatmaps show gene loadings (left) and signed − log 10 p values from Welch’s two-sample t-tests comparing pre- and post-transplant cells (right). e
+
+Box plots of topic usage for two bcNMF topics (Topics 8 and 10) in pre- and post-transplant cells; each point represents a single cell. 9Top Tissue-Specific Genes per Cluster (Core p53 genes excluded)              
+
+> abceUmap Colored by TP53 Mutation Status (NMF) UMAP Colored by Cell Line (NMF) Umap Colored by TP53 Mutation Status (bcNMF) dfgh
+> UMAP Colored by Cell Line (bcNMF)
+> iGene Frequency (Red = TP53 targets) Cell Line Composition of WT clusters TP53 Target Gene Network Dimensionality Reduction Methods: Mutant vs Wild type Performance cluster 1 cluster 1 cluster 2 cluster 2 cluster 3 cluster 3 cluster 4 cluster 4 cluster 5 cluster 5 cluster 6 cluster 6
+> j
+> C 1 C2 Wild-Type Cluster C3 C4 C5 C6 Number of Cells 140 120 100 80 60 40 20 0
+
+Figure 5: bcNMF isolates TP53-dependent transcriptional responses in the MIX-seq idasanutlin dataset. 
+
+a UMAP embedding of NMF topic usage (K = 20), colored by cell line identity. b UMAP embedding of NMF topic usage, colored by TP53 mutation status (wild-type, mutant). c UMAP embedding of bcNMF topic usage (K = 20) using wild-type cell lines as background, colored by cell line identity. d UMAP embedding of 
+
+bcNMF topic usage, colored by TP53 mutation status. e Top five genes for each of the three most significant 
+
+bcNMF topics. Heatmaps show gene loadings (left) and signed − log 10 p values from Welch’s two-sample t-tests comparing TP53 mutant and wild-type cells (right); bottom bars show topic-level significance. f
+
+Cell-line-specific genes from bcNMF topics enriched in wild-type clusters, excluding canonical TP53 targets. Heatmaps show gene loadings and Welch’s t-test-based significance scores. g Histogram of cell line composition within wild-type TP53 clusters identified in the bcNMF embedding. h Frequency of genes identified across the three most significant bcNMF topics 4, 8 and 19, with canonical TP53 targets highlighted in red. i Schematic of the TP53 regulatory network linking identified target genes. j ARI for TP53 mutation status alignment using PCA, cPCA, NMF and bcNMF . Bars show ARI computed on the full dataset; error bars indicate bootstrap standard errors estimated from 20 resampled target/background pairs 
+
+2.5 Unraveling drug perturbation effects on cancer transcriptome 
+
+We further showcase bcNMF by analyzing an scRNA-seq perturbation dataset [24]. The dataset comprised 3,771 cells from 24 cancer cell lines treated with idasanutlin, an MDM2 antagonist that activates the tumour-suppressor protein p53, in TP53 wild-type cell lines (that is, cells with an intact TP53 gene). In parallel, 3,439 cells were treated for 24 hours with DMSO (dimethyl sulfoxide), which served as the vehicle control. Idasanutlin-treated cells were designated as the target dataset and DMSO-treated cells as the background dataset. Among the 24 cell lines, seven carried wild-type TP53 and were expected to exhibit transcriptional response to p53 activation, whereas the remaining 17 cell lines carried mutant TP53 and considered nonresponsive. All samples were generated using the same MIX-seq experimental platform and protocol. No explicit batch correction was performed, as both treatment conditions were processed 10 under comparable experimental settings. We focused our analysis on the top 3,000 HVGs computed across the combined target and background matrices. For all factorization approaches, we learned latent representations using K = 20 topics. In the NMF embedding (Fig. 5a), we observed that cells segregated into 24 well-separated clusters when colored by cell line identity, demonstrating that baseline transcriptional differences among cell lines dominated the factorization. When we colored the same embedding by TP53 mutation status (Fig. 5b), wild-type and mutant cells remained organized according to cell line structure, with no evident genotype-driven grouping. These results show that standard NMF primarily captures baseline cell line heterogeneity, and mutation status does not emerge as a major organizing axis of the latent space. In contrast, bcNMF produced a substantially different organization of the data. When we colored the 
+
+bcNMF embedding by cell lines (Fig. 5c), several lines formed distinct peripheral clusters (e.g., clusters 2, 3, 5, and 6), while many others were intermingled within a large central manifold. This pattern indicates that bcNMF attenuates dominant baseline separation across cell lines while retaining distinct structure for strongly divergent lines. When we colored the same embedding by TP53 mutation status (Fig. 5d), we observed clearer genotype-dependent organization: cells from wild-type TP53 lines occupied multiple coherent clusters, whereas mutant lines largely populated a broad, overlapping region. Examination of cluster composition (Fig. 5g) further showed that, except for cluster 1, each wild-type cluster was dominated by a single responsive cell line with minimal cross-line mixing. Together, these results demonstrate that bcNMF suppresses dominant baseline heterogeneity and reorganizes the latent space to better align treatment-responsive genotypes while preserving within-line identity. We quantified associations between latent topics and TP53 mutation status by performing univariate logistic regression of the binary TP53 genotype on normalized topic usage. Significance was summarized as signed − log 10 p values. The three most strongly associated topics were selected for detailed inspection (Fig. 5e). For each topic, we ranked the top five genes by loading and visualized them alongside their signed 
+
+− log 10 p values, computed from independent univariate logistic regressions applied directly to the original gene expression matrix. Across the three topics, a highly overlapping set of genes emerged, including MDM2, CDKN1A, TP53I3, FDXR, and GDF15, all canonical transcriptional targets of p53. The recurrence of these genes across topics reflects the specificity and strength of the TP53-dependent transcriptional response to idasanutlin. Gene recurrence frequency across the top three topics is summarized in Fig. 5h where we highlight the majority of genes that appeared in all topics and are canonical TP53 targets. We illustrated the regulatory relationships among these genes in Fig. 5i, consistent with established p53 pathway biology [25,26]. The concordance between topic loadings and independent gene-level regressions confirms that the model-derived structure reflects reproducible signal in the raw expression space. Heterogeneity among wild-type clusters remained evident even after alignment by TP53 status. To reveal cluster-specific programs beyond the dominant p53 response, canonical TP53 target genes were excluded, as these genes strongly drive multiple contrastive topics and obscure secondary structure. The resulting gene set (Fig. 5f) uncovers cluster-specific lineage signatures that differentiate wild-type cell populations. The heatmap shows that each cluster is characterized by a small set of selectively enriched genes with minimal overlap across clusters. For example, NSG1 and RGS16 are strongly enriched in one cluster, whereas NECTIN4 and DEPP1 define another, and GLS2 and LNCTAM34A mark additional clusters. These genes exhibit pronounced cell line-specific association signals, consistent across both topic loadings and expression-level statistics. This pattern demonstrates that bcNMF isolates a shared TP53 activation program while simultaneously preserving layered, cell line-specific transcriptional modules. Rather than collapsing all responsive lines into a uniform genotype-driven state, the contrastive 11 representation retains intrinsic lineage identity on top of the common p53 response, revealing structured heterogeneity within the wild-type group. We then quantified the separation between wild-type and mutant TP53 lines using the ARI between 
+
+k-means clusters ( K = 2 ) derived from each low-dimensional representation and TP53 mutation status. As shown in Fig. 5j, NMF exhibited minimal alignment with TP53 mutation status (ARI = 0.058), indicating that baseline cell line heterogeneity dominated the embedding. PCA (ARI = 0.176) and cPCA (ARI = 0.212) showed moderate improvements but remained limited in resolving genotype structure. In contrast, bcNMF 
+
+achieved substantially higher agreement (ARI = 0.621), demonstrating markedly improved and stable genotype separation relative to the other methods. Notably, the bootstrap error bars do not overlap with those of the alternative methods, further supporting the robustness and statistical separation of bcNMF ’s performance. Collectively, these results demonstrate that bcNMF isolates TP53-dependent transcriptional responses in a setting where strong baseline cell line heterogeneity would otherwise dominate unsupervised structure. 
+
+bcNMF simultaneously preserves intrinsic cell line identity, recapitulates the canonical p53 transcriptional program, and resolves additional line-specific transcriptional modules layered on top of the shared drug response. 
+
+2.6 Disentangling transcriptome markers for depression from cell type functions 
+
+As an exploratory analysis, we applied bcNMF to a single-nucleus RNA-seq dataset generated from postmortem human dorsolateral prefrontal cortex (dlPFC) [27]. The full dataset comprises over 160,000 nuclei from individuals with major depressive disorder (MDD) and matched controls. To reduce demographic and technical heterogeneity, we restricted our analyses to female donors aged 40-60 years of Caucasian descent from the Douglas Bell-Canada Brain Bank. After filtering, 11 MDD cases and 4 controls remained. For balanced case-control comparison, four MDD cases were randomly selected (fixed random seed) and paired with the four available controls. Repeated random selections yielded qualitatively consistent results. Given prior evidence that cell-type identity constitutes the dominant axis of variation in cortical single-cell transcriptomic data, and that glial populations are repeatedly implicated in MDD pathology in the original study [27], we further restricted primary analyses to astrocytes (Ast) and oligodendrocytes (Oli). Focusing on these two glial populations serves two purposes: it mitigates confounding driven by broad neuronal-glial differences and concentrates the analysis on cell types with established disease relevance. The target dataset therefore consisted of astrocyte and oligodendrocyte cells from the four selected MDD cases and four controls, whereas the background dataset consisted of the same four control samples only. This design allows disease-associated variation to remain present within the target dataset while enabling suppression of variation shared with controls. Raw count matrices were analyzed without log transformation. Gene selection proceeded by restricting to protein-coding genes (26,639 reduced to 18,716 genes), followed by selection of the top 3,000 HVGs computed across the combined target and background matrices using Scanpy [28]. Cell-type filtering was performed after HVG selection to avoid biasing variability estimates. The final matrices contained 8,886 target cells and 3,645 background cells, each measured across 3,000 HVGs. No additional batch correction was performed, as donors were selected within a constrained demographic subset and processed under a consistent experimental protocol in the original study. In the standard NMF embeddings, astrocytes and oligodendrocytes formed clearly separated clusters (Fig. 6a), confirming that cell-type identity constitutes the dominant axis of variation. Moreover, visualizing 12 a bc dfeUMAP with Broad Categories (NMF) UMAP with Broad Categories (bcNMF) UMAP with Condition Categories (NMF) UMAP with Condition Categories (bcNMF) Figure 6: Revealing hidden disease-associated programs in single-cell RNA-seq from MDD. a UMAP embedding of NMF topics colored by cell types (astrocyte, oligodendrocyte). b UMAP embedding of 
+
+bcNMF topics colored by cell types. c UMAP embedding of NMF topics colored by condition (case, control). d UMAP embedding of bcNMF topics colored by condition. e Top five genes for each of the five most significant bcNMF case-control topics (y-axis), with heatmap showing gene loadings and topic-wise regression p-values (bottom row) and MDD-associated pathway enrichment scores (right panel). f Bar plot of ARI for case-control clustering using PCA, cPCA, NMF, and bcNMF . Higher ARI indicates better recovery of disease-relevant groupings. Error bars were estimated by bootstrap with 20 independent resamples drawing 6,000 cells from the target dataset and 3,000 cells from the background dataset with replacement. by diagnostic status revealed no clear separation between MDD cases and controls (Fig. 6c), indicating that disease-associated signal is weak relative to cell-type structure under non-contrastive factorization. Applying bcNMF with a Poisson likelihood substantially altered the geometry of the latent space. The contrastive parameter α was selected using model-intrinsic criteria based on reconstruction contrast and stability across a moderate range of values. In the bcNMF embedding, astrocytes and oligodendrocytes appeared more intermixed (Fig. 6b), consistent with attenuation of variation shared between target and background datasets, including dominant cell-type signals. More importantly, the bcNMF embedding revealed a visibly sharper separation between MDD cases and controls (Fig. 6d). Notably, a subset of cells forms a distinct case-enriched region that is magnified in the inset (Fig. 6d), where cases cluster densely and are spatially separated from controls. This localized structure is not apparent in the NMF embedding and suggests that contrastive modeling exposes a disease-aligned subpopulation that is otherwise masked by the shared biological variation. We quantified the case-control separation in terms of ARI based on the 
+
+k-means clusters ( K = 2 ) derived from each low-dimensional representation. Under this evaluation, bcNMF 
+
+achieved the highest ARI (0.1306), exceeding PCA (0.0662), cPCA (0.0510), and NMF (0.0363). Although absolute ARI values remain modest, consistent with subtle disease effects in postmortem cortical tissue, the improvement relative to non-contrastive approaches indicates enhanced recovery of disease-associated 13 structure following suppression of shared cell-type variation. Together, these patterns indicate that bcNMF 
+
+suppresses dominant shared structure while enhancing condition-enriched transcriptional programs in the latent space. We quantified the topic-disease associations based on the trained bcNMF with K = 20 topics. Five topics exhibited the strongest associations (Fig. 6e). We extracted the top five genes from each of these topics, yielding a 25-gene signature panel (Fig. 6e, heatmap). Enrichment analysis using Enrichr [29] with the 3,000 HVGs as background shows that these 25 genes were enriched for mitochondrial organization, oxidative stress, immune signaling, and cytokine-related pathways (Fig. S1). Moreover, extracellular matrix (ECM) organization and neuroinflammatory processes are among the most enriched gene sets. Specifically, ECM organization and degradation pathways exhibited the highest gene ratios (0.35-0.45). GO immune and inflammatory terms showed moderate gene ratios (0.20-0.33), suggesting coordinated activation of neuroimmune programs. Network analysis of the top 12 enriched GO Biological Process terms (Fig. S1b) demonstrated a densely connected immune-inflammatory module with high gene overlap (Jaccard similarity [30] > 0.2), alongside peripheral metabolic terms with limited connectivity. The resulting topology (clustering coefficient = 0.42 versus random expectation ≈ 0.15) indicates that the identified genes participate in functionally integrated pathways. Together, these analyses suggest that contrastive topics capture coherent programs involving ECM remodeling and neuroinflammatory signaling, both previously implicated in MDD pathology. 
+
+2.7 Runtime benchmark 
+
+To evaluate computational efficiency and scalability across methods, we benchmarked runtime performance as a function of sample sizes. We used the MNIST-ImageNet composite dataset described in Section 2.2, systematically varying the number of samples from 1,000 to 100,000 while holding feature dimensionality fixed at 784. For each sample size, we measured wall-clock time for each method to complete factorization or dimensionality reduction. For bcNMF and NMF, we implemented both CPU (NumPy) and GPU (PyTorch with MPS backend) versions to assess hardware acceleration benefits. Both NMF and bcNMF were run until convergence using a relative change tolerance of 0.01% in reconstruction loss, with maximum iterations a b 
+
+> Number of samples Number of samples
+
+Figure 7: Runtime and clustering performance comparison. a Runtime of NMF and bcNMF implemented on CPU (NumPy) and GPU (PyTorch) as a function of the number of MNIST-ImageNet image samples. b
+
+Adjusted Rand Index (ARI) between ground-truth labels and clusters obtained from k-means applied to low-dimensional representations from PCA, cPCA, NMF, and bcNMF .14 set to 500. For cPCA, we used the original Python implementation [7]. All methods used K = 2 topics for consistency and the experiments were performed on a system with an Apple M1 Max processor and 32 GB of unified memory. NMF exhibited the fastest performance on both CPU and GPU, scaling approximately linearly with sample size (Fig. 7a). At 1,000 samples, NMF completed in under 0.1 seconds on both devices, increasing to approximately 1 second (CPU) and 0.1 seconds (GPU) at 100,000 samples. bcNMF required longer runtime, primarily because it required more iterations to reach the same convergence criterion due to the additional contrastive term in the objective, taking approximately 0.5 seconds (CPU) and 0.1 seconds (GPU) at 1,000 samples, and 33 seconds (CPU) and 5 seconds (GPU) at 100,000 samples. GPU acceleration provided consistent speedups of approximately 5–7 times for both NMF and bcNMF across all scales. cPCA, implemented as a closed-form eigendecomposition of the contrastive covariance matrix, scaled more favorably than bcNMF on CPU, completing in under 10 seconds across all tested sample sizes. Clustering performance remained stable across sample sizes for all methods (Fig. 7b). bcNMF and cPCA both maintained high ARI values above 0.8 across all scales, confirming that performance gains from contrastive learning were robust to dataset size. Notably, bcNMF consistently outperformed cPCA by approximately 0.1 ARI across all tests, suggesting that the non-negative factorization framework more effectively captured the additive structure of digit composition. NMF consistently produced near-zero ARI values, reflecting its inability to resolve digit structure in the presence of dominant background variation. These results indicate that bcNMF achieves competitive runtime relative to cPCA while providing interpretable, parts-based representations, and that GPU acceleration substantially reduces wall-clock time for iterative factorization methods without compromising clustering quality. In addition, as described in Supplementary Section S2, we leverage a minibatch training strategy to scale bcNMF to much larger datasets. By updating the model via minibatch akin to the stochastic gradient descent in deep learning (Supplementary Section S2), we reduce memory demands and enable distributed or streaming analyses while maintaining stable clustering performance. 
+
+# 3 Discussion 
+
+Identifying interpretable latent structures enriched for target conditions relative to confounding backgrounds remains a central challenge in high-dimensional biological data analysis. The rapid expansion of high-throughput sequencing technologies has intensified the demand for methods that are both scalable and directly interpretable at the feature level. To address this need, we developed bcNMF , which integrates a contrastive objective with the additive, parts-based representations of non-negative matrix factorization. By jointly modeling target and background datasets with a shared basis, bcNMF isolates topics enriched in the target while attenuating variation expressed in both datasets. This formulation provides an interpretable alternative to variance-based contrastive approaches such as contrastive PCA, which emphasize differential variance but may lack feature-level interpretability, and to matrix factorization methods that yield inter-pretable topics but are not inherently contrastive or require explicit regression against known background covariates [31]. Across simulations and multiple biological settings—including mouse proteomics, leukemia single-cell RNA sequencing, postmortem brain data, and cancer perturbation screens— bcNMF recovered biologically meaningful patterns that were obscured or partially confounded under non-contrastive analyses. In some datasets, performance was comparable to strong contrastive baselines such as cPCA, whereas in others bcNMF provided clearer separation or improved interpretability, indicating that its advantages depend 15 on the structure of target-background relationships. Collectively, these results demonstrate that bcNMF 
+
+offers a scalable and interpretable framework for contrastive analysis across diverse modalities. Despite these strengths, bcNMF relies on several structural assumptions. The use of a shared basis ma-trix presumes that target and background datasets admit a common latent representation, and performance may degrade if this assumption is strongly violated. In addition, the quality and relevance of the background dataset are critical: if the background fails to capture shared variation, contrastive topics may reflect residual confounding rather than truly target-specific structure. When target and background distributions are highly similar, contrastive signal may be weak or difficult to disentangle. These considerations highlight that bcNMF complements, rather than replaces, careful experimental design and background selection. Beyond its current formulation, bcNMF admits several methodological extensions. One direction is the integration of multi-modal or multi-view data, where modalities such as scRNA-seq and scATAC-seq, spatial transcriptomics and imaging, or transcriptomic and proteomic assays are analyzed jointly within a shared contrastive framework. Extending bcNMF to such settings could enable extraction of shared and modality-specific contrastive topics, analogous to developments in multi-view contrastive learning [32, 33], while preserving the interpretability afforded by non-negative components. Another extension involves incorporating multiple background datasets or hierarchical contrastive designs to support structured comparisons across several biological conditions, for example healthy controls versus multiple disease subtypes. Such developments could build upon hierarchical and multi-reference contrastive analysis frameworks [7, 34]. In addition, future work may explore incorporating explicit positive-pair contrast mechanisms within the factorization objective, drawing inspiration from recent extensions of contrastive principal component methods such as PCA++ [35], which leverage structured positive relationships to further enhance contrastive signal separation. From a computational perspective, bcNMF can in principle be adapted to online or streaming settings in which data are acquired sequentially and factorization must be updated incrementally. This is enabled by our minibatch training algorithm (Supplementary Section S2) for bcNMF and would be particularly relevant for large-scale initiatives such as cell atlas projects or longitudinal perturbation studies. Integration with deep generative models represents another promising avenue. Incorporating non-negative constraints within variational inference or autoencoder architectures may combine the interpretability of matrix factorization with the flexibility of deep models. Despite related efforts [15, 16], new avenues remain to be explored to broaden the scope of contrastive factorization in complex biological settings. An important practical consideration is the selection of the contrastive weight parameter α, which controls the balance between fitting target structure and suppressing background-associated variation. Analogous to a regularization parameter, α influences the granularity and specificity of the learned topics. In this study, α was selected using model-intrinsic criteria and stability analyses, and grid-based exploration was used to assess robustness across reasonable ranges. Nevertheless, principled and fully data-driven strategies for adaptive selection of α remain an important area for future work. A related methodological extension involves relaxing the shared-basis assumption and learning separate basis matrices for the target and background datasets ( Wtarget and Wbackground ), coupled through alignment or regularization constraints. Such a formulation would permit explicit representation of shared and target-specific structure rather than inducing contrast solely through penalization, aligning with recent shared-private latent variable models [16, 36]. From a theoretical standpoint, bcNMF is related to recent advances in contrastive dimension reduction. Formal frameworks have characterized the decomposition of target variation into shared and contrastive subspaces relative to a background, together with hypothesis tests and estimators for contrastive dimen-16 sionality [37]. Subsequent work has proposed systematic background selection procedures based on subspace inclusion criteria [34]. While bcNMF does not directly inherit the linear subspace guarantees of these methods, these theoretical developments provide a principled lens through which to interpret contrastive structure and motivate further theoretical analysis of non-negative contrastive factorizations. 
+
+bcNMF is conceptually distinct from batch effect correction approaches widely used in genomics and single-cell analysis [38,39]. Batch correction seeks to remove unwanted technical or biological variation and align datasets into a harmonized representation. In contrast, bcNMF explicitly leverages differences between datasets to highlight structure enriched in the target relative to a background. Rather than eliminating background-associated variation, it isolates topics that deviate from that background. In practice, batch correction and bcNMF may be complementary: integration methods can reduce purely technical artifacts prior to contrastive analysis, whereas bcNMF can subsequently isolate biologically meaningful deviations relative to an appropriate reference. In summary, by embedding contrastive analysis within a non-negative factorization framework, bcNMF 
+
+provides an interpretable alternative to existing contrastive dimension reduction methods. Its ability to extract additive topics that remain directly linked to original features makes it particularly suitable for biological applications in which mechanistic interpretation is essential. Continued integration with theoretical advances in contrastive testing and background selection, together with empirical exploration in multi-modal and adaptive settings, may further establish bcNMF as a flexible framework for disentangling shared and context-specific signals across high-dimensional data modalities. 
+
+# 4 Methods 
+
+4.1 bcNMF details 
+
+We introduce background contrastive non-negative matrix factorization ( bcNMF ), an extension of classical NMF that incorporates a background dataset to isolate latent structure specific to the target data. Given a non-negative target matrix X ∈ RM ×NX 
+
+> ≥0
+
+and a background matrix Y ∈ RM ×NY 
+
+> ≥0
+
+, bcNMF learns a shared non-negative basis W ∈ RM ×K 
+
+> ≥0
+
+and dataset-specific coefficients HX ∈ RK×NX 
+
+> ≥0
+
+, H Y ∈ RK×NY 
+
+> ≥0
+
+. A contrast parameter α ≥ 0 controls the degree to which background structure is suppressed in the decomposition. We minimize a contrastive loss of the form: 
+
+min    
+
+> W,H X,H Y≥0
+
+J(W, H X , H Y ) ≡ L (X, W H X ) − αL (Y, W H Y ) ,
+
+where L(·, ·) is a loss function or negative likelihood function appropriate to the data type. This general formulation allows adaptation to different likelihoods, including Gaussian (squared error), Poisson, and (zero-inflated) negative binomial models. As a concrete example, we first consider the squared Frobenius norm: 
+
+L(A, B ) = ∥A − B∥2 
+
+> F
+
+= tr 
+
+h
+
+(A − B)⊤(A − B)
+
+i
+
+,
+
+which leads to the expanded contrastive objective: 
+
+J = tr 
+
+
+
+X⊤X − αY ⊤Y
+
+
+
+− tr 
+
+
+
+2X⊤W H X − 2αY ⊤W H Y
+
+
+
++ tr 
+
+
+
+H⊤ 
+
+> X
+
+W ⊤W H X − αH ⊤ 
+
+> Y
+
+W ⊤W H Y
+
+
+
+.
+
+17 We optimize this objective using multiplicative updates derived from a general principle: 
+
+θ ← θ ◦ ∇− 
+
+> θ
+
+J
+
+∇+ 
+
+> θ
+
+J ,
+
+where ∇− 
+
+> θ
+
+J and ∇+ 
+
+> θ
+
+L are the negative and positive parts of the gradient, and ◦ denotes element-wise multiplication. This update arises from a choice of adaptive learning rate, 
+
+ηθ = θ
+
+∇+ 
+
+> θ
+
+J ,
+
+When applied to a standard gradient descent step θ ← θ − ηθ∇θJ, this yields the multiplicative update form. This scheme ensures non-negativity by construction and promotes convergence under mild conditions. For the squared Frobenius loss, the gradients with respect to each topic matrix can be decomposed into positive and negative terms. Specifically, the gradient of the objective with respect to HX is: 
+
+∇HX J = W ⊤W H X − W ⊤X = ∇+HX J − ∇ −HX J
+
+where ∇+HX J = W ⊤W H X and ∇−HX J = W ⊤X. Applying the multiplicative update rule yields: 
+
+HX ← HX ◦ W ⊤XW ⊤W H X
+
+Similarly, for HY , we have: 
+
+HY ← HY ◦ W ⊤YW ⊤W H Y
+
+,
+
+and for the shared basis matrix W , the gradient is: 
+
+∇W J = W H X H⊤ 
+
+> X
+
++ αY H ⊤ 
+
+> Y
+
+− XH ⊤ 
+
+> X
+
+− αW H Y H⊤
+
+> Y
+
+with positive and negative parts given by: 
+
+∇+ 
+
+> W
+
+J = W H X H⊤ 
+
+> X
+
++ αY H ⊤ 
+
+> Y
+
+, ∇− 
+
+> W
+
+J = XH ⊤ 
+
+> X
+
++ αW H Y H⊤
+
+> Y
+
+which gives the multiplicative update: 
+
+W ← W ◦ XH ⊤ 
+
+> X
+
++ αW H Y H⊤
+
+> Y
+
+W H X H⊤ 
+
+> X
+
++ αY H ⊤
+
+> Y
+
+.
+
+These updates are computationally efficient and retain non-negativity by construction. They serve as the foundation for extensions to other divergences (e.g., Poisson, Negative Binomial; Supplementary Section S1) as well as mini-batch optimization schemes (Supplementary Section S2) that enable scalable training on large datasets. A formal convergence proof of the multiplicative-update algorithm is also provided in the Supplementary Materials (Supplementary Section S3). 18 4.2 Selection of the contrastive parameter 
+
+The contrast parameter α ≥ 0 controls the strength of background suppression in the contrastive objective, thereby governing the trade-off between fitting target-specific structure and penalizing variation shared with the background. Appropriate selection of α is therefore important for achieving effective contrast without over-suppressing informative signal in the target. In our work, α is selected using criteria derived from the model fit itself, rather than downstream super-vised or clustering-based performance, ensuring that tuning remains fully unsupervised and intrinsic to the contrastive factorization objective. Concretely, for a candidate value of α, we assess target reconstruction together with background suppression by evaluating the contrastive objective at convergence. For the squared-error formulation, this corresponds to monitoring the contrastive reconstruction loss: 
+
+J(α) = |X − W H X |2 
+
+> F
+
+− α|Y − W H Y |2 
+
+> F
+
+,
+
+and in likelihood-based formulations (e.g., Poisson, Negative Binomial, or Zero-Inflated Negative Binomial), the analogous contrastive negative log-likelihood is used. We exclude values of α for which the contrastive objective admits degenerate optima, such as collapse of the background coefficients HY or severe loss of target reconstruction fidelity. This restriction ensures that α is selected within a regime where both target and background terms are simultaneously well-conditioned. To explore the parameter space efficiently, we employ a coarse-to-fine line search over a predefined interval [a, b ], starting from small values of α and progressively increasing contrast strength. In practice, the objective typically stabilizes over a broad range of intermediate α values, whereas excessively large α
+
+leads to overly aggressive background suppression and diminished interpretability. Across all experiments, we find that small to moderate values of α (typically 0.5–5) yield stable factorizations that suppress shared variation while preserving target-enriched topics. Unless otherwise stated, we report results obtained using a representative value selected from this stable regime. 
+
+4.3 Selection of the background dataset 
+
+The effectiveness of bcNMF critically depends on the selection of an appropriate background dataset. The goal is not to find a perfect negative control, but rather to identify a background that captures dominant sources of variation that are shared with, but not central to, the target dataset. By suppressing these shared topics, bcNMF can more effectively isolate latent topics that are enriched in the target data. The background may reflect biological, technical, or structural effects that confound interpretation. For example, when analyzing disease heterogeneity, a healthy control population can serve as a background to remove baseline inter-individual variation. In time-series data, early time points may act as a background to emphasize treatment or progression effects. Similarly, in tissue deconvolution, homogeneous cell populations may serve as background when identifying mixed-cell-type signals. In practice, the background need not be drawn from the same experimental condition or matched one-to-one with the target. What matters is that the empirical structure of the background approximates the unwanted topics present in the target. In this sense, bcNMF leverages the contrast between target and background distributions to guide factorization toward target-specific structure. This idea is conceptually related to contrastive PCA, as described in [7], where the choice of background data follows a similar principle-capturing shared but uninformative variation to highlight structure enriched in the target dataset. However, bcNMF extends this approach to the non-negative matrix factorization 19 framework, enabling its application to a broader class of data types–including sparse and count-based data–while improving interpretability through parts-based representations. In designing a background dataset, it is also important to consider representational balance. Overly noisy or under-sampled background data may not provide a reliable contrast, while an overly complex back-ground may suppress informative signal. We therefore recommend empirical validation of the background’s effectiveness using held-out performance metrics or cross-condition reproducibility, in conjunction with interpretability of the learned topics. 
+
+4.4 Data Preprocessing 
+
+All datasets were preprocessed using standard procedures tailored to their data type. For single-cell RNA sequencing datasets, we began by applying quality control filters to remove low-quality cells and genes with negligible expression, following conventional best practices. Gene expression matrices were then restricted to protein-coding genes, and library-size normalization was performed to correct for sequencing depth differences across cells. Counts were subsequently log-transformed to stabilize variance, and the top 3,000 highly variable genes (HVGs) were selected using established variance-based heuristics to focus the analysis on the most informative features. For protein expression data, preprocessing involved the removal of proteins with low variance or excessive missingness, followed by normalization to correct for systematic differences in abundance across samples. All datasets were standardized so that target and background matrices were processed identically, ensuring that downstream contrastive analyses reflected biological or experimental differences rather than preprocessing artifacts. 
+
+4.5 Comparison with Existing Methods 
+
+To evaluate the performance of bcNMF , we compared it against several widely used dimensionality reduction and contrastive analysis methods. Standard principal component analysis (PCA) was applied using the implementation provided in the scikit-learn Python package. Contrastive principal component analysis (cPCA) was performed using the official implementation released by the original authors in the contrastive Python package, which reproduces the algorithm described in [7]. For non-negative matrix factorization (NMF), we implemented the standard multiplicative update algorithm to minimize the Euclidean reconstruction error, following the classical formulation of Lee and Seung [4]. This ensured a consistent optimization scheme between NMF and bcNMF , which also relies on multiplicative updates. All methods were applied to the same preprocessed data matrices, with the same number of topics and without additional downstream transformations, allowing for direct comparisons of their ability to recover target-specific structure. 
+
+4.6 Statistical Testing 
+
+Statistical tests were performed to assess the association between learned topics or gene/protein expres-sion levels and experimental conditions of interest. For each topic obtained from bcNMF , NMF, or cPCA, we compared topic usage between groups using two-sided two-sample t-tests. The resulting p-values were transformed into signed − log 10 p values, with the sign determined by the direction of the mean difference between groups. For gene and protein-level analyses, we applied the same two-sample t-test directly to the original ex-pression matrix to evaluate whether high-loading genes or proteins identified by bcNMF exhibited significant 20 condition-specific differences in the raw data. No multiple testing correction was applied for these analyses, as they were intended for visualization and interpretation rather than formal differential expression testing. To evaluate clustering performance, Adjusted Rand Index (ARI) scores were computed between unsupervised clusters derived from topic embeddings and the corresponding withheld ground-truth labels, providing a measure of alignment between inferred and true subgroup structure. 
+
+4.7 Software Availability 
+
+An open-source implementation of bcNMF , including all algorithms, preprocessing pipelines, and analysis scripts used in this study, is available at https://github.com/li-lab-mcgill/bcnmf . The repository provides a Python package with detailed documentation, example notebooks reproducing the main analyses, and instructions for applying bcNMF to new datasets. 
+
+4.8 Data Availability 
+
+All datasets analyzed in this study are publicly available from their original sources. The mice protein expression dataset was obtained from previously published studies investigating Down syndrome-related molecular changes [21, 22]. The single-cell RNA-seq leukemia dataset was generated by Zheng et al. [23] and is available from 10x Genomics (patient 27, pre- and post-transplant bone marrow mononuclear cells). The major depressive disorder (MDD) single-nucleus RNA-seq dataset was published by Maitra et al. [27] and profiles dorsolateral prefrontal cortex from well-characterized MDD patients and controls. The MIX-seq idasanutlin perturbation dataset was obtained from McFarland et al. [24]. All data were downloaded directly from the original repositories or supplementary materials of the cited publications. No new datasets were generated in this work. Preprocessing was applied uniformly as described in the Methods. Detailed download instructions and preprocessing scripts for each dataset are provided in the bcNMF code repository: https://github.com/li-lab-mcgill/bcnmf .
+
+# 5 Acknowledgment 
+
+Y.L. is supported by Canada Research Chair (Tier 2) in Machine Learning for Genomics and Healthcare (CRC-2021-00547), Natural Sciences and Engineering Research Council (NSERC) Discovery Grant (RGPIN-2016-05174) and Canadian Institutes of Health Research (CIHR) Project Grant (PJT-540722). A.Y. is supported by NSERC Discovery Grant (RGPIN-2024-06780) and FRQNT Team Research Project Grant (FRQ-NT 327788). 
+
+# References 
+
+[1] Stephens, M. False discovery rates: a new deal. Biostatistics 18 , 275–294 (2017). [2] Hicks, S. C., Townes, F. W., Teng, M. & Irizarry, R. A. Missing data and technical variability in single-cell rna-sequencing experiments. Biostatistics 19 , 562–578 (2018). [3] Jolliffe, I. Principal component analysis. In International encyclopedia of statistical science , 1094–1096 (Springer, 2011). 21 [4] Lee, D. D. & Seung, H. S. Learning the parts of objects by non-negative matrix factorization. nature 
+
+401 , 788–791 (1999). [5] Brunet, J.-P., Tamayo, P., Golub, T. R. & Mesirov, J. P. Metagenes and molecular pattern discovery using matrix factorization. Proceedings of the national academy of sciences 101 , 4164–4169 (2004). [6] Lehoucq, R. B., Sorensen, D. C. & Yang, C. ARPACK users’ guide: solution of large-scale eigenvalue problems with implicitly restarted Arnoldi methods (SIAM, 1998). [7] Abid, A., Zhang, M. J., Bagaria, V. K. & Zou, J. Exploring patterns enriched in a dataset with contrastive principal component analysis. Nature communications 9, 2134 (2018). [8] Anders, S. & Huber, W. Differential expression analysis for sequence count data. Nature Precedings 
+
+1–1 (2010). [9] Gutmann, M. & Hyv ¨arinen, A. Noise-contrastive estimation: A new estimation principle for unnor-malized statistical models. In Proceedings of the thirteenth international conference on artificial intelligence and statistics , 297–304 (JMLR Workshop and Conference Proceedings, 2010). [10] Oord, A. v. d., Li, Y. & Vinyals, O. Representation learning with contrastive predictive coding. arXiv preprint arXiv:1807.03748 (2018). [11] Chen, T., Kornblith, S., Norouzi, M. & Hinton, G. A simple framework for contrastive learning of visual representations. In International conference on machine learning , 1597–1607 (PmLR, 2020). [12] He, K., Fan, H., Wu, Y., Xie, S. & Girshick, R. Momentum contrast for unsupervised visual representa-tion learning. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,9729–9738 (2020). [13] Li, D., Jones, A. & Engelhardt, B. Probabilistic contrastive principal component analysis. arXiv preprint arXiv:2012.07977 (2020). [14] Severson, K. A., Ghosh, S. & Ng, K. Unsupervised learning with contrastive latent variable models. In 
+
+Proceedings of the AAAI Conference on Artificial Intelligence , 4862–4869 (2019). [15] Abid, A. & Zou, J. Contrastive variational autoencoder enhances salient features. arXiv preprint arXiv:1902.04601 (2019). [16] Weinberger, E., Lin, C. & Lee, S.-I. Isolating salient variations of interest in single-cell data with contrastivevi. Nature Methods 20 , 1336–1345 (2023). [17] Wang, K., Maraj, A. & Seigal, A. Contrastive independent component analysis for salient patterns and dimensionality reduction. Proceedings of the National Academy of Sciences 122 , e2425119122 (2025). [18] LeCun, Y. The mnist database of handwritten digits. http://yann. lecun. com/exdb/mnist/ (1998). [19] Deng, J. et al. Imagenet: A large-scale hierarchical image database. In 2009 IEEE conference on computer vision and pattern recognition , 248–255 (Ieee, 2009). [20] Hubert, L. & Arabie, P. Comparing partitions. Journal of classification 2, 193–218 (1985). 22 [21] Sarkar, P. et al. Proteomic analysis of mouse hypothalamus under simulated microgravity. Neuro-chemical research 33 , 2335–2341 (2008). [22] Geddes, B. How the cases you choose affect the answers you get: Selection bias in comparative politics. Political analysis 2, 131–150 (1990). [23] Zheng, G. X. et al. Massively parallel digital transcriptional profiling of single cells. Nature communi-cations 8, 14049 (2017). [24] McFarland, J. M. et al. Multiplexed single-cell transcriptional response profiling to define cancer vulnerabilities and therapeutic mechanism of action. Nature communications 11 , 4296 (2020). [25] Vousden, K. H. & Prives, C. Blinded by the light: the growing complexity of p53. Cell 137 , 413–431 (2009). [26] Riley, T., Sontag, E., Chen, P. & Levine, A. Transcriptional control of human p53-regulated genes. 
+
+Nature reviews Molecular cell biology 9, 402–412 (2008). [27] Maitra, M. et al. Cell type specific transcriptomic differences in depression show similar patterns between males and females but implicate distinct cell types and genes. Nature communications 14 ,2912 (2023). [28] Wolf, F. A., Angerer, P. & Theis, F. J. Scanpy: large-scale single-cell gene expression data analysis. 
+
+Genome biology 19 , 15 (2018). [29] Chen, E. Y. et al. Enrichr: interactive and collaborative html5 gene list enrichment analysis tool. BMC bioinformatics 14 , 128 (2013). [30] Niwattanakul, S., Singthongchai, J., Naenudorn, E. & Wanapu, S. Using of jaccard coefficient for keywords similarity. In Proceedings of the international multiconference of engineers and computer scientists , vol. 1, 380–384 (2013). [31] Zhao, Y., Cai, H., Zhang, Z., Tang, J. & Li, Y. Learning interpretable cellular and gene signature embeddings from single-cell transcriptomic data. Nature communications 12 , 5261 (2021). [32] Chen, W., Wang, H. & Liang, C. Deep multi-view contrastive learning for cancer subtype identification. 
+
+Briefings in Bioinformatics 24 (2023). [33] Xu, J. et al. Self-weighted contrastive learning among multiple views for mitigating representation degeneration. Advances in neural information processing systems 36 , 1119–1131 (2023). [34] Park, K., Sun, Z., Liao, R., Bresnick, E. H. & Kele s¸ , S. Systematic background selection for enhanced contrastive dimension reduction. bioRxiv 2025–05 (2025). [35] Wu, M., Sun, Q. & Yang, Y. Pca++: How uniformity induces robustness to background noise in contrastive learning. arXiv preprint arXiv:2511.12278 (2025). [36] M ¨artens, K. & Yau, C. Disentangling shared and private latent factors in multimodal variational autoencoders. In Machine Learning in Computational Biology , 60–75 (PMLR, 2024). 23 [37] Hawke, S., Ma, Y. & Li, D. Contrastive dimension reduction: when and how? Advances in Neural Information Processing Systems 37 , 74034–74057 (2024). [38] Stuart, T. et al. Comprehensive integration of single-cell data. cell 177 , 1888–1902 (2019). [39] Haghverdi, L., Lun, A. T., Morgan, M. D. & Marioni, J. C. Batch effects in single-cell rna-sequencing data are corrected by matching mutual nearest neighbors. Nature biotechnology 36 , 421–427 (2018). [40] Lee, D. & Seung, H. S. Algorithms for non-negative matrix factorization. Advances in neural information processing systems 13 (2000). 24 Supplementary Materials S1 bcNMF with other distributions 
+
+S1.1 Poisson-based bcNMF 
+
+To model sparse count data such as single-cell RNA sequencing (scRNA-seq), we adopt a Poisson likelihood framework. Compared to squared-error loss, the Poisson likelihood more naturally captures the discrete and non-negative nature of count observations, yielding improved interpretability and robustness in biological settings. Let X ∈ RM ×NX 
+
+> ≥0
+
+and Y ∈ RM ×NY 
+
+> ≥0
+
+denote the non-negative count matrices for target and background samples, respectively, where M is the number of features (e.g., genes) and NX , N Y are the number of samples. We approximate these as low-rank products W H X and W H Y , with shared basis W ∈ RM ×K
+
+> ≥0
+
+and sample-specific coefficient matrices HX ∈ RK×NX 
+
+> ≥0
+
+and HY ∈ RK×NY 
+
+> ≥0
+
+.Assuming element-wise Poisson observations, the (unnormalized) nagative log-likelihoods for X and Y
+
+under this factorization are given by: 
+
+Lp (X, W H X ) ∝ − X ◦ log ( W H X ) + W H X ,
+
+Lp (Y, W H Y ) ∝ − Y ◦ log ( W H Y ) + W H Y ,
+
+where all operations are element-wise. We define a contrastive objective that maximizes the target likelihood (which equals to minimize the negative likelihood) while down-weighting the background signal: 
+
+J = Lp (X, W H X ) − αLp (Y, W H Y ) ∝ − X ◦ log ( W H X ) + W H X − α (−Y ◦ log ( W H Y ) + W H Y ) ,
+
+where α > 0 is a tunable contrast parameter. To minimize this objective under non-negativity constraints, we derive multiplicative update rules for HX , H Y, and W .The update for the target-specific coefficients HX is 
+
+HX ← HX ◦
+
+W ⊤
+
+ XW H X
+
+
+
+W ⊤1 ,
+
+where 1 ∈ RM ×NX is a matrix of ones and division is element-wise. Similarly, the update for the background coefficients HY is 
+
+HY ← HY ◦
+
+W ⊤
+
+ YW H Y
+
+
+
+W ⊤1 ,
+
+with 1 ∈ RM ×NY . The update for the shared basis matrix W combines both target and background terms: 
+
+W ← W ◦
+
+ XW H X
+
+
+
+H⊤ 
+
+> X
+
++ α1H⊤
+
+> Y
+
+1H⊤ 
+
+> X
+
++ α
+
+ YW H Y
+
+
+
+H⊤
+
+> Y
+
+,
+
+where the shapes of each term ensure compatibility: XW H X ∈ RM ×NX , H ⊤ 
+
+> X
+
+∈ RNX ×K , and thus the product lies in RM ×K , consistent with the shape of W .25 These updates preserve non-negativity and ensure monotonic convergence under the Poisson model. By explicitly modeling count distributions, bcNMF is particularly suited to scRNA-seq and other sequencing-based assays where direct modeling of discrete variability is needed. 
+
+S1.2 bcNMF with Negative Binomial likelihood 
+
+For datasets characterized by overdispersed counts, such as single-cell RNA sequencing, the Negative Binomial (NB) likelihood offers a more flexible modeling framework than the Poisson distribution by explicitly accounting for variability beyond the mean. Let X ∈ RM ×NX 
+
+> ≥0
+
+and Y ∈ RM ×NY 
+
+> ≥0
+
+denote non-negative target and background count matrices, respectively. As in the Poisson model, we factorize these as X ≈ W H X and Y ≈ W H Y, where W ∈ RM ×K
+
+> ≥0
+
+is a shared basis matrix and HX , H Y ∈ RK×N 
+
+> ≥0
+
+are dataset-specific coefficient matrices. The scalar dispersion parameter θ > 0 is shared and assumed fixed. Under the NB likelihood, the contrastive objective is defined as: 
+
+J = LNB (X, W H X ) − α LNB (Y, W H Y ),
+
+where α > 0 is the contrast weight. The unnormalized Negative Binomial’s negative log-likelihood is proportion to: 
+
+LNB (X, W H X ) ∝ − X ◦ log ( W H X ) + ( X + θ) ◦ log ( θ + W H X )
+
+LNB (Y, W H Y ) ∝ − Y ◦ log ( W H Y ) + ( Y + θ) ◦ log ( θ + W H Y ) ,
+
+where all operations are element-wise and θ > 0 is the (shared) dispersion parameter. To minimize L, we derive the following multiplicative updates under non-negativity constraints. The update for the target coefficients HX is 
+
+HX ← HX ◦
+
+W ⊤
+
+ XW H X
+
+
+
+W ⊤
+
+ θ+Xθ+W H X
+
+ ,
+
+and for the background coefficients HY,
+
+HY ← HY ◦
+
+W ⊤
+
+ YW H Y
+
+
+
+W ⊤
+
+ θ+Yθ+W H Y
+
+ .
+
+The gradient of J with respect to W is given by 
+
+∂J ∂W = −
+
+ XW H X
+
+− θ + Xθ + W H X
+
+
+
+H⊤ 
+
+> X
+
++ α
+
+ YW H Y
+
+− θ + Yθ + W H Y
+
+
+
+H⊤ 
+
+> Y
+
+,
+
+yielding the multiplicative update for W :
+
+W ← W ◦
+
+ XW H X
+
+
+
+H⊤ 
+
+> X
+
++ α
+
+ θ+Yθ+W H Y
+
+
+
+H⊤
+
+> Y
+
+ θ+Xθ+W H X
+
+
+
+H⊤ 
+
+> X
+
++ α
+
+ YW H Y
+
+
+
+H⊤
+
+> Y
+
+.
+
+These updates ensure non-negativity and stable convergence while explicitly accommodating overdispersed 26 counts. The NB-based bcNMF formulation is thus well-suited for high-variance biological data, where Poisson assumptions may underestimate true variability. 
+
+S1.3 bcNMF with Zero-Inflated Negative Binomial likelihood 
+
+In highly sparse count datasets such as single-cell RNA sequencing (scRNA-seq), zero inflation arises due to technical dropout and biological heterogeneity. The Zero-Inflated Negative Binomial (ZINB) distribution captures both overdispersion and the excess of zeros, providing a more expressive generative model than the standard NB. Let X ∈ RM ×NX 
+
+> ≥0
+
+and Y ∈ RM ×NY 
+
+> ≥0
+
+be the observed target and background count matrices, factorized as W H X and W H Y as before. The ZINB distribution introduces a dropout probability parameter π ∈ [0 , 1] ,and the dispersion parameter θ > 0 remains fixed and shared across entries. Let I+ 
+
+> X
+
+and I0 
+
+> X
+
+denote binary indicator matrices where I+
+
+> X
+
+ 
+
+> ij
+
+= 1 if Xij > 0, and I0
+
+> X
+
+ 
+
+> ij
+
+= 1 if Xij = 0 ;similarly for I+ 
+
+> Y
+
+, I 0 
+
+> Y
+
+.We first write the overall contrastive objective as: 
+
+J = LZINB (X, W H X ) − α LZINB (Y, W H Y ),
+
+The unnormalized negative loglikelihood is proportion to: 
+
+LZINB (X, W H X ) ∝ I+ 
+
+> X
+
+◦ (log(1 − π) + X ◦ log ( W H X ) − (X + θ) ◦ log ( θ + W H X )) + I0 
+
+> X
+
+◦ log π + (1 − π) ◦
+
+ θθ + W H X
+
+θ!
+
+LZINB (Y, W H Y ) ∝ I+ 
+
+> Y
+
+◦ (log(1 − π) + Y ◦ log ( W H Y ) − (Y + θ) ◦ log ( θ + W H Y )) +I0 
+
+> Y
+
+◦ log π + (1 − π) ◦
+
+ θθ + W H Y
+
+θ!
+
+.
+
+Use the update rule, we get the multiplicative update for the target coefficient matrix HX ∈ RK×NX 
+
+> ≥0
+
+is: 
+
+HX ← HX ◦
+
+W ⊤
+
+
+
+I+ 
+
+> X
+
+◦ XW H X
+
+
+
+W ⊤
+
+I+ 
+
+> X
+
+◦ θ+Xθ+W H X + I0 
+
+> X
+
+◦ (1 −π)θ    
+
+> θθ+W H X
+> θ
+> (θ+W H X)
+> 
+> π+(1 −π)
+> θθ+W H X
+> θ
+
+
+
+,
+
+and for the background coefficient matrix HY ∈ RK×NY 
+
+> ≥0
+
+:
+
+HY ← HY ◦
+
+W ⊤
+
+
+
+I+ 
+
+> Y
+
+◦ YW H Y
+
+
+
+W ⊤
+
+I+ 
+
+> Y
+
+◦ θ+Yθ+W H Y + I0 
+
+> Y
+
+◦ (1 −π)θ    
+
+> θθ+W H Y
+> θ
+> (θ+W H Y)
+> 
+> π+(1 −π)
+> θθ+W H Y
+> θ
+
+
+
+.
+
+To get the update for the basis matrix W ∈ RM ×K 
+
+> ≥0
+
+, we calculate the gradient with respect to W ∈ RM ×K 
+
+> ≥0
+
+,27 which decomposes into positive and negative topics: 
+
+∂J ∂W =  ∇L + 
+
+> X
+
+− ∇L −
+
+> X
+
+ H⊤ 
+
+> X
+
+− α  ∇L + 
+
+> Y
+
+− ∇L −
+
+> Y
+
+ H⊤ 
+
+> Y
+
+.
+
+Following the multiplicative update strategy, we update W by element-wise division of negative over positive contributions: 
+
+W ← W ◦ ∇L − 
+
+> X
+
+H⊤ 
+
+> X
+
++ α ∇L + 
+
+> Y
+
+H⊤
+
+> Y
+
+∇L + 
+
+> X
+
+H⊤ 
+
+> X
+
++ α ∇L − 
+
+> Y
+
+H⊤
+
+> Y
+
+.
+
+Substituting the expressions explicitly, the update becomes: 
+
+W ← W ◦
+
+h
+
+I+ 
+
+> X
+
+◦ XW H X
+
+i
+
+H⊤ 
+
+> X
+
++ α
+
+I+ 
+
+> Y
+
+◦ θ+Yθ+W H Y + I0 
+
+> Y
+
+◦ (1 −π)θ    
+
+> θθ+W H Y
+> θ
+> (θ+W H Y)
+> 
+> π+(1 −π)
+> θθ+W H Y
+> θ
+
+ H⊤
+
+> Y
+
+I+ 
+
+> X
+
+◦ θ+Xθ+W H X + I0 
+
+> X
+
+◦ (1 −π)θ    
+
+> θθ+W H X
+> θ
+> (θ+W H X)
+> 
+> π+(1 −π)
+> θθ+W H X
+> θ
+
+ H⊤ 
+
+> X
+
++ α
+
+h
+
+I+ 
+
+> Y
+
+◦ YW H Y
+
+i
+
+H⊤
+
+> Y
+
+.
+
+This formulation explicitly separates signal (non-zero counts) from dropout events (zero counts), ensuring biologically informed and numerically stable updates. The ZINB-based bcNMF formulation is particularly well-suited to ultra-sparse data settings, where both overdispersion and dropout must be accounted for simultaneously. 
+
+# S2 Mini-batch optimization of contrastive NMF 
+
+For large-scale datasets, we adopt a mini-batch extension of contrastive non-negative matrix factorization (bcNMF ) under the Poisson likelihood. While standard multiplicative updates apply gradient steps to the full dataset, mini-batch processing enables efficient optimization and memory scaling. However, a key distinction arises: the shared basis matrix W cannot be directly updated within each batch. Instead, contributions from all mini-batches must be accumulated across an iteration before performing a single update to W .Let X ∈ RM ×NX 
+
+> ≥0
+
+and Y ∈ RM ×NY 
+
+> ≥0
+
+denote the target and background data matrices, and let K be the number of latent topics. Given a contrast weight α > 0, and a mini-batch size B, we factorize the data as 
+
+X ≈ W H X and Y ≈ W H Y, with W ∈ RM ×K 
+
+> ≥0
+
+, H X ∈ RK×NX 
+
+> ≥0
+
+, and HY ∈ RK×NY 
+
+> ≥0
+
+. For each global iteration, the following steps are performed: 1. Coefficient Updates in Mini-batches. For each mini-batch of columns from X, denoted X(b) ∈ RM ×B 
+
+> ≥0
+
+,the corresponding submatrix H(b) 
+
+> X
+
+∈ RK×B 
+
+> ≥0
+
+is updated via the standard Poisson multiplicative rule: 
+
+H(b) 
+
+> X
+
+← H(b) 
+
+> X
+
+◦
+
+W ⊤
+
+
+
+> X(b)
+> W H (b)
+> X
+
+
+
+W ⊤1M ×B
+
+,
+
+where division and multiplication are element-wise, and 1M ×B denotes a matrix of ones. 2. Gradient Accumulation for W (Target Term). Simultaneously, we accumulate the numerators and 28 denominators needed for the eventual update of W :
+
+W grad num += X(b)
+
+W H (b)
+
+> X
+
+(H(b) 
+
+> X
+
+)⊤,
+
+W grad den += 1M ×B (H(b) 
+
+> X
+
+)⊤.
+
+3. Repeat for Background Data. For each mini-batch of Y (b) ∈ RM ×B 
+
+> ≥0
+
+, we update the corresponding coefficient matrix H(b) 
+
+> Y
+
+as: 
+
+H(b) 
+
+> Y
+
+← H(b) 
+
+> Y
+
+◦
+
+W ⊤
+
+ 
+
+> Y(b)
+> W H (b)
+> Y
+
+
+
+W ⊤1M ×B
+
+,
+
+and accumulate the background gradients as: 
+
+W grad num += α · 1M ×B (H(b) 
+
+> Y
+
+)⊤,
+
+W grad den += α · Y (b)
+
+W H (b)
+
+> Y
+
+(H(b) 
+
+> Y
+
+)⊤.
+
+4. Single Update for W . After traversing all mini-batches, we update W using the accumulated terms: 
+
+W ← W ◦ W grad num W grad den ,
+
+where all operations are element-wise and the accumulated matrices have shape M × K.
+
+# S3 Convergence proof of the multiplicative-update algorithm 
+
+The multiplicative updates used in bcNMF are derived to optimize a contrastive objective under non-negativity constraints. To ensure that the algorithm is well-founded, we prove that each update monotonically decreases the objective function. This guarantees stable optimization and validates the use of multiplicative rules in practice. We present a complete proof using the majorization function framework, following the classical analysis [40], extended to the contrastive setting. 
+
+Definition 1 (Majorization function) . A function G(Z, Z ′) is an majorization function for F (Z) if 1. G(Z, Z ) ≡ F (Z) for all Z, and 2. G(Z, Z ′) ≥ F (Z) for all Z, Z ′.Then, defining 
+
+Z(t+1) = arg min  
+
+> Z≥0
+
+G Z, Z (t),
+
+yields 
+
+F  Z(t+1)  ≤ G Z(t+1) , Z (t) ≤ G Z(t), Z (t) = F  Z(t),
+
+so F  Z(t) is monotonically non-increasing. 
+
+This majorization function principle provides the foundation of our convergence analysis. Rather than minimizing the original objective F directly, which may be difficult due to coupling between variables and 29 non-negativity constraints, we instead construct a surrogate function G that upper-bounds F while touching it at the current iterate. By minimizing this simpler surrogate at each step, we guarantee a descent in the true objective. In the following, we apply this framework to each block variable in the contrastive NMF objective and explicitly construct suitable majorization functions that yield the multiplicative updates. Fix W and HY . The objective as a function of HX is 
+
+J (HX ) = ∥X − W H X ∥2 
+
+> F
+
++ constant ,
+
+since the background term does not depend on HX . This is exactly the Euclidean NMF subproblem. Let 
+
+A := W ⊤W ∈ RK×K 
+
+> ≥0
+
+, B := W ⊤X ∈ RK×NX 
+
+> ≥0
+
+.
+
+Up to an additive constant independent of HX ,J (HX ) = tr 
+
+
+
+H⊤ 
+
+> X
+
+AH X
+
+
+
+− 2 tr 
+
+
+
+H⊤ 
+
+> X
+
+B
+
+
+
+.
+
+Lemma 1 (Auxiliary function for Euclidean NMF in H). For any current iterate H(t) 
+
+> X
+
+> 0, define 
+
+G HX , H (t)
+
+> X
+
+ := J H(t)
+
+> X
+
+ + X
+
+> k,n
+
+ AH (t)
+
+> X
+
+
+
+> kn
+
+H(t)
+
+> X,kn
+
+ HX,kn − H(t)
+
+> X,kn
+
+2 +
+
+D
+
+∇J H(t)
+
+> X
+
+, H X − H(t)
+
+> X
+
+E
+
+.
+
+Then G ·, H (t)
+
+> X
+
+ is an majorization function for J(·) on the non-negative orthant. 
+
+This is the standard Lee-Seung Euclidean-NMF construction: the quadratic form tr  H⊤AH  is ma-jorized by a separable weighted sum of squares using the inequality 
+
+X
+
+> j
+
+Akj h2 
+
+> j
+
+≤
+
+X
+
+> j
+
+Akj h(t)
+
+> j
+
+ X
+
+> j
+
+h2
+
+> j
+
+h(t)
+
+> j
+
+,
+
+applied entrywise and summed over columns. Minimizing G
+
+
+
+HX , H (t)
+
+> X
+
+
+
+w.r.t. each scalar HX,kn ≥ 0 yields the closed-form update 
+
+HX ← HX ◦ W ⊤XW ⊤W H X
+
+,
+
+where all operations are element-wise. Therefore, this update satisfies 
+
+J
+
+
+
+W, H (t+1)  
+
+> X
+
+, H (t)
+
+> Y
+
+
+
+≤ J
+
+
+
+W, H (t) 
+
+> X
+
+, H (t)
+
+> Y
+
+
+
+.
+
+The same argument applies to HY with X replaced by Y :
+
+HY ← HY ◦ W ⊤YW ⊤W H Y
+
+=⇒ J
+
+
+
+W, H (t+1)  
+
+> X
+
+, H (t+1) 
+
+> Y
+
+
+
+≤ J
+
+
+
+W, H (t+1)  
+
+> X
+
+, H (t)
+
+> Y
+
+
+
+.
+
+30 S4 Supplementary Figures 
+
+S4.1 Extended enrichment analysis of MDD-associated topics ab
+
+Figure S1: Extended enrichment analysis of disease-associated gene programs in MDD. (a) Multi-database enrichment of 25 validated MDD-associated genes across GO Biological Process, KEGG, and Reactome. The x-axis shows gene ratio (overlap / pathway size); point size and color reflect statistical significance ( − log 10 adjusted p-value). Extracellular matrix and immune-inflammatory pathways show the strongest enrichment. (b) Gene-overlap network of the top enriched GO Biological Process terms. Nodes represent enriched terms colored by significance; edges indicate Jaccard similarity > 0.2. A central immune-inflammatory module is observed, with metabolic terms positioned peripherally. 31

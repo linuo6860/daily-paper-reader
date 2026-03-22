@@ -1,0 +1,1905 @@
+Title: LAMMI-Pathology: A Tool-Centric Bottom-Up LVLM-Agent Framework for Molecularly Informed Medical Intelligence in Pathology
+
+URL Source: https://arxiv.org/pdf/2602.18773v1
+
+Published Time: Tue, 24 Feb 2026 01:30:12 GMT
+
+Number of Pages: 48
+
+Markdown Content:
+# LAMMI-Pathology: A Tool-Centric Bottom-Up LVLM-Agent Framework for Molecularly Informed Medical Intelligence in Pathology 
+
+## Haoyang Su 
+
+## Fudan University Shanghai Innovation Institute Shanghai Artificial Intelligence Laboratory 
+
+## Shaoting Zhang 
+
+## Shanghai Jiao Tong University Shanghai Artificial Intelligence Laboratory 
+
+## Xiaosong Wang 
+
+## Shanghai Innovation Institute Shanghai Artificial Intelligence Laboratory 
+
+## Abstract 
+
+The emergence of tool-calling-based agent systems intro-duces a more evidence-driven paradigm for pathology im-age analysis in contrast to the coarse-grained text-image diagnostic approaches. With the recent large-scale ex-perimental adoption of spatial transcriptomics technolo-gies, molecularly validated pathological diagnosis is be-coming increasingly open and accessible. In this work, we propose LAMMI-Pathology (LVLM-Agent System for Molecularly Informed Medical Intelligence in Pathology), a scalable agent framework for domain-specific agent tool-calling. LAMMI-Pathology adopts a tool-centric, bottom-up architecture in which customized domain-adaptive tools serve as the foundation. These tools are clustered by do-main style to form component agents, which are then coor-dinated through a top-level planner hierarchically, avoid-ing excessively long context lengths that could induce task drift. Based on that, we introduce a novel trajectory con-struction mechanism based on Atomic Execution Nodes (AENs), which serve as reliable and composable units for building semi-simulated reasoning trajectories that capture credible agent-tool interactions. Building on this founda-tion, we develop a trajectory-aware fine-tuning strategy that aligns the planner’s decision-making process with these multi-step reasoning trajectories, thereby enhancing infer-ence robustness in pathology understanding and its adap-tive use of the customized toolset. Our code is available at https://github.com/Hoyant-Su/LAMMI. 
+
+## 1. Introduction 
+
+Pathology image understanding is pivotal for advancing di-agnostic precision and streamlining clinical workflows in computational pathology. The emergence of Large Vision-Language Models (LVLMs) has catalyzed a paradigm shift, with pioneering work [28, 40, 45, 46] demonstrating that generative, text-based foundation models can render patho-logical image analysis more intuitive. However, the prevail-ing research landscape exhibits two critical limitations. First, existing studies [5, 26, 27, 40, 46, 65] overempha-size textual representations, which fundamentally misaligns with the visual-centric nature of pathology, where diagnos-tic reasoning primarily relies on the direct morphological interpretation of histopathological images rather than tex-tual descriptions. This textual bias creates an excessive de-pendency on expert-authored morphological reports, divert-ing attention from the primary visual evidence that pathol-ogists inherently utilize. Second, although methods such as Chain-of-Thought [55] (CoT) reasoning and Retrieval-Augmented Generation [19] (RAG) attempt to capture inter-mediate reasoning steps, they still fall short of fully support-ing evidence-grounded medical decision-making in pathol-ogy [15], as these approaches often rely on textual inter-mediaries but overlook the molecular evidence-gathering modalities that are widely employed in clinical practice, such as immunohistochemistry (IHC) and RNA sequencing (RNA-seq), which provide quantitative, objective biologi-cal signals that can serve as direct evidence for pathologi-cal interpretation. Although recent works [3, 46, 54] have attempted to address these limitations by employing multi-agent strategies, these methods remain limited in realizing fully evidence-grounded reasoning in medical domains, as their reasoning processes largely operate on internally sim-ulated outputs rather than direct observations, and their in-creased framework complexity may exacerbate hallucina-tion issues common in generative models [2]. As an exploration of pathological vision-driven molecu-lar mechanisms and evidence-based reasoning, gene expres-1
+
+> arXiv:2602.18773v1 [cs.AI] 21 Feb 2026
+
+sion profiles from techniques like spatial transcriptomics provide a rich source of quantitative data that captures the tissue’s intrinsic state [20, 29, 51]. While existing datasets [4, 14] offer extensive molecular annotations paired with histopathology images, applications have largely been limited to image-level labeling or predictive tasks focused on specific organs or diseases [41]. Consequently, integrat-ing these molecular signals with generative vision-language models presents a critical opportunity to enable reliable, evidence-based reasoning, bridging the gap between mor-phological presentation and textual interpretation. Building on this opportunity, we introduce LAMMI-Pathology, as detailed in Fig. 1, a domain-specific agent framework designed to effectively learn from and lever-age customized tools. Unlike traditional multi-agent sys-tems, LAMMI-Pathology employs a bottom-up architecture in which customized, domain-adaptive tools are first specif-ically designed and then grouped into clusters, each man-aged by a component agent, which in turn is coordinated hierarchically under a visual-driven LVLM planner. To support robust reasoning, we develop a scalable strat-egy to generate semi-simulated agent trajectories, in which the returns of real tools are incorporated and enriched with LLM reasoning. Correspondingly, we design a trajectory-aware fine-tuning strategy to align the planner with these trajectories, ensuring effective adaptation and utilization of downstream tools within LAMMI-Pathology. Our contributions in the proposed framework are three-fold. First, we develop a scalable planner-driven agent framework that supports hierarchical tool-calling, where both tools and component agents can be locally integrated rather than constrained by external APIs. We demonstrate that a single set of fine-tuned weights can adapt to both the planner and component agents, which significantly re-duces the memory allocation required for constructing ex-tensible agent systems. Second, we design our framework with pathology-specific toolsets and domain knowledge, ad-dressing the limitations of conventional VLM in pathology, which often suffers from coarse-grained image-to-text map-pings and the absence of evidence-grounded traces. Third, we introduce Atomic Execution Nodes (AENs) for tool-execution-grounded trajectory generation and a trajectory-aware fine-tuning strategy that leverages these nodes, en-abling the planner to coordinate multiple component agents while improving their tool-calling decisions. 
+
+## 2. Related Work 
+
+2.1. Tool-Calling Agent Systems and Trajectory Learning 
+
+Tool-calling based agent system design has become preva-lent in both general-purpose and domain-specific applica-tions [22, 60], driven by the capabilities of large language models (LLMs) to perform complex tasks through tool uti-lization [25, 30, 58]. Early studies such as TALM [33] and Toolformer [39] first demonstrated that LLMs could self-learn tool invocation patterns, inspiring structured reason-ing frameworks. ReACT [62] proposed a standardized tra-jectory comprising Thought, Action, and Observation, pro-viding a foundational framework for subsequent develop-ments but exhibiting a simple, linear structure that limits its flexibility. Following works such as ToolACE [25], which synthesizes pipeline heavily relies on the general capabil-ities of pretrained LLMs, confining it to the text modal-ity. The complex exploration challenge inherent in such knowledge distillation is not adequately addressed by its sequential three-stage logic of speciation, adaptation, and evolution. Yet, text-only tool-calling paradigms are not suit-able for image-oriented tasks since visual tokens are absent from the reasoning process. To address these shortcomings, several multimodal agent systems have been proposed, yet they still exhibit distinct limitations. Works such as MAT-Agent [8] have explored trajectory simulation, but their fo-cus remains constrained to specific benchmarks, such as GAIA [31] and GTA [52], thereby limiting their adapt-ability in novel or emerging domains. Other systems, like MLLM-Tool [50], are limited by controllers that validate tool invocations only from a formal perspective rather than through outcome-based correctness. 
+
+2.2. LVLM-Driven Agent Systems in Pathology 
+
+Extending these paradigms to pathology, several works have investigated LVLM-driven agent systems tailored for medical image understanding. For instance, SlideSeek [3] introduced a multi-agent system for evaluating gigapixel whole-slide images, but it encodes a fixed supervisor-explorer-report workflow and is tightly coupled to the PathChat+, which limits composability with alternative toolsets and evidence modules. PathGen-1.6M [46] lever-aged multi-agent collaboration to generate a large-scale dataset, yet its iterative revision process remains text-centric and not fully evidence-based. Moreover, PathFinder [9] proposes a multi-modal, multi-agent system for histopathol-ogy that emulates expert workflows across gigapixel WSIs, but it relies on fixed agent roles and lacks flexible tool integration and trajectory-aware reasoning. These works collectively highlight the need for a flexible agent frame-work capable of dynamic tool integration and generalizable, evidence-grounded reasoning through trajectories, motivat-ing the design of LAMMI-Pathology. 
+
+## 3. Method 
+
+3.1. Trajectory Generation via Tool Execution 
+
+Conventional agent tool-calling approaches [33, 47] either impose structured constraints through predefined schemas 2Tool-centric 
+
+bottom-up 
+
+architecture 
+
+> Component
+> Agent
+> Component
+> Agent
+> Component
+> Agent
+> Style-1
+> Toolset
+> Style-2
+> Toolset
+> Style-n
+> Toolset
+> LAMMI
+> Planner
+
+LAMMI-Pathology 
+
+> query: <image> Is the transcription factor EGR1 involved in ... deposition in fibrotic kidneys?
+> Inspect the protein profile of EGR1.
+> The protein encoded ... as a tumor suppressor.
+> <image> Is this area positive for EGR1?
+> Evaluation of this region ... without
+> definitive positive staining.
+> Final Answer: The component agents ...
+> deposition in fibrotic kidneys.
+> Gene
+> Agent
+> Patho
+> Agent
+> operation unit
+> operation unit
+> loops
+> loops
+> The ProteinAtlasGene InfoTool can ... tissue correlation.
+> ProteinAtlasGene
+> InfoTool
+> Cancer-related genes ... Predicted location: Intracellular
+> <image> Does the expression of the gene NUPR1 correlate with poor prognosis in pancreatic ductal adenocarcinoma?
+> True. NUPR1 expression is associated with poor prognosis in pancreatic ductal adenocarcinoma, as it contributes to tumor cell survival. Its overexpression is linked to aggressive tumor behavior.
+> LVLM
+> Retriever
+
+PathSpatial-DocQA 
+
+Semi-simulated trajectories construction 
+
+scientific QA pairs 
+
+emerging spatial transcriptomics research 
+
+> coding?
+> generation?
+> captioning?
+> genomap analysis?
+> 0.2
+> 0.3
+> 0.9
+> 0.7
+> def func():
+> tool = captioner()
+> tool = pathwayKG()
+> tool-specific
+> perceptual subspaces
+> style-informed clustering
+
+task list  toolset 
+
+Toolset specification 
+
+Trajectory-aware fine-tuning           
+
+> LLM reasoning linkage
+> AEN
+> AEN
+> AEN
+> AEN
+> AEN
+> AEN
+> AEN
+> query
+> one-step action
+> observation
+> Atomic Execution Node
+> formation
+> curated trajectories set data flow candidate link established link pipeline flow
+> annotation thought block <text> <text> tool calling block observation block <text>
+> LVLM
+> Backbone
+> Adapter Component
+> Agents
+> LAMMI
+> Planner
+> trajectory-aware FT
+> planner prompt
+> agent-specific prompts
+> shared LVLM weights
+
+…
+
+… …
+
+> …
+> …
+
+…
+
+> :
+> :
+> :
+
+Figure 1. Overview of the LAMMI-Pathology framework. The top row illustrates the hierarchical reasoning architecture where component agents orchestrate style-specific tools and aggregate contextual evidence for the LAMMI planner. The middle row depicts the data and tool construction pipeline, where spatial transcriptomics literature paired with histopathology images are processed through LVLM retriever to extract QA pairs, and tools are bottom-up clustered according to their sequential co-occurrence frequency during AEN construction, with adaptive cluster numbers. The bottom row presents the AEN-driven semi-simulated trajectory generation and trajectory-aware fine-tuning methodology, with both the planner and component agents operating on shared fine-tuned model parameters. 
+
+or rely on carefully designed prompts with large numbers of simulated tool-calling examples to teach agents how to use tools. However, these methods are not well suited for down-stream applications that involve custom tools, and agents cannot easily learn the usage protocols of new tools in zero-shot scenarios. This limitation restricts the extension of tools for downstream tasks. In this work, to facilitate the construction of a semi-simulated trajectory dataset for LVLM agents, we introduce a novel concept termed Atomic Execution Nodes (AENs). An AEN represents the minimal verifiable interaction prim-itive between an agent and an external tool, encapsulating a query, the corresponding tool input, and the observed out-put. Formally, each AEN is defined as a triplet (Q, A, O ) ∈Q × T × O , where Q is a query sampled from a systemat-ically constructed set of pathology-genomics questions Q,
+
+A is the input instruction for a potentially relevant tool se-lected from the custom toolset T , and O ∈ O is the re-sulting observation returned by the tool execution. Unlike purely synthetic or imagined reasoning traces, AENs di-rectly encode grounded tool interactions, providing reliable atomic units for constructing higher-level trajectories. These atomic nodes serve as building blocks for generat-ing coherent meta-trajectories. To this end, a large language model (LLM) performs causal concatenation over candidate AENs, identifying semantically and temporally compatible successor nodes and inserting intermediate Thoughts that explicitly capture reasoning transitions. Formally, a meta-trajectory τ is constructed as a sequence of alternating rea-soning and execution steps, as specified in the expression below: 
+
+τ = {(Ti, A i, O i)}Ki=1 , (1) where Ti denotes the i-th Thought segment capturing rea-soning transitions, Ai ∈ T represents the i-th Action (tool selection), and Oi ∈ O is the corresponding Observation. Each inserted Thought Ti ensures that the agent’s reasoning chain remains causally consistent and that tool executions are interpreted and applied correctly. Furthermore, the LLM filters out semantically invalid or inconsistent nodes, maintaining high-quality trajectories suitable for downstream fine-tuning. This semi-simulated design balances grounded authenticity through real tool out-puts and scalable synthesis via LLM-driven concatenation, enabling the construction of large-scale, structured training datasets that capture both operational logic and reasoning processes for LVLM agents. 3While AEN-based trajectory construction provides rich training data, traditional ReAct-based systems suffer from context length explosion when interacting with entire toolsets [23], thus degrading reasoning quality. To ad-dress this limitation, we propose a Tool-centric Bottom-Up Clustering Architecture that fundamentally reimagines how agents interact with tool repertoires. Our architecture clusters tools based on their style and utility into domain-specific component agents. These component agents, each equipped with a curated subset of specialized tools, inter-act with their respective tool styles to generate outputs that collectively inform the central planner’s resolution of user queries, significantly reducing context complexity while maintaining specialized problem-solving capabilities. 
+
+3.2. Trajectory-aware Adapter Fine-tuning 
+
+3.2.1. Adapter Architecture 
+
+Rather than fully fine-tuning the base VLM, we introduce a Trajectory-aware Adapter (TA) that operates as a struc-tural alignment module in Fig. 2. The adapter constrains gradient updates to low rank parameter subspaces associ-ated with output trajectory formatting. This design aligns with observations that structural compliance such as pro-ducing syntactically valid tool calls tends to emerge earlier during fine-tuning and facilitates subsequent content level learning, with models typically acquiring format and pro-cedural patterns before developing deeper semantic under-standing [11, 42]. Following standard VLM architectures, visual and tex-tual tokens are concatenated into a unified sequence H(0) ∈
+
+RB×(Lv +Lt)×d processed through L Transformer layers, where B is the batch size, Lv and Lt denote visual and tex-tual token counts, respectively, d is the hidden dimension, and L is the number of layers. Each Transformer layer l ∈ { 1, . . . , L } transforms hid-den states H(l−1) ∈ RB×(Lv +Lt)×d through the standard pre-norm architecture. We inject the trajectory adapter TA (l) by dynamically patching the feed-forward network (FFN) block’s forward method, which intercepts FFN com-putation to apply adapter modulation before the residual connection. The complete layer transformation is 
+
+H(l) = H(l) 
+
+> attn
+
++ TA (l) 
+
+FFN (l)(LayerNorm (H(l)
+
+> attn
+
+)) 
+
+
+
+, (2) where H(l) 
+
+> attn
+
+= H(l−1) + MHSA (l)(LayerNorm (H(l−1) )) 
+
+denotes the output after attention and the first residual con-nection in Eq. (2). We denote full-layer hidden state tensors as H and intermediate adapter outputs as h.
+
+3.2.2. Segment Mask-Guided Modulation Mechanism 
+
+The trajectory adapter TA (l) receives FFN output h(l) 
+
+> ffn
+
+=
+
+FFN (l)(LayerNorm (H(l)
+
+> attn
+
+)) ∈ RB×(Lv +Lt)×d and applies segment mask-guided modulation. The adapter employs three learnable per-channel scaling vectors γthought , γaction ,
+
+γinput ∈ Rd, each zero-initialized to preserve pre-trained be-havior. The modulation mechanism adopts IA3’s core prin-ciple [24] of per-channel scaling via element-wise multipli-cation, applied to FFN outputs rather than attention keys/-values, and extended with segment-aware selection among multiple scaling vectors. During training, we dynamically generate a segment mask M ∈ { 0, 1}B×Lseq ×3 where Lseq = Lv + Lt de-notes the total sequence length. Let I = {0, 1, 2} index segment types corresponding to Thought , Action , and 
+
+Action Input , respectively. For visual tokens ( t ≤ Lv ), 
+
+M[b, t, i ] = 0 for all i ∈ I . For text tokens ( t > L v ), 
+
+M[b, t, i ] = 1[t ∈ S i] where S0, S1, S2 denote Thought ,
+
+Action , and Action Input position sets respectively, and 1[·] denotes the indicator function. Mask generation performs on-the-fly substring matching against tokenized trajectory markers, eliminating the need for pre-annotated data. The modulation term ∆ ∈ RB×Lseq ×d is computed as 
+
+∆[b, t, :] = X
+
+> i∈I
+
+Mb[b, t, i ] ⊙ γi, (3) where γ0 = γthought , γ1 = γaction , and γ2 = γinput de-note the scaling vectors γi ∈ Rd for the three segment types, Mb[b, t, i ] denotes the broadcast of the scalar mask 
+
+M[b, t, i ] ∈ { 0, 1} to all d dimensions when multiplied with 
+
+γi, and ⊙ denotes element-wise multiplication. The modu-lation is applied multiplicatively to the FFN output, 
+
+h(l) 
+
+> modulated
+
+= h(l) 
+
+> ffn
+
+⊙ (1 + ∆), (4) where 1 denotes a tensor of ones matching h(l) 
+
+> ffn
+
+in shape. This modulated output is added to H(l) 
+
+> attn
+
+via residual con-nection, producing H(l) as specified in Eq. (2). The segment-aware modulation mechanism enables learning distinct transformation patterns for different tra-jectory components. By applying segment-specific scaling vectors, the adapter captures tool-agnostic structural regu-larities including formatting requirements, enabling gener-alization to unseen tools while preserving the base model’s general reasoning capabilities. Zero-initialized scaling vec-tors ensure minimal disruption to pre-trained representa-tions, allowing gradual adaptation of structure-aware pat-terns without catastrophic forgetting of visual understand-ing and general language abilities. 
+
+## 4. Experiments 
+
+4.1. Dataset Curation and Experimental Settings 
+
+Dataset construction, information extraction, and results evaluation were performed and verified using Qwen3-VL-235B-A22B-Instruct [48] and Qwen3-235B-A22B [61]. 4... 
+
++            
+
+> ×
+> Thought: The user has provided an image and is asking for an analysis of the organizational structure. I need to delegate this task to the ImageAgent, which specializes in interpreting visual and pathological data.
+> Action: ImageAgent.
+> Action Input: Analyze the provided image and determine the structure based on their arrangement.
+> Vision Encoder Text Tokenizer
+> [BOS] [EOS]
+> Segment
+> mask
+> Traj-aware LVLM Decoder
+> ………Transformer Layer
+> Transformer Layer
+> Transformer Layer
+> TA
+> TA
+> TA
+> TA
+> MHSA
+> LN
+> LN
+> FFN
+> Layers
+> frozen trainable input token trainable token data flow annotation
+> [0, 0, 0, …, 0 1, 1, 1, …, 1
+> [0, 0, 0, …, 0
+> [0, 0, 0, …, 0
+> 1, 1, 1, …, 1
+> 1, 1, 1, …, 1]
+> 0, 0, 0, …, 0 0, 0, 0, …, 0]
+> 0, 0, 0, …, 0]
+> 0, 0, 0, …, 0
+> 0, 0, 0, …, 0
+> 0, 0, 0, …, 0
+> ...
+
+Figure 2. Trajectory-aware Adapter architecture. The adapter is injected after the FFN in each Transformer decoder layer. Segment masks are dynamically generated from input sequences to identify Thought , Action , and Action Input segments. Three learnable per-channel scaling vectors are applied, producing a modulation term that is multiplicatively applied to the FFN output. 
+
+Following the procedure described in Sec. 3.1, we construct ST-Traj, a trajectory-level corpus derived from 10,684 successfully executed AENs in spatial transcrip-tomics. Through semantic filtering, length control, and lim-iting each node’s usage to a maximum of three times, 6,818 high-quality meta-trajectories are obtained, each spanning 2-8 AENs and split into training, validation, and test subsets at an 85:5:10 ratio. This dataset serves as the foundation for analyzing multi-step tool-calling behaviors and reasoning dependencies. To complement trajectory supervision with natural-language reasoning, we assemble PathSpatial-DocQA, a pathology-grounded question-answering dataset curated from HEST [14] and STimage-1K4M [4]. The curation pro-cess is guided by 158 high-impact studies from Nature sub-journals, Cell, and other top-tier venues in spatial transcrip-tomics, emphasizing modal reasoning, pathology-driven vi-sual interpretation, and the incorporation of molecular gene expression information. In addition, we adopt PathMMU [43], one of the public QA datasets of clinical origin, as a gold-standard bench-mark for pathological image understanding. Its test-tiny split is used for pure inference evaluation under all agent frameworks in comparison. Tool incorporation policy includes molecular-related APIs [12, 16–18, 34, 49, 57, 59, 64], with captioning models fine-tuned on Quilt-Instruct [40], PathGen [46], and PathCap [44] datasets, and pathology-gene expression alignment tools [21] trained using ROI and RNA-Seq labels from HEST [14] and STimage-1K4M [4]. All experiments use a fixed random seed of 37. LVLM fine-tuning is implemented using DeepSpeed ZeRO-3 [37, 38] with four H200 GPUs, while inference is carried out on four RTX 4090 GPUs. Hyperparameters are standard-ized across all frameworks, with maximum iterations, ex-ecution timeout, and generation length set to 8, 300 sec-onds, and 2048 tokens, respectively. For trajectory quality assessment, we employ Tool Consistency F1 (TCF1) and Trajectory Success Score (TSS) to evaluate ST-Traj quality against standard trajectories. Across all datasets, we mea-sure the Tool Redundancy Rate (TRR), Answer Consistency Score (ACS), and Hallucination Rate (HR) to assess trajec-tory quality. For closed-ended questions, we additionally compute F1 scores. For framework and model selection, we compare our framework against leading LVLM-based tool-calling sys-tems, including MLLM-Tools [50], MAT-Agent [8], and OpenAI-Agent-SDK, as well as the canonical ReAct [62] framework. For the base LVLMs used to construct the planner and component agents, we adopt several state-of-the-art (SOTA) models, including Qwen3-VL-8B [48], InternVL3.5-8B [53], MiniCPM-V-4.5 [63], and the propri-etary GPT-5 [32]. For MLLM-Tools, which decouples au-toregressive reasoning from visual understanding, we em-ploy Vicuna-8B [6], Qwen3-8B [61], and ToolACE-8B [25] as the base LLMs coupled with the ImageBind [10] vision tower. 
+
+4.2. Overall Performance 
+
+When confronting frontier discovery questions incorporated in PathSpatial-DocQA, as Tab. 1 shows, LAMMI with In-ternVL3.5 8B reaches 0.809 ACS, exceeding the SOTA OpenAI-Agents-SDK with GPT-5 by 0.070. Instruction-tuned models like Qwen3-VL-8B Instruct and MiniCPM-V-4.5 show higher adherence to PE under LAMMI, with slightly elevated TRR but reduced HR compared to direct parametric responses, as tool-calling introduces factual ver-ification that mitigates hallucination. In contrast, LoRA-fine-tuned LVLMs in MAT-Agent and MLLM Tools exhibit superficial tool-calling that mimics rather than internalizes scientific reasoning, resulting in elevated TRR without ACS gains, suggesting that elevated tool invocation frequency fails to compensate for underdeveloped reasoning mecha-5Table 1. Performance comparison on PathSpatial-DocQA dataset. We report ACS, HR, and TRR across different frameworks and base models. 
+
+Framework Adaptation Planner ACS ↑ HR ↓ TRR ↓
+
+OpenAI-Agents-SDK PE GPT-5 0.739 0.164 0.033 ReACT PE InternVL3.5 8B 0.798 0.301 0.000 
+
+MiniCPM-V 4.5 0.715 0.353 0.018 Qwen3 VL 8B Instruct 0.705 0.255 0.036 InternVL3.5 8B 0.462 0.662 0.049 MAT-Agent LoRA+PE MiniCPM-V 4.5 0.373 0.660 0.238 Qwen3 VL 8B Instruct 0.404 0.713 0.096 MLLM-Tools LoRA+PE ToolACE 8B + ImageBind 0.448 0.540 0.374 Vicuna v1.5 7B + ImageBind 0.578 0.387 0.060 Qwen3 8B + ImageBind 0.498 0.231 0.603 InternVL3.5 8B 0.809 0.338 0.000 
+
+LAMMI (Ours) TA+PE MiniCPM-V 4.5 0.676 0.205 0.120 Qwen3 VL 8B Instruct 0.777 0.238 0.056 nisms. On ST-Traj, TA fine-tuning yields greater TSS gains than LoRA while achieving better TCF1 alignment with lower HR, as shown in Tab. 2. LAMMI employing InternVL3.5-8B as the planner with TA+PE reaches 0.275 TCF1, which is substantially higher than ReACT with PE alone at 0.031, while maintaining a comparatively low TRR. Notably, the TA+PE strategy enables open-source models to surpass GPT-5 in TCF1, TSS, and ACS, with the latter exhibiting notably lower ACS of 0.176, indicating limited generaliza-tion on structurally novel out-of-domain data like ST-Traj. As Tab. 3 shows, across the open-source benchmark PathMMU, although OpenAI-Agents-SDK with GPT-5 maintains superior comprehension with minimal tool re-liance, LAMMI consistently achieves the highest perfor-mance among open-source frameworks when paired with the same base LVLM, with Qwen3-VL-8B-Instruct achiev-ing the highest performance, reaching 0.582 ACS and 0.503 F1 on average, with an average F1 improvement of 0.058 and 0.173 on multiple choice questions compared to Re-ACT and MAT-Agent, respectively. The same trend is ob-served with InternVL3.5-8B and MiniCPM-V-4.5 incorpo-rated into LAMMI. 
+
+4.3. Ablation Studies 
+
+Ablation studies are conducted across two dimensions. To assess generalization capability when incorporating new tools, adaptation methods are compared under varying Newly Incorporated Tools Ratio (NITR) on the PathSpatial-DocQA dataset to encourage free exploration trajectories. Newly incorporated tools form a fixed set, while existing tools are sampled per sample from a fixed seed according to the NITR ratio, ensuring varying tool combinations across samples for fairness. Additionally, the impact of maximum iteration limits on agent execution and GPU memory allo-cation between LAMMI and standard multi-agent systems (MAS) are analyzed on the ST-Traj dataset. 
+
+4.3.1. Adaptation Method Comparison 
+
+We compare four adaptation strategies on the PathSpatial-DocQA dataset under varying NITR. This dataset contains only QA tasks and encourages free exploration trajectories, making it suitable for evaluating adaptation methods under different tool incorporation scenarios. The baseline uses Prompt Engineering (PE) alone. We evaluate PE with TA, PE with LoRA, and PE with full fine-tuning to assess pa-rameter efficiency and performance trade-offs. Distinct patterns across adaptation methods are observed in Tab. 4. Full fine-tuning shows pronounced TSS decline as NITR increases, indicating overfitting to the training toolset. LoRA maintains stable TSS but suffers elevated TRR and fails to achieve substantial gains over PE, suggest-ing it primarily fits structural patterns rather than enhancing tool-calling capabilities. TA preserves PE capabilities with minimal TRR and demonstrates stable or improving TSS as NITR increases, indicating robust generalization. 
+
+4.3.2. Maximum Iteration and Memory Efficiency Anal-ysis 
+
+We analyze the relationship between the maximum iteration limit lτ and agent execution TSS on the ST-Traj dataset in Tab. 5 to observe the trend. Results are averaged across all samples through the LVLMs in experiments. Addi-tionally, we compare memory consumption between our LAMMI framework and direct multi-agent approaches to assess computational efficiency. As shown in Tab. 5, the TA fine-tuning approach con-sistently outperforms the baseline across all lτ settings. A rapid growth in TSS is observed as lτ increases from 3 to 6, 6Table 2. Performance comparison on ST-Traj dataset. We report TRR, TCF1, TSS, ACS, and HR across different frameworks and base models. 
+
+Framework Adaptation Planner TRR ↓ TCF1 ↑ TSS ↑ ACS ↑ HR ↓
+
+OpenAI-Agents-SDK PE GPT-5 0.025 0.370 0.861 0.492 0.147 
+
+ReACT PE InternVL3.5 8B 0.008 0.031 0.381 0.525 0.446 MiniCPM-V 4.5 0.048 0.362 0.879 0.615 0.579 Qwen3 VL 8B Instruct 0.092 0.377 0.792 0.587 0.506 InternVL3.5 8B 0.054 0.154 0.655 0.534 0.733 MAT-Agent LoRA+PE MiniCPM-V 4.5 0.171 0.153 0.743 0.475 0.757 Qwen3 VL 8B Instruct 0.081 0.085 0.699 0.480 0.771 MLLM-Tools LoRA+PE Vicuna v1.5 7B + ImageBind 0.052 0.215 0.633 0.566 0.674 ToolACE 8B + ImageBind 0.355 0.436 0.423 0.482 0.686 Qwen3 8B + ImageBind 0.614 0.322 0.457 0.555 0.562 InternVL3.5 8B 0.030 0.275 0.817 0.639 0.593 LAMMI (Ours) TA+PE MiniCPM-V 4.5 0.143 0.397 0.868 0.533 0.562 Qwen3 VL 8B Instruct 0.036 0.427 0.901 0.592 0.472                                                                                                           
+
+> Table 3. Performance comparison on PathMMU dataset. We report ACS and F1 scores across four sub-tasks (Atlas, EduContent, PathCLS, PubMed) and trajectory quality metrics (HR, TRR) across different frameworks and base models.
+> Framework Planner ACS ↑F1 ↑HR ↓TRR ↓Atlas EduContent PathCLS Pubmed OpenAI-Agents-SDK GPT-5 0.709 0.755 0.773 0.480 0.719 0.288 0.000
+> ReACT InternVL3.5 8B 0.500 0.341 0.369 0.198 0.443 0.691 0.000
+> MiniCPM-V 4.5 0.554 0.438 0.494 0.232 0.512 0.538 0.092 Qwen3 VL 8B Instruct 0.572 0.433 0.541 0.288 0.518 0.483 0.001 InternVL3.5 8B 0.506 0.349 0.437 0.257 0.440 0.726 0.041 MAT-Agent MiniCPM-V 4.5 0.403 0.231 0.261 0.141 0.315 0.742 0.173 Qwen3 VL 8B Instruct 0.469 0.322 0.376 0.226 0.395 0.694 0.128 MLLM-Tools ToolACE 8B + ImageBind 0.405 0.256 0.259 0.210 0.249 0.778 0.413 Vicuna v1.5 7B + ImageBind 0.426 0.298 0.292 0.186 0.275 0.727 0.045 Qwen3 8B + ImageBind 0.571 0.277 0.310 0.206 0.275 0.579 0.750 InternVL3.5 8B 0.528 0.382 0.390 0.181 0.512 0.671 0.000
+> LAMMI (Ours) MiniCPM-V 4.5 0.541 0.490 0.469 0.299 0.498 0.281 0.139 Qwen3 VL 8B Instruct 0.582 0.546 0.561 0.384 0.521 0.455 0.017
+
+with the TA-enhanced method achieving a 0.102 improve-ment over this range, compared to a 0.073 gain for the base-line. This trend reflects the multi-step nature of tasks in ST-Traj, where questions require multiple tool-calling itera-tions, as evidenced by the ground truth trajectories that span 2 to 8 AENs per sample. As Fig. 3 shows, reduced average GPU memory allo-cation is observed in LAMMI compared with a conven-tional MAS. With InternVL3.5-8B, the average usage is 11.6 GB, equal to 34.7 percent of the MAS baseline, while MiniCPM-V 4.5 and Qwen3-VL-8B-Instruct consume 72.7 percent and 77.4 percent, respectively. The memory re-duction stems from dynamic LLM chain instantiation and a shared weight architecture in LAMMI, where compo-nent chains are instantiated on demand and released after task completion. The variation across models reflects their tool-calling tendencies. Instruction-tuned LVLMs such as Qwen-VL and MiniCPM-V exhibit stronger tool-calling be-havior, invoking multiple component chains with longer ag-gregate lifecycles similar to MAS, whereas models favoring direct visual answering, such as InternVL, show higher pro-portions of direct responses, resulting in shorter chain life-cycles and lower memory consumption. 
+
+4.4. Case Study 
+
+Beyond guided question-answer pairs, we illustrate a repre-sentative ST-Traj case drawn from a long trajectory engag-ing eight successive AENs under a research-oriented ques-tioning paradigm. Iterative tool interactions synthesize vi-sual and molecular information even when the query offers 7Table 4. Ablation study on adaptation methods under varying NITR on PathSpatial-DocQA dataset. We compare PE, TA+PE, LoRA+PE, and Full+PE across different base models and report TRR and TSS for each NITR value. 
+
+Adaption Planner NITR=0.2 NITR=0.5 NITR=1.0 TRR ↓ TSS ↑ TRR ↓ TSS ↑ TRR ↓ TSS ↑
+
+InternVL3.5 8B 0.000 0.504 0.000 0.500 0.000 0.500 PE MiniCPM-V 4.5 0.027 0.814 0.050 0.780 0.085 0.801 Qwen3 VL 8B Instruct 0.022 0.720 0.049 0.839 0.022 0.820 LoRA+PE InternVL3.5 8B 0.230 0.435 0.312 0.468 0.411 0.441 MiniCPM-V 4.5 0.282 0.557 0.327 0.716 0.386 0.784 Qwen3 VL 8B Instruct 0.332 0.407 0.383 0.384 0.484 0.393 InternVL3.5 8B 0.128 0.412 0.429 0.200 0.547 0.154 Full+PE MiniCPM-V 4.5 0.152 0.399 0.456 0.189 0.564 0.137 Qwen3 VL 8B Instruct 0.142 0.418 0.483 0.152 0.634 0.088 TA+PE (Ours) InternVL3.5 8B 0.000 0.504 0.000 0.504 0.000 0.504 MiniCPM-V 4.5 0.085 0.783 0.025 0.611 0.081 0.752 Qwen3 VL 8B Instruct 0.034 0.858 0.047 0.861 0.022 0.868 
+
+Table 5. TSS as a function of maximum iteration limit lτ on ST-Traj dataset.                           
+
+> Adaption lτ= 3 lτ= 4 lτ= 5 lτ= 6 lτ= 7 lτ= 8
+> w/o TA 0.602 0.640 0.660 0.675 0.683 0.691 w/ TA 0.715 0.769 0.796 0.817 0.830 0.862 Model & System
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> Average Allocated Memory (GB)
+> 11.616
+> 49.081 51.356
+> 33.500
+> 67.499 66.335
+
+Avg GPU Memory Allocation    
+
+> InternVL3.5 8B MiniCPM-V 4.5 Qwen3 VL 8B Instruct
+> LAMMI MAS
+
+Figure 3. Memory consumption comparison between LAMMI framework and direct multi-agent approaches. The plot shows GPU memory usage differences between LAMMI and standard MAS. 
+
+minimal guidance, demonstrating how LAMMI with TA fine-tuning enhances the base LVLM’s exploratory capabil-ities. The histopathology image is sourced from a Nature study [7] on spatially resolved prostate tissue, with a 224-pixel region of interest centered at coordinate 11023, 8088 within a 15821 × 15821 whole-slide image. As Fig. 4 shows, the initial research-oriented query, of-fering minimal guidance and no explicit image-related cues, was routed by the planner to the GeneAgent, whose three exploratory calls failed within the gene API space. This occurred on a compounded hallucination where the Plan-ner’s invocation of the ImageAgent and the captioner’s ob-servation jointly diverted inference from the prostate ground truth. OncoTree validation, influenced by TA-induced evi-dential reasoning, revealed the anatomical implausibility of squamous cell carcinoma and prompted molecular cross-checking. Consistent with TA’s objective of minimizing tool redundancy rate, the GeneAgent terminated further ex-ploration rather than persist exhaustively. The mismatch between organ-level context and membrane-level gene ex-pression ultimately corrected the initial hypothesis while maintaining coherent system-level execution, illustrating how coordinated evidence synthesis enables robust recov-ery from cascading errors. 
+
+## 5. Conclusion 
+
+We introduce LAMMI-Pathology, a tool-centric agent framework that bridges morphological interpretation with molecular validation for evidence-driven pathology diagnosis. Our TA fine-tuning strategy enables robust struc-tural learning while preserving base model capabilities, achieving superior performance on frontier discovery ques-tions and outperforming existing MAS frameworks. The framework demonstrates multi-agent coordination that syn-thesizes visual and molecular evidence, establishing a foun-dation for scalable domain-specific agent systems. Future directions include generalizing this framework to broader medical imaging applications and incorporating diverse molecular data sources to enhance diagnostic reasoning. 8WSI  ROI  Planner invokes Image Agent                    
+
+> Given the absence of adefined OncoTree classification, how cautiously should we approach tumor subtyping based solely on histomorphology, and what ancillary studies might be warranted to avoid misclassification?
+> Image :
+> `MEND160_ATTCGTGCTATCTCTT-1.png`
+
+{' sub_query ': 'Analyze this pathology image for histomorphological ... necessitate ancillary studies for accurate classification.’, 
+
+'image_path ': 'MEND160_ATTCGTGCTATCTCTT-1.png'} 
+
+- Diagnosis: Prostate cancer - Key genes: KLK3, RPL4, KLK2, MSMB, ACPP - Conclusion: No further ancillary studies immediately required 
+
+> Planner invokes GeneAgent
+
+- Provides general clinical guidance on cautious tumor subtyping 
+
+- Recommends IHC, molecular profiling, NGS for ancillary studies 
+
+{' sub_query ': 'In the absence of an OncoTree classification, how should tumor subtyping be approached cautiously based solely on histomorphology, and what ancillary studies are warranted to avoid misclassification?'}                
+
+> action observation final answer tool invocation annotation
+> BiomedicalEntityExtractorTool
+> {' text ': 'histomorphology tumor subtyping'}
+> No biological entities found.
+> ProteinAtlasGeneInfoTool DocumentGeneQueryTool
+> {' query ': 'tumor subtyping histomorphology'}
+> No results found.
+> {' gene ': 'TUMOR'}
+> {' error ': 'Failed to fetch ProteinAtlas page for TUMOR'}
+> GeneAgent
+> QwenVLCaptionTool
+> {' text ':
+> 'The image shows squamous cell carcinoma ... for accurate classification. ',
+> 'image_path ': 'MEND160_ATTCGTGCTATCTCTT-1.png'}
+> Your observation about the well-differentiated squamous cell carcinoma is correct, ... could this suggest?
+> hallucination OncoTreeTool
+> {' query ': 'squamous cell carcinoma'}
+> Tumor/Disease: Metaplastic Squamous Cell Carcinoma (MSCC) Main Type: Breast Cancer, Tissue/Organ: Breast, Upstream Nodes: {cparent': 'EMBC', 'precursors': []} Downstream Nodes: None [28 additional entities not shown]
+> BLIPTool
+> {' text ': 'MEND160_ATTCGTGCTATCTCTT-1.png'
+> 'image_path ': 'ILSVRC2012_val_00000001.JPEG'}
+> ❌API call failed: [Error 2] No such file or directory: 'ILSVRC2012_val_00000001.JPEG'
+> BLIPTool
+> {' text ': 'MEND160_ATTCGTGCTATCTCTT-1.png'
+> 'image_path ': 'ILSVRC2012_val_00000001.JPEG'}
+> Homo sapiens prostate shows cancer with oncotree code unknown key overexpressed genes are klk3, rpl4, klk2, msmb, acpp.
+> ImageAgent
+
+In the absence of an OncoTree classification, tumor subtyping should be approached cautiously by relying on detailed histomorphological features such as architectural patterns, cytological characteristics, and mitotic activity. Ancillary studies warranted include immunohistochemistry (IHC) for specific markers, molecular profiling (e.g., gene expression, mutations), and, if feasible, next-generation sequencing to identify actionable targets. These studies help avoid misclassification by providing additional layers of biological information that complement histomorphology. In the case of the provided image, histopathological analysis suggests a diagnosis of prostate cancer, characterized by specific gene expressions (KLK3, RPL4, KLK2, MSMB, ACPP), and no further ancillary studies are immediately required based on this analysis.       
+
+> Background Info:
+> ID: MEND160_ATTCGTGCTATCTCTT-1; Organ: Prostate; Species: Homo sapiens;
+> Disease: Prostatic Acinar Adenocarcinoma; Spatial Technology: Visium
+> <F> <F>
+> <F>
+> <F>
+> <F>
+> <F>
+> <A>
+> <A>
+> <A>
+> <A><A><A>
+> <O><O><O>
+> <O>
+> <A>
+> <O>
+> <A>
+> <A><A>
+> <O><O>
+> Basic Query :<O>
+> Planner
+
+Figure 4. Trajectory visualization of an open-ended research-oriented query showing a semantically coherent solution path that incorporates hallucination occurrence and evidential reasoning through planner-guided exploratory tool invocation by ImageAgent and GeneAgent. 
+
+## References 
+
+[1] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, Kai Dang, Peng Wang, Shijie Wang, Jun Tang, Humen Zhong, Yuanzhi Zhu, Mingkun Yang, Zhao-hai Li, Jianqiang Wan, Pengfei Wang, Wei Ding, Zheren Fu, Yiheng Xu, Jiabo Ye, Xi Zhang, Tianbao Xie, Zesen Cheng, Hang Zhang, Zhibo Yang, Haiyang Xu, and Jun-yang Lin. Qwen2.5-vl technical report. arXiv preprint arXiv:2502.13923 , 2025. 3 [2] Chengkuan Chen, Luca L. Weishaupt, Drew F. K. Williamson, Richard J. Chen, Tong Ding, Bowen Chen, Anurag Vaidya, Long Phi Le, Guillaume Jaume, Ming Y. Lu, and Faisal Mahmood. Evidence-based diagnostic rea-soning with multi-agent copilot for human pathology. ArXiv ,abs/2506.20964, 2025. 1 [3] Chengkuan Chen, Luca L. Weishaupt, Drew F. K. Williamson, Richard J. Chen, Tong Ding, Bowen Chen, Anurag Vaidya, Long Phi Le, Guillaume Jaume, Ming Y. Lu, and Faisal Mahmood. Evidence-based diagnostic reasoning with multi-agent copilot for human pathology, 2025. 1, 2 [4] Jiawen Chen, Muqing Zhou, Wenrong Wu, Jinwei Zhang, Yun Li, and Didong Li. Stimage-1k4m: A histopathology image-gene expression dataset for spatial transcriptomics. In 
+
+Advances in Neural Information Processing Systems , pages 35796–35823. Curran Associates, Inc., 2024. 2, 5 [5] Pingyi Chen, Honglin Li, Chenglu Zhu, Sunyi Zheng, Zhongyi Shui, and Lin Yang. WsiCaption: Multiple Instance Generation of Pathology Reports for Gigapixel Whole-Slide Images . In proceedings of Medical Image Computing and Computer Assisted Intervention – MICCAI 2024 . Springer Nature Switzerland, 2024. 1 [6] Wei-Lin Chiang, Zhuohan Li, Zi Lin, Ying Sheng, Zhanghao Wu, Hao Zhang, Lianmin Zheng, Siyuan Zhuang, Yonghao Zong, Joseph Zou, et al. Vicuna: An open-source chatbot impressing gpt-4 with 90%* chatgpt quality, 2023. 5 [7] A Erickson, M He, E Berglund, and et al. Spatially resolved clonal copy number alterations in benign and malignant tis-sue. Nature , 608:360–367, 2022. 8 [8] Zhi Gao, Bofei Zhang, Pengxiang Li, Xiaojian Ma, Tao Yuan, Yue Fan, Yuwei Wu, Yunde Jia, Song-Chun Zhu, and Qing Li. Multi-modal agent tuning: Building a vlm-driven agent for efficient tool usage. In The Thirteenth International Conference on Learning Representations(ICLR) , 2025. 2, 5 [9] Fatemeh Ghezloo, Mehmet Saygin Seyfioglu, Rustin So-raki, Wisdom O. Ikezogwo, Beibin Li, Tejoram Vivekanan-dan, Joann G. Elmore, Ranjay Krishna, and Linda Shapiro. Pathfinder: A multi-modal multi-agent system for medical diagnostic decision-making applied to histopathology. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , pages 23431–23441, 2025. 2 [10] Rohit Girdhar, Alaaeldin El-Nouby, Zhuang Liu, Mannat Singh, Kalyan Vasudev Alwala, Armand Joulin, and Ishan Misra. Imagebind one embedding space to bind them all. 
+
+2023 IEEE/CVF Conference on Computer Vision and Pat-tern Recognition (CVPR) , pages 15180–15190, 2023. 5 [11] Zixuan Gong, Shijia Li, Yong Liu, and Jiaye Teng. Disentan-gling feature structure: A mathematically provable two-stage training dynamics in transformers, 2025. 4 [12] Robert L. Grossman, Allison P. Heath, Vincent Ferretti, Harold E. Varmus, Douglas R. Lowy, Warren A. Kibbe, and Louis M. Staudt. Toward a shared vision for cancer ge-nomic data. New England Journal of Medicine , 375(12): 1109–1112, 2016. 5 [13] Edward J Hu, yelong shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu Chen. LoRA: Low-rank adaptation of large language models. In In-ternational Conference on Learning Representations , 2022. 4[14] Guillaume Jaume, Paul Doucet, Andrew H. Song, Ming Y. Lu, Cristina Almagro-Perez, Sophia J. Wagner, Anurag J. Vaidya, Richard J. Chen, Drew F. K. Williamson, Ahrong Kim, and Faisal Mahmood. Hest-1k: A dataset for spatial transcriptomics and histology image analysis. In Advances in Neural Information Processing Systems , 2024. 2, 5 [15] Sohyeon Jeon and Hong-Gee Kim. A comparative eval-uation of chain-of-thought-based prompt engineering tech-
+
+9niques for medical question answering. Computers in Biol-ogy and Medicine , 196:110614, 2025. 1 [16] Ritika Kundra, Hongxin Zhang, Robert Sheridan, Sahus-sapont Joseph Sirintrapun, Avery Wang, Angelica Ochoa, Manda Wilson, Benjamin Gross, Yichao Sun, Ramyas-ree Madupuri, Baby A. Satravada, Dalicia Reales, Efse-via Vakiani, Hikmat A. Al-Ahmadie, Ahmet Dogan, Maria Arcila, Ahmet Zehir, Steven Maron, Michael F. Berger, Cristina Viaplana, Katherine Janeway, Matthew Ducar, Lynette Sholl, Snjezana Dogan, Philippe Bedard, Lea F. Sur-rey, Iker Huerga Sanchez, Aijaz Syed, Anoop Balakrishnan Rema, Debyani Chakravarty, Sarah Suehnholz, Moriah Nis-san, Gopakumar V. Iyer, Rajmohan Murali, Nancy Bouvier, Robert A. Soslow, David Hyman, Anas Younes, Andrew Intlekofer, James J. Harding, Richard D. Carvajal, Paul J. Sabbatini, Ghassan K. Abou-Alfa, Luc Morris, Yelena Y. Janjigian, Meighan M. Gallagher, Tara A. Soumerai, Ingo K. Mellinghoff, Abraham A. Hakimi, Matthew Fury, Jason T. Huse, Aditya Bagrodia, Meera Hameed, Stacy Thomas, Stu-art Gardos, Ethan Cerami, Tali Mazor, Priti Kumari, Pichai Raman, Priyanka Shivdasani, Suzanne MacFarland, Scott Newman, Angela Waanders, Jianjiong Gao, David Solit, and Nikolaus Schultz. Oncotree: A cancer classification system for precision oncology. JCO Clinical Cancer Informatics ,(5):221–230, 2021. PMID: 33625877. 5, 3 [17] Indra Kundu, Mridula Sharma, Ram Shankar Barai, Khushal Pokar, and Susan Idicula-Thomas. Gedipnet: Online re-source of curated gene-disease associations for polypharma-cological targets discovery. Genes & Diseases , 10(3):647– 649, 2023. [18] Samuel Lelong, Xiaoling Zhou, Cyrus Afrasiabi, Zhen Qian, Miguel A. Cano, Ginger Tsueng, Jiwen Xin, Jamie Mullen, Yating Yao, Ricardo Avila, Grant Taylor, Andrew I. Su, and Chunlei Wu. Biothings sdk: a toolkit for building high-performance data apis in biomedical research. Bioinformat-ics , 38(7):2077–2079, 2022. 5 [19] Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin, Naman Goyal, Heinrich K¨ uttler, Mike Lewis, Wen-tau Yih, Tim Rockt¨ aschel, Sebas-tian Riedel, and Douwe Kiela. Retrieval-augmented gen-eration for knowledge-intensive nlp tasks. In Advances in Neural Information Processing Systems , pages 9459–9474. Curran Associates, Inc., 2020. 1 [20] Dong Li, Guihong Wan, Xintao Wu, Xinyu Wu, Xiaohui Chen, Yi He, Christine G. Lian, Peter K. Sorger, Yevgeniy R. Semenov, and Chen Zhao. Multi-modal foundation models for computational pathology: A survey, 2025. 2 [21] Junnan Li, Dongxu Li, Caiming Xiong, and Steven Hoi. Blip: Bootstrapping language-image pre-training for unified vision-language understanding and generation, 2022. 5, 2 [22] Xinzhe Li. A review of prominent paradigms for llm-based agents: Tool use, planning (including rag), and feedback learning. In Proceedings of the 31st International Con-ference on Computational Linguistics, COLING 2025, Abu Dhabi, UAE, January 19-24, 2025 , pages 9760–9779. Asso-ciation for Computational Linguistics, 2025. 2 [23] Xiaoxi Li, Wenxiang Jiao, Jiarui Jin, Guanting Dong, Jiajie Jin, Yinuo Wang, Hao Wang, Yutao Zhu, Ji-Rong Wen, Yuan Lu, and Zhicheng Dou. Deepagent: A general reasoning agent with scalable toolsets, 2025. 4 [24] Haokun Liu, Derek Tam, Mohammed Muqeeth, Jay Mohta, Tenghao Huang, Mohit Bansal, and Colin A Raffel. Few-shot parameter-efficient fine-tuning is better and cheaper than in-context learning. In Advances in Neural Information Processing Systems , pages 1950–1965. Curran Associates, Inc., 2022. 4 [25] Weiwen Liu, Xu Huang, Xingshan Zeng, xinlong hao, Shuai Yu, Dexun Li, Shuai Wang, Weinan Gan, Zhengying Liu, Yuanqing Yu, Zezhong WANG, Yuxian Wang, Wu Ning, Yutai Hou, Bin Wang, Chuhan Wu, Wang Xinzhi, Yong Liu, Yasheng Wang, Duyu Tang, Dandan Tu, Lifeng Shang, Xin Jiang, Ruiming Tang, Defu Lian, Qun Liu, and Enhong Chen. ToolACE: Winning the points of LLM function call-ing. In The Thirteenth International Conference on Learning Representations , 2025. 2, 5 [26] Ming Y. Lu, Bowen Chen, Andrew Zhang, Drew F.K. Williamson, Richard J. Chen, Tong Ding, Long Phi Le, Yung-Sung Chuang, and Faisal Mahmood. Visual lan-guage pretrained multiple instance zero-shot transfer for histopathology images. In 2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 19764–19775, 2023. 1 [27] M. Y. Lu, B. Chen, D. F. K. Williamson, R. J. Chen, I. Liang, T. Ding, G. Jaume, I. Odintsov, L. P. Le, G. Gerber, A. V. Par-wani, A. Zhang, and F. Mahmood. A visual-language foun-dation model for computational pathology. Nature Medicine ,30(3):863–874, 2024. 1 [28] Ming Y. Lu, Bowen Chen, Drew F. K. Williamson, Richard J. Chen, Melissa Zhao, Aaron K. Chow, Kenji Ikemura, Ahrong Kim, Dimitra Pouli, Ankush Patel, Amr Soliman, Chengkuan Chen, Tong Ding, Judy J. Wang, Georg Gerber, Ivy Liang, Long Phi Le, Anil V. Parwani, Luca L. Weishaupt, and Faisal Mahmood. A multimodal generative ai copilot for human pathology. Nature , 634(8033):466–473, 2024. 1 [29] Eszter L´ az´ ar and Joakim Lundeberg. Spatial architecture of development and disease. Nature Reviews Genetics , 2025. 2 [30] Tula Masterman, Sandi Besen, Mason Sawtell, and Alex Chao. The landscape of emerging ai agent architectures for reasoning, planning, and tool calling: A survey, 2024. 2 [31] Gr´ egoire Mialon, Cl´ ementine Fourrier, Craig Swift, Thomas Wolf, Yann LeCun, and Thomas Scialom. Gaia: a bench-mark for general ai assistants, 2023. 2 [32] OpenAI. Gpt-5 system card. Technical Report v1.0, OpenAI, 2025. Accessed: 2025-11-08. 5 [33] Aaron Parisi, Yao Zhao, and Noah Fiedel. Talm: Tool aug-mented language models. ArXiv , abs/2205.12255, 2022. 2 [34] Tim E Putman, Kevin Schaper, Nicolas Matentzoglu, Vin-cent P Rubinetti, Faisal S Alquaddoomi, Corey Cox, J Harry Caufield, Glass Elsarboukh, Sarah Gehrke, Harshad Hegde, Justin T Reese, Ian Braun, Richard M Bruskiewich, Luca Cappelletti, Seth Carbon, Anita R Caron, Lauren E Chan, Christopher G Chute, Katherina G Cortes, Vin´ ıcius De Souza, Tommaso Fontana, Nomi L Harris, Emily L Hart-ley, Eric Hurwitz, Julius O B Jacobsen, Madan Krishna-murthy, Bryan J Laraway, James A McLaughlin, Julie A Mc-Murry, Sierra A T Moxon, Kathleen R Mullen, Shawn T 
+
+10 O’Neil, Kent A Shefchek, Ray Stefancsik, Sabrina Toro, Nicole A Vasilevsky, Ramona L Walls, Patricia L Whet-zel, David Osumi-Sutherland, Damian Smedley, Peter N Robinson, Christopher J Mungall, Melissa A Haendel, and Monica C Munoz-Torres. The monarch initiative in 2024: an analytic platform integrating phenotypes, genes and dis-eases across species. Nucleic Acids Research , 52(D1):D938– D949, 2023. 5, 4 [35] Tim E Putman, Kevin Schaper, Nicolas Matentzoglu, Vin-cent P Rubinetti, Faisal S Alquaddoomi, Corey Cox, J Harry Caufield, Glass Elsarboukh, Sarah Gehrke, Harshad Hegde, Justin T Reese, Ian Braun, Richard M Bruskiewich, Luca Cappelletti, Seth Carbon, Anita R Caron, Lauren E Chan, Christopher G Chute, Katherina G Cortes, Vin´ ıcius De Souza, Tommaso Fontana, Nomi L Harris, Emily L Hart-ley, Eric Hurwitz, Julius O B Jacobsen, Madan Krishna-murthy, Bryan J Laraway, James A McLaughlin, Julie A Mc-Murry, Sierra A T Moxon, Kathleen R Mullen, Shawn T O’Neil, Kent A Shefchek, Ray Stefancsik, Sabrina Toro, Nicole A Vasilevsky, Ramona L Walls, Patricia L Whet-zel, David Osumi-Sutherland, Damian Smedley, Peter N Robinson, Christopher J Mungall, Melissa A Haendel, and Monica C Munoz-Torres. The monarch initiative in 2024: an analytic platform integrating phenotypes, genes and dis-eases across species. Nucleic Acids Research , 52(D1):D938– D949, 2024. 4 [36] Alec Radford, Jong Wook Kim, Chris Hallacy, A. Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning transferable visual models from nat-ural language supervision. In ICML , 2021. 3 [37] Samyam Rajbhandari, Jeff Rasley, Olatunji Ruwase, and Yuxiong He. Zero: Memory optimizations toward training trillion parameter models, 2020. 5 [38] Jeff Rasley, Samyam Rajbhandari, Olatunji Ruwase, and Yuxiong He. Deepspeed: System optimizations enable train-ing deep learning models with over 100 billion parame-ters. In Proceedings of the 26th ACM SIGKDD Interna-tional Conference on Knowledge Discovery & Data Mining ,page 3505–3506, New York, NY, USA, 2020. Association for Computing Machinery. 5 [39] Timo Schick, Jane Dwivedi-Yu, Roberto Dess` ı, Roberta Raileanu, Maria Lomeli, Luke Zettlemoyer, Nicola Can-cedda, and Thomas Scialom. Toolformer: Language models can teach themselves to use tools, 2023. 2 [40] Mehmet Saygin Seyfioglu, Wisdom O. Ikezogwo, Fatemeh Ghezloo, Ranjay Krishna, and Linda Shapiro. Quilt-llava: Visual instruction tuning by extracting localized narratives from open-source histopathology videos. In 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 13183–13192, 2024. 1, 5 [41] Zhiceng Shi, Shuailin Xue, Fangfang Zhu, and Wenwen Min. High-resolution spatial transcriptomics from histology im-ages using histosge, 2024. 2 [42] Arabella Sinclair, Jaap Jumelet, Willem Zuidema, and Raquel Fern´ andez. Structural persistence in language mod-els: Priming as a window into abstract language represen-tations. Transactions of the Association for Computational Linguistics , 10:1031–1050, 2022. 4 [43] Yuxuan Sun, Hao Wu, Chenglu Zhu, Sunyi Zheng, Qizi Chen, Kai Zhang, Yunlong Zhang, Dan Wan, Xiaoxiao Lan, Mengyue Zheng, Jingxiong Li, Xinheng Lyu, Tao Lin, and Lin Yang. Pathmmu: A massive multimodal expert-level benchmark for understanding and reasoning in pathology, 2024. 5 [44] Yuxuan Sun, Chenglu Zhu, Sunyi Zheng, Kai Zhang, Lin Sun, Zhongyi Shui, Yunlong Zhang, Honglin Li, and Lin Yang. Pathasst: a generative foundation ai assistant towards artificial general intelligence of pathology. In Proceedings of the Thirty-Eighth AAAI Conference on Artificial Intelligence and Thirty-Sixth Conference on Innovative Applications of Artificial Intelligence and Fourteenth Symposium on Educa-tional Advances in Artificial Intelligence . AAAI Press, 2024. 5[45] Yuxuan Sun, Chenglu Zhu, Sunyi Zheng, Kai Zhang, Lin Sun, Zhongyi Shui, Yunlong Zhang, Honglin Li, and Lin Yang. Pathasst: A generative foundation ai assistant towards artificial general intelligence of pathology. Proceedings of the AAAI Conference on Artificial Intelligence , 38(5):5034– 5042, 2024. 1 [46] Yuxuan Sun, Yunlong Zhang, Yixuan Si, Chenglu Zhu, Kai Zhang, Zhongyi Shui, Jingxiong Li, Xuan Gong, XINHENG LYU, Tao Lin, and Lin Yang. Pathgen-1.6m: 1.6 million pathology image-text pairs generation through multi-agent collaboration. In The Thirteenth International Conference on Learning Representations , 2025. 1, 2, 5 [47] Qiaoyu Tang, Ziliang Deng, Hongyu Lin, Xianpei Han, Qiao Liang, Boxi Cao, and Le Sun. Toolalpaca: Generalized tool learning for language models with 3000 simulated cases. 
+
+ArXiv , abs/2306.05301, 2023. 2 [48] Qwen Team. Qwen3-vl: The multimodal large language model series by qwen team, alibaba cloud., 2025. 4, 5 [49] Mathias Uhl´ en, Linn Fagerberg, Bj¨ orn M. Hallstr¨ om, Ce-cilia Lindskog, Per Oksvold, Adil Mardinoglu, ˚ Asa Siverts-son, Caroline Kampf, Evelina Sj¨ ostedt, Anna Asplund, In-gMarie Olsson, Karolina Edlund, Emma Lundberg, San-jay Navani, Cristina Al-Khalili Szigyarto, Jacob Ode-berg, Dijana Djureinovic, Jenny Ottosson Takanen, Sophia Hober, Tove Alm, Per-Henrik Edqvist, Holger Berling, Hanna Tegel, Jan Mulder, Johan Rockberg, Peter Nilsson, Jochen M. Schwenk, Marica Hamsten, Kalle von Feilitzen, Mattias Forsberg, Lukas Persson, Fredric Johansson, Mar-tin Zwahlen, Gunnar von Heijne, Jens Nielsen, and Fredrik Pont´ en. Tissue-based map of the human proteome. Science ,347(6220):1260419, 2015. 5, 3 [50] Chenyu Wang, Weixin Luo, Qianyu Chen, Haonan Mai, Jindi Guo, Sixun Dong, Xiaohua (Michael) Xuan, Zhengxin Li, Lin Ma, and Shenghua Gao. Mllm-tool: A multimodal large language model for tool agent learning. arXiv preprint arXiv:2401.10727 , 2024. 2, 5 [51] Fa. Wang, Zhenfeng Zhuang, Feng Gao, Ruikun He, Shaot-ing Zhang, Liansheng Wang, Junwei Liu, and Yixue Li. Tmo-net: an explainable pretrained multi-omics model for multi-task learning in oncology. Genome Biology , 25(149), 2024. 2 
+
+11 [52] Jize Wang, Ma Zerun, Yining Li, Songyang Zhang, Cailian Chen, Kai Chen, and Xinyi Le. GTA: A benchmark for gen-eral tool agents. In The Thirty-eight Conference on Neural Information Processing Systems Datasets and Benchmarks Track , 2024. 2 [53] Weiyun Wang, Zhangwei Gao, Lixin Gu, Hengjun Pu, Long Cui, Xingguang Wei, Zhaoyang Liu, Linglin Jing, Sheng-long Ye, Jie Shao, Zhaokai Wang, Zhe Chen, Hongjie Zhang, Ganlin Yang, Haomin Wang, Qi Wei, Jinhui Yin, Wenhao Li, Erfei Cui, Guanzhou Chen, Zichen Ding, Changyao Tian, Zhenyu Wu, Jingjing Xie, Zehao Li, Bowen Yang, Yuchen Duan, Xuehui Wang, Zhi Hou, Haoran Hao, Tianyi Zhang, Songze Li, Xiangyu Zhao, Haodong Duan, Nianchen Deng, Bin Fu, Yinan He, Yi Wang, Conghui He, Botian Shi, Jun-jun He, Yingtong Xiong, Han Lv, Lijun Wu, Wenqi Shao, Kaipeng Zhang, Huipeng Deng, Biqing Qi, Jiaye Ge, Qipeng Guo, Wenwei Zhang, Songyang Zhang, Maosong Cao, Jun-yao Lin, Kexian Tang, Jianfei Gao, Haian Huang, Yuzhe Gu, Chengqi Lyu, Huanze Tang, Rui Wang, Haijun Lv, Wanli Ouyang, Limin Wang, Min Dou, Xizhou Zhu, Tong Lu, Dahua Lin, Jifeng Dai, Weijie Su, Bowen Zhou, Kai Chen, Yu Qiao, Wenhai Wang, and Gen Luo. Internvl3.5: Advanc-ing open-source multimodal models in versatility, reasoning, and efficiency, 2025. 5 [54] Ziyue Wang, Junde Wu, Chang Han Low, and Yueming Jin. Medagent-pro: Towards multi-modal evidence-based medical diagnosis via reasoning agentic workflow. ArXiv ,abs/2503.18968, 2025. 1 [55] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, brian ichter, Fei Xia, Ed Chi, Quoc V Le, and Denny Zhou. Chain-of-thought prompting elicits reasoning in large language models. In Advances in Neural Information Pro-cessing Systems , pages 24824–24837. Curran Associates, Inc., 2022. 1 [56] Brandon T Willard and R´ emi Louf. Efficient guided generation for large language models. arXiv preprint arXiv:2307.09702 , 2023. 7 [57] Chunlei Wu, Ian Macleod, and Andrew I. Su. Biogps and mygene.info: organizing online, gene-centric information. 
+
+Nucleic Acids Research , 41(D1):D561–D565, 2013. 5 [58] Georg W¨ olflein, Dyke Ferber, Daniel Truhn, Ognjen Arand-jelovic, and Jakob Nikolas Kather. Llm agents making agent tools. CoRR , abs/2502.11705, 2025. 2 [59] Jiwen Xin, Adam Mark, Cyrus Afrasiabi, Ginger Tsueng, Marcel Juchler, Neha Gopal, Gregory S. Stupp, Thomas E. Putman, Benjamin J. Ainscough, Obi L. Griffith, Ali Torka-mani, Patricia L. Whetzel, Chris J. Mungall, Sean D. Mooney, Andrew I. Su, and Chunlei Wu. High-performance web services for querying gene and variant annotation. 
+
+Genome Biology , 17(1):91, 2016. 5, 3 [60] Weikai Xu, Chengrui Huang, Shen Gao, and Shuo Shang. Llm-based agents for tool learning: A survey. Data Science and Engineering , 2025. 2 [61] An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao, Chengen Huang, Chenxu Lv, Chujie Zheng, Dayiheng Liu, Fan Zhou, Fei Huang, Feng Hu, Hao Ge, Haoran Wei, Huan Lin, Jia-long Tang, Jian Yang, Jianhong Tu, Jianwei Zhang, Jianxin Yang, Jiaxi Yang, Jing Zhou, Jingren Zhou, Junyang Lin, Kai Dang, Keqin Bao, Kexin Yang, Le Yu, Lianghao Deng, Mei Li, Mingfeng Xue, Mingze Li, Pei Zhang, Peng Wang, Qin Zhu, Rui Men, Ruize Gao, Shixuan Liu, Shuang Luo, Tian-hao Li, Tianyi Tang, Wenbiao Yin, Xingzhang Ren, Xinyu Wang, Xinyu Zhang, Xuancheng Ren, Yang Fan, Yang Su, Yichang Zhang, Yinger Zhang, Yu Wan, Yuqiong Liu, Zekun Wang, Zeyu Cui, Zhenru Zhang, Zhipeng Zhou, and Zihan Qiu. Qwen3 technical report, 2025. 4, 5 [62] Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, and Yuan Cao. React: Synergizing reasoning and acting in language models. 2023. Pub-lisher Copyright: © 2023 11th International Conference on Learning Representations, ICLR 2023. All rights reserved.; 11th International Conference on Learning Representations, ICLR 2023 ; Conference date: 01-05-2023 Through 05-05-2023. 2, 5 [63] Yuan Yao, Tianyu Yu, Ao Zhang, Chongyi Wang, Junbo Cui, Hongji Zhu, Tianchi Cai, Haoyu Li, Weilin Zhao, Zhihui He, et al. Minicpm-v: A gpt-4v level mllm on your phone. arXiv preprint arXiv:2408.01800 , 2024. 5 [64] Andrew D Yates, Premanand Achuthan, Wasiu Akanni, James Allen, Jamie Allen, Jorge Alvarez-Jarreta, M Ridwan Amode, Irina M Armean, Andrey G Azov, Ruth Bennett, Jyothish Bhai, Konstantinos Billis, Sanjay Boddu, Jos´ e Car-los Marug´ an, Carla Cummins, Claire Davidson, Kamalku-mar Dodiya, Reham Fatima, Astrid Gall, Carlos Garcia Giron, Laurent Gil, Tiago Grego, Leanne Haggerty, Erin Haskell, Thibaut Hourlier, Osagie G Izuogu, Sophie H Janacek, Thomas Juettemann, Mike Kay, Ilias Lavidas, Tuan Le, Diana Lemos, Jose Gonzalez Martinez, Thomas Maurel, Mark McDowall, Aoife McMahon, Shamika Mohanan, Ben-jamin Moore, Michael Nuhn, Denye N Oheh, Anne Parker, Andrew Parton, Mateus Patricio, Manoj Pandian Sakthivel, Ahamed Imran Abdul Salam, Bianca M Schmitt, Helen Schuilenburg, Dan Sheppard, Mira Sycheva, Marek Szuba, Kieron Taylor, Anja Thormann, Glen Threadgold, Alessan-dro Vullo, Brandon Walts, Andrea Winterbottom, Amonida Zadissa, Marc Chakiachvili, Bethany Flint, Adam Frankish, Sarah E Hunt, Garth IIsley, Myrto Kostadima, Nick Lan-gridge, Jane E Loveland, Fergal J Martin, Joannella Morales, Jonathan M Mudge, Matthieu Muffato, Emily Perry, Magali Ruffier, Stephen J Trevanion, Fiona Cunningham, Kevin L Howe, Daniel R Zerbino, and Paul Flicek. Ensembl 2020. 
+
+Nucleic Acids Research , 48(D1):D682–D688, 2019. 5, 3 [65] Renyu Zhang, Christopher Weber, Robert Grossman, and Aly A Khan. Evaluating and interpreting caption prediction for histopathology images. In Machine Learning for Health-care Conference , pages 418–435. PMLR, 2020. 1 
+
+12 LAMMI-Pathology: A Tool-Centric Bottom-Up LVLM-Agent Framework for Molecularly Informed Medical Intelligence in Pathology 
+
+# Supplementary Material 
+
+## 6. AEN Construction and Trajectory Genera-tion 
+
+6.1. Atomic Execution Node Generation 
+
+The AEN generation process creates atomic execution nodes by generating tool actions from queries and executing them, as detailed in Algorithm 1. 
+
+Algorithm 1 AEN Generation 
+
+Require: Query Q ∈ Q , Tool set T , LLM fLLM 
+
+Ensure: AEN node N = ( Q, A, O ) 
+
+> 1:
+
+Generate action and input: (A, input ) ← fLLM (Q) 
+
+> 2:
+
+Execute tool: O ← Execute (A, input ) 
+
+> 3:
+
+return (Q, A, O )
+
+6.2. Trajectory Connection Algorithm 
+
+The trajectory connection algorithm discovers valid connec-tions between AEN nodes by sampling node pairs and eval-uating their compatibility, as shown in Algorithms 2 and 3. 
+
+Algorithm 2 Node Connection Discovery 
+
+Require: Node set N = {N1, . . . , N n}, Threshold θ, Max pairs P
+
+Ensure: Connection list C = {(i, j, s ij , R k)} 
+
+> 1:
+
+C ← ∅ , P ← ∅ , attempts ← 0 
+
+> 2:
+
+while |P| < P and attempts < 10 · P do  
+
+> 3:
+
+Sample (i, j ) ∼ Uniform (N × N ), i̸ = j 
+
+> 4:
+
+attempts ← attempts + 1  
+
+> 5:
+
+if (i, j ) /∈ P and ImageCompatible (Ni, N j ) then  
+
+> 6:
+
+P ← P ∪ { (i, j )} 
+
+> 7:
+
+sij , R k ← fLLM (ConnectionPrompt (Ni, N j ))  
+
+> 8:
+
+if sij ≥ θ then  
+
+> 9:
+
+C ← C ∪ { (i, j, s ij , R k)} 
+
+> 10:
+
+end if  
+
+> 11:
+
+end if  
+
+> 12:
+
+end while  
+
+> 13:
+
+Sort C by sij descending  
+
+> 14:
+
+return C { The multiplier 10 is an implementation safe-guard; theoretical analysis treats the number of evalu-ated pairs as m(n) and lets m(n) grow as specified in (A2). }
+
+6.3. Scalability Analysis 
+
+We analyze the scalability properties of the AEN construc-tion method under idealized assumptions. The following 
+
+Algorithm 3 Trajectory Construction 
+
+Require: Nodes N , Connections C, Max length K, Max usage M , Max trajectories Tmax 
+
+Ensure: Trajectories T = {τ1, . . . , τ t} 
+
+> 1:
+
+T ← ∅ , used ← ∅ , count ← zeros (|N | ) 
+
+> 2:
+
+for (i, j, s ij , R k) ∈ C in descending score order do  
+
+> 3:
+
+if |T | ≥ Tmax then  
+
+> 4:
+
+break  
+
+> 5:
+
+end if  
+
+> 6:
+
+if (i, j ) ∈ used or count [i] ≥ M or count [j] ≥ M
+
+then  
+
+> 7:
+
+continue  
+
+> 8:
+
+end if  
+
+> 9:
+
+τ ← [Ni, N j ] {Initialize with source and target } 
+
+> 10:
+
+τ [0] .step ← 0, τ [1] .step ← 1, τ [1] .reasoning ← Rk 
+
+> 11:
+
+current ← j, ℓ ← 2 
+
+> 12:
+
+while ℓ < K do  
+
+> 13:
+
+(j∗, s ∗, R ∗) ← arg max (j,s,R )∈Candidates (current ,C) s 
+
+> 14:
+
+if s∗ = 0 then  
+
+> 15:
+
+break  
+
+> 16:
+
+end if  
+
+> 17:
+
+N ∗ ← Nj∗ , N ∗.step ← ℓ, N ∗.reasoning ← R∗ 
+
+> 18:
+
+τ ← τ ∪ [N ∗], current ← j∗, ℓ ← ℓ + 1  
+
+> 19:
+
+end while  
+
+> 20:
+
+final answer ← fLLM (FinalAnswerPrompt (τ ))  
+
+> 21:
+
+τ ← τ ∪ [final answer ] 
+
+> 22:
+
+T ← T ∪ { τ }, used ← used ∪ { (i, j )} 
+
+> 23:
+
+Update count for all nodes in τ 
+
+> 24:
+
+end for  
+
+> 25:
+
+return T { Overall time complexity: O(|C| · K) under greedy extension. }
+
+propositions provide conditional guarantees that hold un-der specific assumptions about the connection score distri-bution, sampling strategy, and system constraints. Let n = |N | denote the number of nodes. 
+
+Assumptions. The analysis assumes: (A1) connection scores sij are i.i.d. with cumulative distribution function 
+
+F (or satisfy weak-dependence conditions such that the asymptotic distribution of extremes remains valid); (A2) the number of evaluated candidate pairs m(n) satisfies 
+
+m(n) → ∞ as n → ∞ , and in particular m(n) = Ω( nα)
+
+for some α > 0 (typical analysis uses α = 2 ); (A3) image compatibility constraints do not reduce the effective can-didate pool below Ω( n2); (A4) node usage limits M are 1constant or grow sublinearly with n (i.e., M = o(n)). 
+
+Proposition 1: Connection Quality Monotonicity (Conditional). Under assumptions (A1)–(A2), let Cn de-note the connection set discovered from n nodes. As 
+
+n increases, the expected maximum connection score 
+
+E[max (i,j )∈C n sij ] increases. 
+
+Analysis. The number of candidate pairs grows as 
+
+Θ( n2), while the number of valid connections |C n| scales as Θ( n2 · p) where p is the probability that a random pair satisfies sij ≥ θ and image compatibility. Under (A1), as-suming F admits a density f (otherwise use the general order-statistic expression), the maximum of |C n| indepen-dent samples has expected value: 
+
+E[ max 
+
+> (i,j )∈C n
+
+sij ] = 
+
+Z ∞−∞ 
+
+x · fmax (x) dx (5) where fmax (x) = |C n| · F (x)|C n|− 1 · f (x) is the density of the maximum order statistic. Since fmax stochastically dominates f for |C n| > 1, and |C n| → ∞ under (A2), the expected maximum increases with n.
+
+Practical Considerations. In practice, LLM outputs may exhibit correlation for similar prompts, and image compatibility may reduce effective candidate pairs. If the sampling budget P is fixed rather than scaling with n, the above conclusion may not hold. Empirical validation is rec-ommended to verify these conditions in specific deployment scenarios. 
+
+Proposition 2: Step Distribution Diversity (Condi-tional). Under assumptions (A1)–(A4), let Dk(n) denote the number of trajectories of length k generated from n
+
+nodes. As n increases, the step distribution becomes more uniform in the sense that longer trajectories become more feasible. 
+
+Analysis. We model the connection graph as G(n, p n)
+
+where edges exist independently with probability pn =Pr( sij ≥ θ and image compatibility ). The extension prob-ability at step ℓ is P (ℓ) = P(∃j : ( iℓ, j, s ij , R k) ∈ C n s.t. 
+
+sij ≥ θ and j not in trajectory ), where iℓ is the current tra-jectory endpoint. For fixed n, P (ℓ) decreases as ℓ increases due to node usage constraints (each node may appear at most M times). A sufficient condition for P (ℓ) → 1 is 
+
+pnn → ∞ as n → ∞ . If moreover M = o(n) (as in A4), then for each fixed ℓ < K we have P (ℓ) → 1 as n → ∞ ,making longer trajectories feasible and leading to a more uniform step distribution. 
+
+Practical Considerations. The greedy extension strat-egy introduces dependencies between steps, and the actual distribution depends on the specific connection graph topol-ogy. The variance bound in the original formulation re-quires additional assumptions about the connection graph structure and extension probabilities. In practice, the step distribution improvement should be validated through em-pirical measurements. 
+
+Corollary 3: Trajectory Quality (Conditional). Under assumptions (A1)–(A4), and the additional condition that greedy local decisions do not systematically induce adverse global conflicts, the average trajectory quality, measured by connection score sum Q(τ ) = P 
+
+> (i,j )∈τ
+
+sij , tends to in-crease with n.
+
+Analysis. By Proposition 1, each connection in a trajec-tory has higher expected score as n increases. By Propo-sition 2, trajectories can achieve greater lengths under the idealized model. Since trajectories are constructed greed-ily by selecting maximum-score connections at each step, 
+
+E[Q(τ )] = P|τ | 
+
+> k=1
+
+E[sik jk ] tends to increase with n. Note that without the additional condition on greedy decisions, only an expected or upper-bound improvement can be guar-anteed. 
+
+Practical Considerations. Greedy selection does not guarantee global optimality, and larger n may introduce conflicting high-score connections that lead to local optima. The actual trajectory quality improvement should be vali-dated empirically, especially when budget constraints or im-age compatibility significantly restrict the candidate pool. 
+
+Empirical Validation. The theoretical analysis pro-vides conditional guarantees under idealized assumptions. In practice, we recommend empirical validation across dif-ferent node set sizes, sampling budgets, image compatibil-ity regimes, and LLM configurations to verify the scalabil-ity properties in specific deployment scenarios. The condi-tional nature of these results underscores the need to align theoretical assumptions with empirical realities when de-ploying large-scale AEN-based systems. 
+
+## 7. Tool Specifications 
+
+All open-source tools and APIs deployments used in this work adhere to standards suitable for integration in repro-ducible and verifiable scientific research. Table 6 provides a comprehensive overview of all tools integrated into the LAMMI framework, including their sources, training data, and descriptions provided in the agent templates. 
+
+BLIP-based Patch-to-Gene Tool and CLIP Image-Text Matching Tool. Within our agent tool-calling framework, we implement two complementary vision-language tools for pathology image analysis. The BLIP-based Patch-to-Gene Tool maps pathology ROI patches to corresponding gene expression representations using the BLIP architec-ture [21], which is widely adopted as a reference standard in spatial pathology studies. The visual embedding is pro-cessed by BLIP’s text decoder, reformulated to generate a continuous vector representing the predicted gene expres-sion profile for that patch. This approach allows the agent to retrieve molecular information directly from histologi-cal patterns without requiring pre-defined gene lists during 2inference stage. The tool is trained on spatial transcrip-tomics datasets, including HEST and STimage-1K4M. To account for variability in sequencing depth across patches, raw counts are first normalized to a consistent scale, and these normalized counts are then used to supervise the gen-eration of patch-level gene embeddings. This normalization ensures that differences in total transcript counts do not con-found the learning of morphological-to-molecular associa-tions. The CLIP Image-Text Matching Tool complements the BLIP tool by providing image-text similarity matching ca-pabilities. It utilizes OpenCLIP ViT-H-14 model [36] fine-tuned on pathogenomics datasets with training data con-sistent with BLIPTool. The tool encodes input pathology images and compares them against a predefined set of text candidates describing pathological ROI characteristics, in-cluding species, tissue types, and high-expression gene lists. The model computes similarity scores between image em-beddings and text embeddings, ranking candidates by prob-ability. This enables the agent to retrieve relevant patho-logical descriptions and gene expression patterns for given images, supporting image-based retrieval and classification tasks in spatial pathology analysis. 
+
+Qwen-VL Caption Tool. The Qwen-VL Caption Tool is integrated into our agent framework to provide vision-language question answering capabilities for pathology images. It leverages the Qwen-VL-2.5 vision-language model [1], which is fine-tuned on large-scale pathology image-text caption pairs including PathCap with 0.17 mil-lion samples, Quilt-Instruct with 0.096 million samples, and PathGen with 0.14 million samples. The tool accepts a text instruction or question along with an image path, and re-turns the model’s textual output describing the image con-tent or answering the question. This enables the agent to perform natural language-based image understanding tasks, including image captioning, visual question answering, and detailed image description generation for pathology images. 
+
+OncoTree Tool. The OncoTree tool [16] is integrated into our agent framework to provide standardized cancer type taxonomy and hierarchical disease mapping. It queries the MSKCC OncoTree API to retrieve structured information about tumor types, diseases, and tissues. For each matched result, the tool returns information including tumor name, OncoTree code, main type classification, tissue and organ mapping, upstream nodes consisting of parent nodes and precursors, and downstream nodes representing children in the hierarchy. This enables the agent to interpret or con-vert free-text tumor descriptions into structured OncoTree codes, facilitating consistent cancer subtype identification and hierarchical navigation across datasets. 
+
+Pathway Knowledge Graph Tool. The Pathway Knowl-edge Graph Tool provides gene pair relationship analy-sis through local subgraph overlap computation. It op-erates on a local pathway knowledge graph implemented as a NetworkX DiGraph containing 18,588 nodes and 874,888 edges with 6 relation types: controls-expression-of, in-complex-with, controls-phosphorylation-of, controls-state-change-of, catalysis-precedes, and controls-transport-of. For a given pair of genes, the tool extracts ego subgraphs representing neighborhoods of specified radius around each gene node, considering edge directionality. It then com-putes weighted Jaccard similarity between these subgraphs, where edge weights are incorporated into the similarity cal-culation. The tool supports both outgoing and incoming edge directions, allowing flexible analysis of gene regula-tory relationships. This enables the agent to assess path-way relationships and functional associations between gene pairs based on their local network topology, supporting gene interaction analysis and pathway-based reasoning. 
+
+Ensembl to Database Tool. The Ensembl to Database Tool enables cross-reference mapping between Ensembl gene identifiers and external database entries. It utilizes the Ensembl REST API [64] to fetch related database in-formation for a given Ensembl ID. For the specified En-sembl ID, the tool queries the xrefs/id endpoint to retrieve all cross-references, then filters results by database name with GeneCards as the default. The returned information in-cludes synonyms, display ID, info type, info text, database name, primary ID, database display name, version, and de-scription. This enables the agent to map gene identifiers across multiple authoritative databases, facilitating data in-tegration and cross-database queries in biomedical research. 
+
+Protein Atlas Gene Information Tool. The Protein At-las Gene Information Tool retrieves comprehensive gene and protein information from the Human Protein Atlas [49]. The tool fetches the gene summary page from Protein At-las and parses structured information from HTML tables, extracting three main information blocks: General Infor-mation including gene name, synonyms, gene description, protein class, and predicted location; Gene Information in-cluding chromosome location, cytoband, Ensembl ID, En-trez gene, HGNC, UniProt, neXtProt, GeneCards, and Anti-bodypedia; and Protein Function including protein function, molecular function, biological process, ligand, and gene summary. This enables the agent to retrieve detailed pro-tein function, localization, and expression information for genes. 
+
+Document Gene Query Tool. The Document Gene Query Tool provides gene information retrieval with article-correlated summaries through the MyGene API [59]. It re-3turns the top-ranked gene entries with correlation scores, in-cluding Entrez ID, gene name, and detailed summaries ex-tracted from scientific literature. This enables the agent to retrieve literature-backed gene summaries and descriptions. 
+
+Biomedical Entity Extractor. The Biomedical Entity Extractor is integrated into our agent framework to pro-vide standardized biological entity recognition and mapping from natural language text to structured biomedical knowl-edge. It leverages the Monarch Initiative v3 API [34, 35], which integrates data from multiple authoritative biomed-ical databases and ontologies including the Monarch Dis-ease Ontology, the Human Phenotype Ontology, Uberon, and other standardized biomedical ontologies. The tool per-forms a two-step process. First, it calls the Monarch API’s entities endpoint to extract entity mentions and their IDs from the input text. Then, for each unique entity ID, it queries the Monarch API’s entity endpoint to retrieve com-prehensive entity information including standardized ID, name, category, description, symbol, and synonyms. 
+
+## 8. Parameter Efficiency and Computational Complexity 
+
+8.1. Parameter Efficiency Analysis 
+
+The adapter introduces 3d trainable parameters per layer, corresponding to the three segment-specific scaling vectors 
+
+γthought , γaction , and γinput . For a model with L layers, the to-tal adapter parameter count is Θ( Ld ), compared to Θ( Ld 2)
+
+for standard FFN weights (assuming feed-forward dimen-sion dff ≈ 4d). The parameter efficiency ratio quantifies the reduction, 
+
+ρ = |Θadapter ||Θfull | = 3Ld 
+
+12 Ld 2 = 14d . (6) For d = 4096 , this yields ρ ≈ 0.0061% , demonstrating substantial parameter reduction. Compared to LoRA [13], which introduces 2rd parameters per layer (typically r =8), our method achieves a 5.3× reduction: 3d = 12 , 288 
+
+versus 2rd = 65 , 536 parameters per layer, while providing explicit structural awareness through segment masks. 
+
+8.2. Computational Complexity 
+
+The modulation computation requires O(BL seq d) opera-tions for element-wise multiplications, where Lseq = Lv +
+
+Lt includes both visual and textual tokens. Segment mask generation involves O(BL t) token matching operations on text tokens only, performed by scanning input sequences to locate trajectory markers ( Thought , Action , Action Input ). Compared to the O(BL seq d2) FFN forward pass, the relative overhead is 
+
+O(BL seq d) + O(BL t)
+
+O(BL seq d2) = O
+
+ 1
+
+d
+
+
+
+≈ 0.024% , (7) where d equals to 4096 . The negligible computational overhead, combined with parameter efficiency, makes the adapter suitable for resource-constrained deployment sce-narios. 
+
+## 9. Evaluation Metrics 
+
+We establish a comprehensive evaluation framework with six core metrics to assess trajectory quality, tool usage effi-ciency, and answer correctness. The following formulations define each metric’s computation. 
+
+9.1. Trajectory Success Score 
+
+For trajectory data, we measure execution success by com-bining output validity and tool call success, 
+
+S(τ ) = 0 .5 · 1[valid output ] + 0 .5 · Nsuccess 
+
+Ntotal 
+
+, (8) where Nsuccess and Ntotal denote successful and total tool calls, respectively. A trajectory is considered successful if 
+
+S(τ ) ≥ 1.0.
+
+9.2. Tool Redundancy Rate 
+
+We quantify redundant tool usage by measuring the propor-tion of tool calls with similar inputs, 
+
+R = |{ (i, j ) : sim (ui, u j ) > θ, t i = tj }| |{ (i, j ) : i < j }| , (9) where ti and ui denote the tool name and input content for call i, sim (·, ·) is a Jaccard similarity function, and θ is a threshold equals to 0.7. The redundancy rate aggregates across all samples: ¯R = 1
+
+> N
+
+PNk=1 Rk.
+
+9.3. Tool Consistency F1 Score 
+
+For trajectory data, we compare expected tools Texp from ground truth with actual tools Tact from model output, Precision = |T exp ∩ T act ||T act | , (10) Recall = |T exp ∩ T act ||T exp | , (11) F1 = 2 · Precision · Recall Precision + Recall . (12) The average F1 score across trajectory samples is: F1 =
+
+> 1
+> N
+
+PNk=1 F1 k.
+
+9.4. Answer Consistency Score 
+
+We employ LLM-based evaluation to measure semantic consistency between reference answer aref and model an-swer amodel :4Table 6. Tool Specifications and Sources 
+
+Tool Name Source Description ImageAgent 
+
+BLIPTool Model Training: 3.68M HEST ROI, 15k Visium ROI, 10K ST ROI with corresponding high-expression genes (based on RNA-seq data) Provides genetic answers for pathology images with questions related to gene expressions. Input: text in-struction/question and image name. Output: basic genetic information including high-expression genes, species, and tissue. CLIPTool Model Training: OpenCLIP ViT-H-14 fine-tuned on pathogenomics dataset (training data consistent with BLIP-Tool) OpenCLIP image-text matching tool. Strictly accepts image file paths as input. Do not provide image de-scriptions or text; only valid paths allowed. QwenVLCaptionTool Model Training: Image-text caption pairs including PathCap 0.17M, Quilt-Instruct 0.096M, and PathGen 0.14M samples; Base model: Qwen-VL-2.5 vision-language model Provides answers for pathology images with associated questions. Input: text instruction/question and image path. Returns model’s textual output. OncoTreeTool API: MSKCC OncoTree (oncotree .mskcc.org) Query OncoTree knowledge graph. Input: tumor, dis-ease, or tissue keyword. Returns upstream/downstream nodes and tissue mapping. 
+
+GeneAgent 
+
+PathwayKGTool Knowledge Graph: Local path-way knowledge graph (DiGraph with 18,588 nodes and 874,888 edges) with 6 relation types (controls-expression-of, in-complex-with, controls-phosphorylation-of, controls-state-change-of, catalysis-precedes, controls-transport-of); NetworkX-based weighted Jaccard similarity Query Pathway Commons neighborhood for a given gene and return network edges as plain text. EnsemblToDatabaseTool API: Ensembl REST API (rest .ensembl.org) Fetches related database info for the Ensembl ID us-ing Ensembl REST API. Returns synonyms, display ID, info type, info text, database name, primary ID, and ver-sion. ProteinAtlasGeneInfoTool API: Human Protein Atlas (proteinat-las.org) Fetches gene information from Protein Atlas using gene name. Returns protein function, chromosome location, UniProt, Antibodypedia, protein function, and gene summary. DocumentGeneQueryTool API: MyGene.info v3 (mygene.info) Query gene information from MyGene.info using gene symbol or keyword. Useful for retrieving article-correlated gene summaries. Encouraged to summarize information most correlated to query. BiomedicalEntityExtractorTool API: Monarch Initiative API v3 (mon archinitiative.org) Extract biological entities (genes, diseases, proteins, etc.) from text using Monarch Initiative API. Returns formatted markdown with entity details including ID, category, description, and synonyms. 
+
+C(aref , a model ) = fLLM (Consistency (aref , a model )) , (13) where fLLM returns a score in [0 , 1] . The average consis-tency score is: ¯C = 1
+
+> N
+
+PNk=1 Ck.59.5. Hallucination Rate 
+
+We detect hallucinations in model responses using LLM evaluation: 
+
+H(q, a model , τ ) = fLLM (HallucinationPrompt (q, a model , τ )) ,
+
+(14) where q is the question, amodel is the model answer, τ
+
+is the full reasoning trajectory, and H ∈ [0 , 1] indicates hallucination severity. The hallucination rate is: ¯H =
+
+> 1
+> N
+
+PNk=1 1[Hk > 0.5] .
+
+9.6. Multiple Choice F1 Score 
+
+For multiple-choice questions with options O =
+
+{o1, . . . , o K }, we compute: Acc =
+
+(
+
+1.0 if apred exactly matches acorrect 
+
+sim (apred , a correct ) otherwise ,
+
+(15) where sim (·, ·) is LLM-based semantic similarity evalua-tion. The F1 score equals accuracy for multiple-choice questions: F1 = Acc. 
+
+## 10. LAMMI Architecture Specification 
+
+10.1. Template Specification 
+
+The LAMMI architecture employs a hierarchical agent system with specialized prompt templates, including the Planner Agent template, the Component Agent base tem-plate (inherited by GeneAgent and ImageAgent), and their domain-specific extensions. This section provides detailed specifications of the prompt templates used in our experi-ments. 
+
+10.1.1. Planner Agent Template 
+
+The Planner Agent serves as the master coordinator that analyzes user queries and delegates tasks to specialized agents. The prompt template adopts a ReACT-based PE design with Thought , Action , and Action Input 
+
+loops. The template is shown in Fig. 5. 
+
+10.1.2. Component Agent Template 
+
+Component agents, including GeneAgent and ImageAgent, inherit from a base template that enforces the ReACT for-mat structure. The base template provides the common framework for tool-calling interactions as follows. The tem-plate is shown in Fig. 6. 
+
+10.1.3. GeneAgent Template 
+
+The GeneAgent specializes in gene-related queries and uses a ReACT-based tool-calling interface. It inherits from the base template and adds domain-specific instructions. The template is shown in Fig. 7. 
+
+<Context Begin >:You are a master planner. Analyze the user’s query and decide whether to answer directly or delegate to a specialized agent. Please strictly follow the ReACT format, and give dialogues in Thought/Action/Action Input loop. Available Specialist Agents: - ImageAgent: [description] - GeneAgent: [description] If you can answer the query directly, respond with: 
+
+Final Answer : [your direct answer] If the query requires a specialist, strictly follow the ReACT format: 
+
+Thought : The information obtained so far regard-ing the user query, along with the sub-agents that need to be invoked next and the aspects that require further discussion. 
+
+Action : [agent name] 
+
+Action Input : [detailed sub query] Example: User query: ”What is the role of TP53 in cancer?” 
+
+Thought : To answer the effects of TP53, I need to call sub-agent xx to investigate yy. 
+
+Action : GeneAgent 
+
+Action Input : Explain the role and function of TP53 gene in cancer development. Once you believe the summaries from the sub-agents are sufficient to answer the user’s question, please output Final Answer and provide the summarized answer to the question. Repeatedly calling the same sub-agent and asking the same query is meaningless. Begin! User Query: <Question >: {query }
+
+<Image >: {img }
+
+Extra parameters: 
+
+{extra params str }
+
+Thought : {agent scratchpad }
+
+> Figure 5. Planner Agent prompt template.
+
+6<Context Begin >:Please follow strict ReACT format (Thought/Ac-tion/Action Input) to solve tasks. 
+
+Thought: what should I do? 
+
+Action: the subagent or tool to use, return only the subagent or tool name without any redundance 
+
+Action Input: the input to the subagent or tool (Observation will be provided after tool execution) Launch Thought/Action/Action Loop as needed, repeatedly generating the same action and action input is not suggested. If you think you have enough information or you cannot solve the query anymore, please provide: 
+
+Final Answer: your final answer to the question You MUST NOT output ”Final Answer” in the same step as ”Action” and ”Action Input”. If you do so, your output will be considered INVALID and ignored. Specific requirements are given below: 
+
+{extra instruction }{agent scratchpad }
+
+> Figure 6. Component Agent base prompt template.
+
+10.1.4. ImageAgent Template 
+
+The ImageAgent focuses on histopathology image analy-sis and encourages hypothesis generation based on visual evidence. It follows the same ReACT structure as the Ge-neAgent but with pathology-specific instructions. The tem-plate is shown in Fig. 8. 
+
+10.1.5. Execution Flow and Text Parsing Template 
+
+The agent execution framework employs a two-stage pars-ing mechanism to convert free-form LLM text outputs into structured data. First, regular expressions extract Action 
+
+and Action Input segments from the raw text. Then, for component agents, the Action Input text is parsed into structured JSON format conforming to tool-specific Pydantic schemas using the Outlines library [56], which leverages a dedicated LLM (Qwen2.5-7B) to ensure schema compliance. The parsing LLM is prompted with the tem-plate shown in Fig. 9. [Component Agent Heading Template] You are a gene expert. Answer gene-related queries by tool calling. You have access to the following tools: [Tool descriptions with names and descriptions] 
+
+<Question >: {query }
+
+<Image >: {img }
+
+Extra parameters: 
+
+{extra params str }
+
+Use the following format to solve a given question: 
+
+Thought: what should I do? 
+
+Action: must be one of [tool names] 
+
+Action Input: the input to the tool (Observation will be provided after tool execution) 
+
+> Figure 7. GeneAgent prompt template.
+
+[Component Agent Heading Template] You are an image expert. Analyze histopathology slides by tool calling. You are encouraged to give hypotheses based on the pathology image you see. You have access to the following tools: [Tool descriptions with names and descriptions] 
+
+<Question >: {query }
+
+<Image >: {img }
+
+Extra parameters: 
+
+{extra params str }
+
+Use the following format to solve a given question: 
+
+Thought : what should I do? 
+
+Action : must be one of [tool names] 
+
+Action Input : the input to the tool (Observation will be provided after tool execution) 
+
+> Figure 8. ImageAgent prompt template.
+
+## 11. Curated Dataset Details 
+
+This section presents detailed examples from our two cu-rated datasets: PathSpatial-DocQA and ST-Traj. We show-case typical samples and ground truth examples to illustrate the dataset characteristics, query complexity, and expected trajectory structures. 7Do not interpret, or infer new information from the input. You are not allowed to add extra information. You must only fill the fields according to the schema below. === SCHEMA === 
+
+{schema json }
+
+=== INPUT === 
+
+{raw input }
+
+Now return the JSON object: 
+
+> Figure 9. Parsing LLM prompt template for schema compliance.
+
+11.1. PathSpatial-DocQA Dataset 
+
+The PathSpatial-DocQA dataset addresses frontier ques-tions in pathology-molecular diagnosis integration. Below we present typical samples from the dataset, including the questions and reference answers. The samples are orga-nized into categories, including causal mechanism reason-ing, multi-entity relation reasoning, hypothesis verification, and temporal and sequential reasoning. 
+
+11.1.1. Causal Mechanism Reasoning 
+
+Typical samples are shown in Figs. 10 to 12. 
+
+11.1.2. Multi-entity Relation Reasoning 
+
+Typical samples are shown in Figs. 13 to 15. 
+
+11.1.3. Hypothesis Verification 
+
+Typical samples are shown in Figs. 16 and 17. 
+
+11.1.4. Temporal and Sequential Reasoning 
+
+Typical samples are shown in Figs. 18 and 19. 
+
+11.2. ST-Traj Dataset 
+
+The ST-Traj dataset consists of long connected trajectories with high-quality tool-calling sequences. Typical trajectory samples demonstrating the expected structure and tool in-vocation patterns are shown in Figs. 20 to 22. 
+
+## 12. Supplementary Experiments 
+
+12.1. Planning and Domain-Knowledge Ablations 
+
+We report architecture-side ablations to isolate the contribu-tions of planning (Plan.) and domain-knowledge orchestra-tion (Orch.). In Tab. 7, rows with Plan. empty and Orch. 
+
+checked denote the setting where the planner is removed while orchestration is retained. Rows with Plan. checked and Orch. empty denote the setting where the planner is retained while orchestration is removed. 
+
+Question : Can TGF β signaling loss in cancer cells convert the tumor microenvironment into a fibro-macrophage state and exclude T cells? image path: GSE193460 GSM5808056 61x69-12 x20.png 
+
+Answer : True. When TGF β signaling is lost in cancer cells, the tumor microenvironment under-goes remodeling characterized by activation of fi-broblasts and accumulation of macrophages, while T cells are excluded. This shift is associated with increased fibrotic stroma and reduced anti-tumor immunity, indicating that TGF β responsiveness in cancer cells directly shapes the immune landscape of the tumor. 
+
+> Figure 10. Typical PathSpatial-DocQA dataset example for case STimage-1K4M 35290801 page 2 2.
+
+Question : Can triple-negative breast cancer (TNBC) be targeted therapeutically by inhibiting the NDRG1 gene? 
+
+Answer : False. NDRG1 functions as a tumor suppressor in TNBC; therefore, inhibiting it would likely promote tumor progression rather than sup-press it. Therapeutic strategies should aim to re-store or enhance NDRG1 function, not inhibit it, as shown in studies of TNBC progression and metas-tasis. 
+
+> Figure 11. Typical PathSpatial-DocQA dataset example for case STimage-1K4M 36283023 page 17 2.
+
+These results complement the main analysis by showing that planner-level decomposition and domain-knowledge orchestration provide distinct contributions across datasets and base LVLMs. 
+
+## 13. Comparative Case Study 
+
+This section presents a comparative analysis of trajectory execution across different frameworks. We examine four representative cases selected to span distinct pathological conditions and query complexities, illustrating how various 8Table 7. LAMMI ablations on planning (Plan.) or domain knowledge (Orch.). Missing values indicate inapplicability. 
+
+Dataset LVLM Plan. Orch. ACS TRR TCF1 TSS HR Avg. F1 PathMMU InternVL ✓ 0.441 0.000 / / 0.700 0.325 MiniCPM ✓ 0.423 0.342 / / 0.300 0.263 Qwen-VL ✓ 0.554 0.038 / / 0.375 0.263 InternVL ✓ 0.493 / / / 0.519 0.329 MiniCPM ✓ 0.546 / / / 0.592 0.307 Qwen-VL ✓ 0.500 / / / 0.645 0.331 PathSpatial InternVL ✓ 0.451 0.000 / / 0.787 /MiniCPM ✓ 0.370 0.214 / / 0.400 /Qwen-VL ✓ 0.475 0.077 / / 0.275 /InternVL ✓ 0.610 / / / 0.261 /MiniCPM ✓ 0.582 / / / 0.361 /Qwen-VL ✓ 0.635 / / / 0.160 /ST-Traj InternVL ✓ 0.636 0.000 0.256 0.506 0.537 /MiniCPM ✓ 0.409 0.141 0.245 0.629 0.694 /Qwen-VL ✓ 0.501 0.114 0.485 0.825 0.650 /InternVL ✓ 0.569 / / / 0.510 /MiniCPM ✓ 0.588 / / / 0.592 /Qwen-VL ✓ 0.540 / / / 0.348 /
+
+Question : Is the presence of TLSs (tertiary lym-phoid structures) in the liver associated with chronic inflammation and fibrosis in patients with HS (hep-atic steatosis)? image path: GSE249729 GSM7962129 38x45-47 x54.png 
+
+Answer : True. TLSs are organized aggregates of immune cells that form in nonlymphoid tissues, in-cluding the liver, during chronic inflammatory con-ditions such as HS. Their presence correlates with disease severity, including fibrosis, and they are rec-ognized as a histological feature of HS lesions, sug-gesting their role in sustaining local immune re-sponses that drive tissue damage. 
+
+> Figure 12. Typical PathSpatial-DocQA dataset example for case STimage-1K4M 38113104 page 9 0.
+
+frameworks handle complex pathology-molecular diagno-sis queries. The analysis highlights differences in tool in-
+
+Question : Is it true that ER+ breast cancers exhibit less proliferation and more differentiation com-pared to ER- breast cancers? 
+
+Answer : True. ER+ breast cancers are charac-terized by lower proliferation rates and higher dif-ferentiation, which contrasts with the more aggres-sive, poorly differentiated phenotype typically seen in ER- tumors. This distinction is clinically rele-vant and forms the basis for prognostic classifica-tion and therapeutic strategies targeting estrogen re-ceptor signaling. 
+
+> Figure 13. Typical PathSpatial-DocQA dataset example for case STimage-1K4M 38282415 page 3 0.
+
+vocation patterns, reasoning depth, and error recovery ca-pabilities. Case 1 focuses on HER2 receptor targeting in breast cancer, where multi-step gene information retrieval demands adaptive error recovery. Case 2 concerns spatial transcriptomic signature generalization in oral squamous cell carcinoma. Case 3 involves histological pattern anal-ysis in glioblastoma. Case 4 explores tumor subtyping sce-narios without standardized OncoTree classification. Sam-ple information for all four cases is presented in Figs. 23 to 26. Detailed trajectory analyses and framework comparisons for each case are provided in the following subsections, 9Question : Does the presence of osteopontin corre-late with macrophage recruitment in renal papillary tissue? image path: GSE206306 GSM6250307 56x57-61 x62.png 
+
+Answer : True. Osteopontin interacts with macrophages to enhance their chemotaxis and re-cruitment, and it is co-expressed with macrophage markers such as CD68 and CD45 in renal papil-lary tissue, indicating a direct association between osteopontin and macrophage infiltration in stone-forming regions. 
+
+> Figure 14. Typical PathSpatial-DocQA dataset example for case STimage-1K4M 37468493 page 10 1.
+
+Question : Are CD34+ and PDGFR α+ fibroblasts found in both the lining and sublining layers of rheumatoid synovium? image path: GSE249729 GSM7962129 44x51-39 x46.png 
+
+Answer : True. CD34+ and PDGFR α+ fibroblasts are present in both the lining layer (where they are most abundant) and the sublining layer of rheuma-toid synovium. Their presence in these regions sug-gests a role in both synovial expansion and stromal remodeling during chronic inflammation. 
+
+> Figure 15. Typical PathSpatial-DocQA dataset example for case STimage-1K4M 38113104 page 4 1.
+
+demonstrating how different frameworks approach these di-agnostic challenges and highlighting the strengths and lim-itations of each approach. 
+
+Question : Do conventional corticosteroid therapies effectively treat muscular sarcoidosis, and what is the current therapeutic strategy based on? 
+
+Answer : False. Conventional corticosteroid ther-apy alone is not sufficient for treating muscular sar-coidosis, as the disease is based on systemic im-mune dysregulation. Current therapeutic strategies are derived from the treatment of systemic sarcoido-sis and include immunosuppressive agents, since corticosteroids alone provide only a first-line ap-proach without addressing the underlying immune-mediated pathology. 
+
+> Figure 16. Typical PathSpatial-DocQA dataset example for case STimage-1K4M 38067175 page 2 2.
+
+Question : Is T cell infiltration into colorectal tu-mors associated with favorable clinical outcomes? 
+
+Answer : True. T cell infiltration into colorectal tu-mors has long been associated with favorable out-comes, suggesting a possible role for immunomod-ulation in controlling tumor growth. This associa-tion implies that the presence of T cells in the tumor microenvironment may contribute to better patient prognosis. 
+
+> Figure 17. Typical PathSpatial-DocQA dataset example for case HEST page 25 0.
+
+Question : Is it true that the thymus undergoes sig-nificant involution after birth, leading to a decline in thymocyte output and reduced thymic function in adulthood? 
+
+Answer : True. The thymus is most active during infancy and childhood, with high thymocyte out-put. After birth, it undergoes progressive involution, characterized by a decline in thymocyte production and replacement of lymphoid tissue with adipose tissue. This results in diminished capacity to gen-erate new T cells in adults. 
+
+> Figure 18. Typical PathSpatial-DocQA dataset example for case STimage-1K4M 36741401 page 2 2.
+
+10 Question : Is the transcription factor EGR1 in-volved in the regulation of extracellular matrix (ECM) deposition in fibrotic kidneys? image path: GSE183456 GSM6047785 50x58-49 x57.png 
+
+Answer : True. EGR1 is activated in adaptive fibro-sis and contributes to the progression of tubuloin-terstitial fibrosis through gene expression changes that regulate ECM deposition. This transcription factor plays a fundamental role in fibrosis mecha-nisms across multiple organ systems. 
+
+> Figure 19. Typical PathSpatial-DocQA dataset example for case STimage-1K4M 37468583 page 7 2.
+
+13.1. Case Study Examples 
+
+13.1.1. Case 1: HER2 Receptor Targeting in Breast Can-cer 
+
+The sample information for case STimage-1K4M 34650042 page 13 2 is shown in Fig. 23. The com-plete execution trajectories of case STimage-1K4M 34650042 page 13 2 for all frameworks are shown in Figs. 27 to 31. As shown in the figures, LAMMI demonstrates effective error recovery through hierarchical agent coordination and adaptive tool selection, successfully retrieving relevant gene information despite initial tool failures. MAT-Agent ex-hibits fundamental tool misalignment, repeatedly invoking tools that are semantically unrelated to the query, indicat-ing insufficient tool understanding. ReACT simulates tool execution without actual invocation, generating responses through internal reasoning rather than external tool integra-tion. MLLM-Tools displays significant tool redundancy and prompt engineering overfitting, with repetitive similar calls and formulaic queries that reveal limited comprehension of tool invocation semantics. OpenAI-Agent-SDK produces comprehensive responses but demonstrates insufficient tool exploration, failing to employ alternative strategies when initial tool calls encounter errors. 
+
+13.1.2. Case 2: Spatial Transcriptomic Signature in Oral Squamous Cell Carcinoma 
+
+The sample information for case 3649 8072 10393 is shown in Fig. 24. The complete execution trajectories of case 3649 8072 10393 for all frameworks are shown in Figs. 32 to 36. This case examines whether spatial transcriptomic sig-natures at the tumor leading edge can reliably distinguish aggressive disease across different cancer types, requiring cross-cancer comparative analysis to assess molecular pro-gram conservation. MAT-Agent performs a single BLIP-Tool invocation that incorrectly returns breast cancer tis-sue information instead of oral squamous cell carcinoma data, then concludes affirmatively without any cross-cancer type validation, fundamentally missing the query’s com-parative requirement. ReACT demonstrates simulated tool invocation in Fig. 34, where failed OncoTreeTool queries and invalid BLIPTool calls are followed by an affirmative conclusion that contradicts the reference answer’s negative stance regarding cross-cancer type reliability. MLLM-Tools focuses solely on MDM2 gene expression without cross-cancer comparison and terminates prematurely due to ex-ecution time limits. OpenAI-Agent-SDK produces a cor-rect negative conclusion with detailed cross-cancer valida-tion reasoning, but this analysis derives primarily from pre-trained knowledge rather than tool-derived comparative ev-idence, as the BLIPTool returns mismatched breast can-cer data. LAMMI addresses the cross-modal nature of this query by coordinating ImageAgent for architectural analy-sis and GeneAgent for molecular investigation, recognizing the need for comparative cross-cancer validation even when direct tool evidence is unavailable. 
+
+13.1.3. Case 3: Histological Pattern Analysis in Glioblas-toma 
+
+The sample information for case 1511 6709 6887 8022 is shown in Fig. 25. The complete execution trajectories of case 1511 6709 6887 8022 for all frameworks are shown in Figs. 37 to 41. This case requires identifying specific histological pat-terns in glioblastoma samples, including nuclear atypia, mi-totic activity, and microvascular proliferation, and correlat-ing these morphological features with OncoTree classifica-tion to understand their diagnostic significance. LAMMI demonstrates robust multi-modal analysis capabilities by sequentially invoking BLIPTool and QwenVLCaptionTool through ImageAgent, effectively recovering from the initial BLIPTool error that returned incorrect species information by adaptively switching to the vision-language captioning tool. The framework then successfully queries OncoTree-Tool to establish the correlation between identified histo-logical features and the tumor classification, producing a comprehensive answer that addresses both morphological analysis and molecular taxonomy integration. MAT-Agent exhibits significant tool redundancy with repeated failed at-tempts to invoke non-existent functions, resulting in an in-complete response that fails to establish the OncoTree cor-relation. ReACT initially uses an incorrect image path but 11 Sample ID: 8780 9284 10156 
+
+Step 1: Query: Is the BRCA1 gene involved in DNA repair? 
+
+Thought: To determine if the BRCA1 gene is involved in DNA repair, I should first gather information about the gene’s functions from a reliable source. 
+
+Action: ProteinAtlasGeneInfoTool 
+
+Action Input: {”gene”: ”BRCA1” }
+
+Observation: Gene: BRCA1, Gene name: BRCC1, FANCS, PPP1R53, RNF53, Gene description: BRCA1 DNA repair associated, Protein class: Cancer-related genes, Disease related genes, Human disease related genes, Plasma proteins, Potential drug targets... Protein function: E3 ubiquitin-protein ligase that specifically mediates the formation of ’Lys-6’-linked polyubiquitin chains and plays a central role in DNA repair by facilitating cellular responses to DNA damage. The BRCA1-BARD1 heterodimer coordinates a diverse range of cellular pathways such as DNA damage repair, ubiquitination and transcriptional regulation to maintain genomic stability. Gene summary: This gene ... (Content exceeding six lines has been truncated for display. )
+
+Step 2: Reasoning: The previous observation confirms that BRCA1 is critically involved in DNA repair, particularly through homologous recombination, and helps maintain genomic stability. Given the functional parallels between BRCA1 and BRCA2 in the same pathway, it follows that BRCA2 mutations also impair DNA repair, predisposing to cancers like triple-negative breast cancer (TNBC). Tumors with such deficiencies are initially sensitive to PARP inhibitors due to synthetic lethality. However, resistance can emerge through somatic reversion mutations that restore BRCA2 function. Monitoring these resistance mechanisms in real time via circulating tumor DNA (ctDNA) could allow early (Content exceeding six lines has been truncated for display. )
+
+Action: DocumentGeneQueryTool 
+
+Action Input: {”query”: ”triple-negative breast cancer BRCA2 somatic reversion mutations PARP inhibitors circu-lating tumor DNA” }
+
+Observation: 1. Gene entry: BRCA2 DNA repair associated (Entrez ID: 675, Correlation Score: 139.24248) Summary: Inherited mutations in BRCA1 and this gene, BRCA2, confer increased lifetime risk of developing breast or ovarian cancer. Both BRCA1 and BRCA2 are involved in maintenance of genome stability, specifically the ho-mologous recombination pathway for double-strand DNA repair. The largest exon in both genes is exon 11, which harbors the most important and frequent mutations in breast cancer patients. The BRCA2 gene was found on chro-mosome 13q12.3 in human. The BRCA2 protein contains several copies of a 70 aa motif called the BRC motif, ... (Content exceeding six lines has been truncated for display. )
+
+Step 3: Reasoning: The previous query provided detailed information about BRCA2, including its role in DNA repair and its relevance to triple-negative breast cancer and PARP inhibitor resistance, but did not specify the Ensembl gene ID, which is required for downstream genomic analyses or database cross-referencing. Since the current task involves understanding somatic reversion mutations in the context of ctDNA monitoring, precise genomic coordinates and transcript information from Ensembl would enhance the accuracy of mutation tracking and assay design. Therefore, retrieving the Ensembl ID for BRCA2 is a necessary next step to support more granular molecular analysis ... ( Con-tent exceeding six lines has been truncated for display. )
+
+Action: ProteinAtlasGeneInfoTool 
+
+Action Input: {”gene”: ”BRCA2” }
+
+Observation: Gene: BRCA2, Gene name: BRCC2, FACD, FAD, FAD1, FANCD, FANCD1, XRCC11, Gene de-scription: BRCA2 DNA repair associated, Protein class: Cancer-related genes, Disease related genes, Human disease related genes... Protein function: Involved in double-strand break repair and/or homologous recombination. Binds RAD51 and potentiates recombinational DNA repair by promoting assembly of RAD51 onto single-stranded DNA (ssDNA). Acts by targeting RAD51 to ssDNA over double-stranded DNA, enabling RAD51 to displace replication protein-A (RPA) from ssDNA and stabilizing RAD51-ssDNA filaments by blocking ATP hydrolysis. Gene ... ( Con-tent exceeding six lines has been truncated for display. )
+
+Final Answer: Yes, the BRCA1 gene is directly involved in DNA repair, particularly in the homologous recombina-tion pathway for repairing double-strand DNA breaks, and plays a critical role in maintaining genomic stability. 
+
+> Figure 20. Typical ST-Traj dataset example for case 8780 9284 10156.
+
+12 Sample ID: 1384 8588 9733 10239 image path: TENX125 027x090.png 
+
+Step 1: Query: What histological features and cellular morphology in this lymphoid tissue sample are indicative of disease pathology, and how might AI-driven image analysis improve diagnostic precision? 
+
+Thought: To analyze the histological features and cellular morphology in the lymphoid tissue sample and understand how AI-driven image analysis can improve diagnostic precision, I need to first gather detailed information about the image content. 
+
+Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”Describe the histological features and cellular morphology in this lymphoid tissue sample.”, ”image path”: ”TENX125 027x090.png” }
+
+Observation: The histological features of this lymphoid tissue sample show a dense, diffuse infiltrate of cells with scant cytoplasm, round nuclei, and condensed chromatin. The nucleoli are not prominent, and the cells are tightly packed together. The lack of significant pleomorphism and the absence of mitotic figures suggest a monomorphic population of cells, which is characteristic of a lymphoid neoplasm. The overall architecture of the tissue is effaced by the infiltrate, indicating a disruption of the normal tissue structure. The presence of these features is consistent with a diagnosis of a lymphoid neoplasm, such as a lymphoma. 
+
+Step 2: Reasoning: The histological findings reveal a monomorphic, densely packed lymphoid infiltrate with nuclear uniformity and effaced tissue architecture, highly suggestive of a malignant lymphoma. Given the morphological suspicion of a high-grade or aggressive lymphoid neoplasm, understanding the potential underlying genetic aberrations becomes critical for accurate classification, prognostication, and therapeutic planning. Among the most significant molecular alterations in lymphoid malignancies is mutation of the TP53 tumor suppressor gene, which is associated with poor prognosis, chemoresistance, and disease progression in various lymphomas, including ... (Content exceeding six lines has been truncated for display. )
+
+Action: DocumentGeneQueryTool 
+
+Action Input: {”query”: ”TP53 mutations and cancer association” }
+
+Observation: 1. Gene entry: tumor protein p53 **Entrez ID**: 7157 **Correlation Score**: 144.38092 **Summary**: This gene encodes a tumor suppressor protein containing transcriptional activation, DNA binding, and oligomerization domains. The encoded protein responds to diverse cellular stresses to regulate expression of target genes, ( Content exceeding six lines has been truncated for display. )
+
+Step 3: Reasoning: The previous search for cancers associated with TP53 mutations correctly identified that TP53 is a tumor suppressor gene frequently mutated across various cancers, including Li-Fraumeni syndrome and other malignancies. However, understanding which cancers are linked to TP53 mutations naturally leads to the question of how this gene exerts its tumor-suppressive effects. The observation provided general information about TP53’s role in responding to cellular stress but did not detail the specific molecular mechanisms by which the p53 protein prevents malignant transformation. To fully comprehend its protective function, it is essential to explore how p53 ... (Content exceeding six lines has been truncated for display. )
+
+Action: DocumentGeneQueryTool 
+
+Action Input: {”query”: ”p53 protein function in cancer prevention” }
+
+Observation: 1. Gene entry: ribosomal protein S27a **Entrez ID**: 6233 **Correlation Score**: 6.0943103 **Summary**: Ubiquitin, a highly conserved protein that has a major role in targeting cellular proteins for degradation by the 26S proteosome, is synthesized as a precursor protein consisting of either polyubiquitin chains or a single ubiquitin fused to ... (Content exceeding six lines has been truncated for display. )
+
+Step 4: Reasoning: The previous search for ”p53 protein function in cancer prevention” returned results related to ubiquitin and ribosomal proteins, but did not provide direct information about p53 or its gene, suggesting the query may have been misinterpreted or the tool failed to retrieve the correct gene entry. Given that p53 is a well-known tumor suppressor encoded by the TP53 gene, the next logical step is to verify the gene identity using a reliable identifier like Ensembl ID ENSG00000141510, which is known to correspond to TP53, to ensure accurate downstream analysis. Therefore, querying the Ensembl database directly will confirm the gene associated with this ID and enable ... (Content exceeding six lines has been truncated for display. )
+
+Action: EnsemblToDatabaseTool 
+
+Action Input: {”ensembl”: ”ENSG00000141510” }
+
+Observation: [{”info text”: ””, ”db display name”: ”GeneCards”, ”info type”: ”DEPENDENT”, ”description”: ”tumor protein p53”, ”display id”: ”TP53”, ”syn-onyms”: [], ”dbname”: ”GeneCards”, ”version”: ”0”, ”primary id”: ”11998” }]
+
+Final Answer: The histological features observed in this lymphoid tissue sample—namely, a dense, diffuse infiltrate of monomorphic cells with scant cytoplasm, round nuclei, condensed chromatin, inconspicuous nucleoli, and effacement of normal architecture—collectively indicate a neoplastic lymphoid proliferation. The absence of significant pleomorphism and mitotic activity further supports a diagnosis of a low-grade or indolent lymphoma, such as small lymphocytic lymphoma or follicular lymphoma, though precise classification would require immunophenotyping. The prominence of tumor protein p53 (TP53), with the highest correlation score among the associated ... (Content exceeding six lines has been truncated for display. )
+
+Figure 21. Typical ST-Traj dataset example for case 1384 8588 9733 10239. 
+
+13 Sample ID: MEND85 b CATGGAAATGGGACCA-1 image path: MEND85 b CATGGAAATGGGACCA-1.png 
+
+Step 1: Query: [Tissue: unknown tissue] Patient has multiple lesions across colon, liver, and lung; map potential primary tumor types and hierarchical relationships. 
+
+Thought: To start solving this task, I need to understand the nature of the image first. I’ll use a tool that can analyze the image and provide relevant information about it. Given the context of the question, which involves understanding potential primary tumor types and their hierarchical relationships, I should first gather basic information about the image such as the tissue type, species, and any other relevant details. 
+
+Action: BLIPTool 
+
+Action Input: What is the tissue type, species, and any notable gene expressions in the image MEND85 b CATGGAAATGGGACCA-1.png? 
+
+Observation: Homo sapiens lung shows healthy with oncotree code unknown key overexpressed genes are malat1, hba2, mt - co3, mt - nd1. 
+
+Step 2: Reasoning: The tissue analysis shows overexpression of MALAT1, HBA2, MT-CO3, and MT-ND1 in healthy human lung tissue. These genes are primarily involved in mitochondrial function and non-coding RNA regulation. Given the presence of lesions in multiple organs including lung, I need to investigate tumor suppressor genes that might be dysregulated in potential primary tumors. PTEN is a critical tumor suppressor frequently altered in cancers, and its role in the PI3K/AKT pathway makes it a key candidate for analysis. Understanding PTEN’s function in this pathway could provide insights into potential oncogenic mechanisms despite the current healthy tissue appearance. I should query the knowledge graph to retrieve detailed information about PTEN’s interactions in the PI3K/AKT signaling pathway. 
+
+Action: PathwayKGTool 
+
+Action Input: {”gene1”: ”PTEN”, ”gene2”: ”PI3K/AKT”, ”radius”: 100, ”use in edges”: true }
+
+Observation: {”weighted jaccard”: 0.0, ”intersection nodes example”: [], ”summary”: ”One or both genes not in KG.” }
+
+Step 3: Reasoning: The initial analysis attempted to explore the role of PTEN in the PI3K/AKT pathway but returned a null result due to absence of both genes in the knowledge graph, indicating a potential data gap or incorrect node labeling—however, the biological context suggests that PTEN and PIK3CA are functionally interconnected as key regulators of the same pathway, with PTEN acting as a negative regulator and PIK3CA as a positive effector. Given this, shifting focus to PIK3CA mutations—particularly their oncogenic role in squamous cell carcinomas—provides a viable alternative to investigate downstream signaling consequences, especially in clinically relevant contexts such as immune modulation in HNSCC. Recent evidence implicates PI3K pathway activation in shaping the tumor immune microenvironment, specifically through regulatory T cell recruitment and PD-L1 upregulation, which may differentially impact HPV-positive and HPV-negative tumors due to distinct molecular pathologies. Therefore, querying the impact of PIK3CA mutations on immune markers in HNSCC subtypes represents a logical progression to uncover clinically significant interactions within the same pathway, despite the initial data limitation. This directly motivates a focused literature search using mutation and immune contexture keywords to extract actionable insights on pathway-driven immunomodulation. 
+
+Action: DocumentGeneQueryTool 
+
+Action Input: {”query”: ”mutation in PIK3CA and their effects on regulatory T cell infiltration and PD-L1 expression in HPV-positive and HPV-negative head and neck squamous cell carcinoma” }
+
+Observation: 1. Gene entry: phosphatidylinositol-4,5-bisphosphate 3-kinase catalytic subunit alpha **Entrez ID**: 5290 **Correlation Score**: 143.0949 **Summary**: Phosphatidylinositol 3-kinase is composed of an 85 kDa regulatory subunit and a 110 kDa catalytic subunit. The protein encoded by this gene represents the catalytic subunit, which uses ATP to phosphorylate PtdIns, PtdIns4P and PtdIns(4,5)P2. This gene has been found to be oncogenic and has been implicated in cervical cancers. A pseudogene of this gene has been defined on chromosome 22. [provided by RefSeq, Apr 2016]. 
+
+Final Answer: The presence of multiple lesions across the colon, liver, and lung suggests a metastatic neoplasm with potential origins in a primary epithelial malignancy. The gene expression profile from the lung tissue shows overexpression of MALAT1, HBA2, MT-CO3, and MT-ND1. MALAT1 is a well-known oncogenic long non-coding RNA frequently overexpressed in a broad range of carcinomas, including lung, colorectal, and hepatocellular carcinomas, and is associated with metastatic progression and poor prognosis. The mitochondrial genes MT-CO3 and MT-ND1 are components of the electron transport chain; their dysregulation may reflect increased metabolic demand in tumor cells. HBA2, encoding a subunit of hemoglobin, is not typically expressed in non-hematopoietic tissues, and its detection may indicate either contamination from blood cells or aberrant expression in tumor stroma or vasculature. The absence of significant gene overlap in the weighted Jaccard analysis suggests limited functional pathway alignment with known disease-associated gene networks, possibly due to tissue heterogeneity or technical limitations. Notably, the identification of PIK3CA (phosphatidylinositol-4,5-bisphosphate 3-kinase catalytic subunit alpha) with a high correlation score underscores the potential involvement of the PI3K/AKT/mTOR signaling pathway, which is commonly activated in colorectal, endometrial, breast, and lung cancers. PIK3CA mutations are particularly prevalent in colorectal carcinoma, where they drive tumorigenesis and are associated with metastatic behavior. Given the multi-organ involvement and the molecular features, the lesion distribution is most consistent with a colorectal primary with hepatic and pulmonary metastases, although a lung primary with extrapulmonary spread or a less common primary such as pancreatic or biliary cannot be excluded without histopathological confirmation. The hierarchical relationship would position the colon as the most likely primary site, with liver and lung representing downstream metastatic sites, supported by the molecular signature involving MALAT1 and PIK3CA pathway activation. 
+
+Figure 22. Typical ST-Traj dataset example for case MEND85 b CATGGAAATGGGACCA-1. 
+
+14 Sample ID: STimage-1K4M 34650042 page 13 2 
+
+Question: Can targeting the HER2/neu receptor improve outcomes in HER2-positive breast cancer patients? 
+
+Reference Answer: True. Multiple studies show-ing that HER2 overexpression is linked to aggres-sive tumor behavior and poor prognosis. However, targeted therapies such as trastuzumab (Herceptin), which binds to HER2, have significantly improved survival rates in HER2-positive breast cancer pa-tients by inhibiting downstream signaling pathways and inducing antibody-dependent cellular cytotoxi-city. 
+
+> Figure 23. Case study 1: Question and reference answer for sam-ple STimage-1K4M 34650042 page 13 2.
+
+Sample ID: 3649 8072 10393 
+
+Question: The architectural complexity of the tu-mor leading edge in this oral squamous cell car-cinoma sample suggests a conserved invasive phe-notype—can we confidently assert that the spatial transcriptomic signature here reliably distinguishes aggressive disease across cancer types? 
+
+Answer: No, we cannot confidently assert that the spatial transcriptomic signature at the tumor leading edge reliably distinguishes aggressive dis-ease across cancer types, as the molecular programs driving invasion are highly context-dependent and show minimal conservation between different carci-nomas, as evidenced by the lack of gene expression overlap between oral squamous cell carcinoma and the breast cancer profile analyzed. 
+
+> Figure 24. Case study 2: Question and reference answer for sam-ple 3649 8072 10393.
+
+recovers to identify histological features, though it lacks the systematic multi-modal verification that LAMMI pro-vides. MLLM-Tools performs only a single BLIPTool in-vocation that returns incorrect species data, then terminates without OncoTree integration, leaving the query partially 
+
+Sample ID: 1511 6709 6887 8022 
+
+Question: What distinct histological patterns in this glioblastoma sample—such as nuclear atypia, mi-totic activity, or microvascular proliferation—reveal the aggressive nature of the tumor, and how do they correlate with its assigned OncoTree classification? 
+
+Answer: The glioblastoma sample exhibits nuclear atypia, mitotic activity, and microvascular prolifer-ation—histological hallmarks that collectively indi-cate a highly aggressive tumor phenotype. These features reflect genomic instability, rapid cellular proliferation, and robust angiogenesis, respectively, which are characteristic of high-grade gliomas. The molecular profile, particularly the strong associa-tion with IDH1 and its functional similarity to IDH 
+
+> Figure 25. Case study 3: Question and reference answer for sam-ple 1511 6709 6887 8022.
+
+unanswered. OpenAI-Agent-SDK successfully identifies histological patterns through vision-language analysis but encounters repeated OncoTreeTool parameter errors, pre-venting the critical correlation between morphological fea-tures and tumor classification that the query requires. 
+
+13.1.4. Case 4: Tumor Subtyping in the Absence of On-coTree Classification 
+
+The sample information for case 1317 5021 7882 9140 9288 9676 9691 10334 is shown in Fig. 26. The complete execution trajectories of case 1317 5021 7882 9140 9288 9676 9691 10334 for all frameworks are shown in Figs. 42 to 46. This case addresses the critical diagnostic challenge of tumor subtyping when OncoTree classification is unavail-able, requiring evaluation of histomorphology-based clas-sification limitations and identification of appropriate an-cillary studies to prevent misclassification due to morpho-logic overlap among molecularly distinct entities. As dis-cussed in the main text, LAMMI demonstrates a sophisti-cated error recovery process that begins with ImageAgent generating an initial hallucination of well-differentiated squamous cell carcinoma through QwenVLCaptionTool, followed by evidence mismatch when BLIPTool returns prostate cancer-specific gene expression signatures (KLK3, 15 Sample ID: 
+
+1317 5021 7882 9140 9288 9676 9691 10334 
+
+Question: Given the absence of a defined OncoTree classification, how cautiously should we approach tumor subtyping based solely on histomorphology, and what ancillary studies might be warranted to avoid misclassification? 
+
+Answer: Tumor subtyping based solely on histo-morphology should be approached with significant caution, especially in the absence of a defined On-coTree classification, due to the potential for mor-phologic overlap among molecularly distinct en-tities. Ancillary studies including immunohisto-chemistry, molecular profiling via next-generation sequencing for mutations in genes such as MEN1, PTEN, PIK3CA, KIT, and PDGFRA, and testing for gene rearrangements 
+
+> Figure 26. Case study 4: Question and reference answer for sam-ple 1317 5021 7882 9140 9288 9676 9691 10334.
+
+RPL4, KLK2, MSMB, ACPP). Rather than accepting the conflicting evidence, the Planner Agent recognizes the dis-crepancy and invokes GeneAgent to synthesize a compre-hensive approach. GeneAgent, despite encountering mul-tiple tool failures, produces a principled answer emphasiz-ing the need for caution in histomorphology-based subtyp-ing and recommending ancillary studies including immuno-histochemistry, molecular profiling, and next-generation sequencing for genes such as MEN1, PTEN, PIK3CA, KIT, and PDGFRA. This hierarchical coordination enables LAMMI to overcome initial misclassification by integrat-ing cross-modal evidence and applying domain knowledge about diagnostic uncertainty. MAT-Agent performs a single BLIPTool invocation that identifies prostate cancer mark-ers but fails to address the broader question about histo-morphology limitations and ancillary study requirements, producing an incomplete response that overlooks the diag-nostic complexity. ReACT successfully identifies prostate cancer through BLIPTool and extracts biological entities via BiomedicalEntityExtractorTool, then provides a reason-able answer about caution and ancillary studies, though it lacks the systematic evidence reconciliation that LAMMI demonstrates. MLLM-Tools exhibits severe tool redun-dancy by repeatedly attempting to access non-existent im-age files with incremental suffixes, resulting in execution failure without producing any meaningful diagnostic guid-ance. OpenAI-Agent-SDK provides the most comprehen-sive answer, correctly identifying the morphologic ambigu-ity as a small round-cell tumor requiring extensive ancillary studies, but this analysis derives primarily from pretrained knowledge rather than systematic tool-based evidence syn-thesis, as the BLIPTool returns prostate cancer data that conflicts with the vision-language model’s hematopoietic lineage interpretation. 
+
+13.2. Summary of Comparative Findings 
+
+The case studies demonstrate that LAMMI’s trajecto-ries exhibit more systematic scientific exploration through proper tool invocation and cross-modal evidence synthesis, whereas other frameworks frequently resort to simulated tool execution or rely on pretrained knowledge that diverges from tool-derived evidence. LAMMI’s hierarchical coordi-nation enables comprehensive tool-based investigation and principled evidence reconciliation. 16 LAMMI (MiniCPM-V 4.5): Evaluation Result: TRR: 0.0, TSS: 0.75, ACS: 1.0, HR: 0.0 
+
+Step 1: Planner Agent Invokes GeneAgent Thought: To determine if targeting the HER2/neu receptor can improve outcomes in HER2-positive breast cancer patients, I need to delve into gene-related analysis to understand the molecular mechanisms and implications of HER2/neu receptor targeting. 
+
+Action: GeneAgent 
+
+Action Input: ”Explain the role of HER2/neu receptor in breast cancer and how targeting it can improve patient outcomes” 
+
+Step 2: GeneAgent Tool Call 1 Thought: To understand the role of HER2/neu receptor in breast cancer and its impact on patient outcomes, I should start by using the ProteinAtlasGeneInfoTool to gather basic gene information about HER2/neu, including its function and associated databases. 
+
+Action: ProteinAtlasGeneInfoTool 
+
+Action Input: {”gene”: ”HER2/neu” }
+
+Observation: {”error”: ”Failed to fetch ProteinAtlas page for HER2/neu” }
+
+Step 3: GeneAgent Tool Call 2 Action: EnsemblToDatabaseTool 
+
+Action Input: {”ensembl”: ”ENSG00000141526” }
+
+Observation: [{”db display name”: ”GeneCards”, ”synonyms”: [], ”dbname”: ”GeneCards”, ”info text”: ””, ”pri-mary id”: ”10924”, ”description”: ”solute carrier family 16 member 3”, ”display id”: ”SLC16A3”, ”version”: ”0”, ”info type”: ”DEPENDENT” }]
+
+Step 4: GeneAgent Tool Call 3 Thought: To proceed, I should use the DocumentGeneQueryTool to retrieve gene information for HER2, as other tools failed or returned incorrect data. This will help gather details about HER2’s role in breast cancer. 
+
+Action: DocumentGeneQueryTool 
+
+Action Input: {”query”: ”HER2” }
+
+Observation: 1. Gene entry: protein tyrosine phosphatase non-receptor type 18 **Entrez ID**: 26469 **Correlation Score**: 2.899672 **Summary:** The protein encoded by this gene is a member of the protein tyrosine phosphatase (PTP) family. PTPs are known to be signaling molecules that regulate a variety of cellular processes including cell growth, differentiation, the ... (Content exceeding six lines has been truncated for display. )
+
+GeneAgent Final Answer Final Answer: HER2/neu (also known as ERBB2) is a member of the epidermal growth factor receptor (EGF) family and functions as a receptor tyrosine kinase. It plays a crucial role in cell growth, differentiation, and oncogenic transformation. Overexpression or amplification of HER2 is common in breast cancer, leading to enhanced cell proliferation and poor prognosis. Targeting HER2 with therapies like trastuzumab (Herceptin) significantly improves patient outcomes by inhibiting HER2 signaling, reducing tumor growth, and increasing survival rates in HER2-positive breast cancer patients. 
+
+Planner Agent Final Answer Final Answer: HER2/neu (also known as ERBB2) is a member of the epidermal growth factor receptor (EGF) family and functions as a receptor tyrosine kinase. It plays a crucial role in cell growth, differentiation, and oncogenic transformation. Overexpression or amplification of HER2 is common in breast cancer, leading to enhanced cell proliferation and poor prognosis. Targeting HER2 with therapies like trastuzumab (Herceptin) significantly improves patient outcomes by inhibiting HER2 signaling, reducing tumor growth, and increasing survival rates in HER2-positive breast cancer patients. 
+
+> Figure 27. Trajectory execution for LAMMI (MiniCPM-V 4.5) framework on case STimage-1K4M 34650042 page 13 2.
+
+17 MAT-Agent (MiniCPM-V 4.5): Evaluation Result: TRR: 0.75, TSS: 0.5, ACS: 0.4, HR: 1.0 
+
+Step 1: Thought: To answer the question, I will first need to find information about HER2-positive breast cancer and its treatment. Then, I will use a tool that can provide answers for pathology images along with associated questions using Qwen-VL model to determine if targeting the HER2/neu receptor can improve outcomes in HER2-positive breast cancer patients. 
+
+Code: 
+
+# Find information about HER2-positive breast cancer and its treatment her2 info = oncotree query(query=”HER2-positive breast cancer”, query type=’tumor’) print(her2 info) # Use Qwen-VL model to determine if targeting the HER2/neu receptor can improve outcomes in HER2-positive breast cancer patients answer = qwen vl pathology qa(text=”Can targeting the HER2/neu receptor improve outcomes in HER2-positive breast cancer patients?”, image path=None) print(answer) 
+
+Observation: 
+
+Print outputs: No results found for query ’HER2-positive breast cancer’ Error processing image: expected str, bytes or os.PathLike object, not NoneType 
+
+Step 2: Thought: It seems that the query for HER2-positive breast cancer did not yield any results. I will try searching for ”HER2/neu receptor” instead. 
+
+Code: 
+
+# Find information about HER2/neu receptor and its treatment her2 neu info = oncotree query(query=”HER2/neu receptor”, query type=’tumor’) print(her2 neu info) # Use Qwen-VL model to determine if targeting the HER2/neu receptor can improve outcomes in HER2-positive breast cancer patients answer = qwen vl pathology qa(text=”Can targeting the HER2/neu receptor improve outcomes in HER2-positive breast cancer patients?”, image path=None) print(answer) 
+
+Observation: 
+
+Print outputs: No results found for query ’HER2/neu receptor’ Error processing image: expected str, bytes or os.PathLike object, not NoneType 
+
+Step 3-8: Agent repeats similar failed attempts with variations of the same queries, all resulting in ”No results found” and image processing errors. 
+
+Observation: Reached max iterations after multiple failed tool calls. 
+
+Final Output: I apologize for the repeated errors. I will try a different approach to answer the question. Code: # Find information about HER2-positive breast cancer and its treatment her2 info = oncotree query(query=”HER2-positive breast cancer”, query type=’tumor’) print(her2 info) # Use Qwen-VL model to determine if targeting the HER2/neu receptor can improve outcomes in HER2-positive breast cancer patients answer = qwen vl pathology qa(text=”Can targeting the HER2/neu receptor improve outcomes in HER2-positive breast cancer patients?”, image path=None) print(answer) 
+
+> Figure 28. Trajectory execution for MAT-Agent (MiniCPM-V 4.5) framework on case STimage-1K4M 34650042 page 13 2.
+
+18 ReACT (MiniCPM-V 4.5): Evaluation Result: TRR: 0.0, TSS: 0.5, ACS: 0.1, HR: 0.2 
+
+Step 1: Thought: The question is about HER2/neu receptor in breast cancer, so I need to gather information on the gene and its role. First, I should use a tool to get detailed gene information for HER2. 
+
+Action: ProteinAtlasGeneInfoTool 
+
+Action Input: HER2 (Observation will be provided after tool execution) 
+
+Thought: After obtaining details about HER2, I can check if there are relevant studies or summaries using My-Gene.info that discuss targeting this receptor in breast cancer patients. 
+
+Action: DocumentGeneQueryTool 
+
+Action Input: HER2 (Observation will be provided after tool execution) 
+
+Thought: With genetic background from ProteinAtlasGeneInfoTool and possibly clinical evidence from Document-GeneQueryTool, I might also want to confirm pathways involved with HER2 to see how targeted therapy fits into treatment strategies. 
+
+Action: PathwayKGTool 
+
+Action Input: HER2 (Observation will be provided after tool execution) 
+
+Final Answer: Targeting the HER2/neu receptor improves outcomes in HER2-positive breast cancer patients by providing specific therapy (such as trastuzumab) that directly addresses the overexpression of HER2, leading to better disease control and survival benefits compared to standard treatments alone. (Note: The agent planned to use ProteinAtlasGeneInfoTool, DocumentGeneQueryTool, and PathwayKGTool but did not execute these tools, instead providing a direct answer based on prior knowledge without waiting for tool observations. )
+
+> Figure 29. Trajectory execution for ReACT (MiniCPM-V 4.5) framework on case STimage-1K4M 34650042 page 13 2.
+
+19 MLLM-Tools (ToolACE 8B + ImageBind): Evaluation Result: TRR: 0.4, TSS: 0.5, ACS: 0.1, HR: 0.9 
+
+Step 1: Thought: what else should I do? 
+
+Action: ProteinAtlasGeneInfoTool 
+
+Action Input: {”gene”: ”HER2” }
+
+Observation: {”gene”: ”HER2”, ”GENERAL INFORMATION”: {”Gene name”: ”c-ERB-2, c-ERB2, CD340, HER-2, HER2, MLN-19, NEU, NGL, p185(erbB2)”, ”Gene description”: ”Erb-b2 receptor tyrosine kinase 2”, ”Pro-tein class”: ”Cancer-related genes nCD markers nDisease related genes nFDA approved drug targets (Content exceeding six lines has been truncated for display. )
+
+Step 2: Thought: what else should I do? 
+
+Action: ProteinAtlasGeneInfoTool 
+
+Action Input: {”gene”: ”HER2” }
+
+Observation: Same result as Step 1 (redundant call) 
+
+Step 3: Thought: What are the key signaling pathways and downstream effects of HER2/neu receptor activation in breast cancer? 
+
+Action: PathwayKGTool 
+
+Action Input: {”gene1”: ”HER2”, ”gene2”: ”HER2”, ”radius”: 1, ”use in edges”: false }
+
+Observation: {”weighted jaccard”: 0.0, ”intersection nodes example”: [], ”summary”: ”One or both genes not in KG.” }
+
+Step 4: Thought: what else should I do? 
+
+Action: PathwayKGTool 
+
+Action Input: {”gene1”: ”HER2”, ”gene2”: ”HER2”, ”radius”: 1, ”use in edges”: false }
+
+Observation: {”weighted jaccard”: 0.0, ”intersection nodes example”: [], ”summary”: ”One or both genes not in KG.” } (redundant call) 
+
+Step 5: Thought: what else should I do? 
+
+Action: DocumentGeneQueryTool 
+
+Action Input: {”query”: ”HER2” }
+
+Observation: 1. Gene entry: protein tyrosine phosphatase non-receptor type 18 **Entrez ID**: 26469 **Correlation Score**: 2.8996513 **Summary:** The protein encoded by this gene is a member of the protein tyrosine phosphatase (PTP) family. PTPs are known to be signaling molecules that regulate a variety of cellular processes including cell growth, differentiation, the ... (Content exceeding six lines has been truncated for display. )
+
+Step 6: Agent reaches iteration limit 
+
+Final Output: Agent stopped due to iteration limit or time limit. 
+
+> Figure 30. Trajectory execution for MLLM-Tools (ToolACE 8B) framework on case STimage-1K4M 34650042 page 13 2.
+
+20 OpenAI-Agent-SDK (GPT-5): Evaluation Result: TRR: 0.0, TSS: 0.75, ACS: 1.0, HR: 0.1 
+
+Step 1: Action: DocumentGeneQueryTool 
+
+Action Input: {”query”: ”ERBB2” }
+
+Observation: 1. Gene entry: erb-b2 receptor tyrosine kinase 2 **Entrez ID**: 2064 **Correlation Score**: 141.54207 **Summary:** This gene encodes a member of the epidermal growth factor (EGF) receptor family of receptor tyrosine kinases. This protein has no ligand binding domain of its own and therefore cannot bind growth factors. However, it does bind ... (Content exceeding six lines has been truncated for display. )
+
+Step 2: Action: GenetoDiseaseTool 
+
+Action Input: {”gene”: ”ERBB2” }
+
+Observation: The potential diseases correlated to gene ERBB2 are listed follows: [’Adenocarcinoma’, ’Asthma’, ’Astrocytoma’, ’Benign neoplasm of stomach’, ’Biliary tract neoplasm’, ’Bipolar disorder’, ’Bladder carcinoma’, ’Breast adenocarcinoma’, ’Breast cancer’, ’Breast carcinoma’, ’Carcinoma’, ’Carcinoma of the head and neck’, ’Cholangiocarcinoma’, ’Chromophobe carcinoma’, ’Colonic neoplasms’, ’Colorectal cancer’, ’Colorectal neo-plasms’, ’Embolism’, ’Endometrial cancer’, ’Ependymoma’, ’Esophageal carcinoma’, ’Esophagus neoplasm’, ’Gall-bladder cancer’, ’Gastric cancer’, ’Gastrointestinal neoplasms’, ’Glioblastoma’, ’Glioma’, ’Head and neck ... (Content exceeding six lines has been truncated for display. )
+
+Step 3: Action: ProteinAtlasGeneInfoTool 
+
+Action Input: {”gene”: ”ERBB2” }
+
+Observation: Error fetching Protein Atlas info: ’GeneToEnsemblTool’ object has no attribute ’forward’ 
+
+Step 4: Action: GDCGeneInfoTool 
+
+Action Input: {”gene”: ”ERBB2” }
+
+Observation: Error fetching GDC gene info: ’GeneToEnsemblTool’ object has no attribute ’forward’ 
+
+Final Answer: Yes. Targeting the HER2/neu (ERBB2) receptor markedly improves outcomes for patients with HER2-positive breast cancer across early-stage and metastatic settings. Key evidence and standard practices: Early-stage (neoadjuvant/adjuvant): Trastuzumab with chemotherapy reduces recurrence by about one-third and improves overall survival versus chemotherapy alone (e.g., NSABP B-31/NCCTG N9831, HERA, BCIRG 006). One year of adjuvant trastuzumab remains the standard duration. Neoadjuvant dual HER2 blockade (trastuzumab + pertuzumab) with chemotherapy increases pathologic complete response rates (NeoSphere, TRYPHAENA ... (Content exceeding six lines has been truncated for display. )
+
+> Figure 31. Trajectory execution for OpenAI-Agent-SDK (GPT-5) framework on case STimage-1K4M 34650042 page 13 2.
+
+21 LAMMI (Qwen3 VL 8B Instruct): Evaluation Result: TRR: 0.0, TSS: 0.83, ACS: 0.9, HR: 0.2 
+
+Step 1: Planner Agent Invokes ImageAgent Thought: The user’s query involves analyzing a pathology image for signs of oral squamous cell carcinoma and interpreting whether the spatial transcriptomic signature can reliably distinguish aggressive disease across cancer types. This requires specialized image analysis to evaluate the tumor’s invasive phenotype and potentially gene expression patterns. I need to delegate this task to the ImageAgent, which is designed to process pathology images and extract relevant biological and morphological features. 
+
+Action: ImageAgent 
+
+Action Input: ”Analyze this pathology image of oral squamous cell carcinoma to assess the architectural complexity of the tumor leading edge and determine if the observed invasive phenotype can be linked to spatial transcriptomic signatures that reliably distinguish aggressive disease across cancer types.” 
+
+Step 2: ImageAgent Tool Call Thought: I need to analyze the pathology image to assess the architectural complexity of the tumor leading edge and determine if the invasive phenotype can be linked to spatial transcriptomic signatures. The QwenVLCaptionTool is suitable for providing a detailed textual analysis of the pathology image. 
+
+Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”The image shows a pathology slide of oral squamous cell carcinoma (OSCC) with a tumor leading edge...”, ”image path”: ”GSE208253 GSM6339637 7x14-43x50.png” }
+
+Observation: The image shows a pathology slide of oral squamous cell carcinoma (OSCC) with a tumor leading edge. The tumor cells are arranged in a disor-ganized manner, with irregularly shaped nuclei and prominent nucleoli. The tumor cells are surrounded by a dense stroma of fibroblasts and inflammatory cells. The tumor cells are also seen invading into the surrounding normal tissue, with some areas of necrosis and hemorrhage. The overall architectural complexity of the tumor leading edge is high, with a mixture of solid and glandular structures. The invasive phenotype of the tumor is evident, with tumor cells invading into the surrounding normal tissue and forming microvascular channels. The spatial transcriptomic signatures of the tumor cells are not clearly visible in the image, but the overall pattern of gene expression is consistent with an aggressive phenotype. The image is consistent with the diagnosis of OSCC, and the observed invasive ... (Content exceeding six lines has been truncated for display. )
+
+Step 3: Planner Agent Invokes GeneAgent Thought: The ImageAgent has provided a detailed analysis of the pathology image, confirming the high architectural complexity and invasive phenotype of the oral squamous cell carcinoma. It also noted that while spatial transcriptomic signatures are not clearly visible in the image, the overall gene expression pattern is consistent with an aggressive phenotype. However, the user’s question specifically asks whether the spatial transcriptomic signature here reliably distinguishes aggressive disease across cancer types. The ImageAgent’s output does not address this broader, comparative question across cancer types. To answer this, I need to consult a specialist in gene expression and spatial transcriptomics. 
+
+Action: GeneAgent 
+
+Action Input: ”Can the spatial transcriptomic signature observed in this oral squamous cell carcinoma reliably distinguish aggressive disease across different cancer types?” 
+
+Step 4: GeneAgent Tool Call 1 Thought: The image provided is a histological section, but it does not contain any gene names or specific molecular data required to answer the question about spatial transcriptomic signatures distinguishing aggressive disease across cancer types. Since the question is gene-related, I need to determine if any biological entities or genes are implied or can be extracted from the context. However, the image alone does not provide textual or gene-related data. I should use the BiomedicalEntityExtractorTool to extract any potential biological entities from the question text. 
+
+Action: BiomedicalEntityExtractorTool 
+
+Action Input: {”text”: ”spatial transcriptomic signature, oral squamous cell carcinoma, aggressive disease, different cancer types” }
+
+Observation: {”error”: ”1 validation error for BiomedicalEntityExtractorSchema. Field required [type=missing], pydantic error. }
+
+Step 5: GeneAgent Tool Call 2 Thought: The BiomedicalEntityExtractorTool failed due to an invalid input format. Since the question is gene-related and involves spatial transcriptomic sig-natures and cancer types, I should use the DocumentGeneQueryTool to retrieve gene-related information that might help answer the question. I will query for ”spatial transcriptomic signature” and ”oral squamous cell carcinoma” to gather relevant gene summaries. 
+
+Action: DocumentGeneQueryTool 
+
+Action Input: {”query”: ”spatial transcriptomic signature” }
+
+Observation: No results found. 
+
+Step 6: GeneAgent Tool Call 3 Thought: The DocumentGeneQueryTool did not return any results for ”spatial transcriptomic signature.” I should now try querying for ”oral squamous cell carcinoma” to retrieve relevant gene information. 
+
+Action: DocumentGeneQueryTool 
+
+Action Input: {”query”: ”oral squamous cell carcinoma” }
+
+Observation: 1. Gene entry: BarH like homeobox 2 (Entrez ID: 343472, Correlation Score: 23.115345) Summary: Enables sequence-specific double-stranded DNA binding activity. Predicted to be involved in regulation of transcription by RNA polymerase II. Implicated in oral squamous cell carcinoma. Biomarker of colorectal cancer; oral squamous cell carcinoma; and stomach cancer. —2. Gene entry: calcium/calmodulin dependent protein kinase II inhibitor 1 (Entrez ID: 55450, Correlation Score: 22.122725) Summary: Enables calcium-dependent protein kinase inhibitor activity and protein kinase binding activity. Implicated in ovarian cancer; ovarian carcinoma ... (Content exceeding six lines has been truncated for display. )
+
+GeneAgent Final Answer Final Answer: The provided image and query do not contain sufficient gene or pathway data to determine whether spatial transcriptomic signatures can reliably distinguish aggressive disease across different cancer types. Additional molecular or clinical data specific to spatial transcriptomics and comparative cancer biology would be required. 
+
+Planner Agent Final Answer Final Answer: Based on the analysis, the architectural complexity and invasive phenotype of the tumor leading edge in this oral squamous cell carcinoma sample are evident, consistent with an aggressive phenotype. However, the spatial transcriptomic signature cannot be reliably assessed or validated for its ability to distinguish aggressive disease across different cancer types with the available data. Additional molecular or clinical data specific to spatial transcriptomics and comparative cancer biology would be required to address this broader question. 
+
+Figure 32. Trajectory execution for LAMMI (Qwen3 VL 8B Instruct) framework on case 3649 8072 10393. 
+
+22 MAT-Agent (Qwen3 VL 8B Instruct): Evaluation Result: TRR: 0.0, TSS: 0.5, ACS: 0.3, HR: 0.9 
+
+Step 1: Thought: I need to analyze the image and provide an answer based on the analysis. I will use the blip pathology analysis tool to get genetic information about the image. 
+
+Action: BLIPTool 
+
+Action Input: {”text”: ”Can we confidently assert that the spatial transcriptomic signature here reliably distinguishes aggressive disease across cancer types?”, ”image path”: ”GSE208253 GSM6339637 7x14-43x50.png” }
+
+Observation: Homo sapiens breast tissue the oncotree code is idc and highly expressed genes are mt - co2, erbb2, scd, mt - co3, cyb. 
+
+Step 2: Thought: I will now analyze the genetic information provided by the blip pathology analysis tool to answer the question. 
+
+Final Answer: Yes, the spatial transcriptomic signature in this oral squamous cell carcinoma sample can confidently distinguish aggressive disease across cancer types based on the genetic information provided. 
+
+> Figure 33. Trajectory execution for MAT-Agent (Qwen3 VL 8B Instruct) framework on case 3649 8072 10393.
+
+23 ReACT (Qwen3 VL 8B Instruct): Evaluation Result: TRR: 0.0, TSS: 0.83, ACS: 0.3, HR: 0.9 
+
+Step 1: Thought: To address the question, I need to analyze the spatial transcriptomic signature of the oral squamous cell carcinoma sample and determine if it can reliably distinguish aggressive disease across cancer types. This requires understanding the genetic and molecular features of the tumor, as well as its spatial architecture. I should start by using a tool that can provide genetic information related to the pathology image. 
+
+Action: BLIPTool 
+
+Action Input: {”instruction”: ”What are the genes with high expression, species, and tissue correlated to this oral squamous cell carcinoma sample?”, ”image name”: ”GSE208253 GSM6339637 7x14-43x50.png” }
+
+Observation: {”error”: ”2 validation errors for BLIPToolSchema. Field required [type=missing], pydantic error. }
+
+Step 2: Thought: The BLIPTool failed due to invalid input format. I should use QwenVLCaptionTool to analyze the pathol-ogy image and extract relevant information about the tumor’s architecture and potential gene expressions. 
+
+Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”The image shows a section of oral squamous cell carcinoma (OSCC) tissue...”, ”im-age path”: ”GSE208253 GSM6339637 7x14-43x50.png” }
+
+Observation: The image shows a section of oral squamous cell carcinoma (OSCC) tissue. The tumor cells are ar-ranged in a complex, irregular pattern, with some areas showing a more organized structure and others appearing more disorganized. The tumor cells are surrounded by a dense stroma, which is composed of fibroblasts, blood vessels, and other connective tissue components. The tumor cells are also seen to be invading into the surrounding tissue, with some areas showing a more aggressive phenotype, characterized by a higher degree of cellular atypia and increased mitotic activity. The tumor cells are also seen to be expressing a number of genes that are associated with the invasive phenotype, including matrix metalloproteinases (MMPs), integrins, and adhesion molecules. Overall, the architectural complexity of the tumor leading edge and the observable features of the tumor cells suggest that this is a highly aggressive form of OSCC that is likely to have a poor prognosis. 
+
+Step 3: Thought: The QwenVLCaptionTool provided a detailed description of the oral squamous cell carcinoma (OSCC) tissue, highlighting its architectural complexity, invasive phenotype, and expression of genes associated with invasion (e.g., MMPs, integrins, adhesion molecules). However, to determine whether this spatial transcriptomic signature can reliably distinguish aggressive disease across cancer types, I need to explore the broader context of cancer biology and gene expression patterns across different cancers. I should use the OncoTreeTool to investigate upstream/downstream nodes and tissue mapping related to OSCC, which may help identify conserved pathways or genes across cancer types. 
+
+Action: OncoTreeTool 
+
+Action Input: {”query”: ”oral squamous cell carcinoma”, ”query type”: ”tissue” }
+
+Observation: No results found for query ’oral squamous cell carcinoma’ 
+
+Step 4: Final Answer: Yes, we can confidently assert that the spatial transcriptomic signature of the oral squamous cell carcinoma sample, characterized by the expression of genes associated with invasion (e.g., MMPs, integrins, adhesion molecules), reliably distinguishes aggressive disease across cancer types. These genes are conserved across multiple cancers and are known biomarkers of tumor invasiveness and metastasis, supporting the notion that the observed architectural complexity and invasive phenotype are indicative of aggressive disease. 
+
+> Figure 34. Trajectory execution for ReACT (Qwen3 VL 8B Instruct) framework on case 3649 8072 10393.
+
+24 MLLM-Tools (ToolACE 8B): Evaluation Result: TRR: 0.0, TSS: 0.5, ACS: 0.2, HR: 0.9 
+
+Step 1: Thought: what should I do? 
+
+Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”Describe the spatial transcriptomic signature in this oral squamous cell carcinoma sample, focusing on its reliability in distinguishing aggressive disease across cancer types.”, ”image path”: ”GSE208253 GSM6339637 7x14-43x50.png” }
+
+Observation: The spatial transcriptomic signature in this oral squamous cell carcinoma (OSCC) sample is charac-terized by a dense, uniform distribution of cells with high expression of MDM2. This uniformity and intensity are striking features, as MDM2 is a highly sensitive and specific marker for certain types of OSCC, particularly those exhibiting 12p loss and amplification, which often correlates with aggressive behavior. In contrast, other areas of the sample show less intense staining, suggesting heterogeneity within the tumor. While this pattern is highly suggestive of an aggressive disease, it’s important to note that the absence of MDM2 expression in some regions does not rule out malignancy. The heterogeneity could represent different stages of tumor evolution or varying degrees of differen-tiation within the tumor itself. Therefore, while this sample is classified as having a high-risk profile based on MDM2 expression, it demonstrates the complexity of predicting tumor behavior and the need for comprehensive diagnostic evaluations. 
+
+Step 2: Thought: what should I do? 
+
+Action: ProteinAtlasGeneInfoTool 
+
+Action Input: {”gene”: ”MDM2” }
+
+Observation: Gene: MDM2, Gene name: HDM2, MGC5370, Gene description: MDM2 proto-oncogene, Protein class: Cancer-related genes, Disease related genes, Human disease related genes, Metabolic proteins, Potential drug targets... Protein function: E3 ubiquitin-protein ligase that mediates ubiquitination of p53/TP53, leading to its degra-dation by the proteasome. Inhibits p53/TP53- and p73/TP73-mediated cell cycle arrest and apoptosis by binding its transcriptional activation domain... Gene summary: This gene encodes a nuclear-localized E3 ubiquitin ligase. The encoded protein can promote tumor formation by targeting tumor suppressor proteins, such as p53, for proteasomal degradation. This gene is itself transcriptionally-regulated by p53. Overexpression or amplification of this locus is detected in a variety of different cancers... 
+
+Step 3: Thought: what should I do? 
+
+Action: PathwayKGTool 
+
+Action Input: {”gene1”: ”MDM2”, ”gene2”: ”TP53”, ”radius”: 1, ”use in edges”: false }
+
+Observation: weighted jaccard: 0.022364217252396165, intersection nodes example: [”CREBBP”, ”TFIP11”, ”TP73”, ”YY1”, ”CACNG2”], summary: ”Weighted Jaccard similarity between MDM2 and TP53 is 0.022 with 28 overlapping nodes (showing up to 5).” 
+
+Step 4: Output: Agent stopped due to iteration limit or time limit. 
+
+> Figure 35. Trajectory execution for MLLM-Tools (ToolACE 8B) framework on case 3649 8072 10393.
+
+25 OpenAI-Agent-SDK (GPT-5): Evaluation Result: TRR: 0.0, TCF1: 0.5, TSS: 1.0, ACS: 0.7, HR: 0.0 
+
+Step 1: Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”Describe the histopathologic features in this H&E-stained oral squamous cell carcinoma leading edge, focusing on invasive front architecture (keratinization, budding nests, stromal reaction, necrosis, in-flammatory infiltrate).”, ”image path”: ”GSE208253 GSM6339637 7x14-43x50.png” }
+
+Observation: The image shows an invasive squamous cell carcinoma at the leading edge. Key features include: 1) **Keratinization:** There is evidence of individual cell keratinization and potentially early keratin pearl formation, indicating squamous differentiation. 2) **Budding Nests & Strands:** Small clusters and linear arrangements of malignant squamous cells infiltrate the stroma, characteristic of invasion. 3) **Desmoplastic Stromal Reaction:** The surrounding connective tissue (stroma) appears reactive, characterized by increased cellularity (fibroblasts, in-flammatory cells) and collagen deposition, responding to the tumor invasion. 4) **Necrosis:** Areas of cell death are present, likely due to tumor growth outstripping its blood supply or direct cytotoxic effects. 5) **Inflammatory Infiltrate:** Numerous inflammatory cells (lymphocytes, plasma cells, neutrophils) are scattered within the stroma and amongst the tumor cells, representing a host immune response to the malignancy. 
+
+Step 2: Action: BLIPTool 
+
+Action Input: {”text”: ”Summarize the key morphologic patterns visible in this H&E section of oral squamous cell carcinoma at the tumor leading edge (e.g., tumor nests, keratinization, stromal reaction, inflammation).”, ”im-age path”: ”GSE208253 GSM6339637 7x14-43x50.png” }
+
+Observation: Homo sapiens breast tissue the oncotree code is idc and highly expressed genes are igkc, ighg4, rpl41, mt - n and. 
+
+Final Answer: Short answer: no—without multi-cancer external validation, you can’t confidently claim that a spatial leading-edge signature from oral SCC will reliably distinguish aggressive disease across cancer types. What the image supports - The invasive front shows budding nests/strands, squamous differentiation with keratiniza-tion, reactive stroma, necrosis, and prominent inflammatory infiltrate—features consistent with an invasion-associated program. Why cross-cancer reliability is uncertain - Biological context: Invasive-edge programs share modules (partial EMT/TGF-β, CAF/ECM remodeling, hypoxia, myeloid inflammation) but their gene composition and thresholds are tissue- and lineage-specific. - Cell-mixing in ST: Leading-edge spots often blend tumor, CAFs, and immune cells; signatures may reflect stromal content rather than tumor-intrinsic aggressiveness. - Etiology and site effects: HPV status, keratinization, oral mucosa vs lung/breast/colon microenvironments alter the transcriptomic pattern. - Technical heterogeneity: Platform resolution, capture area, and batch effects affect transferability. - Prognostic transfer: Pan-cancer EMT/CAF scores correlate with worse outcomes in many carcinomas but fail or invert in some settings; calibration is required. Recommended validation strategy - Derive a tumor-intrinsic signature by deconvolving ST spots (e.g., cell2location/RCTD/SPOTlight) and modeling spatial interaction with CAFs/immune cells. - Train in HNSC/OSCC; test in independent OSCC and other carcinomas (lung/eso SCC, colorectal, breast) with nested cross-validation and domain adaptation (Harmony/ComBat). - Assess discrimination for metastasis/recurrence/survival (AUC, calibra-tion) and perform site-specific recalibration. - Orthogonal validation with multiplex IHC for canonical markers (e.g., VIM, ZEB1, EPCAM loss, ITGA5/ITGB1, MMP9, COL1A1/POSTN/SPP1; CAF: ACTA2, FAP; hypoxia: CA9). -Report robustness to stromal proportion and batch effects; include decision thresholds per cancer type. Bottom line Your spatial signature likely captures a conserved invasive-edge phenotype, but its ability to reliably distinguish ”aggressive” disease across cancer types must be demonstrated with multi-cohort, cross-cancer validation and careful control for stromal mixing and technical variation. If you share the gene list, I can check pan-cancer consistency and disease associations to prioritize a transferable core module. 
+
+> Figure 36. Trajectory execution for OpenAI-Agent-SDK (GPT-5) framework on case 3649 8072 10393.
+
+26 LAMMI (MiniCPM-V 4.5): Evaluation Result: TRR: 0.0, TCF1: 0.33, TSS: 1.0, ACS: 0.8, HR: 0.2 
+
+Step 1: Planner Agent Invokes ImageAgent Thought: The user has provided an image of a glioblastoma sample and requested analysis for distinct histological patterns such as nuclear atypia, mitotic activity, microvascular proliferation, and their correlation with the OncoTree classification. This requires detailed visual inspection and expert knowledge in pathology. 
+
+Action: ImageAgent 
+
+Action Input: ”Please analyze this glioblastoma sample to identify signs of nuclear atypia, mitotic activity, and microvas-cular proliferation, and explain how these features correlate with its assigned OncoTree classification.” 
+
+Step 2: ImageAgent Tool Call 1 Thought: To analyze the glioblastoma sample, I should first use a tool to identify specific histopathological features such as nuclear atypia, mitotic activity, and microvascular proliferation. Then, using another tool, I can correlate these findings with its OncoTree classification. 
+
+Action: BLIPTool 
+
+Action Input: {”text”: ”Describe any notable histopathological features in this slide related to glioblastoma, including cellular morphology and tissue architecture.”, ”image path”: ”NCBI375 16.8x22.11.png” }
+
+Observation: Mus musculus brain shows healthy with oncotree code unknown key overexpressed genes are mbp, plp1, fth1, mobp, act. 
+
+Step 3: ImageAgent Tool Call 2 Thought: The BLIPTool provided information about the genetic expression and species, but did not directly address histopathological features such as nuclear atypia, mitotic activity, and microvascular proliferation. To get a more detailed description of these specific features in the context of glioblastoma, I should use another tool that can provide an image-based analysis. 
+
+Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”Analyze this glioblastoma sample to identify signs of nuclear atypia, mitotic activity, and mi-crovascular proliferation.”, ”image path”: ”NCBI375 16.8x22.11.png” }
+
+Observation: The sample under examination is from the glioblastoma multiforme (GBM) cell line, which is known for its aggressive nature. The nuclei appear hyperchromatic and irregular, indicative of nuclear atypia. This irregularity in nuclear morphology is a hallmark of malignancy, suggesting abnormal cell growth and division. In addition to nuclear atypia, there is evidence of mitotic activity. The presence of cells in various stages of cell division, such as prophase, metaphase, anaphase, and telophase, further supports the diagnosis of a high-grade tumor like glioblastoma. Microvascular proliferation is also observed in this sample. The blood vessels appear dilated and tortuous, with multiple layers of ... (Content exceeding six lines has been truncated for display. )
+
+Step 4: ImageAgent Tool Call 3 Thought: Now that I have identified the histopathological features of the glioblastoma sample, I should use the OncoTree-Tool to correlate these findings with its assigned OncoTree classification. 
+
+Action: OncoTreeTool 
+
+Action Input: {”query”: ”glioblastoma”, ”query type”: ”tumor” }
+
+Observation: Tumor/Disease: Glioblastoma, IDH-Wildtype (GB) **Main Type**: Glioma **Tissue/Organ**: CNS/Brain **Upstream Nodes**: {’parent’: ’ADIFG’, ’precursors’: [] }
+
+**Downstream Nodes**: None —(Content exceeding six lines has been truncated for display. )
+
+ImageAgent Final Answer Final Answer: The analysis of the glioblastoma sample shows signs of nuclear atypia, mitotic activity, and microvascular proliferation. These features correlate with its assigned OncoTree classification as Glioma in the CNS/Brain tissue category. 
+
+Planner Agent Final Answer Final Answer: The analysis of the glioblastoma sample shows signs of nuclear atypia, mitotic activity, and microvascular proliferation. These features correlate with its assigned OncoTree classification as Glioma in the CNS/Brain tissue category. 
+
+> Figure 37. Trajectory execution for LAMMI (MiniCPM-V 4.5) framework on case 1511 6709 6887 8022.
+
+27 MAT-Agent (MiniCPM-V 4.5): Evaluation Result: TRR: 0.75, TCF1: 0.0, TSS: 0.5, ACS: 0.3, HR: 0.9 
+
+Step 1: Thought: To answer the question, I need to analyze the glioblastoma sample using blip pathology analysis and then use oncotree query to get information about its OncoTree classification. 
+
+Code: 
+
+# Analyze the glioblastoma sample analysis result = blip pathology analysis(text=”What distinct histological patterns reveal the aggressive nature of the tumor?”, image path=”NCBI375 16.8x22.11.png”) # Use oncotree query to get information about its OncoTree classification oncotree classification = oncotree query(query=”glioblastoma”, query type=”tumor”) print(oncotree classification) 
+
+Observation: 
+
+Tumor/Disease: Glioblastoma, IDH-Wildtype (GB) **Main Type**: Glioma **Tissue/Organ**: CNS/Brain **Upstream Nodes**: {’parent’: ’ADIFG’, ’precursors’: [] }
+
+**Downstream Nodes**: None —(Content exceeding six lines has been truncated for display. )
+
+Step 2: Thought: I will try to use qwen vl pathology qa to get an answer about the histological patterns in glioblastoma. 
+
+Code: 
+
+# Use qwen vl pathology qa to get an answer about the histological patterns in glioblastoma pathology answer = qwen vl pathology qa(text=”What distinct histological patterns reveal the aggressive nature of the tumor?”, image path=”NCBI375 16.8x22.11.png”) print(pathology answer) 
+
+Observation: 
+
+Print outputs: The tumor exhibits areas with a storiform pattern, characterized by a swirling arrangement of spindle cells, and regions showing a whorled pattern, where cells form concentric circles. These patterns are indicative of the tumor’s aggressive behavior and are often associated with malignant neoplasms. 
+
+Step 3-8: Thought: I will try to use the provided tools to generate an image showcasing the distinct histological patterns in glioblastoma. 
+
+Code: 
+
+# Generate an image showcasing the distinct histological patterns in glioblastoma using blip pathology analysis and oncotree query results image = generate image(title=”Distinct histological patterns in glioblastoma”, description=analysis result + ” and OncoTree classification of glioblastoma”) print(image) 
+
+Observation: 
+
+Error: It is not permitted to evaluate other functions than the provided tools or functions defined in previous code (tried to execute generate image). (Steps 3-8 repeat the same error. )
+
+Final Answer: I apologize for the errors. Let’s try a different approach to generate an image showcasing the distinct histological patterns in glioblastoma. Please note that this solution may not provide the desired result due to the limitations of the provided tools. 
+
+> Figure 38. Trajectory execution for MAT-Agent (MiniCPM-V 4.5) framework on case 1511 6709 6887 8022.
+
+28 ReACT (MiniCPM-V 4.5): Evaluation Result: TRR: 0.0, TCF1: 0.4, TSS: 0.83, ACS: 0.8, HR: 0.2 
+
+Step 1: Thought: To address the question, I need to first analyze the histological features visible in the image using a tool that can interpret pathology images. Once the specific patterns (nuclear atypia, mitotic activity, microvascular proliferation) are identified, I will use another tool to map these findings onto the OncoTree classification system. 
+
+Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”glioblastoma”, ”image path”: ”glioblastoma.jpg” }
+
+Observation: API call failed: Image file does not exist: glioblastoma.jpg 
+
+Step 2: Thought: The image path provided is incorrect. The correct image path should be used to analyze the histological features. 
+
+Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”What distinct histological patterns in this glioblastoma sample—such as nuclear atypia, mitotic activity, or microvascular proliferation—reveal the aggressive nature of the tumor, and how do they correlate with its assigned OncoTree classification?”, ”image path”: ”NCBI375 16.8x22.11.png” }
+
+Observation: The glioblastoma sample exhibits several key histological patterns indicative of its aggressive nature. These include pronounced nuclear atypia, characterized by irregularly shaped and sized nuclei, and high mitotic activity, reflecting rapid cell division. Microvascular proliferation is also evident, with an increased number of small, abnormal blood vessels. These features collectively suggest high-grade malignancy, consistent with the OncoTree classification of glioblastoma. 
+
+Step 3: Thought: Now that the histological features of the glioblastoma sample have been identified, I need to use a tool to map these findings onto the OncoTree classification system. 
+
+Action: OncoTreeTool 
+
+Action Input: {”query”: ”glioblastoma”, ”query type”: ”tumor” }
+
+Observation: [”Tumor/Disease: Glioblastoma, IDH-Wildtype (GB) **Main Type**: Glioma **Tissue/Organ**: CNS/Brain **Upstream Nodes**: {’parent’: ’ADIFG’, ’precursors’: [] }
+
+**Downstream Nodes**: None —(Content exceeding six lines has been truncated for display. )
+
+Final Answer: The glioblastoma sample exhibits pronounced nuclear atypia, high mitotic activity, and microvascular proliferation, which reveal its aggressive nature. These histological features correspond to the OncoTree classification of IDH-wildtype Glioblastoma (GB), highlighting the malignant potential associated with these characteristics. 
+
+> Figure 39. Trajectory execution for ReACT (MiniCPM-V 4.5) framework on case 1511 6709 6887 8022.
+
+29 MLLM-Tools (Vicuna v1.5 7B + ImageBind): Evaluation Result: TRR: 0.0, TCF1: 0.0, TSS: 0.75, ACS: 0.8, HR: 0.7 
+
+Step 1: Thought: What distinct histological patterns in this glioblastoma sample—such as nuclear atypia, mitotic activity, or microvascular proliferation—reveal the aggressive nature of the tumor, and how do they correlate with its assigned OncoTree classification? 
+
+Action: BLIPTool 
+
+Action Input: {”text”: ”What distinct histological patterns in this glioblastoma sample—such as nuclear atypia, mitotic activity, or microvascular proliferation—reveal the aggressive nature of the tumor, and how do they correlate with its assigned OncoTree classification?”, ”image path”: ”NCBI375 16.8x22.11.png” }
+
+Observation: Mus musculus brain tissue the oncotree code is unknown and highly expressed genes are mbp, snap25, atp1b1, cpe, gnas itm2. 
+
+Step 2: Thought: Action: EchoTool 
+
+Action Input: {”error”: ”Could not parse Action / Action Input. Please follow the format: Thought/Action/Action Input or Final Answer.” }
+
+Observation: EchoTool is not a valid tool, try one of [BLIPTool, QwenVLCaptionTool, OncoTreeTool, PathwayKG-Tool, EnsemblToDatabaseTool, ProteinAtlasGeneInfoTool, DocumentGeneQueryTool, BiomedicalEntityExtractor-Tool]. 
+
+Final Answer: The glioblastoma sample exhibits distinct histological patterns of nuclear atypia, mitotic activity, and microvascular proliferation, which are indicative of its aggressive nature. These patterns are highly correlated with the tumor’s OncoTree classification, which reflects its aggressive behavior and poor prognosis. 
+
+> Figure 40. Trajectory execution for MLLM-Tools (Vicuna) framework on case 1511 6709 6887 8022.
+
+30 OpenAI-Agent-SDK (GPT-5): Evaluation Result: TRR: 0.4, TCF1: 0.4, TSS: 0.6, ACS: 0.1, HR: 0.0 
+
+Step 1: Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”You are a pathology assistant. Inspect this H&E-like brain tumor image for glioblastoma histologic features. Identify if you can see any of the following: 1) nuclear atypia/pleomorphism, 2) mitotic figures, 3) microvascular proliferation (tufted/endothelial multilayering), 4) areas suggestive of necrosis or pseudopalisading, 5) high cellularity. Provide a concise description of visible patterns.”, ”image path”: ”NCBI375 16.8x22.11.png” }
+
+Observation: The image displays a brain tissue sample with a purple hue, indicative of a standard hematoxylin and eosin (H&E) stain. The tissue architecture appears disrupted, with irregularly shaped cells that exhibit nuclear atypia, suggesting possible malignancy. There are also areas of dense cellularity, hinting at a high proliferation rate. Some regions show a lack of staining, possibly indicating necrosis. The presence of endothelial multilayering suggests vascular proliferation. These features collectively suggest a high-grade glioma, such as glioblastoma. 
+
+Step 2: Action: OncoTreeTool 
+
+Action Input: {”query”: ”glioblastoma”, ”query type”: ”tumor” }
+
+Observation: An error occurred while running the tool. Please try again. Error: The type of input ‘query type‘ of OncoTreeTool.apply‘ is not supported. Supported types are ImageIO, bool, int, AudioIO, str, File, float 
+
+Step 3-5: Agent attempts OncoTreeTool with variations (query: ”Glioblastoma Multiforme”, query type: ””), all resulting in the same error. 
+
+Final Answer: Observed histologic patterns in the provided field: - Nuclear atypia/pleomorphism: nuclei appear variably sized and irregular with hyperchromasia, consistent with malignant astrocytic cells. - High cellularity: crowding of atypical cells suggests rapid growth. - Mitotic activity: no unequivocal mitotic figures are identifiable in this small, low-resolution field. - Microvascular proliferation: classic glomeruloid/endothelial multilayering is not clearly seen in this view. - Necrosis/pseudopalisading: not evident in this specific field. Interpretation and correlation with OncoTree: - Glioblastoma is defined histologically by marked atypia with brisk ... (Content exceeding six lines has been truncated for display. )
+
+> Figure 41. Trajectory execution for OpenAI-Agent-SDK (GPT-5) framework on case 1511 6709 6887 8022.
+
+31 LAMMI (Qwen-VL 8B Instruct): Evaluation Result: TRR: 0.0, TCF1: 0.6, TSS: 0.78, ACS: 0.8, HR: 0.8 
+
+Step 1: Planner Agent Invokes ImageAgent Thought: The user is asking about tumor subtyping in the absence of an OncoTree classification, specifically focusing on the cautious approach required when relying solely on histomorphology and what ancillary studies might be needed. This requires expert analysis of histopathological features and guidance on appropriate ancillary diagnostic tools. Since I am not equipped to directly analyze pathology images or provide nuanced clinical guidance on tumor classification, I need to delegate this to the appropriate specialist. 
+
+Action: ImageAgent 
+
+Action Input: ”Analyze this pathology image for histomorphological features suggestive of tumor subtypes, and identify any ambiguous or atypical features that might necessitate ancillary studies for accurate classification.” 
+
+Step 2: ImageAgent Tool Call 1 Thought: I need to analyze the histopathology image for histomorphological features suggestive of tumor subtypes and identify any ambiguous or atypical features. The QwenVLCaptionTool is suitable for providing a detailed textual analysis of the pathology image based on visual features. 
+
+Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”The image shows a well-differentiated squamous cell carcinoma with keratin pearls and intercellular bridges. There are no atypical features that would necessitate ancillary studies for accurate classification.”, ”image path”: ”MEND160 ATTCGTGCTATCTCTT-1.png” }
+
+Observation: Your observation about the well-differentiated squamous cell carcinoma is correct, and your reasoning about the absence of atypical features is also valid. However, the diagnosis might not be limited to squamous cell carcinoma. Hint: Consider the possibility of other pathologies that could coexist with squamous cell carcinoma. For instance, what if there were small nests of cells completely surrounded by stroma within the squamous mucosa? What could this suggest? 
+
+Step 3: ImageAgent Tool Call 2 Thought: The observation suggests considering other pathologies that might coexist with squamous cell carcinoma, such as small nests of cells surrounded by stroma. To further analyze this, I should use the OncoTreeTool to explore potential tissue mappings and related tumor subtypes that could be relevant. 
+
+Action: OncoTreeTool 
+
+Action Input: {”query”: ”squamous cell carcinoma”, ”query type”: ”tumor” }
+
+Observation: Multiple subtypes of squamous cell carcinoma across various tissues, including head and neck, skin, lung, and others. 
+
+Step 4: ImageAgent Tool Call 3 Thought: The BLIPTool failed due to an incorrect image path. I should retry with the correct image path provided in the initial input. 
+
+Action: BLIPTool 
+
+Action Input: {”text”: ”Analyze this pathology image for histomorphological features suggestive of tumor subtypes, and identify any ambiguous or atypical features that might necessitate ancillary studies for accurate classification.”, ”image path”: ”MEND160 ATTCGTGCTATCTCTT-1.png” }
+
+Observation: Homo sapiens prostate shows cancer with oncotree code unknown key overexpressed genes are klk3, rpl4, klk2, msmb, acpp. 
+
+ImageAgent Final Answer Final Answer: The histopathology image suggests a diagnosis of prostate cancer, characterized by specific gene expressions (KLK3, RPL4, KLK2, MSMB, ACPP) and histomorphological features consistent with this subtype. No further ancillary studies are immediately required based on this analysis. 
+
+Step 5: Planner Agent Invokes GeneAgent Thought: The ImageAgent has provided a detailed analysis of the pathology image, identifying it as prostate cancer based on histomorphological features and gene expression patterns (KLK3, RPL4, KLK2, MSMB, ACPP). The analysis also indicates that no further ancillary studies are immediately required. However, the user’s original query was broader, asking about the cautious approach to tumor subtyping in the absence of an OncoTree classification and what ancillary studies might be warranted. The ImageAgent’s response addresses the specific image but does not directly answer the general clinical question about tumor subtyping protocols and ancillary studies. 
+
+Action: GeneAgent 
+
+Action Input: ”In the absence of an OncoTree classification, how should tumor subtyping be approached cautiously based solely on histomorphology, and what ancillary studies are warranted to avoid misclassification?” 
+
+Step 6: GeneAgent Tool Call 1 Thought: The question is about tumor subtyping based on histomorphology and ancillary studies needed to avoid misclassification. The image provided is a histopatho-logical slide, which suggests a need to extract biological entities from the image description or associated text. 
+
+Action: BiomedicalEntityExtractorTool 
+
+Action Input: {”text”: ”histomorphology tumor subtyping” }
+
+Observation: No biological entities found. 
+
+Step 7: GeneAgent Tool Call 2 Thought: Since no biological entities were extracted from the input text, and the question is about tumor subtyping based on histomorphology and ancillary studies, I need to rely on general knowledge and available tools to provide a cautious approach. 
+
+Action: DocumentGeneQueryTool 
+
+Action Input: {”query”: ”tumor subtyping histomorphology” }
+
+Observation: No results found. 
+
+Step 8: GeneAgent Tool Call 3 Thought: Since no results were found from the DocumentGeneQueryTool, I will try to use the ProteinAtlasGeneInfoTool to fetch general gene information that might be relevant to tumor subtyping based on histomorphology. 
+
+Action: ProteinAtlasGeneInfoTool 
+
+Action Input: {”gene”: ”TUMOR” }
+
+Observation: {”error”: ”Failed to fetch ProteinAtlas page for TUMOR” }
+
+GeneAgent Final Answer Final Answer: In the absence of an OncoTree classification, tumor subtyping should be approached cautiously by relying on detailed histomorphological features such as architectural patterns, cytological characteristics, and mitotic activity. Ancillary studies warranted include immunohistochemistry (IHC) for specific markers, molecular profiling (e.g., gene expression, mutations), and, if feasible, next-generation sequencing to identify actionable targets. These studies help avoid misclassification by providing additional layers of biological information that complement histomorphology. 
+
+Final Answer: In the absence of an OncoTree classification, tumor subtyping should be approached cautiously by relying on detailed histomorphological features such as architectural patterns, cytological characteristics, and mitotic activity. Ancillary studies warranted include immunohistochemistry (IHC) for specific markers, molecular profiling (e.g., gene expression, mutations), and, if feasible, next-generation sequencing to identify actionable targets. These studies help avoid misclassification by providing additional layers of biological information that complement histomorphology. In the case of the provided image, histopathological analysis suggests a diagnosis of prostate cancer, characterized by specific gene expressions (KLK3, RPL4, KLK2, MSMB, ACPP), and no further ancillary studies are immediately required based on this analysis. 
+
+Figure 42. Trajectory execution for LAMMI (Qwen-VL 8B Instruct) framework on case 1317 5021 7882 9140 9288 9676 9691 10334. 
+
+32 MAT-Agent (Qwen-VL 8B Instruct): Evaluation Result: TRR: 0.0, TCF1: 0.0, TSS: 0.5, ACS: 0.7, HR: 1.0 
+
+Step 1: Thought: I need to analyze the image and find the relevant information to answer the question. I will use the ‘blip pathology analysis‘ tool to extract information about the image and its associated questions. 
+
+Code: 
+
+”’py answer = blip pathology analysis(text=”How cautiously should we approach tumor subtyping based solely on histomorphology, and what ancillary studies might be warranted to avoid misclassification?”, im-age path=”MEND160 ATTCGTGCTATCTCTT-1.png”) print(answer) ”’ 
+
+Observation: Homo sapiens prostate shows cancer with oncotree code unknown key overexpressed genes are rps12, rpl13a, rpl35, pnrc1s2. 
+
+Step 2: Thought: Based on the analysis, the prostate tissue has cancer with unknown OncoTree code. The overexpressed genes include rps12, rpl13a, rpl35, and pnrc1s2. Ancillary studies may be warranted to avoid misclassification. 
+
+Code: 
+
+”’py final answer(”Ancillary studies may be warranted to avoid misclassification due to the unknown OncoTree code and the presence of overexpressed genes such as rps12, rpl13a, rpl35, and pnrc1s2.”) ”’ 
+
+Final Answer: Ancillary studies may be warranted to avoid misclassification due to the unknown OncoTree code and the presence of overexpressed genes such as rps12, rpl13a, rpl35, and pnrc1s2.  
+
+> Figure 43. Trajectory execution for MAT-Agent (Qwen-VL 8B Instruct) framework on case 1317 5021 7882 9140 9288 9676 9691 10334.
+
+33 ReACT (Qwen-VL 8B Instruct): Evaluation Result: TRR: 0.0, TCF1: 0.0, TSS: 1.0, ACS: 0.9, HR: 0.7 
+
+Step 1: Thought: To address the question, I need to understand the histomorphological features of the tumor from the image and determine if there are any specific genes or pathways that might be associated with the observed morphology. This will help in evaluating the reliability of histomorphology alone for tumor subtyping and identifying necessary ancillary studies. I should start by using a tool to analyze the image and extract relevant genetic or pathological information. 
+
+Action: BLIPTool 
+
+Action Input: {”text”: ”MEND160 ATTCGTGCTATCTCTT-1.png”, ”image path”: ”MEND160 ATTCGTGCT ATCTCTT-1.png” }
+
+Observation: Homo sapiens prostate shows cancer with oncotree code unknown key overexpressed genes are eef1a1, klk3, rpl4, rpl41, them5. 
+
+Step 2: Thought: The BLIPTool has provided information indicating that the tissue is from a human prostate with cancer, and specific genes are overexpressed. However, since the OncoTree classification is unknown, I need to determine what ancillary studies might be warranted to avoid misclassification. I should use the OncoTreeTool to explore potential upstream/downstream nodes and tissue mapping to better understand the classification context. 
+
+Action: OncoTreeTool 
+
+Action Input: {”query”: ”prostate cancer”, ”query type”: ”tissue” }
+
+Observation: No results found for query ’prostate cancer’ 
+
+Step 3: Thought: The OncoTreeTool did not return any results for ”prostate cancer,” which suggests that the tool might not have sufficient data or the query might need refinement. Given this, I should consider using another tool to extract relevant biological entities from the text or image description to better understand the context. 
+
+Action: BiomedicalEntityExtractorTool 
+
+Action Input: {”text”: ”prostate cancer, eef1a1, klk3, rpl4, rpl41, them5” }
+
+Observation: Extracted biological entities including prostate cancer (MONDO:0008315), KLK3 (HGNC:6364, PSA, prostate specific antigen), eef1a1, Rpl4, Rpl41, and Them5 with their respective IDs and descriptions. 
+
+Final Answer: Tumor subtyping based solely on histomorphology should be approached with caution due to the absence of a defined OncoTree classification. Ancillary studies such as molecular profiling (e.g., gene expression analysis, genomic sequencing) and immunohistochemistry for specific markers (like KLK3/PSA) are warranted to avoid misclassification. 
+
+> Figure 44. Trajectory execution for ReACT (Qwen-VL 8B Instruct) framework on case 1317 5021 7882 9140 9288 9676 9691 10334.
+
+34 MLLM-Tools (Qwen 8B): Evaluation Result: TRR: 0.75, TCF1: 0.0, TSS: 0.125, ACS: 0.1, HR: 1.0 
+
+Step 1: Thought: I need to determine the tissue type and relevant genes from the provided image to understand the underly-ing biology and potential gene expression patterns. 
+
+Action: BLIPTool 
+
+Action Input: {”text”: ”What is the tissue type and relevant genes in this image?”, ”image path”: ”MEND160 ATTCGTGCTATCTCTT-1.png” }
+
+Observation: Homo sapiens prostate shows cancer with oncotree code unknown key overexpressed genes are klk3, rpl8, rpl41, rpl10, eep. 
+
+Step 2: Thought: I need To Determine the tissue type and relevant genes from the provided image to understand the under-lying biology and potential gene expression patterns. 
+
+Action: BLIPTool 
+
+Action Input: {”text”: ”What is the tissue type and relevant genes in this image?”, ”image path”: ”MEND160 ATTCGTGCTATCTCTT-2.png” }
+
+Observation: API call failed: [Errno 2] No such file or directory 
+
+Step 3: Thought: I need To Determine the tissue type and relevant genes from the provided image to understand the under-lying biology and potential gene expression patterns. 
+
+Action: BLIPTool 
+
+Action Input: {”text”: ”What is the tissue type and relevant genes in this image?”, ”image path”: ”MEND160 ATTCGTGCTATCTCTT-2.png” }
+
+Observation: API call failed: [Errno 2] No such file or directory 
+
+Step 4: Thought: I need To Determine the tissue type and relevant genes from the provided image to understand the under-lying biology and potential gene expression patterns. 
+
+Action: BLIPTool 
+
+Action Input: {”text”: ”What is the tissue type and relevant genes in this image?”, ”image path”: ”MEND160 ATTCGTGCTATCTCTT-3.png” }
+
+Observation: API call failed: [Errno 2] No such file or directory 
+
+Final Answer: Agent stopped due to iteration limit or time limit. 
+
+> Figure 45. Trajectory execution for MLLM-Tools (Qwen 8B) framework on case 1317 5021 7882 9140 9288 9676 9691 10334.
+
+35 OpenAI-Agent-SDK (GPT-5): Evaluation Result: TRR: 0.0, TCF1: 0.33, TSS: 1.0, ACS: 0.8, HR: 0.0 
+
+Step 1: Action: QwenVLCaptionTool 
+
+Action Input: {”text”: ”Describe the key histologic features visible (cell type, architecture, stroma) and any clues to tumor lineage. Avoid overinterpretation; provide generic descriptors.”, ”image path”: ”MEND160 ATTCGTGCTATCTCTT-1.png” }
+
+Observation: The image displays clusters of relatively small, darkly staining cells with high nuclear-to-cytoplasmic ratios and round to oval nuclei. These cells are embedded within a pink, fibrillar stromal matrix. The cohesive nature of the cell clusters and the lack of significant pleomorphism or prominent nucleoli suggest a lymphoid or hematopoietic lineage (e.g., lymphoma, leukemia) rather than a typical epithelial malignancy like adenocarcinoma, which usually forms glands or nests with more abundant cytoplasm. While small cell carcinoma is a differential, the overall pattern here is more suggestive of a hematopoietic neoplasm. 
+
+Step 2: Action: BLIPTool 
+
+Action Input: {”text”: ”Provide a concise pathology-oriented description of this H&E image: what structures and cells are seen? Any features suggestive of epithelial lining, stroma, or inflammatory infiltrate?”, ”image path”: ”MEND160 ATTCGTGCTATCTCTT-1.png” }
+
+Observation: Homo sapiens prostate tissue the oncotree code is unknown and highly expressed genes are rpl41, mt - co2, rps27, klk3, mt2. 
+
+Final Answer: Caution: Very high. On a small H&E focus with tightly packed, basophilic ”small round cells” along a stromal edge, morphology alone is non-specific and can mimic hematolymphoid, neuroendocrine/epithelial, melanoma, or small-round-cell sarcoma. Without an OncoTree framework, avoid assigning a precise subtype based only on histology; issue a provisional diagnosis (e.g., ”malignant neoplasm, small round-cell tumor—classification deferred”) and base classification on immunophenotype and molecular testing. Ancillary studies to prevent misclassification: - Broad screening IHC panel - Epithelial/neuroendocrine: ... (Content exceeding six lines has been truncated for display. )
+
+> Figure 46. Trajectory execution for OpenAI-Agent-SDK (GPT-5) framework on case 1317 5021 7882 9140 9288 9676 9691 10334.
+
+36

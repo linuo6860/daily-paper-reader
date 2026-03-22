@@ -1,0 +1,1483 @@
+Title: Confidence intervals for two-stage adaptive designs with subpopulation selection
+
+URL Source: https://arxiv.org/pdf/2603.13583v1
+
+Published Time: Tue, 17 Mar 2026 00:38:51 GMT
+
+Number of Pages: 25
+
+Markdown Content:
+# Confidence intervals for two-stage adaptive designs with subpopulation selection 
+
+Enyu Li 1∗, Nigel Stallard 1, Ekkehard Glimm 2, Dominic Magirr 2, Peter K. Kimani 11Clinical Trials Unit, University of Warwick, Coventry, U.K. 
+
+> 2
+
+Advanced Methodology and Data Science, Novartis Pharma AG, Basel, Switzerland 
+
+> ∗
+
+Email: Enyu.Li@warwick.ac.uk 
+
+Abstract 
+
+We consider clinical trials in which an experimental treatment is compared with a control in pre-specified patient subpopulations. In such settings, adaptive enrichment designs allow the enrolled population to be modified at an interim analysis, with subpopulations selected according to preplanned rules. Since these interim decisions are data-dependent, valid statistical inference must account for them. We focus on constructing confidence intervals for the treatment effect in the selected population. Confidence interval methods that ignore the possibility of population modification may fail to achieve the desired coverage probability. We propose a new approach that constructs confidence intervals with exact 100(1 − α)% coverage conditional on the interim decision. Importantly, our method applies to a broad class of adaptive enrichment designs, rather than a single specific design. Our method involves deriving the distribution of the naive estimator of the treatment effect in the selected population conditional on the interim decision and inverting uniformly most accurate unbiased tests to obtain the confidence interval. We provide an efficient computational procedure and show through extensive simulations that the resulting confidence intervals satisfy the theoretical coverage guarantees. 
+
+Key words : Adaptive enrichment design; Interval estimation; Precision medicine; Seamless phase II/III design; Subgroup analysis 
+
+# 1 Introduction 
+
+Recent advances in biomedical research have revealed a plethora of genetic biomarkers which may be related to the success of medical treatments. For example, metastatic breast cancer patients with over-expression of human epidermal growth factor receptor-2 (HER2) are more likely to get desired benefits from HER2 targeted therapies, such as trastuzumab and pertuzumab, as described by Baselga (2001) and Capelan et al. (2013). Subpopulations may also be associated with other baseline characteristics. For example, a meta-analysis by Kirsch et al. (2008) suggested that a certain class of antidepressants may only benefit patients with higher baseline severity of depression. When it is suspected that a treatment may benefit certain subpopulations only, it may be more efficient and ethically justifiable to incorporate an interim analysis into a trial such that the patient population enrolled is allowed to be modified mid-trial based on accrued data using preplanned rules. For example, if the interim analysis gives evidence that the treatment only benefits a certain subpopulation, patient recruitment can subsequently be restricted to this subpopulation. Such designs are known as adaptive enrichment designs (Simon and Simon, 2013). Rosenblum and van der Laan (2011) and Rosenblum (2015) showed that, with the same expected sample size, adaptive enrichment designs can identify subpopulations that benefit from the experimental treatment and evaluate subpopulation-specific treatment effects more effectively than standard fixed designs. 1
+
+> arXiv:2603.13583v1 [stat.ME] 13 Mar 2026
+
+In an adaptive enrichment design, multiple treatment effects in different subpopulations are considered, and the change of the population enrollment depends on data observed at interim analysis. This introduces statistical challenges on the inference about the treatment effect in the selected subpopulation. Standard hypothesis testing procedures which ignore the adaptive nature of the design may not guarantee the type I error rate. Similarly, in adaptive enrichment designs, naive point estimators may be biased, and naive confidence intervals may fail to achieve nominal coverage probabilities (e.g. Kimani et al. (2015) and Magnusson and Turnbull (2013)). Methods have been proposed to address hypothesis testing and point estimation for adaptive enrichment designs, including Brannath et al. (2009); Jenkins et al. (2011); Rosenblum and van der Laan (2011); Carreras and Brannath (2013); Kimani et al. (2015); Robertson et al. (2016); Kimani et al. (2018), and Kimani et al. (2020). However, confidence intervals for adaptive enrichment designs have drawn less attention. We focus on constructing confidence intervals for the treatment effect in the subpopulations selected at the interim analysis. European Medicines Agency (2007) remarked that using an adaptive design implies that the statistical methods control the pre-specified type I error, and that correct estimates and confidence intervals for the treatment effect are available. Hence, construction of confidence intervals, like hypothesis testing and point estimation, is an integral aspect of inference. We consider two-stage adaptive enrichment designs. At the interim analysis, a decision is made based on stage 1 data to determine the enrollment criteria for stage 2, with the options being to continue with the full population, any combination of subpopulations, or stop for futility. We develop the method in a broad class of designs involving multiple subpopulations. The designs we consider only allow changes to population enrollment, rather than total sample size, number of treatments, or randomization probabili-ties. Our contribution is a new methodology for constructing confidence intervals that achieve exact 100(1 −
+
+α)% conditional coverage given the interim decision, i.e., the selected population, as formalized in Sec-tion 3 and Section 4. We first derive the conditional distribution of the naive treatment effect estimator in the selected population, and show that it is a sufficient statistic under the conditional model. Building on the conditional inference framework of Lehmann and Romano (2022), we then obtain the associated conditional uniformly most accurate unbiased confidence interval. In adaptive enrichment designs, how-ever, the conditional distributions are analytically complex, and the resulting confidence intervals do not have closed-form expressions, and their calculation is complex. To address this, we develop an efficient numerical procedure that only requires evaluation of a definite integral of a well-defined probability density and root-finding for a monotone continuous function, both of which are readily implemented in standard statistical software. To the best of our knowledge, no existing confidence interval procedure for adap-tive enrichment designs provides exact conditional coverage, and our approach is the first to derive and compute the uniformly most accurate unbiased confidence interval in this adaptive design setting. 
+
+# 2 Related Work 
+
+A number of methods have been proposed to construct confidence intervals for adaptive designs involving treatment selection, subpopulation selection, and early stopping (Posch et al., 2005; Sampson and Sill, 2005; Brannath et al., 2006; Bowden and Glimm, 2008; Koopmeiners et al., 2012; Magnusson and Turnbull, 2013; Rosenblum, 2013; Robertson et al., 2016; Kimani et al., 2020). In general, these approaches control the overall coverage probability at the nominal level 100(1 − α)%. However, for the class of adaptive enrichment designs considered in Section 3, these existing procedures are either not applicable or do not provide accurate coverage. We give more details below. Rosenblum (2013) constructed confidence intervals for adaptive enrichment designs by inflating the width of the naive confidence intervals that ignores adaptivity. Their method guarantees at least 100(1 −
+
+α)% overall coverage, defined as a weighted average of the conditional coverage probabilities across all possible interim decisions. In contrast, the method proposed in this paper provides the stronger guarantee of exact conditional coverage given the interim decision. Furthermore, our framework accommodates more 2general enrichment designs, including those with futility stopping and multiple subpopulations, in which the direct application of the method of Rosenblum (2013) is not straightforward. Magnusson and Turnbull (2013) considered group sequential designs with subpopulation selection and proposed double bootstrap confidence intervals for the treatment effect in the selected population. Following the bootstrap bias-correction strategy of Davison and Hinkley (1997), they iteratively estimated the selection bias of the naive estimator to obtain a bias-corrected confidence interval. Although their aim was to achieve conditional coverage at level 100(1 − α)%, their simulation results indicated substantial under-coverage in many settings. Magirr et al. (2013) presented a general procedure for constructing one-sided simultaneous confidence intervals, which guarantees at least 100(1 − α)% overall simultaneous coverage, for a broad class of adaptive designs. Kimani et al. (2020) focused on an adaptive enrichment design and extended this approach to obtain two-sided confidence intervals, referred to as duality confidence intervals. However, duality confidence intervals can be highly conservative and, in certain cases, may be non-informative (e.g. covering the entire parameter space). Sampson and Sill (2005) studied confidence intervals for drop-the-loser designs, where multiple treat-ments are compared and the best-performing treatment in stage 1 is selected for continuation in stage 2. They derived the conditional distribution of the naive treatment effect estimator given that the treat-ment is selected, and constructed confidence intervals by inverting two one-sided level α/ 2 uniformly most powerful tests (Lehmann and Romano, 2022). Our work extends this conditional inference perspective by constructing the uniformly most accurate unbiased confidence interval which is obtained by inverting the two-sided level α uniformly most powerful unbiased test. Moreover, in contrast to the design in Sampson and Sill (2005), our procedure applies to adaptive enrichment designs with multiple subpopulations and stopping for futility. 
+
+# 3 Problem Definition and Notation 
+
+3.1 Data description, notation, and assumptions 
+
+Suppose the full patient population can be partitioned into k disjoint subpopulations. Denote the subpop-ulations 1 to k and the full population by S1, . . . , Sk, and F, respectively. We write K = {1, . . . , k } as the index set for the k subpopulations. We have S 
+
+> m∈K
+
+Sm = F and Sm
+
+T Sm′ = ∅ for any m, m ′ ∈ K , m ̸ = m′.For each m ∈ K , let pm denote the proportion of patients from subpopulation Sm in the full population where P 
+
+> m∈K
+
+pm = 1. We focus on adaptive enrichment designs with two stages. Let n denote the total sample size, and let nj = wj n be the sample size in stage j ∈ { 1, 2}, where w1 + w2 = 1. In the first stage where patients are enrolled from the full population, for each subpopulation Sm, we assume that the pro-portion of patients from Sm is the same as the subpopulation proportion pm. After the interim analysis, stage 2 enrollment may be restricted to any combination of subpopulations that is likely to benefit, which is called enrichment. Let K(2) denote the index set for the selected subpopulations, where K(2) ⊆ K .Define the selected subpopulations by SK(2) = S 
+
+> m∈K (2)
+
+Sm. In the second stage, we assume that patients are enrolled from subpopulation m ∈ K (2) in proportion pm/p K(2) , where pK(2) = P 
+
+> m∈K (2)
+
+pm. Within each enrolled subpopulation during a given stage, we assume that half of the patients are randomized to the treatment arm and half to the control arm. For each patient i ∈ { 1, . . . , n }, we collect the following data, ( Si, J i, A i, Y i), where Si ∈ K denotes the subpopulation index, Ji ∈ { 1, 2} is the stage when the patient is enrolled, Ai ∈ { 0, 1} is the treatment arm indicator (0 for control, 1 for treatment), and Yi ∈ R is the outcome. We assume that outcomes are normally distributed, with mean μma in subpopulation Sm and study arm a ∈ { 0, 1}, and with common variance σ2. Throughout the paper, we assume larger outcome values correspond to greater treatment effect. For each subpopulation Sm, define the true treatment effect in Sm by ∆ m, where ∆ m = μm1 − μm0.For any combination of subpopulations SK(2) , we define the true treatment effect in SK(2) by ∆ K(2) , where ∆K(2) = ( P 
+
+> m∈K (2)
+
+pm∆m)/p K(2) .Accordingly, the true treatment effect in the full population F is given 3by ∆ K = P 
+
+> m∈K
+
+pm∆m.Throughout the paper, we assume n1 and n2 are fixed at the beginning of the trial. In addition, we suppose pm for each m ∈ K and σ are known. 
+
+3.2 Definition of test statistics and naive confidence interval 
+
+For any combination of subpopulations SK(2) and each stage j ∈ { 1, 2} in which there is an enrollment in 
+
+Sm for any m ∈ K (2) , define the sample mean difference between treatment versus control by ˆ∆(j) 
+
+> K(2)
+
+=
+
+P 
+
+> {i:Si∈K (2) ,J i=j,A i=1 }
+
+Yi
+
+|{ i : Si ∈ K (2) , J i = j, A i = 1 }| −
+
+P 
+
+> {i:Si∈K (2) ,J i=j,A i=0 }
+
+Yi
+
+|{ i : Si ∈ K (2) , J i = j, A i = 0 }| .
+
+In the following, we define the naive point estimator for the true treatment effect to be the estimator obtained by pooling data of all patients enrolled in both stage 1 and 2. If the trial continues with the combination of subpopulations SK(2) , we define the naive point estimator for the true treatment effect in 
+
+SK(2) by ˆ∆K(2) =
+
+P 
+
+> {i:Si∈K (2) ,A i=1 }
+
+Yi
+
+|{ i : Si ∈ K (2) , A i = 1 }| −
+
+P 
+
+> {i:Si∈K (2) ,A i=0 }
+
+Yi
+
+|{ i : Si ∈ K (2) , A i = 0 }| .
+
+We define the naive 100(1 − α)% confidence interval that ignores the adaptive nature of the design as 
+
+
+
+ˆ∆K(2) + Φ −1(α/ 2) 2σ
+
+√pK(2) n1 + n2
+
+, ˆ∆K(2) + Φ −1(1 − α/ 2) 2σ
+
+√pK(2) n1 + n2
+
+
+
+For notational simplicity, for single subpopulation Sm, we write ˆ∆(j) 
+
+> m
+
+and ˆ∆m instead of ˆ∆(j) 
+
+> {m}
+
+and ˆ∆{m}, respectively, throughout the paper. 
+
+3.3 Decision rule 
+
+Denote the stage 1 data by X (1) = {(Si, J i, A i, Y i) : i ∈ { 1, . . . , n }, J i = 1 }. Suppose that X (1) is available for the interim analysis. Let D : X (1) 7 → K (2) denote the decision rule, which maps the stage 1 data to a unique index set K(2) ⊆ K representing the subpopulations to be enrolled in stage 2, with D(X (1) ) = ∅
+
+indicating that the trial stops for futility after stage 1. We introduce a general class of interim decision rules, denoted by D, for two-stage adaptive enrichment designs, to which the theoretical results in Section 4 apply for constructing the proposed confidence intervals. Decision rules in D satisfy the following condition: for each non-empty realization of K(2) , there exist random thresholds LK(2) and UK(2) such that 
+
+{X (1) : D(X (1) ) = K(2) } = {X (1) : LK(2) < ˆ∆(1)  
+
+> K(2)
+
+< U K(2) }.
+
+Here, LK(2) and UK(2) may also take values in R = R ∪ {−∞ , +∞} . In addition, LK(2) and UK(2) are assumed to be independent of ˆ∆(1)  
+
+> K(2)
+
+. The inequalities may be taken as either strict or non-strict, as the distinction does not affect the validity of the proposed method. Intuitively, a subpopulation is selected if its stage 1 sample mean ˆ∆(1)  
+
+> K(2)
+
+lies within a range whose limits are determined by random variables independent of ˆ∆(1)  
+
+> K(2)
+
+.If the trial continues with the subpopulations SK(2) , we aim to construct a 100(1 − α)% confidence interval for ∆ K(2) , whose conditional coverage probability satisfies Pr 
+
+
+
+∆K(2) ∈ CI 1−α(∆ K(2) ) D(X (1) ) = K(2) 
+
+= 1 − α. 
+
+Although the class D is defined above in terms of constraints on the stage 1 estimator, our framework also applies to certain interim decision rules that additionally depend on auxiliary statistics, provided that 4the resulting selection event can be characterized through joint constraints on ˆ∆(1)  
+
+> K(2)
+
+and the auxiliary statistic. Under this condition, the proposed confidence interval in Section 4 remain valid. For complete-ness, an example involving such an auxiliary statistic as in Kimani et al. (2015) is provided in Appendix C, where we illustrate this extension. 
+
+3.4 Example designs with decision rule in class D
+
+The class D encompasses a broad range of interim decision rules arising in adaptive enrichment designs, including those proposed in the literature (Rosenblum, 2013; Kimani et al., 2015, 2018). We first describe the decision rule of Rosenblum (2013) and the rule proposed in this paper, which are used in the worked example (Section 6) and simulation study (Section 7). Additional illustrations corresponding to the decision rules of Kimani et al. (2015, 2018) are provided in Appendix C. 
+
+3.4.1 The interim decision rule proposed by Rosenblum (2013) 
+
+Rosenblum (2013) considered the two subpopulations case, i.e., K = {1, 2} and proposed a decision rule based on Z-statistics. Define the stage 1 Z-statistics in the full population F, S1, and S2, respectively, as 
+
+Z(1)  
+
+> K
+
+= ˆ∆(1) 
+
+> K
+
+2σ/ √n1
+
+, Z(1) 1 = ˆ∆(1) 1
+
+2σ/ √p1n1
+
+, Z(1) 2 = ˆ∆(1) 2
+
+2σ/ √p2n1
+
+.
+
+Let D1 denote the decision rule shown in Fig. 1. For a fixed Z∗, if Z(1)  
+
+> K
+
+> Z ∗, the trial continues with the full population F, i.e., D1(X (1) ) = {1, 2}. Otherwise, the trial enriches to the subpopulation with the greater standardized stage 1 sample mean difference such that D1(X (1) ) = {arg max m∈{ 1,2} Z(1)  
+
+> m
+
+} with ties broken arbitrarily. Here, we assume the trial enriches to S1 when Z(1) 1 = Z(1) 2 . In this design, the possible values of D1(X (1) ) are {1, 2}, {1},and {2} corresponding respectively to continuation in the full population F, enrichment in S1, and enrichment in S2.
+
+Z(1)  
+
+> K
+
+> Z ∗
+
+Enrol from F Enrol from 
+
+Sarg max m∈{ 1,2} Z(1) 
+
+> m
+
+Yes No Figure 1: Schematic diagram of the interim decision rule D1 (proposed by Rosenblum (2013)) In Appendix B.1, we show that D1 induces the following partition of the stage 1 sample space and hence lies in class D.
+
+{X (1) : D1(X (1) ) = K} = {X (1) : 2σ
+
+√n1
+
+Z∗ < ˆ∆(1)  
+
+> K
+
+< +∞} {X (1) : D1(X (1) ) = {1}} = {X (1) :
+
+r p2
+
+p1
+
+ˆ∆(1) 2 ≤ ˆ∆(1) 1 ≤ 2σp1
+
+√n1
+
+Z∗ − p2
+
+p1
+
+ˆ∆(1) 2 }{X (1) : D1(X (1) ) = {2}} = {X (1) :
+
+r p1
+
+p2
+
+ˆ∆(1) 1 < ˆ∆(1) 2 ≤ 2σp2
+
+√n1
+
+Z∗ − p1
+
+p2
+
+ˆ∆(1) 1 }
+
+53.4.2 An interim decision rule with stopping for futility 
+
+We also consider the two subpopulations case ( K = {1, 2}) and propose an interim decision rule with stopping for futility, which may terminate the trial when the stage 1 observations are not promising. The decision rule, D2, is illustrated in Fig. 2. If the stage 1 sample mean difference in the full population 
+
+F exceeds the pre-specified threshold ∆ ∗, the trial continues with F in stage 2. Otherwise, if the larger of the stage 1 sample mean differences in S1 and S2 exceeds ∆ ∗, the trial enriches to the corresponding subpopulation. If none of these stage 1 sample mean differences exceeds ∆ ∗, the trial stops for futility. The possible values of D2(X (1) ) are {1, 2}, {1}, {2}, and ∅, corresponding respectively to continuation in the full population F, enrichment in S1, enrichment in S2, and stopping for futility in stage 2. ˆ∆(1)  
+
+> K
+
+> ∆∗
+
+Enrol from F
+
+max( ˆ∆(1) 1 , ˆ∆(1) 2 ) > ∆∗
+
+Enrol from 
+
+Sarg max m∈{ 1,2} ˆ∆(1) 
+
+> m
+
+Stop Yes No Yes No Figure 2: Schematic diagram of the interim decision rule D2
+
+In Appendix B.2, we demonstrate that D2 yields the following partition of the stage 1 sample space and also lies in class D.
+
+{X (1) : D2(X (1) ) = K} = {X (1) : ∆ ∗ < ˆ∆(1)  
+
+> K
+
+< +∞} {X (1) : D2(X (1) ) = {1}} = {X (1) : ∆ ∗ < ˆ∆(1) 1 ≤ (∆ ∗ − p2 ˆ∆(1) 2 )/p 1}{X (1) : D2(X (1) ) = {2}} = {X (1) : ∆ ∗ < ˆ∆(1) 2 ≤ (∆ ∗ − p1 ˆ∆(1) 1 )/p 2}
+
+3.5 Co-primary analysis 
+
+Following Jenkins et al. (2011), when the full population continues to stage 2, investigators may still be interested in the treatment effect in a particular subpopulation and in how this effect compares with that in the full population, either as an enhancement or an attenuation. Therefore, a co-primary analysis can be included. For example, in the case of two subpopulations, when the full population F continues to stage 2, 100(1 − α)% confidence intervals for ∆ 1 and ∆ 2 may also be constructed, with conditional coverage Pr 
+
+
+
+∆1 ∈ CI 1−α(∆ 1) D(X (1) ) = {1, 2}
+
+
+
+= 1 − α
+
+and Pr 
+
+
+
+∆2 ∈ CI 1−α(∆ 2) D(X (1) ) = {1, 2}
+
+
+
+= 1 − α. 
+
+64 Construction of Conditional Uniformly Most Accurate Unbiased Confidence Intervals 
+
+4.1 General method and theorem 
+
+Theorem 1. Suppose ˆ∆(1) ∼ N (∆ , σ 2(1) ) and ˆ∆(2) ∼ N (∆ , σ 2(2) ), where σ2(1) and σ2(2) are known. Let τ(1) =1/σ 2(1) , τ (2) = 1 /σ 2(2) , ˆ∆ = τ(1) /(τ(1) + τ(2) ) ˆ∆(1) + τ(2) /(τ(1) + τ(2) ) ˆ∆(2) and σ2(12) = σ2(1) σ2(2) /(σ2(1) + σ2(2) ).(i) The conditional distribution of ˆ∆ given l < ˆ∆(1) < u , where l and u are constants in R = R ∪{−∞ , +∞} , is 
+
+f∆( ˆ∆ | l < ˆ∆(1) < u ) = 1
+
+σ(12) 
+
+ϕ( ˆ∆ − ∆
+
+σ(12) 
+
+)Φ( u− ˆ∆(σ(1) /σ (2) )σ(12) ) − Φ( l− ˆ∆(σ(1) /σ (2) )σ(12) )Φ( u−∆ 
+
+> σ(1)
+
+) − Φ( l−∆ 
+
+> σ(1)
+
+) ,
+
+where ϕ and Φ are probability density function and cumulative distribution function of standard normal distribution. Furthermore, ˆ∆ is a sufficient statistic for ∆.(ii) The conditional level α uniformly most powerful unbiased test for H : ∆ = ∆ 0, given l < ˆ∆(1) < u ,exists. The critical function ψ∆0 ( ˆ∆) for testing H is 
+
+ψ∆0 ( ˆ∆) = 
+
+(
+
+1 when ˆ∆ < C 1(∆ 0) or ˆ∆ > C 2(∆ 0),
+
+0 when C1(∆ 0) ≤ ˆ∆ ≤ C2(∆ 0).
+
+where C1(∆ 0) and C2(∆ 0) are determined by 
+
+(
+
+E∆0 (ψ∆0 ( ˆ∆)) = α, 
+
+E∆0 ( ˆ∆ψ∆0 ( ˆ∆)) = αE∆0 ( ˆ∆) .
+
+(iii) The inverse functions, C−11 and C−12 , exist. By inverting the uniformly most powerful unbiased tests, the conditional 100(1 − α)% uniformly most accurate unbiased confidence interval for ∆, (∆ , ∆) ,is given by 
+
+∆ = C−12 ( ˆ∆) , ∆ = C−11 ( ˆ∆) .
+
+Proof. See Appendix A.1. We denote our proposed conditional uniformly most accurate unbiased confidence interval by C-UMAU confidence interval. 
+
+Proposition 1. The C-UMAU confidence interval for ∆ has the following properties: (i) Exact conditional coverage: Pr  ∆ ∈ (∆ , ∆) | l < ˆ∆(1) < u  = 1 − α.(ii) Conditional unbiased: Pr  ∆′ ∈ (∆ , ∆) | l < ˆ∆(1) < u  ≤ 1 − α, for any ∆′̸ = ∆ .(iii) Uniformly most accurate among unbiased intervals: among all confidence intervals with conditional coverage at least 1 − α, the C-UMAU interval minimizes Pr  ∆′ ∈ (∆ , ∆) | l < ˆ∆(1) < u  for all 
+
+∆′̸ = ∆ .Proof. See Appendix A.2. 74.2 Numerical method for calculating the C-UMAU confidence interval 
+
+Suppose ˆ∆ is distributed as in Theorem 1(i). We next provide a detailed procedure for constructing the 100(1 − α)% C-UMAU confidence interval by inverting the conditional uniformly most powerful tests. Step 1: Construct the conditional uniformly most powerful unbiased test for H : ∆ = ∆ 0.1. For any ∆ 0 ∈ R, compute E∆0 ( ˆ∆) using the result from Appendix A.3. 2. Solve the equation Z c2(c1)
+
+> c1
+
+t f ∆0 (t) dt = (1 − α) E∆0 ( ˆ∆) for c1, where c2(c1) = F −1(F (c1) + 1 − α). We prove R c2(c1) 
+
+> c1
+
+t f ∆0 (t) dt is continuous and strictly increasing on c1 in Appendix A.4. Accordingly, we can use any numerical root-finding method such as uniroot in R.3. Let c∗ 
+
+> 1
+
+denote the solution, and define 
+
+C1(∆ 0) = c∗
+
+> 1
+
+, C2(∆ 0) = c2(c∗
+
+> 1
+
+).
+
+4. Then [ C1(∆ 0), C 2(∆ 0)] is the acceptance region for the conditional uniformly most powerful test in Theorem 1(ii). Step 2: Invert the test to obtain the confidence interval. 1. Treat C1(∆ 0) and C2(∆ 0) as functions of ∆ 0. Given the observed ˆ∆, solve 
+
+C2(∆) = ˆ∆ and C1(∆) = ˆ∆for the lower limit ∆( ˆ∆) and the upper limit ∆( ˆ∆), respectively. We prove that C1(∆ 0) and C2(∆ 0)are continuous and strictly increasing in ∆ 0 in Appendix A.5. Then, both roots can be found using 
+
+uniroot in R.2. 
+
+h
+
+∆( ˆ∆) , ∆( ˆ∆) 
+
+i
+
+is the C-UMAU confidence interval. 
+
+4.3 Application on two-stage enrichment designs with interim decision rules in D
+
+First, we consider the conditional probability density of ˆ∆K(2) given the interim decision D(X (1) ) = K(2) 
+
+and the realization of LK(2) and UK(2) .
+
+f ( ˆ∆K(2) | D(X (1) ) = K(2) , L K(2) = lK(2) , U K(2) = uK(2) )=f ( ˆ∆K(2) | lK(2) < ˆ∆(1)  
+
+> K(2)
+
+< u K(2) )=
+
+ϕ( ˆ∆K(2) −∆K(2) 
+
+> 2σ/
+
+√pK(2) n1+n2 )2σ/ √pK(2) n1 + n2
+
+Φ( lK(2) − ˆ∆K(2) 
+
+√n2/(pK(2) n1) 2 σ/ √nK(2) 
+
+) − Φ( uK(2) − ˆ∆K(2) 
+
+√n2/(pK(2) n1) 2 σ/ √nK(2) 
+
+)Φ( lK(2) −∆K(2) 
+
+> 2σ/
+
+√pK(2) n1 ) − Φ( uK(2) −∆K(2) 
+
+> 2σ/
+
+√pK(2) n1 )
+
+.
+
+The conditional distribution of ˆ∆K(2) follows the form in Theorem 1(i). Hence, ˆ∆K(2) is a sufficient statistic for estimating ∆ K(2) . Then, we can use the procedure to calculate the C-UMAU confidence interval as described in Section 4.2. Since this procedure provides the C-UMAU confidence interval for every realization of LK(2) and UK(2) , it also constitutes the C-UMAU confidence interval for ∆ K(2) given 
+
+D(X (1) ) = K(2) (Theorem 4.4.1 and Lemma 5.5.1 in Lehmann and Romano (2022)). Examples with specific designs will be given in Section 6 and Section 7. 85 A computationally simpler alternative based on inversion of two one-sided tests 
+
+The proposed C-UMAU confidence interval is obtained by inverting two-sided conditional uniformly most powerful unbiased tests. In this subsection, we introduce a computationally simpler alternative to the proposed C-UMAU confidence interval, constructed via inversion of two conditional one-sided uniformly most powerful tests. We refer to this construction as the C-TOST (conditional two one-sided tests) con-fidence interval. By construction, the C-TOST confidence interval guarantees exact conditional coverage, and its lower and upper limits correspond to the conditional uniformly most accurate confidence bounds as defined in Lehmann and Romano (2022). However, unlike the C-UMAU confidence interval, the re-sulting interval does not in general satisfy the uniformly most accurate unbiased criterion and is therefore theoretically suboptimal. We include the C-TOST confidence interval as a computationally convenient alternative for comparison. 
+
+Definition 1. Let F∆( ˆ∆ | l < ˆ∆(1) < u ) denote the conditional cumulative distribution function of ˆ∆
+
+given in Theorem 1(i). The 100(1 − α)% C-TOST confidence interval for ∆, denoted by (∆ ∗, ∆∗), is defined by 
+
+F∆∗ ( ˆ∆ | l < ˆ∆(1) < u ) = 1 − α
+
+2 ,F∆∗ ( ˆ∆ | l < ˆ∆(1) < u ) = α
+
+2 .
+
+For two-stage adaptive enrichment designs with interim decision rules in the class D, the conditional probability density function f ( ˆ∆K(2) | D(X (1) ) = K(2) , L K(2) = lK(2) , U K(2) = uK(2) ) is given in Section 4.3. For any fixed ∆ K(2) and observed ˆ∆K(2) , the corresponding cumulative distribution function F∆K(2) ( ˆ∆K(2) |
+
+D(X (1) ) = K(2) , l K(2) , u K(2) ) can be computed numerically using integrate in R. Then, the C-TOST confidence limits can be obtained by solving the defining equations using a one-dimensional root-finding algorithm, such as uniroot in R, treating ∆ K(2) as the scalar argument with fixed ˆ∆K(2) .
+
+# 6 Example 
+
+In this section, we consider an adaptive enrichment trial and apply the proposed confidence interval procedures to demonstrate their use in a realistic setting. The Early Minimally Invasive Removal of Intracerebral Hemorrhage (ENRICH) trial (Pradilla et al., 2024) used a multi-stage adaptive design that considered potential treatment effect heterogeneity across patient subpopulations. Patients were classified according to hemorrhage location: lobar hemorrhage ( S1) and anterior basal ganglia ( S2). The trial planned a sample size ranging from 150 to 300 patients, with interim analyses triggered after 150, 175, 200, 225, 250, and 275 patients had been enrolled. A total of 300 patients were ultimately recruited. Following an interim analysis conducted after 175 patients, subsequent recruitment was restricted to patients with lobar hemorrhage ( S1). In the confirmatory analysis, treatment effects in S1, S2, and F
+
+were estimated. The subgroup definition, multi-stage conduct, enrollment adaptation, and co-primary analysis features align with the adaptive enrichment designs considered in this paper. To illustrate the proposed confidence interval procedures within a setting consistent with the ENRICH trial, we consider a simplified two-stage adaptive enrichment design. We assume a maximum sample size of 300 patients, with a single interim analysis conducted after 200 patients using the decision rule defined in Fig. 2. Patient accrual follows the framework described in Section 3.1. This simplified structure aligns with the class of designs studied in this paper. As in the ENRICH trial, the primary endpoint is the utility-weighted modified Rankin scale at 180 days. Following published studies (Mendelow et al., 2013; Hanley et al., 2016; Pradilla et al., 2024), we assume the endpoint follows a normal distribution with common variance across treatment arms and subpopulations, with σ2 = 0 .36 2. The subgroup prevalences 9are approximated by p1 = p2 = 0 .5 for analytical simplicity. This approximation is consistent with the observed early accrual in the ENRICH trial, where among the first 175 enrolled patients, 83 (47.4%) and 92 (52.6%) were classified as lobar and anterior basal ganglia hemorrhages, respectively. The interim decision threshold is set to ∆ ∗ = 0 .025. This value is chosen such that, if the true treatment effect in the full population equals the minimum clinically meaningful effect reported in the ENRICH trial, the stage 1 estimator ˆ∆(1)  
+
+> K
+
+exceeds ∆ ∗ with probability over 80%. Stagewise summaries from the ENRICH trial are not reported. Therefore, for illustration purposes, we construct stagewise sample means that are numerically consistent with the reported overall sample means in S1 and S2. The stage 1 sample means in S1, S2, and the full population F are taken to be ˆ∆(1) 1 = 0 .113, ˆ∆(1) 2 = 0 .013, and ˆ∆(1)  
+
+> {1,2}
+
+= 0 .063, respectively. According to the decision rule, the trial proceeds with the full population. At stage 2, the sample means are taken to be ˆ∆(2) 1 = 0 .155, ˆ∆(2) 2 =
+
+−0.064, and ˆ∆(2)  
+
+> {1,2}
+
+= 0 .045. The corresponding overall naive estimates are ˆ∆1 = 0 .127, ˆ∆2 = −0.013, and ˆ∆{1,2} = 0 .057. Using these quantities, we calculate 95% confidence intervals for the treatment effects in 
+
+F, S1, and S2 using the naive, C-UMAU, and C-TOST approaches. Details for constructing the C-UMAU confidence intervals in this example are provided in Appendix B.2. Method CI for ∆ {1,2} CI for ∆ 1 CI for ∆ 2
+
+Naive (-0.024, 0.138) (0.012, 0.242) (-0.128, 0.102) C-UMAU (-0.079, 0.131) (-0.028, 0.240) (-0.200, 0.093) C-TOST (-0.078, 0.132) (-0.025, 0.240) (-0.198, 0.094) Table 1: 95% confidence intervals for treatment effects in the worked example under the naive, C-UMAU, and C-TOST methods. Table 1 reports the 95% confidence intervals under the naive, C-UMAU, and C-TOST approaches. Across the full population and both subgroups, the C-UMAU and C-TOST intervals are consistently wider than the naive intervals, primarily due to lower bounds being reduced while upper bounds remain similar. The naive confidence interval ignores the interim decision and treats the data as arising from a fixed design, leading to narrower intervals. In contrast, C-UMAU and C-TOST condition on the adaptive selection and therefore adjust for the adaptive decision mechanism, resulting in wider and lower intervals. In addition. the C-UMAU intervals are marginally wider than the C-TOST intervals. 
+
+# 7 Simulation Study 
+
+To evaluate the conditional coverage of the C-UMAU confidence interval and the associated width inflation required to achieve conditional coverage, we conduct the simulation using adaptive enrichment designs with interim decision rules described in Section 3.4. 
+
+7.1 Simulation Results for the Adaptive Enrichment Design in Rosenblum (2013) 
+
+We first consider the adaptive enrichment design described in Section 6 of Rosenblum (2013), which evaluated a new antidepressant. Based on the meta-analysis of Kirsch et al. (2008), such a treatment may benefit only patients with severe depression but not those with moderate depression. We assume 
+
+S1 consists of patients with severe baseline depression and S2 of those with moderate depression, with 
+
+K = {1, 2}. Patient enrollment follows the scheme described in Section 3.1. The outcome is the change in the Hamilton Rating Scale for Depression (HRSD) score from baseline to the final visit. Based on Kirsch et al. (2008), HRSD outcomes are assumed normally distributed with known standard deviation σ = 8 HRSD points. Decision rule D1 described in Section 3.4.1 is used for the interim analysis. We evaluate the performance of the C-UMAU confidence interval, the C-TOST confidence interval, the confidence interval procedure in Rosenblum (2013), and the naive confidence interval. The confi-10 dence interval procedure of Rosenblum (2013) asymptotically guarantees the overall (i.e., unconditional) coverage, which is given by Pr  ∆K(2) ∈ CI(∆ K(2) ) = Pr  D1(X (1) ) = {1, 2} Pr  ∆K ∈ CI(∆ K) D1(X (1) ) = {1, 2}
+
++ Pr  D1(X (1) ) = {1} Pr  ∆1 ∈ CI(∆ 1) D1(X (1) ) = {1}
+
++ Pr  D1(X (1) ) = {2} Pr  ∆2 ∈ CI(∆ 2) D1(X (1) ) = {2}.
+
+The construction of the C-UMAU confidence intervals for this design is described in Appendix B.1. We use the same parameter setting as in Rosenblum (2013). Three hypothetical scenarios are consid-ered. In scenario 1, suppose the antidepressant benefits the full population equally such that ∆ 1 = ∆ 2 =1.8. In scenario 2, we assume the antidepressant only benefits subpopulation 1 with ∆ 1 = 1 .8 and ∆ 2 = 0. For scenario 3, there is no benefit in either subpopulation, that is, ∆ 1 = ∆ 2 = 0. As in Rosenblum (2013), we set Z∗ = 1 in D1. The sample size is set as n = 488 ( n1 = n2 = 244) and the proportion of each subpopulation p1 = p2 = 0 .5. In each scenario, for subpopulation Sm (m ∈ 1, 2), the mean outcome in the control arm is set to μm0 = 0, and the mean in the treatment arm to μm1 = ∆ m.Scenario Method Continue with F Enrich S1 Enrich to S2 Overall Scenario 1: ∆1 = 1 .8∆2 = 1 .8Decision proportion 77 .35% 11 .41% 11 .25% -Naive 96 .38% 97 .09% 96 .97% 96 .53% Rosenblum (2013) 96 .88% (1 .03) 97 .50% (1 .03) 97 .45% (1 .03) 97 .02% (1 .03) C-UMAU 95.01% (1 .14) 95.06% (1 .16) 95.04% (1 .16) 95.02% (1 .15) C-TOST 94.99% (1 .14) 95.03% (1 .16) 95.03% (1 .16) 95.00% (1 .15) Scenario 2: ∆1 = 1 .8∆2 = 0 Decision proportion 45 .16% 44 .43% 10 .41% -Naive 94 .36% 96 .66% 96 .60% 95 .62% Rosenblum (2013) 95.11% (1 .03) 97 .16% (1 .03) 97 .03% (1 .03) 96 .22% (1 .03) C-UMAU 95.13% (1 .21) 95.02% (1 .12) 94.76% (1 .16) 95.05% (1 .16) C-TOST 95.10% (1 .21) 95.02% (1 .11) 94.77% (1 .16) 95.03% (1 .16) Scenario 3: ∆1 = 0 ∆2 = 0 Decision proportion 15 .90% 42 .00% 42 .10% -Naive 87 .76% 96 .37% 96 .26% 94.95% 
+
+Rosenblum (2013) 89 .07% (1 .03) 96 .87% (1 .03) 96 .84% (1 .03) 95 .62% (1 .03) C-UMAU 95.03% (1 .27) 94.95% (1 .12) 94.96% (1 .12) 94.97% (1 .14) C-TOST 95.04% (1 .28) 94.96% (1 .12) 94.96% (1 .12) 94.97% (1 .14) Table 2: Simulated interim decision proportions, coverage probabilities, and relative average interval widths under three scenarios for the design described in Section 7.1. Boldface coverage values indicate that the empirical coverage lies within the 95% Monte Carlo error band around the nominal 95% level. Values in parentheses denote the ratio of the average interval width to that of the naive confidence interval. Under each scenario, we conduct 100,000 simulated trials and compute the corresponding 95% confi-dence intervals and their widths. The proportions of interim decisions, the conditional coverage proba-bilities of the considered confidence interval methods given each interim decision, as well as the ratios of their average widths relative to the naive confidence interval, are summarized in Table 2. As described in Section 3.3, the C-UMAU guarantees a conditional coverage probability of 95%, which also ensures the overall coverage to be 95% in this design. The simulation results confirm this property, with both the conditional and overall coverage probabilities of the C-UMAU confidence intervals lying within the 95% Monte Carlo error band around the nominal 95% level under all three scenarios. The average width ratio between the C-UMAU and naive intervals ranges from 1.12 to 1.27, indicating that an additional 12% − 27% increase in width is required to guarantee conditional 95% coverage. For comparison, the C-TOST confidence interval also attains conditional and overall coverage close to the nominal 95% level, with a degree of width inflation similar to that observed for the C-UMAU confidence interval. By construction, 11 the confidence interval of Rosenblum (2013) guarantees overall coverage of at least 95% asymptotically, but not conditional coverage for each interim decision. The average width ratio between this interval and the naive one remained fixed at 1.03. Notably, the overall coverage probabilities of the naive confidence interval were also close to or slightly above 95% under the three scenarios. Thus, in terms of overall coverage, the improvement offered by the interval of Rosenblum (2013) over the naive confidence interval is limited in this simulation study. For the proportions of interim decisions, in Scenario 1 the design continued with the full population in a substantial proportion of trials (77 .35%). When the treatment benefited only subpopulation 1, as in Scenario 2, the design enriched to subpopulation 1 in 44 .43% of trials. Without a stopping for futility option, an inherent limitation of D1 is that the trial always continues in some form, regardless of how unfavorable the stage 1 results are, as illustrated in Scenario 3. 
+
+7.2 Simulation Results for an Adaptive Enrichment Design with Stopping for futility and Co-primary Analysis 
+
+We modify the adaptive enrichment design proposed in Rosenblum (2013) by using interim decision rules 
+
+D2 described in Section 3.4.2, where a stopping for futility is incorporated. We also consider the co-primary analysis as described in Section 3.5 such that the confidence intervals for treatment effects in S1
+
+and S2 are calculated when the trial continues with F.We consider the same settings and scenarios as in the previous section. We set ∆ ∗ = 1 in D2, which yields reasonable decisions, as we show below. Extending the method of Rosenblum (2013) to this design is not straightforward; therefore, we evaluate the performance of the proposed C-UMAU confidence interval, the C-TOST confidence interval, and the naive confidence interval. Additional details on constructing the C-UMAU confidence intervals for this design are given in Appendix B.2. We report the same metrics as in the previous section in Table 3. The last column of Table 3 reports the overall coverage probability and the average width ratio for all simulated trials that continue to stage 2, regardless of the selected population. Under all three scenarios, both the conditional and overall coverage probabilities of the C-UMAU confidence intervals fall within the 95% Monte Carlo error band around the nominal 95% coverage level. As in the previous simulation setting, the C-TOST confidence interval shows similar empirical performance with respect to coverage and interval width. The naive confidence interval generally attains at least 95% coverage when the true treatment effect is substantial, but may fail to reach the nominal level when the effect is weak or absent as in Scenario 3. Given each interim decision, the width inflation of the C-UMAU intervals relative to the naive intervals ranges from 14% to 27%, and the overall width inflation under the three scenarios lies between 15% and 22%. In Scenario 1, the design continued with the full population in a large proportion of trials (78 .29%). In Scenario 2, an appreciable fraction (28 .00%) of trials enriched to subpopulation 1, where the treatment effect was more pronounced. In Scenario 3, where neither subpopulation benefited, 57 .26% of trials stopped for futility at the interim. Compared with D1, the interim decision rule D2 can effectively terminate the trial when treatment effects in both subpopulations are absent. For co-primary analysis, when the trial continues with the full population, we also evaluate the C-UMAU and the C-TOST confidence intervals for treatment effects in both S1 and S2. The simulation results in Table 4 demonstrate that the conditional coverage of the C-UMAU and the C-TOST confidence intervals for ∆ 1 and ∆ 2 is maintained at the nominal 95% level, with all simulated coverage probabilities lying within simulation error of 95%. In contrast, the naive confidence interval fails to achieve the nominal level in scenario 3 where the treatment effect is absent. The width inflation of the C-UMAU and C-TOST intervals in this co-primary analysis ranges from 10% to 23%. 12 Scenario  Method  Continue with  F Enrich  S1 Enrich to  S2 Stop  Continuation Scenario 1: ∆1 = 1 .8∆2 = 1 .8Decision proportion  78 .29%  6.70%  6.66%  4.09%  91 .65% Naive  96 .42%  98 .10%  97 .99%  − 96 .66% C-UMAU  95.02%  (1 .14)  94.99%  (1 .20)  95.23%  (1 .20)  − 95.03%  (1 .15) C-TOST  95.01%  (1 .14)  94.99%  (1 .20)  95.23%  (1 .20)  − 95.03%  (1 .15) Scenario 2: ∆1 = 1 .8∆2 = 0 Decision proportion  46 .46%  28 .00%  3.73%  21 .81%  78 .19% Naive  94 .69%  97 .54%  94 .17%  − 95 .69% C-UMAU  94.97%  (1 .21)  94.90%  (1 .18)  95.06%  (1 .21)  − 94.95%  (1 .20) C-TOST  94.97%  (1 .21)  94.91%  (1 .18)  95.06%  (1 .20)  − 94.96%  (1 .20) Scenario 3: ∆1 = 0 ∆2 = 0 Decision proportion  16 .34%  13 .07%  13 .33%  57 .26%  42 .74% Naive  87 .06%  93 .25%  93 .92%  − 91 .10% C-UMAU  94.86%  (1 .27)  94.67%  (1 .19)  95.22%  (1 .19)  − 94.92%  (1 .22) C-TOST  94.90%  (1 .27)  94.68%  (1 .19)  95.21%  (1 .19)  − 94.98%  (1 .22) Table 3: Simulated interim decision proportions, coverage probabilities, and relative average interval widths under three scenarios for the design described in Section 7.2. Boldface coverage values indicate that the empirical coverage lies within the 95% Monte Carlo error band around the nominal 95% level. Values in parentheses denote the ratio of the average interval width to that of the naive confidence interval. 
+
+13 Scenario Method CI for ∆ 1 in the co-primary option CI for ∆ 2 in the co-primary option Scenario 1: Naive 95 .68% 95 .79% ∆1 = 0 .5 C-UMAU 94.92% (1 .10) 95.01% (1 .10) ∆2 = 0 .5 C-TOST 94.91% (1 .10) 95.02% (1 .10) Scenario 2: Naive 94 .80% 94.81% 
+
+∆1 = 0 .5 C-UMAU 94.97% (1 .17) 94.96% (1 .17) ∆2 = 0 .2 C-TOST 95.00% (1 .17) 94.98% (1 .17) Scenario 3: Naive 90 .59% 90 .92% ∆1 = 0 .5 C-UMAU 94.75% (1 .22) 94.91% (1 .22) ∆2 = 0 C-TOST 94.71% (1 .23) 94.92% (1 .22) Table 4: Simulated coverage probabilities and relative interval widths in the co-primary analysis under three scenarios for the design described in Section 7.2. Boldface coverage values indicate that the empirical coverage lies within the 95% Monte Carlo error band around the nominal 95% level. Values in parentheses denote the ratio of the average interval width to that of the naive confidence interval. 
+
+# 8 Discussion 
+
+We have developed new methods for constructing confidence intervals that guarantees 100(1 − α)% con-ditional coverage given each possible interim decision, for a broad class of two-stage adaptive enrichment designs which allow stopping for futility and co-primary analysis. Our simulation study confirms that the proposed confidence intervals achieve the nominal conditional coverage in finite samples and quantifies the increase in interval width required to attain this stronger form of coverage control. For clarity of exposition, the class D is defined in terms of constraints on the stage 1 estimator. The proposed conditional inference framework, however, also applies to certain decision rules involving auxiliary stage 1 quantities, provided that the resulting selection event can be explicitly characterised. Details are provided in Appendix C. The C-UMAU confidence interval is our primary proposal, as it uniquely achieves exact conditional coverage together with the uniformly most accurate unbiased property. For completeness, we also con-sider a simpler alternative based on inverting two conditional one-sided tests, referred to as the C-TOST confidence interval. While the C-TOST confidence interval has correct conditional coverage and is compu-tationally simpler, it sacrifices the uniformly most accurate unbiased property and is therefore theoretically suboptimal. In simulation studies, confidence intervals are typically evaluated in terms of coverage prob-ability and average length. These summary measures do not directly reflect the uniformly most accurate and unbiased properties that define the optimality of the C-UMAU confidence interval. As a result, the C-UMAU and C-TOST confidence intervals may exhibit similar empirical performance with respect to coverage and length, despite the stronger theoretical guarantees of the C-UMAU construction. In settings where computational simplicity is a primary concern and optimality is not critical, the C-TOST confidence interval may provide a useful alternative. The current methodology assumes normally distributed outcomes. For non-normal outcomes, the theoretical results hold asymptotically, provided that standard regularity conditions ensure the asymptotic normality of the treatment effect estimator as the stage-wise sample sizes tend to infinity (e.g. by the central limit theorem). Extending the method to adaptive designs with more than two stages is a natural direction for future research, but remains technically challenging and is left as an open problem. In this paper, we have focused on individual coverage for a single parameter rather than simultaneous coverage for a set of parameters. For unconditional 100(1 −α)% simultaneous coverage in adaptive designs, one may refer to Magirr et al. (2013). If conditional simultaneous coverage is desired, our method could in principle be adapted by applying multiplicity corrections, such as the Bonferroni or ˇSid´ ak adjustments (Bonferroni, 1936; Hochberg and Tamhane, 1987). However, the resulting intervals would no longer be 14 uniformly most accurate unbiased and may become conservative. We also restrict attention to conditional coverage. A detailed comparison of conditional and unconditional inference lies beyond the scope of this paper; see Marschner (2021) for a comprehensive discussion. 
+
+# Acknowledgments 
+
+This work is funded by the MRC Doctoral Training Partnership in Interdisciplinary Biomedical Research awarded to the University of Warwick (MR/W007053/1) and Novartis. 15 References 
+
+Baselga, J. (2001). Herceptin ® alone or in combination with chemotherapy in the treatment of her2-positive metastatic breast cancer: pivotal trials. Oncology , 61(Suppl. 2):14–21. Bonferroni, C. (1936). Teoria statistica delle classi e calcolo delle probabilita. Pubblicazioni del R istituto superiore di scienze economiche e commericiali di firenze , 8:3–62. Bowden, J. and Glimm, E. (2008). Unbiased estimation of selected treatment means in two-stage trials. 
+
+Biometrical Journal: Journal of Mathematical Methods in Biosciences , 50(4):515–527. Brannath, W., K¨ onig, F., and Bauer, P. (2006). Estimation in flexible two stage designs. Statistics in Medicine , 25(19):3366–3381. Brannath, W., Zuber, E., Branson, M., Bretz, F., Gallo, P., Posch, M., and Racine-Poon, A. (2009). Confirmatory adaptive designs with bayesian decision tools for a targeted therapy in oncology. Statistics in medicine , 28(10):1445–1463. Capelan, M., Pugliano, L., De Azambuja, E., Bozovic, I., Saini, K., Sotiriou, C., Loi, S., and Piccart-Gebhart, M. (2013). Pertuzumab: new hope for patients with her2-positive breast cancer. Annals of oncology , 24(2):273–282. Carreras, M. and Brannath, W. (2013). Shrinkage estimation in two-stage adaptive designs with midtrial treatment selection. Statistics in Medicine , 32(10):1677–1690. Davison, A. C. and Hinkley, D. V. (1997). Bootstrap methods and their application . Number 1. Cambridge university press. European Medicines Agency (2007). Reflection paper on methodological issues in confirmatory clinical trials planned with an adaptive design. Hanley, D. F., Thompson, R. E., Muschelli, J., Rosenblum, M., McBee, N., Lane, K., Bistran-Hall, A. J., Mayo, S. W., Keyl, P., Gandhi, D., et al. (2016). Safety and efficacy of minimally invasive surgery plus recombinant tissue plasminogen activator in intracerebral haemorrhage evacuation (mistie): arandomised, phase 2 trial. The Lancet. Neurology , 15(12):1228. Hochberg, Y. and Tamhane, A. C. (1987). Multiple comparison procedures . John Wiley & Sons, Inc. Jenkins, M., Stone, A., and Jennison, C. (2011). An adaptive seamless phase ii/iii design for oncology trials with subpopulation selection using correlated survival endpoints. Pharmaceutical statistics , 10(4):347– 356. Kimani, P. K., Todd, S., Renfro, L. A., Glimm, E., Khan, J. N., Kairalla, J. A., and Stallard, N. (2020). Point and interval estimation in two-stage adaptive designs with time to event data and biomarker-driven subpopulation selection. Statistics in medicine , 39(19):2568–2586. Kimani, P. K., Todd, S., Renfro, L. A., and Stallard, N. (2018). Point estimation following two-stage adaptive threshold enrichment clinical trials. Statistics in Medicine , 37(22):3179–3196. Kimani, P. K., Todd, S., and Stallard, N. (2015). Estimation after subpopulation selection in adaptive seamless trials. Statistics in Medicine , 34(18):2581–2601. Kirsch, I., Deacon, B. J., Huedo-Medina, T. B., Scoboria, A., Moore, T. J., and Johnson, B. T. (2008). Initial severity and antidepressant benefits: a meta-analysis of data submitted to the food and drug administration. PLoS medicine , 5(2):e45. 16 Koopmeiners, J. S., Feng, Z., and Pepe, M. S. (2012). Conditional estimation after a two-stage diagnostic biomarker study that allows early termination for futility. Statistics in Medicine , 31(5):420–435. Lehmann, E. L. and Romano, J. P. (2022). Testing statistical hypotheses . Springer Texts in Statistics. Springer Cham, 4th edition. Magirr, D., Jaki, T., Posch, M., and Klinglmueller, F. (2013). Simultaneous confidence intervals that are compatible with closed testing in adaptive designs. Biometrika , 100(4):985–996. Magnusson, B. P. and Turnbull, B. W. (2013). Group sequential enrichment design incorporating subgroup selection. Statistics in medicine , 32(16):2695–2714. Marschner, I. C. (2021). A general framework for the analysis of adaptive experiments. Statistical Science ,36(3):465–492. Mendelow, A. D., Gregson, B. A., Rowan, E. N., Murray, G. D., Gholkar, A., and Mitchell, P. M. (2013). Early surgery versus initial conservative treatment in patients with spontaneous supratentorial lobar intracerebral haematomas (stich ii): a randomised trial. The Lancet , 382(9890):397–408. Posch, M., Koenig, F., Branson, M., Brannath, W., Dunger-Baldauf, C., and Bauer, P. (2005). Testing and estimation in flexible group sequential designs with adaptive treatment selection. Statistics in medicine , 24(24):3697–3714. Pradilla, G., Ratcliff, J. J., Hall, A. J., Saville, B. R., Allen, J. W., Paulon, G., McGlothlin, A., Lewis, R. J., Fitzgerald, M., Caveney, A. F., et al. (2024). Trial of early minimally invasive removal of intracerebral hemorrhage. New England Journal of Medicine , 390(14):1277–1289. Robertson, D. S., Prevost, A. T., and Bowden, J. (2016). Accounting for selection and correlation in the analysis of two-stage genome-wide association studies. Biostatistics , 17(4):634–649. Rosenblum, M. (2013). Confidence intervals for the selected population in randomized trials that adapt the population enrolled. Biometrical Journal , 55(3):322–340. Rosenblum, M. (2015). Adaptive randomized trial designs that cannot be dominated by any standard design at the same total sample size. Biometrika , 102(1):191–202. Rosenblum, M. and van der Laan, M. J. (2011). Optimizing randomized trial designs to distinguish which subpopulations benefit from treatment. Biometrika , 98(4):845–860. Sampson, A. R. and Sill, M. W. (2005). Drop-the-losers design: normal case. Biometrical Journal: Journal of Mathematical Methods in Biosciences , 47(3):257–268. Simon, N. and Simon, R. (2013). Adaptive enrichment designs for clinical trials. Biostatistics , 14(4):613– 625. 17 Appendix 
+
+A: Theorems and Proofs 
+
+A.1. Proof of Theorem 1 from Section 4.1 
+
+Proof. For Theorem 1(i), we first consider the conditional distribution of ( ˆ∆(1) , ˆ∆(2) ) given l < ˆ∆(1) < u ,which is 
+
+f ( ˆ∆(1) , ˆ∆(2) | l < ˆ∆(1) < u ) = 1
+
+σ(1) 
+
+ϕ( ˆ∆(1) − ∆
+
+σ(1) 
+
+) 1Φ( u−∆ 
+
+> σ(1)
+
+) − Φ( l−∆ 
+
+> σ(1)
+
+)1
+
+σ(2) 
+
+ϕ( ˆ∆(2) − ∆
+
+σ(2) 
+
+).
+
+Part of the expression above can be written as 
+
+ϕ( ˆ∆(1) − ∆
+
+σ(1) 
+
+)ϕ( ˆ∆(2) − ∆
+
+σ(2) 
+
+)=ϕ(
+
+> τ(1)
+> τ(1) +τ(2)
+
+ˆ∆(1) + τ(2) 
+
+> τ(1) +τ(2)
+
+ˆ∆(2) − ∆
+
+σ(1) σ(2) /
+
+q
+
+σ2(1) + σ2(2) 
+
+)ϕ(ˆ∆(1) − ( τ(1) 
+
+> τ(1) +τ(2)
+
+ˆ∆(1) + τ(2) 
+
+> τ(1) +τ(2)
+
+ˆ∆(2) )
+
+σ2(1) /
+
+q
+
+σ2(1) + σ2(2) 
+
+)Let ˆ∆ = τ(1) /(τ(1) + τ(2) ) ˆ∆(1) + τ(2) /(τ(1) + τ(2) ) ˆ∆(2) and σ2(12) = σ2(1) σ2(2) /(σ2(1) + σ2(2) ). We can obtain the conditional distribution of ( ˆ∆(1) , ˆ∆) given l < ˆ∆(1) < u by transforming ( ˆ∆(1) , ˆ∆(2) ) to ( ˆ∆(1) , ˆ∆) as 
+
+f ( ˆ∆(1) , ˆ∆ | l < ˆ∆(1) < u ) = 1
+
+σ(12) 
+
+ϕ( ˆ∆ − ∆
+
+σ(12) 
+
+) 1(σ(1) /σ (2) )σ(12) 
+
+ϕ( ˆ∆(1) − ˆ∆(σ(1) /σ (2) )σ(12) 
+
+) 1Φ( u−∆ 
+
+> σ(1)
+
+) − Φ( l−∆ 
+
+> σ(1)
+
+) .
+
+The conditional distribution of ˆ∆ given l < ˆ∆(1) < u can be obtained by integrating out ˆ∆(1) in the above equation as 
+
+f ( ˆ∆ | l < ˆ∆(1) < u ) = 
+
+Z ul
+
+f ( ˆ∆(1) , ˆ∆ | l < ˆ∆(1) < u ) d ˆ∆(1) 
+
+= 1
+
+σ(12) 
+
+ϕ( ˆ∆ − ∆
+
+σ(12) 
+
+)Φ( u− ˆ∆(σ(1) /σ (2) )σ(12) ) − Φ( l− ˆ∆(σ(1) /σ (2) )σ(12) )Φ( u−∆ 
+
+> σ(1)
+
+) − Φ( l−∆ 
+
+> σ(1)
+
+) .
+
+The conditional distribution of ˆ∆ belongs to the one-parameter exponential family. By the factorization theorem, ˆ∆ is a sufficient statistic for ∆ within this conditional model. For Theorem 1(ii), the conditional distribution f ( ˆ∆ | l < ˆ∆(1) < u ) follows the one-parameter exponen-tial family, the construction of the two-sided uniformly most powerful unbiased test for the one-parameter exponential family is given in Section 4.2 in Lehmann and Romano (2022). For Theorem 1(iii), it is straightforward to verify f ( ˆ∆ | l < ˆ∆(1) < u ) has monotone likelihood ratio in ˆ∆. The expression of the uniformly most accurate unbiased confidence interval is given in Lemma 5.5.1 in Lehmann and Romano (2022). 
+
+A.2. Proof of Proposition 1 from Section 4.1 
+
+Proof. For Proposition 1(i), since C1 and C2 are strictly increasing in ∆ 0 (see Lemma 5.5.1 in Lehmann and Romano (2022)), we have Pr  ∆ ∈ (∆ , ∆) | l < ˆ∆(1) < u 
+
+= Pr  C1(∆) < ˆ∆ < C 2(∆) | l < ˆ∆(1) < u  = 1 − E∆(ψ∆( ˆ∆)) = 1 − α. 
+
+Proposition 1(ii) and Proposition 1(iii) follow the definition of the uniformly most accurate unbiased confidence interval in Section 5.5 in Lehmann and Romano (2022). 18 A.3. Corollary 1 Corollary 1. Suppose ˆ∆ is distributed as in Theorem 1(i). Then, its expectation is given by 
+
+E∆( ˆ∆) = ∆ + 
+
+ϕ( l−∆ 
+
+> σ(1)
+
+) − ϕ( u−∆ 
+
+> σ(1)
+
+)Φ( u−∆ 
+
+> σ(1)
+
+) − Φ( l−∆ 
+
+> σ(1)
+
+)
+
+σ(1) τ(1) 
+
+τ(1) + τ(2) 
+
+.
+
+Proof. 
+
+E∆( ˆ∆) = E∆( τ(1) 
+
+τ(1) + τ(2) 
+
+ˆ∆(1) + τ(2) 
+
+τ(1) + τ(2) 
+
+ˆ∆(2) ) = τ(1) 
+
+τ(1) + τ(2) 
+
+E∆( ˆ∆(1) ) + τ(2) 
+
+τ(1) + τ(2) 
+
+E∆( ˆ∆(2) ),
+
+where ˆ∆(1) is truncated normal distribution with mean ∆ and standard deviation σ(1) and lies within the interval ( l, u ), and ˆ∆(2) is truncated normal distribution with mean ∆ and standard deviation σ(2) . Since 
+
+E∆( ˆ∆(1) ) = ∆ + 
+
+ϕ( l−∆ 
+
+> σ(1)
+
+) − ϕ( u−∆ 
+
+> σ(1)
+
+)Φ( u−∆ 
+
+> σ(1)
+
+) − Φ( l−∆ 
+
+> σ(1)
+
+) σ(1) , E∆( ˆ∆(2) ) = ∆ ,
+
+we have 
+
+E∆( ˆ∆) = ∆ + 
+
+ϕ( l−∆ 
+
+> σ(1)
+
+) − ϕ( u−∆ 
+
+> σ(1)
+
+)Φ( u−∆ 
+
+> σ(1)
+
+) − Φ( l−∆ 
+
+> σ(1)
+
+)
+
+σ(1) τ(1) 
+
+τ(1) + τ(2) 
+
+.
+
+A.4. Lemma 1 Lemma 1. Let f (·) and F (·) denote the probability density function and cumulative distribution function of the distribution in Theorem 1(i). For any c1 such that F (c1) < α (0 < α < 1/2) , define 
+
+c2(c1) = F −1 F (c1) + 1 − α.
+
+Then the function 
+
+I(c1) = 
+
+Z c2(c1)
+
+> c1
+
+tf (t) dt 
+
+is continuous and strictly increasing in c1.Proof. We first prove the continuity of I(c1), It is straightforward to show that c2(c1) is continuous in 
+
+c1. In addition, it follows directly from its expression that ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u ) is bounded. Let 
+
+M = sup ˆ∆ ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u ). Let δ1 = c2(c1) − c1. Then, we have ∀c′ 
+
+> 1
+
+: |c′ 
+
+> 1
+
+− c1| < δ 1 satisfies 
+
+c′ 
+
+> 1
+
+< c 2(c1). By the continuity of c2(c1) , ∃δ2 s.t. ∀c′ 
+
+> 1
+
+: |c′ 
+
+> 1
+
+− c1| < δ 2 satisfies c2(c′
+
+> 1
+
+) > c 1. For any ϵ > 0, let δ3 = ϵ/ (2 M ). By the continuity of c2(c1), ∃δ4 s.t. ∀c′ 
+
+> 1
+
+: |c′ 
+
+> 1
+
+− c1| < δ 4 has |c2(c′
+
+> 1
+
+) − c2(c1)| < ϵ/ (2 M ). Let δ = min( δ1, δ 2, δ 3, δ 4). For ∀c′ 
+
+> 1
+
+: |c′ 
+
+> 1
+
+− c1| < δ , we have 
+
+|
+
+Z c2(c′
+
+> 1)
+> c′
+> 1
+
+ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ −
+
+Z c2(c1)
+
+> c1
+
+ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆|
+
+<|
+
+Z max( c1,c ′
+
+> 1)min( c1,c ′
+> 1)
+
+ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆| + |
+
+Z max( c2(c1),c 2(c′
+
+> 1)) min( c2(c1),c 2(c′
+> 1))
+
+ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆dt |
+
+<|c′ 
+
+> 1
+
+− c1|M + |c2(c′
+
+> 1
+
+) − c2(c1)|M<ϵ 
+
+19 Then, we prove the monotonicity. Suppose c1 < c ′
+
+> 1
+
+. If c′ 
+
+> 1
+
+≥ c2(c1), we have 
+
+Z c2(c′
+
+> 1)
+> c′
+> 1
+
+ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ > c ′
+
+> 1
+
+(1 − α) ≥ c2(c1)(1 − α) >
+
+Z c2(c1)
+
+> c1
+
+ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆.
+
+Otherwise, 
+
+Z c2(c′
+
+> 1)
+> c′
+> 1
+
+ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ −
+
+Z c2(c1)
+
+> c1
+
+ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆=
+
+Z c2(c′
+
+> 1)
+> c2(c1)
+
+ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ −
+
+Z c′
+
+> 1
+> c1
+
+ˆ∆f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆
+
+>c 2(c1)
+
+Z c2(c′
+
+> 1)
+> c2(c1)
+
+f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ − c′
+
+> 1
+
+Z c′
+
+> 1
+> c1
+
+f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆.
+
+Since Z c2(c′
+
+> 1)
+> c2(c1)
+
+f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ = 
+
+Z c′
+
+> 1
+> c1
+
+f ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆,
+
+the above result is greater than 0. 
+
+A.5. Proposition 2 Proposition 2. C1(∆ 0) and C2(∆ 0) are continuous and strictly increasing in ∆0.Proof. Lemma 5.5.1 in Lehmann and Romano (2022) gives that C1 and C2 are strictly increasing functions in ∆ 0. We prove the continuity by contradiction. Suppose any of Ci, say C1, is not continuous at ∆ 0 = ∆ ′.Since C1 is strictly increasing, C1 can only be the jump discontinuity at ∆ ′, where lim ∆0→∆′− C1(∆ 0) = 
+
+C− 
+
+> 1
+
+(∆ ′), lim ∆0→∆′+ C1(∆ 0) = C+1 (∆ ′), and C− 
+
+> 1
+
+(∆ ′) < C +1 (∆ ′). Suppose [ C1(∆ ′), C 2(∆ ′)] is the acceptance region of the uniformly most powerful unbiased test of H : ∆ = ∆ ′. At least one of the quantities C− 
+
+> 1
+
+(∆ ′)or C+1 (∆ ′) differs from C1(∆ ′), say C+1 (∆ ′)̸ = C1(∆ ′). Define sequence ∆ n = ∆ ′ + 1 /n (n ∈ Z+). Suppose [C1(∆ n), C 2(∆ n)] are the corresponding acceptance region of the uniformly most powerful unbiased test of H : ∆ = ∆ n. For any ∆ n, by the definition of the uniformly most powerful unbiased test, we have 
+
+Z C2(∆ n)
+
+> C1(∆ n)
+
+f∆n ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ = 1 − α
+
+and 
+
+Z C2(∆ n)
+
+> C1(∆ n)
+
+ˆ∆f∆n ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ = (1 − α)E∆n ( ˆ∆) .
+
+We have lim n→+∞ C1(∆ n) = C+1 (∆ ′). Let lim ∆0→∆′+ C2(∆ 0) = C+2 (∆ ′). Then, we have lim n→+∞ C2(∆ n) = 
+
+C+2 (∆ ′). Let n → +∞ in the above two equations, by dominated convergence theorem (details are given in S.1.2*), we obtain 
+
+Z C+2 (∆ ′) 
+
+> C+1(∆ ′)
+
+f∆′ ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ = 1 − α
+
+and 
+
+Z C+2 (∆ ′) 
+
+> C+1(∆ ′)
+
+ˆ∆f∆′ ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ = (1 − α)E∆′ ( ˆ∆) .
+
+Hence, [ C+1 (∆ ′), C +2 (∆ ′)], where C+1 (∆ ′)̸ = C1(∆ ′), also constitutes the uniformly most powerful unbiased test of H : ∆ = ∆ ′, which is conflict with the uniqueness of the uniformly most powerful unbiased test (For uniqueness, see Problem 4.23 in Lehmann and Romano (2022)). 20 A.5*. Detail of the application of dominated convergence theorem in A.5 
+
+Proof. We aim to prove that lim 
+
+> n→+∞
+
+Z C2(∆ n)
+
+> C1(∆ n)
+
+f∆n ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ = 
+
+Z C+2 (∆ ′) 
+
+> C+1(∆ ′)
+
+f∆′ ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆and lim 
+
+> n→+∞
+
+Z C2(∆ n)
+
+> C1(∆ n)
+
+ˆ∆f∆n ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ = 
+
+Z C+2 (∆ ′) 
+
+> C+1(∆ ′)
+
+ˆ∆f∆′ ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆.
+
+Let M = sup ∆∈[∆ ′,∆′+1] , ˆ∆∈[C+1 (∆ ′),C +2 (∆ ′)] f∆( ˆ∆ | l < ˆ∆(1) < u ) and g ≡ M . Then, in region [ C+1 (∆ ′), C +2 (∆ ′)], 
+
+f∆n is dominated by g. g is integrable on [ C+1 (∆ ′), C +2 (∆ ′)] since 
+
+Z C+2 (∆ ′) 
+
+> C+1(∆ ′)
+
+g = ( C+2 (∆ ′) − C+1 (∆ ′)) M < +∞.
+
+Then, by dominated convergence theorem, we have lim 
+
+> n→+∞
+
+Z C+2 (∆ ′) 
+
+> C+1(∆ ′)
+
+f∆n ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ = 
+
+Z C+2 (∆ ′) 
+
+> C+1(∆ ′)
+
+f∆′ ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆.
+
+Since lim n→+∞ C1(∆ n) = C+1 (∆ ′) and lim n→+∞ C2(∆ n) = C+2 (∆ ′), we have lim 
+
+> n→+∞
+
+  Z C2(∆ n)
+
+> C1(∆ n)
+
+f∆n ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ −
+
+Z C+2 (∆ ′) 
+
+> C+1(∆ ′)
+
+f∆n ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆
+
+= lim 
+
+> n→+∞
+
+  Z C2(∆ n)
+
+> C2(∆ ′)
+
+f∆n ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆ −
+
+Z C1(∆ n)
+
+> C1(∆ ′)
+
+f∆n ( ˆ∆ | l < ˆ∆(1) < u )d ˆ∆
+
+=0 .
+
+The first equation is proved. To prove the second equation, a completely analogous method can be used. 
+
+B: Application of the C-UMAU confidence interval procedure in considered designs 
+
+B.1. Application in the design with interim decision D1 as described in Section 7.1 
+
+For the design descried in Section 7.1, if the trial continues with the full population, i.e., D1(X (1) ) = {1, 2}
+
+we have 
+
+{X (1) : D1(X (1) ) = {1, 2}} = {X (1) : Z(1)  
+
+> K
+
+> Z ∗} = {X (1) : 2σ
+
+√n1
+
+Z∗ < ˆ∆(1)  
+
+> K
+
+< +∞} .
+
+If the trial enriches to subpopulation 1, we have 
+
+{X (1) : D1(X (1) ) = {1}} 
+
+={X (1) : Z(1)  
+
+> K
+
+≤ Z∗, Z (1) 1 ≥ Z(1) 2 }
+
+={X (1) :
+
+r p2
+
+p1
+
+ˆ∆(1) 2 ≤ ˆ∆(1) 1 ≤ 2σp1
+
+√n1
+
+Z∗ − p2
+
+p1
+
+ˆ∆(1) 2 }.
+
+21 Similarly, if the trial enriches to subpopulation 2, we have 
+
+{X (1) : D1(X (1) ) = {2}} 
+
+={X (1) : Z(1)  
+
+> K
+
+≤ Z∗, Z (1) 1 < Z (1) 2 }
+
+={X (1) :
+
+r p1
+
+p2
+
+ˆ∆(1) 1 < ˆ∆(1) 2 ≤ 2σp2
+
+√n1
+
+Z∗ − p1
+
+p2
+
+ˆ∆(1) 1 }.
+
+According to Section 3.3, D1 ∈ D .Then, we illustrate the calculation of the C-UMAU confidence intervals. If the trial continues with the full population, by Theorem 1(i), the conditional distribution of ˆ∆K given D1(X (1) ) = {1, 2} is 
+
+f ( ˆ∆K | D1(X (1) ) = {1, 2})=f ( ˆ∆K | (2 σ/ √n1)Z∗ < ˆ∆(1)  
+
+> K
+
+< +∞)= 12σ/ √n ϕ( ˆ∆K − ∆K
+
+2σ/ √n )1 − Φ( (2 σ/ √n1)Z∗− ˆ∆K
+
+√n2/n 1 2σ/ √n )1 − Φ( (2 σ/ √n1)Z∗−∆K 
+
+> 2σ/ √n1
+
+) .
+
+Then, for any ∆ K,0 ∈ R, we can construct the conditional level α uniformly most powerful unbiased test for the null hypothesis H : ∆ K = ∆ K,0 using Step 1 in Section 4.2. Then, we can calculate the 100(1 −α)% C-UMAU confidence interval for ∆ K using Step 2 in Section 4.2. If the trial enriches to subpopulation 1, by Theorem 1(i), the conditional distribution of ˆ∆1 given D1(X (1) ) = {1} and the realization of ˆ∆(1) 2 is 
+
+f ( ˆ∆1 | D1(X (1) ) = {1}, ˆ∆(1) 2 )=f ( ˆ∆1 |
+
+r p2
+
+p1
+
+ˆ∆(1) 2 < ˆ∆(1) 1 ≤ 2σp1
+
+√n1
+
+Z∗ − p2
+
+p1
+
+ˆ∆(1) 2 )= 12σ/ √p1n1 + n2
+
+ϕ( ˆ∆1 − ∆1
+
+2σ/ √p1n1 + n2
+
+)Φ(     
+
+> 2σp1√n1Z∗−p2
+> p1
+> ˆ∆(1) 2−ˆ∆1
+
+√n2/(p1n1) 2 σ/ √p1n1+n2
+
+) − Φ(    
+
+> qp2
+> p1
+> ˆ∆(1) 2−ˆ∆1
+
+√n2/(p1n1) 2 σ/ √p1n1+n2
+
+)Φ(     
+
+> 2σp1√n1Z∗−p2
+> p1
+> ˆ∆(1) 2−∆1
+> 2σ/ √p1n1
+
+) − Φ(    
+
+> qp2
+> p1
+> ˆ∆(1) 2−∆1
+> 2σ/ √p1n1
+
+)
+
+.
+
+Then, using Step 1 in Section 4.2, for any ∆ 1,0 ∈ R, we can construct the conditional level α uniformly most powerful unbiased test for the null hypothesis H : ∆ 1 = ∆ 1,0. Subsequently, we can calculate the 100(1 − α)% C-UMAU confidence interval for ∆ 1 using Step 2 in Section 4.2 given D2(X (1) ) = {1} and the observed ˆ∆(1) 2 . Since this procedure provides the C-UMAU confidence intervals for every realization of ˆ∆(1) 2 , it also constitutes the C-UMAU confidence interval for ∆ 1 given D1(X (1) ) = {1}. If the trial enriches to subpopulation S2, a completely analogous procedure can be applied to obtain the confidence interval for ∆ 2.
+
+B.2. Application in the design with interim decision D2 as described in Section 6 and Section 7.2 
+
+If the trial continues with the full population F, i.e., D2(X (1) ) = {1, 2} , the stage 1 sample mean difference in F satisfies ∆ ∗ < ˆ∆(1)  
+
+> K
+
+< +∞. Hence, we have 
+
+{X (1) : D2(X (1) ) = {1, 2}} = {X (1) : ∆ ∗ < ˆ∆(1)  
+
+> K
+
+< +∞} .
+
+When the trial enriches to subpopulation S1, i.e., D2(X (1) ) = {1}, the stage 1 sample mean differences satisfy −∞ < ˆ∆(1)  
+
+> K
+
+≤ ∆∗ and max( ˆ∆(1) 1 , ˆ∆(1) 2 ) = ˆ∆(1) 1 > ∆∗. Using ˆ∆(1)  
+
+> K
+
+= p1 ˆ∆(1) 1 + p2 ˆ∆(1) 2 , these constraints can be equivalently written as ∆ ∗ < ˆ∆(1) 1 ≤ (∆ ∗ − p2 ˆ∆(1) 2 )/p 1. Hence, we have 
+
+{X (1) : D2(X (1) ) = {1}} = {X (1) : ∆ ∗ < ˆ∆(1) 1 ≤ (∆ ∗ − p2 ˆ∆(1) 2 )/p 1}.
+
+22 Similarly, if the trial enriches to S2, we can obtain that 
+
+{X (1) : D2(X (1) ) = {2}} = {X (1) : ∆ ∗ < ˆ∆(1) 2 ≤ (∆ ∗ − p1 ˆ∆(1) 1 )/p 2}.
+
+Hence, D2 ∈ D .Then, we illustrate the calculation of the C-UMAU confidence intervals. If the trial continues with the full population, condition on D(X (1) ) = {1, 2}, we can obtain the probability density of ˆ∆K by Theorem 1(i), which is given by 
+
+f ( ˆ∆K | D(X (1) ) = {1, 2})=f ( ˆ∆K | ∆∗ < ˆ∆(1)  
+
+> K
+
+< +∞)= 12σ/ √n ϕ( ˆ∆K − ∆K
+
+2σ/ √n )1 − Φ( ∆∗− ˆ∆K√n2/n 1 2σ/ √n )1 − Φ( ∆∗−∆K 
+
+> 2σ/ √n1
+
+) .
+
+Accordingly, for any ∆ K,0 ∈ R, we can construct the conditional level α uniformly most powerful unbiased test for the null hypothesis H : ∆ K = ∆ K,0 using Step 1 in Section 4.2. Then, we can calculate the 100(1 − α)% C-UMAU confidence interval for ∆ K using Step 2 in Section 4.2. When the trial enriches to subpopulation S1, conditioning on both D2(X (1) ) = {1} and the realization of ˆ∆(1) 2 , the density of ˆ∆1
+
+follows Theorem 1(i), given by 
+
+f ( ˆ∆1 | D(X (1) ) = {1}, ˆ∆(1) 2 )=f ( ˆ∆1 | ∆∗ < ˆ∆(1) 1 ≤ (∆ ∗ − p2 ˆ∆(1) 2 )/p 1)= 12σ/ √p1n1 + n2
+
+ϕ( ˆ∆1 − ∆1
+
+2σ/ √p1n1 + n2
+
+)1 − Φ( ∆∗− ˆ∆1√n2/(p1n1) 2 σ/ √p1n1+n2
+
+)1 − Φ( ∆∗−∆1 
+
+> 2σ/ √p1n1
+
+) .
+
+Then, using Step 1 in Section 4.2, for any ∆ 1,0 ∈ R, we can construct the conditional level α uniformly most powerful unbiased test for the null hypothesis H : ∆ 1 = ∆ 1,0. Subsequently, we can calculate the 100(1 − α)% C-UMAU confidence interval for ∆ 1 using Step 2 in Section 4.2 given D2(X (1) ) = {1}
+
+and the observed ˆ∆(1) 2 . Since this procedure provides the 100(1 − α)% C-UMAU confidence intervals for every realization of ˆ∆(1) 2 , it also constitutes 100(1 − α)% C-UMAU confidence interval for ∆ 1 given 
+
+D2(X (1) ) = {1}. If the trial enriches to subpopulation S2, a completely analogous procedure can be applied to obtain the confidence interval for ∆ 2.If the trial continues with the full population and the co-primary analysis is desired, the stage 1 sample mean difference in S1 satisfies (∆ ∗ − p2 ˆ∆(1) 2 )/p 1 < ˆ∆(1) 1 ≤ +∞, i.e., {X (1) : D2(X (1) ) = {1, 2}} = {X (1) :(∆ ∗ − p2 ˆ∆(1) 2 )/p 1 < ˆ∆(1) 1 ≤ +∞} . By conditioning on both D2(X (1) ) = {1, 2} and the realization of ˆ∆(1) 2 , an analogous method to that described above can be applied to obtain the confidence interval for ∆1 given D(X (1) ) = {1, 2}. Similarly, in this case, the stage 1 sample mean difference in S2 satisfies (∆ ∗ − p1 ˆ∆(1) 1 )/p 2 < ˆ∆(1) 2 ≤ +∞, i.e., {X (1) : D2(X (1) ) = {1, 2}} = {X (1) : (∆ ∗ − p2 ˆ∆(1) 2 )/p 1 < ˆ∆(1) 1 ≤
+
++∞} . By conditioning on both D2(X (1) ) = {1, 2} and the realization of ˆ∆(1) 1 , we can obtain the confidence interval for ∆ 2 given D(X (1) ) = {1, 2}.
+
+C. Additional adaptive enrichment designs for the proposed confidence intervals 
+
+To illustrate the generality of the proposed confidence interval method, we consider two trial designs previously proposed in the literature (Kimani et al., 2015, 2018). We retain the notation introduced in Section 3. The first example is the design of Kimani et al. (2015). They considered the patient population can be partitioned into two subpopulations, i.e., K = {1, 2}. Further, prior knowledge suggests 23 ˆ∆(1) 1 − ˆ∆(1)  
+
+> K
+
+> ∆∗
+
+Enrol from S1 Enrol from F
+
+Yes No 
+
+Figure 3: Schematic diagram of the interim decision rule in Kimani et al. (2015) subpopulation 1 is more likely to benefit from the treatment than subpopulation 2. Fig. 3 shows the interim decision rule in Kimani et al. (2015). If ˆ∆(1) 1 − ˆ∆(1)  
+
+> K
+
+> ∆∗, the enrollment criteria will be restricted to subpopulation 1 in stage 2. In this case, by replacing ˆ∆(1)  
+
+> K
+
+with p1 ˆ∆(1) 1 + p2 ˆ∆(1) 
+
+> {2}
+
+, we can obtain 
+
+{X (1) : D(X (1) ) = {1}} = {X (1) : ˆ∆(1) 1 − ˆ∆(1)  
+
+> K
+
+> ∆∗} = {X (1) : ˆ∆(1)  
+
+> {2}
+
++ ∆ ∗/p 2 < ˆ∆(1) 1 < +∞} . Then, the C-UMAU confidence interval for ∆ 1 can be calculated using similar procedure as in Section B.1 and B.2. When the trial continues with the full population F, i.e., ˆ∆(1) 1 − ˆ∆(1)  
+
+> K
+
+≤ ∆∗. Note that ˆ∆(1) 1 − ˆ∆(1) 
+
+> K
+
+is independent of ˆ∆(1)  
+
+> K
+
+. Hence, given D(X (1) ) = K, the conditional distribution of ˆ∆(1)  
+
+> K
+
+is not altered by the constraints on ˆ∆(1) 1 − ˆ∆(1)  
+
+> K
+
+, and ˆ∆(1) 1 − ˆ∆(1)  
+
+> K
+
+is an auxiliary statistic for estimating ∆ F . Then, using the fact that f ( ˆ∆K | D(X (1) ) = K) = f ( ˆ∆K | ∆∗ < ˆ∆(1) 1 − ˆ∆(1)  
+
+> K
+
+< +∞) = f ( ˆ∆K), Then, the C-UMAU confidence interval for ∆ K can be calculated. Actually, in this case, C-UMAU confidence interval and the naive confidence interval for ∆ K are the same. We can formally include the auxiliary statistic in class D∗ such that 
+
+{X (1) : D∗(X (1) ) = K(2) } = {X (1) : LK(2) < ˆ∆(1)  
+
+> K(2)
+
+< U K(2) , L ′K(2) < V K(2) < U ′K(2) },
+
+where LK(2) , UK(2) , L′K(2) , and U ′K(2) are random variables that may also take values in R = R∪{−∞ , +∞} .In addition, LK(2) , UK(2) , and VK(2) are assumed to be independent of ˆ∆(1)  
+
+> K(2)
+
+. Then, we have 
+
+f ( ˆ∆K(2) | D∗(X (1) ) = K(2) , L K(2) = lK(2) , U K(2) = uK(2) )
+
+f ( ˆ∆K(2) | lK(2) < ˆ∆(1)  
+
+> K(2)
+
+< u K(2) , L ′K(2) < V K(2) < U ′K(2) )=f ( ˆ∆K(2) | lK(2) < ˆ∆(1)  
+
+> K(2)
+
+< u K(2) )=
+
+ϕ( ˆ∆K(2) −∆K(2) 
+
+> 2σ/
+
+√pK(2) n1+n2 )2σ/ √pK(2) n1 + n2
+
+Φ( lK(2) − ˆ∆K(2) 
+
+√n2/(pK(2) n1) 2 σ/ √nK(2) 
+
+) − Φ( uK(2) − ˆ∆K(2) 
+
+√n2/(pK(2) n1) 2 σ/ √nK(2) 
+
+)Φ( lK(2) −∆K(2) 
+
+> 2σ/
+
+√pK(2) n1 ) − Φ( uK(2) −∆K(2) 
+
+> 2σ/
+
+√pK(2) n1 )
+
+,
+
+which has the same expression as in Section 4.3. Hence, our method can be applied with adaptive enrichment designs with interim decisions in the extended class D∗.Another example is adaptive threshold enrichment design proposed by Kimani et al. (2018), where 
+
+k (k ≥ 2) subpopulations are considered. They assume the true treatment effects in S1 to Sk is mono-tonically decreasing with ∆ 1 ≥ · · · ≥ ∆k. Define [ m] = {1, . . . , m } (m ≤ k). In the interim analysis, the largest subgroup S[m] whose stage 1 sample mean is greater than the threshold ∆ ∗ is selected to continue in stage 2. Hence, we have 
+
+{X (1) : D(X (1) ) = [ m]} = {X (1) : ˆ∆(1) [m] > ∆∗, ˆ∆(1) [m′] ≤ ∆∗ (for any m′ > m )}
+
+24 As shown in Kimani et al. (2018), this selection event can also be expressed as 
+
+X (1) : ∆ ∗ < ∆(1) [m] ≤ p[m+1] 
+
+p[m]
+
+∆∗ + min { −pm+1 ˆ∆(1) 
+
+> m+1
+
+p[m]
+
+, − Pm+2  
+
+> i=m+1
+
+pi ˆ∆(1) 
+
+> i
+
+p[m]
+
+, · · · , − Pki=m+1 pi ˆ∆(1) 
+
+> i
+
+p[m]
+
+} .
+
+Accordingly, this design belongs to the class D where our method can be applied. 25

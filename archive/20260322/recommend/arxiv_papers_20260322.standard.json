@@ -1,0 +1,947 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-03-22T19:31:04.129163+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 3,
+    "deep_divecandidates": 20,
+    "deep_cap": 8,
+    "deep_selected": 8,
+    "quick_candidates": 60,
+    "quick_skim_target": 13,
+    "quick_selected": 13
+  },
+  "deep_dive": [
+    {
+      "id": "2603.13676v1",
+      "title": "TheraAgent: Multi-Agent Framework with Self-Evolving Memory and Evidence-Calibrated Reasoning for PET Theranostics",
+      "abstract": "PET theranostics is transforming precision oncology, yet treatment response varies substantially; many patients receiving 177Lu-PSMA radioligand therapy (RLT) for metastatic castration-resistant prostate cancer (mCRPC) fail to respond, demanding reliable pre-therapy prediction. While LLM-based agents have shown remarkable potential in complex medical diagnosis, their application to PET theranostic outcome prediction remains unexplored, which faces three key challenges: (1) data and knowledge scarcity: RLT was only FDA-approved in 2022, yielding few training cases and insufficient domain knowledge in general LLMs; (2) heterogeneous information integration: robust prediction hinges on structured knowledge extraction from PET/CT, laboratory tests, and free-text clinical documentation; (3) evidence-grounded reasoning: clinical decisions must be anchored in trial evidence rather than LLM hallucinations. In this paper, we present TheraAgent, to our knowledge, the first agentic framework for PET theranostics, with three core innovations: (1) Multi-Expert Feature Extraction with Confidence-Weighted Consensus, where three specialized experts process heterogeneous inputs with uncertainty quantification; (2) Self-Evolving Agentic Memory (SEA-Mem), which learns prognostic patterns from accumulated cases, enabling case-based reasoning from limited data; (3) Evidence-Calibrated Reasoning, integrating a curated theranostics knowledge base to ground predictions in VISION/TheraP trial evidence. Evaluated on 35 real patients and 400 synthetic cases, TheraAgent achieves 75.7% overall accuracy on real patients and 87.0% on synthetic cases, outperforming MDAgents and MedAgent-Pro by over 20%. These results highlight a promising blueprint for trustworthy AI agents in PET theranostics, enabling trial-calibrated, multi-source decision support. Code will be released upon acceptance.",
+      "authors": [
+        "Zhihao Chen",
+        "Jiahui Wang",
+        "Yizhou Chen",
+        "Xiaozhong Ji",
+        "Xiaobin Hu",
+        "Jimin Hong",
+        "Wolfram Andreas Bosbach",
+        "Axel Rominger",
+        "Ali Afshar-Oromieh",
+        "Hongming Shan",
+        "Kuangyu Shi"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-03-14T00:50:10+00:00",
+      "link": "https://arxiv.org/pdf/2603.13676v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:TCM BI",
+        "query:BIO CA",
+        "query:TCM BI"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "precision oncology and outcome prediction for prostate cancer",
+      "llm_evidence_cn": "前列腺癌的精准肿瘤学与结果预测",
+      "llm_evidence": "前列腺癌的精准肿瘤学与结果预测",
+      "canonical_evidence": "前列腺癌的精准肿瘤学与结果预测",
+      "llm_tldr_en": "A multi-agent framework for predicting treatment response in prostate cancer using PET theranostics.",
+      "llm_tldr_cn": "一种利用PET诊疗一体化预测前列腺癌治疗反应的多智能体框架。",
+      "llm_tldr": "一种利用PET诊疗一体化预测前列腺癌治疗反应的多智能体框架。",
+      "llm_tags": [
+        "query:bio-ca:composite"
+      ],
+      "matched_query_tag": "query:bio-ca:composite",
+      "matched_query_text": "Papers central to 追踪癌症生物信息学新方法，重点关注多组学整合、生物标志物发现、预后预测及机器学习分析。, especially work that connects or combines: biomarker; survival analysis; machine learning; multi-omics; bioinformatics; cancer; Deep learning methods for cancer data analysis; Machine learning studies for prognosis prediction and biomarker discovery in cancer; Multi omics integration approaches in cancer analysis; Novel bioinformatics methods and models for cancer research.",
+      "matched_requirement_id": "req-composite-bio-ca",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.16160v1",
+      "title": "Segmentation-before-Staining Improves Structural Fidelity in Virtual IHC-to-Multiplex IF Translation",
+      "abstract": "Multiplex immunofluorescence (mIF) enables simultaneous single-cell quantification of multiple biomarkers within intact tissue architecture, yet its high reagent cost, multi-round staining protocols, and need for specialized imaging platforms limit routine clinical adoption. Virtual staining can synthesize mIF channels from widely available brightfield immunohistochemistry (IHC), but current translators optimize pixel-level fidelity without explicitly constraining nuclear morphology. In pathology, this gap is clinically consequential: subtle distortions in nuclei count, shape, or spatial arrangement propagate directly to quantification endpoints such as the Ki67 proliferation index, where errors of a few percent can shift treatment-relevant risk categories. This work introduces a supervision-free, architecture-agnostic conditioning strategy that injects a continuous cell probability map from a pretrained nuclei segmentation foundation model as an explicit input prior, together with a variance-preserving regularization term that matches local intensity statistics to maintain cell-level heterogeneity in synthesized fluorescence channels. The soft prior retains gradient-level boundary information lost by binary thresholding, providing a richer conditioning signal without task-specific tuning. Controlled experiments across Pix2Pix with U-Net and ResNet generators, deterministic regression U-Net, and conditional diffusion on two independent datasets demonstrate consistent improvements in nuclei count fidelity and perceptual quality, as the sole modifications. Code will be made publicly available upon acceptance.",
+      "authors": [
+        "Junhyeok Lee",
+        "Han Jang",
+        "Heeseong Eum",
+        "Joon Jang",
+        "Kyu Sung Choi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-17T06:25:50+00:00",
+      "link": "https://arxiv.org/pdf/2603.16160v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "keyword:TCM BI",
+        "query:BIO CA",
+        "query:RNA INT",
+        "query:TCM BI"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "quantification of multiple biomarkers in tissue architecture",
+      "llm_evidence_cn": "组织结构中多种生物标志物的定量分析",
+      "llm_evidence": "组织结构中多种生物标志物的定量分析",
+      "canonical_evidence": "组织结构中多种生物标志物的定量分析",
+      "llm_tldr_en": "Improves virtual staining for mIF to enable accurate single-cell biomarker quantification in pathology.",
+      "llm_tldr_cn": "改进了mIF的虚拟染色技术，以实现病理学中准确的单细胞生物标志物定量。",
+      "llm_tldr": "改进了mIF的虚拟染色技术，以实现病理学中准确的单细胞生物标志物定量。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "biomarker",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.17576v1",
+      "title": "LoGSAM: Parameter-Efficient Cross-Modal Grounding for MRI Segmentation",
+      "abstract": "Precise localization and delineation of brain tumors using Magnetic Resonance Imaging (MRI) are essential for planning therapy and guiding surgical decisions. However, most existing approaches rely on task-specific supervised models and are constrained by the limited availability of annotated data. To address this, we propose LoGSAM, a parameter-efficient, detection-driven framework that transforms radiologist dictation into text prompts for foundation-model-based localization and segmentation. Radiologist speech is first transcribed and translated using a pretrained Whisper ASR model, followed by negation-aware clinical NLP to extract tumor-specific textual prompts. These prompts guide text-conditioned tumor localization via a LoRA-adapted vision-language detection model, Grounding DINO (GDINO). The LoRA adaptation updates using 5% of the model parameters, thereby enabling computationally efficient domain adaptation while preserving pretrained cross-modal knowledge. The predicted bounding boxes are used as prompts for MedSAM to generate pixel-level tumor masks without any additional fine-tuning. Conditioning the frozen MedSAM on LoGSAM-derived priors yields a state-of-the-art dice score of 80.32% on BRISC 2025. In addition, we evaluate the full pipeline using German dictations from a board-certified radiologist on 12 unseen MRI scans, achieving 91.7% case-level accuracy. These results highlight the feasibility of constructing a modular, speech-to-segmentation pipeline by intelligently leveraging pretrained foundation models with minimal parameter updates.",
+      "authors": [
+        "Mohammad Robaitul Islam Bhuiyan",
+        "Sheethal Bhat",
+        "Melika Qahqaie",
+        "Tri-Thien Nguyen",
+        "Paula Andrea Pérez Toro",
+        "Tomas Arias Vergara",
+        "Andreas Maier"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-18T10:33:32+00:00",
+      "link": "https://arxiv.org/pdf/2603.17576v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "keyword:TCM BI",
+        "query:BIO CA",
+        "query:RNA INT",
+        "query:TCM BI"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "deep learning for brain tumor segmentation and localization using MRI",
+      "llm_evidence_cn": "利用 MRI 进行脑肿瘤分割和定位的深度学习",
+      "llm_evidence": "利用 MRI 进行脑肿瘤分割和定位的深度学习",
+      "canonical_evidence": "利用 MRI 进行脑肿瘤分割和定位的深度学习",
+      "llm_tldr_en": "Proposes LoGSAM, a parameter-efficient framework for brain tumor localization and segmentation from MRI.",
+      "llm_tldr_cn": "提出了 LoGSAM，一个用于 MRI 脑肿瘤定位和分割的高效参数框架。",
+      "llm_tldr": "提出了 LoGSAM，一个用于 MRI 脑肿瘤定位和分割的高效参数框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2602.24251v1",
+      "title": "Histopathology Image Normalization via Latent Manifold Compaction",
+      "abstract": "Batch effects arising from technical variations in histopathology staining protocols, scanners, and acquisition pipelines pose a persistent challenge for computational pathology, hindering cross-batch generalization and limiting reliable deployment of models across clinical sites. In this work, we introduce Latent Manifold Compaction (LMC), an unsupervised representation learning framework that performs image harmonization by learning batch-invariant embeddings from a single source dataset through explicit compaction of stain-induced latent manifolds. This allows LMC to generalize to target domain data unseen during training. Evaluated on three challenging public and in-house benchmarks, LMC substantially reduces batch-induced separations across multiple datasets and consistently outperforms state-of-the-art normalization methods in downstream cross-batch classification and detection tasks, enabling superior generalization.",
+      "authors": [
+        "Xiaolong Zhang",
+        "Jianwei Zhang",
+        "Selim Sevim",
+        "Emek Demir",
+        "Ece Eksi",
+        "Xubo Song"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CV"
+      ],
+      "published": "2026-02-27T18:26:59+00:00",
+      "link": "https://arxiv.org/pdf/2602.24251v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "unsupervised representation learning for histopathology image normalization",
+      "llm_evidence_cn": "用于组织病理学图像归一化的无监督表示学习",
+      "llm_evidence": "用于组织病理学图像归一化的无监督表示学习",
+      "canonical_evidence": "用于组织病理学图像归一化的无监督表示学习",
+      "llm_tldr_en": "Proposes Latent Manifold Compaction to reduce batch effects in histopathology images for better model generalization.",
+      "llm_tldr_cn": "提出潜流形压缩方法，减少组织病理图像中的批次效应，提高模型泛化能力。",
+      "llm_tldr": "提出潜流形压缩方法，减少组织病理图像中的批次效应，提高模型泛化能力。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2602.24251v1"
+    },
+    {
+      "id": "2603.01381v1",
+      "title": "Differential gene expression analysis via two-component mixture models with a semiparametric skew-normal scale mixture alternative",
+      "abstract": "Two-component mixture models are particularly useful for identifying differentially expressed genes, but their performance can deteriorate markedly when the alternative distribution departs from parametric assumptions or symmetry. We propose a semiparametric mixture model in which the null component is standard normal and the alternative follows a skew-normal scale mixture with an unspecified scale mixing distribution. This formulation accommodates skewness and heavy tails, providing a flexible and computationally tractable tool for differential gene-expression analysis without restrictive distributional assumptions. We establish identifiability and consistency of the model and develop an efficient estimation algorithm that incorporates nonparametric maximum likelihood estimation of the scale distribution. Numerical studies show notable improvements over existing parametric and nonparametric approaches for modeling the alternative distribution, and applications to colon cancer and leukemia datasets demonstrate reduced false discovery and false negative rates.",
+      "authors": [
+        "Sangkon Oh",
+        "Geoffrey J. McLachlan"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME"
+      ],
+      "published": "2026-03-02T02:22:09+00:00",
+      "link": "https://arxiv.org/pdf/2603.01381v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "differential gene expression analysis via mixture models",
+      "llm_evidence_cn": "通过混合模型进行差异基因表达分析",
+      "llm_evidence": "通过混合模型进行差异基因表达分析",
+      "canonical_evidence": "通过混合模型进行差异基因表达分析",
+      "llm_tldr_en": "A semiparametric mixture model for flexible and robust differential gene expression analysis.",
+      "llm_tldr_cn": "一种用于灵活且稳健的差异基因表达分析的半参数混合模型。",
+      "llm_tldr": "一种用于灵活且稳健的差异基因表达分析的半参数混合模型。",
+      "llm_tags": [
+        "query:rna-int"
+      ],
+      "matched_query_tag": "query:rna-int",
+      "matched_query_text": "bulk transcriptomics data analysis",
+      "matched_requirement_id": "req-16",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.01381v1"
+    },
+    {
+      "id": "2603.01143v1",
+      "title": "TC-SSA: Token Compression via Semantic Slot Aggregation for Gigapixel Pathology Reasoning",
+      "abstract": "The application of large vision-language models to computational pathology holds great promise for diagnostic assistants but faces a critical computational bottleneck: the gigapixel scale of Whole Slide Images (WSIs). A single WSI typically contains over 105 patches, creating sequence lengths that exceed the constraints of standard Transformer architectures. Existing solutions often resort to spatial sampling, which risks discarding diagnostically critical evidence. To address this, we propose TC-SSA (Token Compression via Semantic Slot Aggregation), a learnable token compression framework that aggregates patch features into a fixed number of semantic slots. A gated routing module assigns patches to slots using sparse Top-2 routing, followed by weighted aggregation, enabling global slide coverage under a strict token budget. The resulting representation retains diagnostically relevant information while reducing the number of visual tokens to 1.7% of the original sequence. On the SlideBench(TCGA), our model achieves 78.34% overall accuracy and 77.14% on the diagnosis subset, outperforming sampling-based baselines under comparable token budgets. The method also generalizes to MIL classification, reaching AUC of 95.83% on TCGA-BRCA, 98.27% on TCGA-NSCLC and 79.80% on PANDA. These results suggest that learnable semantic aggregation provides an effective trade-off between efficiency and diagnostic performance for gigapixel pathology reasoning.",
+      "authors": [
+        "Zhuo Chen",
+        "Shawn Young",
+        "Lijian Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-01T15:07:57+00:00",
+      "link": "https://arxiv.org/pdf/2603.01143v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Token compression for gigapixel pathology reasoning",
+      "llm_evidence_cn": "用于千兆像素病理推理的令牌压缩",
+      "llm_evidence": "用于千兆像素病理推理的令牌压缩",
+      "canonical_evidence": "用于千兆像素病理推理的令牌压缩",
+      "llm_tldr_en": "Proposes TC-SSA to handle the computational bottleneck of large-scale pathology image analysis.",
+      "llm_tldr_cn": "提出TC-SSA以解决大规模病理图像分析的计算瓶颈。",
+      "llm_tldr": "提出TC-SSA以解决大规模病理图像分析的计算瓶颈。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.01143v1"
+    },
+    {
+      "id": "2603.02273v1",
+      "title": "Graph Attention Based Prioritization of Disease Responsible Genes from Multimodal Alzheimer's Network",
+      "abstract": "Prioritizing disease-associated genes is central to understanding the molecular mechanisms of complex disorders such as Alzheimer's disease (AD). Traditional network-based approaches rely on static centrality measures and often fail to capture cross-modal biological heterogeneity. We propose NETRA (Node Evaluation through Transformer-based Representation and Attention), a multimodal graph transformer framework that replaces heuristic centrality metrics with attention-driven relevance scoring. Using AD as a case study, gene regulatory networks are independently constructed from microarray, single-cell RNA-seq, and single-nucleus RNA-seq data. Random-walk sequences derived from these networks are used to train a BERT-based model for learning global gene embeddings, while modality-specific gene expression profiles are compressed using variational autoencoders. These representations are integrated with auxiliary biological networks, including protein-protein interactions, Gene Ontology semantic similarity, and diffusion-based gene similarity, into a unified multimodal graph. A graph transformer assigns NETRA scores that quantify gene relevance in a disease-specific and context-aware manner. Gene set enrichment analysis shows that NETRA achieves a normalized enrichment score of about 3.9 for the Alzheimer's disease pathway, substantially outperforming classical centrality measures and diffusion models. Top-ranked genes enrich multiple neurodegenerative pathways, recover a known late-onset AD susceptibility locus at chr12q13, and reveal conserved cross-disease gene modules. The framework preserves biologically realistic heavy-tailed network topology and is readily extensible to other complex disorders.",
+      "authors": [
+        "Binon Teji",
+        "Subhajit Bandyopadhyay",
+        "Swarup Roy"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-01T06:46:18+00:00",
+      "link": "https://arxiv.org/pdf/2603.02273v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Integrative analysis of microarray, single-cell, and single-nucleus RNA-seq",
+      "llm_evidence_cn": "微阵列、单细胞和单核RNA-seq的整合分析",
+      "llm_evidence": "微阵列、单细胞和单核RNA-seq的整合分析",
+      "canonical_evidence": "微阵列、单细胞和单核RNA-seq的整合分析",
+      "llm_tldr_en": "NETRA uses graph transformers to prioritize disease genes by integrating multimodal transcriptomic data.",
+      "llm_tldr_cn": "NETRA利用图变换器通过整合多模态转录组数据来优先排序疾病相关基因。",
+      "llm_tldr": "NETRA利用图变换器通过整合多模态转录组数据来优先排序疾病相关基因。",
+      "llm_tags": [
+        "query:rna-int"
+      ],
+      "matched_query_tag": "query:rna-int",
+      "matched_query_text": "bulk RNA seq and single cell RNA seq comparative and integrative analysis",
+      "matched_requirement_id": "req-17",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.02273v1"
+    },
+    {
+      "id": "2603.01250v1",
+      "title": "The MAMA-MIA Challenge: Advancing Generalizability and Fairness in Breast MRI Tumor Segmentation and Treatment Response Prediction",
+      "abstract": "Breast cancer is the most frequently diagnosed malignancy among women worldwide and a leading cause of cancer-related mortality. Dynamic contrast-enhanced magnetic resonance imaging plays a central role in tumor characterization and treatment monitoring, particularly in patients receiving neoadjuvant chemotherapy. However, existing artificial intelligence models for breast magnetic resonance imaging are often developed using single-center data and evaluated using aggregate performance metrics, limiting their generalizability and obscuring potential performance disparities across demographic subgroups. The MAMA-MIA Challenge was designed to address these limitations by introducing a large-scale benchmark that jointly evaluates primary tumor segmentation and prediction of pathologic complete response using pre-treatment magnetic resonance imaging only. The training cohort comprised 1,506 patients from multiple institutions in the United States, while evaluation was conducted on an external test set of 574 patients from three independent European centers to assess cross-continental and cross-institutional generalization. A unified scoring framework combined predictive performance with subgroup consistency across age, menopausal status, and breast density. Twenty-six international teams participated in the final evaluation phase. Results demonstrate substantial performance variability under external testing and reveal trade-offs between overall accuracy and subgroup fairness. The challenge provides standardized datasets, evaluation protocols, and public resources to promote the development of robust and equitable artificial intelligence systems for breast cancer imaging.",
+      "authors": [
+        "Lidia Garrucho",
+        "Smriti Joshi",
+        "Kaisar Kushibar",
+        "Richard Osuala",
+        "Maciej Bobowicz",
+        "Xavier Bargalló",
+        "Paulius Jaruševičius",
+        "Kai Geissler",
+        "Raphael Schäfer",
+        "Muhammad Alberb",
+        "Tony Xu",
+        "Anne Martel",
+        "Daniel Sleiman",
+        "Navchetan Awasthi",
+        "Hadeel Awwad",
+        "Joan C. Vilanova",
+        "Robert Martí",
+        "Daan Schouten",
+        "Jeong Hoon Lee",
+        "Mirabela Rusu",
+        "Eleonora Poeta",
+        "Luisa Vargas",
+        "Eliana Pastor",
+        "Maria A. Zuluaga",
+        "Jessica Kächele",
+        "Dimitrios Bounias",
+        "Alexandra Ertl",
+        "Katarzyna Gwoździewicz",
+        "Maria-Laura Cosaka",
+        "Pasant M. Abo-Elhoda",
+        "Sara W. Tantawy",
+        "Shorouq S. Sakrana",
+        "Norhan O. Shawky-Abdelfatah",
+        "Amr Muhammad Abdo-Salem",
+        "Androniki Kozana",
+        "Eugen Divjak",
+        "Gordana Ivanac",
+        "Katerina Nikiforaki",
+        "Michail E. Klontzas",
+        "Rosa García-Dosdá",
+        "Meltem Gulsun-Akpinar",
+        "Oğuz Lafcı",
+        "Carlos Martín-Isla",
+        "Oliver Díaz",
+        "Laura Igual",
+        "Karim Lekadir"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-01T20:06:30+00:00",
+      "link": "https://arxiv.org/pdf/2603.01250v1",
+      "tags": [
+        "keyword:BIO CA",
+        "query:BIO CA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "deep learning for breast cancer tumor segmentation and treatment response prediction",
+      "llm_evidence_cn": "深度学习用于乳腺癌肿瘤分割和治疗反应预测",
+      "llm_evidence": "深度学习用于乳腺癌肿瘤分割和治疗反应预测",
+      "canonical_evidence": "深度学习用于乳腺癌肿瘤分割和治疗反应预测",
+      "llm_tldr_en": "The MAMA-MIA challenge focuses on generalizability and fairness in AI for breast MRI analysis.",
+      "llm_tldr_cn": "MAMA-MIA 挑战赛专注于乳腺 MRI 分析中人工智能模型的泛化性和公平性。",
+      "llm_tldr": "MAMA-MIA 挑战赛专注于乳腺 MRI 分析中人工智能模型的泛化性和公平性。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.01250v1"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.01295v1",
+      "title": "Multi-Level Bidirectional Decoder Interaction for Uncertainty-Aware Breast Ultrasound Analysis",
+      "abstract": "Breast ultrasound interpretation requires simultaneous lesion segmentation and tissue classification. However, conventional multi-task learning approaches suffer from task interference and rigid coordination strategies that fail to adapt to instance-specific prediction difficulty. We propose a multi-task framework addressing these limitations through multi-level decoder interaction and uncertainty-aware adaptive coordination. Task Interaction Modules operate at all decoder levels, establishing bidirectional segmentation-classification communication during spatial reconstruction through attention weighted pooling and multiplicative modulation. Unlike prior single-level or encoder-only approaches, this multi-level design captures scale specific task synergies across semantic-to-spatial scales, producing complementary task interaction streams. Uncertainty-Proxy Attention adaptively weights base versus enhanced features at each level using feature activation variance, enabling per-level and per-sample task balancing without heuristic tuning. To support instance-adaptive prediction, multi-scale context fusion captures morphological cues across varying lesion sizes. Evaluation on multiple publicly available breast ultrasound datasets demonstrates competitive performance, including 74.5% lesion IoU and 90.6% classification accuracy on BUSI dataset. Ablation studies confirm that multi-level task interaction provides significant performance gains, validating that decoder-level bidirectional communication is more effective than conventional encoder-only parameter sharing. The code is available at: https://github.com/C-loud-Nine/Uncertainty-Aware-Multi-Level-Decoder-Interaction.",
+      "authors": [
+        "Abdullah Al Shafi",
+        "Md Kawsar Mahmud Khan Zunayed",
+        "Safin Ahmmed",
+        "Sk Imran Hossain",
+        "Engelbert Mephu Nguifo"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-01T22:02:06+00:00",
+      "link": "https://arxiv.org/pdf/2603.01295v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "deep learning for breast ultrasound lesion segmentation and classification",
+      "llm_evidence_cn": "用于乳腺超声病变分割和分类的深度学习",
+      "llm_evidence": "用于乳腺超声病变分割和分类的深度学习",
+      "canonical_evidence": "用于乳腺超声病变分割和分类的深度学习",
+      "llm_tldr_en": "Proposes a multi-task deep learning framework for uncertainty-aware breast ultrasound image analysis.",
+      "llm_tldr_cn": "提出一种多任务深度学习框架，用于不确定性感知的乳腺超声图像分析。",
+      "llm_tldr": "提出一种多任务深度学习框架，用于不确定性感知的乳腺超声图像分析。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.01295v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.13583v1",
+      "title": "Confidence intervals for two-stage adaptive designs with subpopulation selection",
+      "abstract": "We consider clinical trials in which an experimental treatment is compared with a control in pre-specified patient subpopulations. In such settings, adaptive enrichment designs allow the enrolled population to be modified at an interim analysis, with subpopulations selected according to preplanned rules. Since these interim decisions are data-dependent, valid statistical inference must account for them. We focus on constructing confidence intervals for the treatment effect in the selected population. Confidence interval methods that ignore the possibility of population modification may fail to achieve the desired coverage probability. We propose a new approach that constructs confidence intervals with exact nominal coverage conditional on the interim decision. Importantly, our method applies to a broad class of adaptive enrichment designs, rather than a single specific design. Our method involves deriving the distribution of the naive estimator of the treatment effect in the selected population conditional on the interim decision and inverting uniformly most accurate unbiased tests to obtain the confidence interval. We provide an efficient computational procedure and show through extensive simulations that the resulting confidence intervals satisfy the theoretical coverage guarantees.",
+      "authors": [
+        "Enyu Li",
+        "Nigel Stallard",
+        "Ekkehard Glimm",
+        "Dominic Magirr",
+        "Peter K. Kimani"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME"
+      ],
+      "published": "2026-03-13T20:47:10+00:00",
+      "link": "https://arxiv.org/pdf/2603.13583v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:TCM BI",
+        "query:RNA INT",
+        "query:TCM BI"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Adaptive designs with subpopulation selection in clinical trials",
+      "llm_evidence_cn": "临床试验中具有亚组选择的自适应设计",
+      "llm_evidence": "临床试验中具有亚组选择的自适应设计",
+      "canonical_evidence": "临床试验中具有亚组选择的自适应设计",
+      "llm_tldr_en": "A new approach for constructing confidence intervals in adaptive enrichment clinical trials with subpopulation selection.",
+      "llm_tldr_cn": "一种在具有亚组选择的自适应富集临床试验中构建置信区间的新方法。",
+      "llm_tldr": "一种在具有亚组选择的自适应富集临床试验中构建置信区间的新方法。",
+      "llm_tags": [
+        "query:tcm-bi"
+      ],
+      "matched_query_tag": "query:tcm-bi",
+      "matched_query_text": "patient stratification and subgrouping in TCM clinical trials",
+      "matched_requirement_id": "req-22",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.13557v1",
+      "title": "Performance evaluation of deep learning models for image analysis: considerations for visual control and statistical metrics",
+      "abstract": "Deep learning-based automated image analysis (DL-AIA) has been shown to outperform trained pathologists in tasks related to feature quantification. Related to these capacities the use of DL-AIA tools is currently extending from proof-of-principle studies to routine applications such as patient samples (diagnostic pathology), regulatory safety assessment (toxicologic pathology), and recurrent research tasks. To ensure that DL-AIA applications are safe and reliable, it is critical to conduct a thorough and objective generalization performance assessment (i.e., the ability of the algorithm to accurately predict patterns of interest) and possibly evaluate model robustness (i.e., the algorithm's capacity to maintain predictive accuracy on images from different sources). In this article, we review the practices for performance assessment in veterinary pathology publications by which two approaches were identified: 1) Exclusive visual performance control (i.e. eyeballing of algorithmic predictions) plus validation of the models application utilizing secondary performance indices, and 2) Statistical performance control (alongside the other methods), which requires a dataset creation and separation of an hold-out test set prior to model training. This article compares the strengths and weaknesses of statistical and visual performance control methods. Furthermore, we discuss relevant considerations for rigorous statistical performance evaluation including metric selection, test dataset image composition, ground truth label quality, resampling methods such as bootstrapping, statistical comparison of multiple models, and evaluation of model stability. It is our conclusion that visual and statistical evaluation have complementary strength and a combination of both provides the greatest insight into the DL model's performance and sources of error.",
+      "authors": [
+        "Christof A. Bertram",
+        "Jonas Ammeling",
+        "Alexander Bartel",
+        "Gillian Beamer",
+        "Marc Aubreville"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-13T19:49:39+00:00",
+      "link": "https://arxiv.org/pdf/2603.13557v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:TCM BI",
+        "query:BIO CA",
+        "query:TCM BI"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Deep learning performance evaluation in diagnostic pathology",
+      "llm_evidence_cn": "诊断病理学中深度学习性能评估",
+      "llm_evidence": "诊断病理学中深度学习性能评估",
+      "canonical_evidence": "诊断病理学中深度学习性能评估",
+      "llm_tldr_en": "Discusses metrics and considerations for evaluating deep learning models in automated pathology image analysis.",
+      "llm_tldr_cn": "探讨了自动化病理图像分析中深度学习模型的评估指标与考量因素。",
+      "llm_tldr": "探讨了自动化病理图像分析中深度学习模型的评估指标与考量因素。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.02757v1",
+      "title": "Mathematical model of tumor-macrophage interactions: Elucidating the tumor-driven macrophage phenotype reprogramming",
+      "abstract": "The interplay between tumor cells and macrophages plays a central regulatory role in cancer progression. In this study, we developed a mathematical model that incorporates tumor cells, M1 type macrophages, M2 type macrophages and an M3 type macrophage population characterized by dual phenotypic features. First, we analyzed the fundamental mathematical properties of the model and derived the conditions under which the system attains a tumor free stable state or a coexistence state of tumor and immune cells. Second, global sensitivity analysis revealed that key parameters governing macrophage polarization and intercellular communication vary dynamically during tumor development. Bifurcation analysis further identified the polarization rate of M1 type macrophages $κ$ and the baseline level of resting macrophages $M_0$ as critical determinants of the system's dynamical behavior. Notably, using approximate Bayesian computation for parameter inference and dynamic simulations, the model successfully recapitulated the evolutionary trajectories of eight tumor samples. The results demonstrate that lower tumor burden is significantly associated with higher M1 type macrophage infiltration and delayed peak time of M3 type macrophage activation. Moreover, survival analysis indicated that both enhanced M1 type macrophage infiltration and delayed peak time of M3 type macrophage activation are correlated with longer survival time. In summary, this study not only provides a theoretical framework for understanding the dynamic mechanisms underlying tumor macrophage interactions but also proposes two potential clinical prognostic markers: the level of M1 type macrophage infiltration and the peak time of M3 type macrophage activation.",
+      "authors": [
+        "Haifeng Zhang",
+        "Yipu Qu",
+        "Wuyue Yang",
+        "Chenghang Li"
+      ],
+      "primary_category": "q-bio.PE",
+      "categories": [
+        "q-bio.PE"
+      ],
+      "published": "2026-03-03T08:55:51+00:00",
+      "link": "https://arxiv.org/pdf/2603.02757v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Mathematical model for tumor-immune interactions in cancer research",
+      "llm_evidence_cn": "癌症研究中肿瘤-免疫相互作用的数学模型",
+      "llm_evidence": "癌症研究中肿瘤-免疫相互作用的数学模型",
+      "canonical_evidence": "癌症研究中肿瘤-免疫相互作用的数学模型",
+      "llm_tldr_en": "A mathematical model elucidating the reprogramming of macrophage phenotypes during tumor progression.",
+      "llm_tldr_cn": "一种阐明肿瘤进展过程中巨噬细胞表型重编程的数学模型。",
+      "llm_tldr": "一种阐明肿瘤进展过程中巨噬细胞表型重编程的数学模型。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Novel bioinformatics methods and models for cancer research",
+      "matched_requirement_id": "req-10",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.02757v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.14381v1",
+      "title": "A Bayesian Critique of Rank-Based Methods for Surrogate Marker Evaluation",
+      "abstract": "Surrogate markers are often employed in clinical trials to replace primary outcomes that may be difficult, expensive, or time-consuming to measure directly. These markers can accelerate the evaluation of new treatments, provided they reliably capture the causal relationship between treatment and true clinical benefit. Parast et al. (2024) recently proposed a rank-based approach for evaluating surrogate markers, characterized by its nonparametric nature and minimal assumptions. While this method is useful in small-sample model-agnostic settings, it has several limitations, including a lack of clear causal interpretation, low statistical power, and insufficient robustness to different data-generating mechanisms. In this paper, we propose a Bayesian approach that addresses these shortcomings by focusing on causal treatment effect estimands and, in doing so, improves power through covariate adjustment. We demonstrate the advantages of our proposed method through a simulation study designed to highlight gains in both accuracy and power.",
+      "authors": [
+        "Pietro Carlotti",
+        "Layla Parast"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME"
+      ],
+      "published": "2026-03-15T13:39:05+00:00",
+      "link": "https://arxiv.org/pdf/2603.14381v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:TCM BI",
+        "query:TCM BI"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Bayesian evaluation of surrogate markers in clinical trials",
+      "llm_evidence_cn": "临床试验中替代标志物的贝叶斯评估",
+      "llm_evidence": "临床试验中替代标志物的贝叶斯评估",
+      "canonical_evidence": "临床试验中替代标志物的贝叶斯评估",
+      "llm_tldr_en": "Proposes a Bayesian approach to improve the evaluation of surrogate markers in clinical trials.",
+      "llm_tldr_cn": "提出一种贝叶斯方法，旨在改进临床试验中替代标志物的评估。",
+      "llm_tldr": "提出一种贝叶斯方法，旨在改进临床试验中替代标志物的评估。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "biomarker",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.13590v1",
+      "title": "Opportunistic Cardiac Health Assessment: Estimating Phenotypes from Localizer MRI through Multi-Modal Representations",
+      "abstract": "Cardiovascular diseases are the leading cause of death. Cardiac phenotypes (CPs), e.g., ejection fraction, are the gold standard for assessing cardiac health, but they are derived from cine cardiac magnetic resonance imaging (CMR), which is costly and requires high spatio-temporal resolution. Every magnetic resonance (MR) examination begins with rapid and coarse localizers for scan planning, which are discarded thereafter. Despite non-diagnostic image quality and lack of temporal information, localizers can provide valuable structural information rapidly. In addition to imaging, patient-level information, including demographics and lifestyle, influence the cardiac health assessment. Electrocardiograms (ECGs) are inexpensive, routinely ordered in clinical practice, and capture the temporal activity of the heart. Here, we introduce C-TRIP (Cardiac Tri-modal Representations for Imaging Phenotypes), a multi-modal framework that aligns localizer MRI, ECG signals, and tabular metadata to learn a robust latent space and predict CPs using localizer images as an opportunistic alternative to CMR. By combining these three modalities, we leverage cheap spatial and temporal information from localizers, and ECG, respectively while benefiting from patient-specific context provided by tabular data. Our pipeline consists of three stages. First, encoders are trained independently to learn uni-modal representations. The second stage fuses the pre-trained encoders to unify the latent space. The final stage uses the enriched representation space for CP prediction, with inference performed exclusively on localizer MRI. Proposed C-TRIP yields accurate functional CPs, and high correlations for structural CPs. Since localizers are inherently rapid and low-cost, our C-TRIP framework could enable better accessibility for CP estimation.",
+      "authors": [
+        "Busra Nur Zeybek",
+        "Özgün Turgut",
+        "Yundi Zhang",
+        "Jiazhen Pan",
+        "Robert Graf",
+        "Sophie Starck",
+        "Daniel Rueckert",
+        "Sevgi Gokce Kafali"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-13T21:00:48+00:00",
+      "link": "https://arxiv.org/pdf/2603.13590v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:TCM BI",
+        "query:BIO CA",
+        "query:TCM BI"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "estimating phenotypes as biomarkers for cardiac health assessment",
+      "llm_evidence_cn": "估计表型作为心脏健康评估的生物标志物",
+      "llm_evidence": "估计表型作为心脏健康评估的生物标志物",
+      "canonical_evidence": "估计表型作为心脏健康评估的生物标志物",
+      "llm_tldr_en": "Estimating cardiac phenotypes from MRI localizers using multi-modal representations for health assessment.",
+      "llm_tldr_cn": "利用多模态表示从MRI定位像中估计心脏表型，用于健康评估。",
+      "llm_tldr": "利用多模态表示从MRI定位像中估计心脏表型，用于健康评估。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "biomarker",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.02952v1",
+      "title": "Sparse autoencoders reveal organized biological knowledge but minimal regulatory logic in single-cell foundation models: a comparative atlas of Geneformer and scGPT",
+      "abstract": "Background: Single-cell foundation models such as Geneformer and scGPT encode rich biological information, but whether this includes causal regulatory logic rather than statistical co-expression remains unclear. Sparse autoencoders (SAEs) can resolve superposition in neural networks by decomposing dense activations into interpretable features, yet they have not been systematically applied to biological foundation models.   Results: We trained TopK SAEs on residual stream activations from all layers of Geneformer V2-316M (18 layers, d=1152) and scGPT whole-human (12 layers, d=512), producing atlases of 82525 and 24527 features, respectively. Both atlases confirm massive superposition, with 99.8 percent of features invisible to SVD. Systematic characterization reveals rich biological organization: 29 to 59 percent of features annotate to Gene Ontology, KEGG, Reactome, STRING, or TRRUST, with U-shaped layer profiles reflecting hierarchical abstraction. Features organize into co-activation modules (141 in Geneformer, 76 in scGPT), exhibit causal specificity (median 2.36x), and form cross-layer information highways (63 to 99.8 percent). When tested against genome-scale CRISPRi perturbation data, only 3 of 48 transcription factors (6.2 percent) show regulatory-target-specific feature responses. A multi-tissue control yields marginal improvement (10.4 percent, 5 of 48 TFs), establishing model representations as the bottleneck.   Conclusions: These models have internalized organized biological knowledge, including pathway membership, protein interactions, functional modules, and hierarchical abstraction, yet they encode minimal causal regulatory logic. We release both feature atlases as interactive web platforms enabling exploration of more than 107000 features across 30 layers of two leading single-cell foundation models.",
+      "authors": [
+        "Ihor Kendiukhov"
+      ],
+      "primary_category": "q-bio.GN",
+      "categories": [
+        "q-bio.GN",
+        "cs.LG",
+        "q-bio.CB"
+      ],
+      "published": "2026-03-03T13:05:11+00:00",
+      "link": "https://arxiv.org/pdf/2603.02952v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "interpretable features in single-cell foundation models like Geneformer and scGPT",
+      "llm_evidence_cn": "单细胞基础模型（如 Geneformer 和 scGPT）中的可解释特征",
+      "llm_evidence": "单细胞基础模型（如 Geneformer 和 scGPT）中的可解释特征",
+      "canonical_evidence": "单细胞基础模型（如 Geneformer 和 scGPT）中的可解释特征",
+      "llm_tldr_en": "Using sparse autoencoders to interpret biological knowledge within single-cell foundation models.",
+      "llm_tldr_cn": "使用稀疏自编码器解释单细胞基础模型中的生物学知识。",
+      "llm_tldr": "使用稀疏自编码器解释单细胞基础模型中的生物学知识。",
+      "llm_tags": [
+        "query:rna-int"
+      ],
+      "matched_query_tag": "query:rna-int",
+      "matched_query_text": "single-cell transcriptomics reference",
+      "matched_requirement_id": "req-15",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.02952v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.14719v1",
+      "title": "Multimodal Deep Learning for Early Prediction of Patient Deterioration in the ICU: Integrating Time-Series EHR Data with Clinical Notes",
+      "abstract": "Early identification of patients at risk for clinical deterioration in the intensive care unit (ICU) remains a critical challenge. Delayed recognition of impending adverse events, including mortality, vasopressor initiation, and mechanical ventilation, contributes to preventable morbidity and mortality. We present a multimodal deep learning approach that combines structured time-series data (vital signs and laboratory values) with unstructured clinical notes to predict patient deterioration within 24 hours. Using the MIMIC-IV database, we constructed a cohort of 74,822 ICU stays and generated 5.7 million hourly prediction samples. Our architecture employs a bidirectional LSTM encoder for temporal patterns in physiologic data and ClinicalBERT embeddings for clinical notes, fused through a cross-modal attention mechanism. We also present a systematic review of existing approaches to ICU deterioration prediction, identifying 31 studies published between 2015 and 2024. Most existing models rely solely on structured data and achieve area under the curve (AUC) values between 0.70 and 0.85. Studies incorporating clinical notes remain rare but show promise for capturing information not present in structured fields. Our multimodal model achieves a test AUROC of 0.7857 and AUPRC of 0.1908 on 823,641 held-out samples, with a validation-to-test gap of only 0.6 percentage points. Ablation analysis validates the multimodal approach: clinical notes improve AUROC by 2.5 percentage points and AUPRC by 39.2% relative to a structured-only baseline, while deep learning models consistently outperform classical baselines (XGBoost AUROC: 0.7486, logistic regression: 0.7171). This work contributes both a thorough review of the field and a reproducible multimodal framework for clinical deterioration prediction.",
+      "authors": [
+        "Binesh Sadanandan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-03-16T01:50:08+00:00",
+      "link": "https://arxiv.org/pdf/2603.14719v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:TCM BI",
+        "query:BIO CA",
+        "query:TCM BI"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Multimodal deep learning for early prediction of patient mortality",
+      "llm_evidence_cn": "多模态深度学习用于患者死亡率早期预测",
+      "llm_evidence": "多模态深度学习用于患者死亡率早期预测",
+      "canonical_evidence": "多模态深度学习用于患者死亡率早期预测",
+      "llm_tldr_en": "Integrates EHR data and clinical notes using deep learning to predict ICU patient deterioration.",
+      "llm_tldr_cn": "利用深度学习整合EHR数据和临床记录，预测ICU患者的病情恶化。",
+      "llm_tldr": "利用深度学习整合EHR数据和临床记录，预测ICU患者的病情恶化。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Machine learning studies for prognosis prediction and biomarker discovery in cancer",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.13660v1",
+      "title": "Learning Generalizable 3D Medical Image Representations from Mask-Guided Self-Supervision",
+      "abstract": "Foundation models have transformed vision and language by learning general-purpose representations from large-scale unlabeled data, yet 3D medical imaging lacks analogous approaches. Existing self-supervised methods rely on low-level reconstruction or contrastive objectives that fail to capture the anatomical semantics critical for medical image analysis, limiting transfer to downstream tasks. We present MASS (MAsk-guided Self-Supervised learning), which treats in-context segmentation as the pretext task for learning general-purpose medical imaging representations. MASS's key insight is that automatically generated class-agnostic masks provide sufficient structural supervision for learning semantically rich representations. By training on thousands of diverse mask proposals spanning anatomical structures and pathological findings, MASS learns what semantically defines medical structures: the holistic combination of appearance, shape, spatial context, and anatomical relationships. We demonstrate effectiveness across data regimes: from small-scale pretraining on individual datasets (20-200 scans) to large-scale multi-modal pretraining on 5K CT, MRI, and PET volumes, all without annotations. MASS demonstrates: (i) few-shot segmentation on novel structures, (ii) matching full supervision with only 20-40\\% labeled data while outperforming self-supervised baselines by over 20 in Dice score in low-data regimes, and (iii) frozen-encoder classification on unseen pathologies that matches full supervised training with thousands of samples. Mask-guided self-supervised pretraining captures broadly generalizable knowledge, opening a path toward 3D medical imaging foundation models without expert annotations. Code is available: https://github.com/Stanford-AIMI/MASS.",
+      "authors": [
+        "Yunhe Gao",
+        "Yabin Zhang",
+        "Chong Wang",
+        "Jiaming Liu",
+        "Maya Varma",
+        "Jean-Benoit Delbrouck",
+        "Akshay Chaudhari",
+        "Curtis Langlotz"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-14T00:06:18+00:00",
+      "link": "https://arxiv.org/pdf/2603.13660v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "keyword:TCM BI",
+        "query:BIO CA",
+        "query:RNA INT",
+        "query:TCM BI"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Self-supervised learning for 3D medical image representations",
+      "llm_evidence_cn": "用于3D医学图像表示的自监督学习",
+      "llm_evidence": "用于3D医学图像表示的自监督学习",
+      "canonical_evidence": "用于3D医学图像表示的自监督学习",
+      "llm_tldr_en": "Introduces MASS, a self-supervised method for learning semantically rich 3D medical image representations.",
+      "llm_tldr_cn": "引入MASS，一种用于学习语义丰富的3D医学图像表示的自监督方法。",
+      "llm_tldr": "引入MASS，一种用于学习语义丰富的3D医学图像表示的自监督方法。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.08195v1",
+      "title": "Supporting Workflow Reproducibility by Linking Bioinformatics Tools across Papers and Executable Code",
+      "abstract": "Motivation: The rapid growth of biological data has intensified the need for transparent, reproducible, and well-documented computational workflows. The ability to clearly connect the steps of a workflow in the code with their description in a paper would improve workflow understanding, support reproducibility, and facilitate reuse. This task requires the linking of Bioinformatics tools in workflow code with their mentions in a published workflow description. Results: We present CoPaLink, an automated approach that integrates three components: Named Entity Recognition (NER) for identifying tool mentions in scientific text, NER for tool mentions in workflow code, and entity linking grounded on Bioinformatics knowledge bases. We propose approaches for all three steps achieving a high individual F1-measure (84 - 89) and a joint accuracy of 66 when evaluated on Nextflow workflows using Bioconda and Bioweb Knowledge bases. CoPaLink leverages corpora of scientific articles and workflow executable code with curated tool annotations to bridge the gap between narrative descriptions and workflow implementations. Availability: The code is available at https://gitlab.liris.cnrs.fr/sharefair/copalink-experiments and https://gitlab.liris.cnrs.fr/sharefair/copalink. The corpora are also available at https://doi.org/10.5281/zenodo.18526700, https://doi.org/10.5281/zenodo.18526760 and https://doi.org/10.5281/zenodo.18543814.",
+      "authors": [
+        "Clémence Sebe",
+        "Olivier Ferret",
+        "Aurélie Névéol",
+        "Mahdi Esmailoghli",
+        "Ulf Leser",
+        "Sarah Cohen-Boulakia"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-03-09T10:24:25+00:00",
+      "link": "https://arxiv.org/pdf/2603.08195v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "linking bioinformatics tools across papers and code",
+      "llm_evidence_cn": "跨论文和代码链接生物信息学工具",
+      "llm_evidence": "跨论文和代码链接生物信息学工具",
+      "canonical_evidence": "跨论文和代码链接生物信息学工具",
+      "llm_tldr_en": "CoPaLink improves bioinformatics workflow reproducibility by linking tool mentions in text to executable code.",
+      "llm_tldr_cn": "CoPaLink通过将文本中的工具提及与可执行代码链接，提高生物信息学工作流的可重复性。",
+      "llm_tldr": "CoPaLink通过将文本中的工具提及与可执行代码链接，提高生物信息学工作流的可重复性。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "bioinformatics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.08195v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.14806v1",
+      "title": "Fold-CP: A Context Parallelism Framework for Biomolecular Modeling",
+      "abstract": "Understanding cellular machinery requires atomic-scale reconstruction of large biomolecular assemblies. However, predicting the structures of these systems has been constrained by hardware memory requirements of models like AlphaFold 3, imposing a practical ceiling of a few thousand residues that can be processed on a single GPU. Here we present NVIDIA BioNeMo Fold-CP, a context parallelism framework that overcomes this barrier by distributing the inference and training pipelines of co-folding models across multiple GPUs. We use the Boltz models as open source reference architectures and implement custom multidimensional primitives that efficiently parallelize both the dense triangular updates and the irregular, data-dependent pattern of window-batched local attention. Our approach achieves efficient memory scaling; for an N-token input distributed across P GPUs, per-device memory scales as $O(N^2/P)$, enabling the structure prediction of assemblies exceeding 30,000 residues on 64 NVIDIA B300 GPUs. We demonstrate the scientific utility of this approach through successful developer use cases: Fold-CP enabled the scoring of over 90% of Comprehensive Resource of Mammalian protein complexes (CORUM) database, as well as folding of disease-relevant PI4KA lipid kinase complex bound to an intrinsically disordered region without cropping. By providing a scalable pathway for modeling massive systems with full global context, Fold-CP represents a significant step toward the realization of a virtual cell.",
+      "authors": [
+        "Dejun Lin",
+        "Simon Chu",
+        "Vishanth Iyer",
+        "Youhan Lee",
+        "John St John",
+        "Kevin Boyd",
+        "Brian Roland",
+        "Xiaowei Ren",
+        "Guoqing Zhou",
+        "Zhonglin Cao",
+        "Polina Binder",
+        "Yuliya Zhautouskaya",
+        "Jakub Zakrzewski",
+        "Maximilian Stadler",
+        "Kyle Gion",
+        "Yuxing Peng",
+        "Xi Chen",
+        "Tianjing Zhang",
+        "Philipp Junk",
+        "Michelle Dimon",
+        "Paweł Gniewek",
+        "Fabian Ortega",
+        "McKinley Polen",
+        "Ivan Grubisic",
+        "Ali Bashir",
+        "Graham Holt",
+        "Danny Kovtun",
+        "Matthias Grass",
+        "Luca Naef",
+        "Rui Wang",
+        "Jian Peng",
+        "Anthony Costa",
+        "Saee Paliwal",
+        "Eddie Calleja",
+        "Timur Rvachov",
+        "Neha Tadimeti",
+        "Roy Tal",
+        "Emine Kucukbenli"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM",
+        "cs.DC",
+        "cs.LG",
+        "q-bio.BM"
+      ],
+      "published": "2026-03-16T04:20:01+00:00",
+      "link": "https://arxiv.org/pdf/2603.14806v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "keyword:TCM BI",
+        "query:BIO CA",
+        "query:RNA INT",
+        "query:TCM BI"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Bioinformatics framework for biomolecular modeling",
+      "llm_evidence_cn": "用于生物分子建模的生物信息学框架",
+      "llm_evidence": "用于生物分子建模的生物信息学框架",
+      "canonical_evidence": "用于生物分子建模的生物信息学框架",
+      "llm_tldr_en": "Introduces BioNeMo Fold-CP, a parallel framework for large-scale biomolecular structure prediction.",
+      "llm_tldr_cn": "推出BioNeMo Fold-CP，一个用于大规模生物分子结构预测的并行框架。",
+      "llm_tldr": "推出BioNeMo Fold-CP，一个用于大规模生物分子结构预测的并行框架。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Novel bioinformatics methods and models for cancer research",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.13682v1",
+      "title": "Every Error has Its Magnitude: Asymmetric Mistake Severity Training for Multiclass Multiple Instance Learning",
+      "abstract": "Multiple Instance Learning (MIL) has emerged as a promising paradigm for Whole Slide Image (WSI) diagnosis, offering effective learning with limited annotations. However, existing MIL frameworks overlook diagnostic priorities and fail to differentiate the severity of misclassifications in multiclass, leaving clinically critical errors unaddressed. We propose a mistake-severity-aware training strategy that organizes diagnostic classes into a hierarchical structure, with each level optimized using a severity-weighted cross-entropy loss that penalizes high-severity misclassifications more strongly. Additionally, hierarchical consistency is enforced through probabilistic alignment, a semantic feature remix applied to the instance bag to robustly train class priority and accommodate clinical cases involving multiple symptoms. An asymmetric Mikel's Wheel-based metric is also introduced to quantify the severity of errors specific to medical fields. Experiments on challenging public and real-world in-house datasets demonstrate that our approach significantly mitigates critical errors in MIL diagnosis compared to existing methods. We present additional experimental results on natural domain data to demonstrate the generalizability of our proposed method beyond medical contexts.",
+      "authors": [
+        "Sungrae Hong",
+        "Jiwon Jeong",
+        "Jisu Shin",
+        "Donghee Han",
+        "Sol Lee",
+        "Kyungeun Kim",
+        "Mun Yong Yi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-14T01:36:12+00:00",
+      "link": "https://arxiv.org/pdf/2603.13682v1",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:TCM BI",
+        "query:BIO CA",
+        "query:TCM BI"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Multiple Instance Learning for Whole Slide Image diagnosis",
+      "llm_evidence_cn": "用于全切片图像诊断的多实例学习",
+      "llm_evidence": "用于全切片图像诊断的多实例学习",
+      "canonical_evidence": "用于全切片图像诊断的多实例学习",
+      "llm_tldr_en": "A mistake-severity-aware training strategy for multiclass MIL in medical image diagnosis.",
+      "llm_tldr_cn": "一种针对医学图像诊断中多类多实例学习的错误严重程度感知训练策略。",
+      "llm_tldr": "一种针对医学图像诊断中多类多实例学习的错误严重程度感知训练策略。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.08605v3",
+      "title": "Weakly Supervised Teacher-Student Framework with Progressive Pseudo-mask Refinement for Gland Segmentation",
+      "abstract": "Background and objectives: Colorectal cancer histopathological grading depends on accurate segmentation of glandular structures. Current deep learning approaches rely on large scale pixel level annotations that are labor intensive and difficult to obtain in routine clinical practice. Weakly supervised semantic segmentation offers a promising alternative. However, class activation map based methods often produce incomplete pseudo masks that emphasize highly discriminative regions and fail to supervise unannotated glandular structures. We propose a weakly supervised teacher student framework that leverages sparse pathologist annotations and an Exponential Moving Average stabilized teacher network to generate refined pseudo masks.   Methods: The framework integrates confidence based filtering, adaptive fusion of teacher predictions with limited ground truth, and curriculum guided refinement to progressively segment unannotated glandular regions. The method was evaluated on an institutional colorectal cancer cohort from The Ohio State University Wexner Medical Center consisting of 60 hematoxylin and eosin stained whole slide images and on public datasets including the Gland Segmentation dataset, TCGA COAD, TCGA READ, and SPIDER.   Results: On the Gland Segmentation dataset the framework achieved a mean Intersection over Union of 80.10 and a mean Dice coefficient of 89.10. Cross cohort evaluation demonstrated robust generalization on TCGA COAD and TCGA READ without additional annotations, while reduced performance on SPIDER reflected domain shift.   Conclusions: The proposed framework provides an annotation efficient and generalizable approach for gland segmentation in colorectal histopathology.",
+      "authors": [
+        "Hikmat Khan",
+        "Wei Chen",
+        "Muhammad Khalid Khan Niazi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-09T16:54:05+00:00",
+      "link": "https://arxiv.org/pdf/2603.08605v3",
+      "tags": [
+        "keyword:BIO CA",
+        "keyword:RNA INT",
+        "query:BIO CA",
+        "query:RNA INT"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "deep learning for colorectal cancer histopathological grading",
+      "llm_evidence_cn": "用于结直肠癌组织病理学分级的深度学习",
+      "llm_evidence": "用于结直肠癌组织病理学分级的深度学习",
+      "canonical_evidence": "用于结直肠癌组织病理学分级的深度学习",
+      "llm_tldr_en": "A weakly supervised framework for gland segmentation to assist in colorectal cancer histopathological grading.",
+      "llm_tldr_cn": "一种弱监督教师-学生框架，用于腺体分割以辅助结直肠癌病理分级。",
+      "llm_tldr": "一种弱监督教师-学生框架，用于腺体分割以辅助结直肠癌病理分级。",
+      "llm_tags": [
+        "query:bio-ca"
+      ],
+      "matched_query_tag": "query:bio-ca",
+      "matched_query_text": "Deep learning methods for cancer data analysis",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.08605v3",
+      "quick_tier": "8plus"
+    }
+  ]
+}

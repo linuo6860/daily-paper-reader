@@ -1,0 +1,1046 @@
+Title: Differential gene expression analysis via two-component mixture models with a semiparametric skew-normal scale mixture alternative
+
+URL Source: https://arxiv.org/pdf/2603.01381v1
+
+Published Time: Tue, 03 Mar 2026 02:51:03 GMT
+
+Number of Pages: 22
+
+Markdown Content:
+# Differential gene expression analysis via two-component mixture models with a semiparametric skew-normal scale mixture alternative 
+
+# Sangkon Oh 1 and Geoffrey J. McLachlan 21Department of Statistics and Data Science, Pukyong National University 
+
+1E-mail: ohsangkon@pknu.ac.kr 
+
+2School of Mathematics and Physics, University of Queensland 
+
+2E-mail: g.mclachlan@uq.edu.au 
+
+Abstract 
+
+Two–component mixture models are particularly useful for identifying differ-entially expressed genes, but their performance can deteriorate markedly when the alternative distribution departs from parametric assumptions or symmetry. We propose a semiparametric mixture model in which the null component is stan-dard normal and the alternative follows a skew–normal scale mixture with an un-specified scale mixing distribution. This formulation accommodates skewness and heavy tails, providing a flexible and computationally tractable tool for differential gene–expression analysis without restrictive distributional assumptions. We estab-lish identifiability and consistency of the model and develop an efficient estimation algorithm that incorporates nonparametric maximum likelihood estimation of the scale distribution. Numerical studies show notable improvements over existing para-metric and nonparametric approaches for modeling the alternative distribution, and applications to colon cancer and leukemia datasets demonstrate reduced false dis-covery and false negative rates. 
+
+Keywords: Differential gene expression, Microarray data, Nonparametric maximum like-lihood estimation, Semiparametric mixture models 
+
+# 1 Introduction 
+
+Gene expression analysis plays a critical role in elucidating the biological mechanisms under-lying complex diseases, identifying key biomarker genes, and facilitating the development of diagnostic, preventive, and therapeutic strategies. In this context, the identification of differ-entially expressed genes has become a cornerstone of modern genomics, particularly with the advent of high-throughput technologies such as microarrays and RNA sequencing. These plat-forms enable the simultaneous quantification of expression levels for tens of thousands of genes, but they also introduce substantial statistical challenges due to the scale and multiplicity of hypothesis testing involved. 
+
+1
+
+> arXiv:2603.01381v1 [stat.ME] 2 Mar 2026
+
+To address this issue, a wide array of statistical methods has been developed, among which penalized variable-selection techniques have gained significant prominence. Since the introduc-tion of the least absolute shrinkage and selection operator (LASSO) by Tibshirani (1996), nu-merous extensions and domain-specific applications have been proposed for gene expression analysis, including those by Ghosh and Chinnaiyan (2005), Zhang et al. (2006), Ma et al. (2007), and Guo et al. (2017). These approaches are effective in managing high-dimensional data by promoting sparsity and identifying informative gene subsets. However, they also exhibit several limitations, as the selected features may not generalize reliably across models, and the repeated model fitting required in ultra-high-dimensional settings can lead to substantial computational burdens. Alternatively, motivated in part by the two-component Gaussian mixture model for observed log ratios proposed by Lee et al. (2000), Efron et al. (2001) and Efron and Tibshirani (2002) introduced the local false discovery rate (FDR), a refinement of the classical tail-area–based FDR originally developed by Benjamini and Hochberg (1995). Subsequently, Efron (2004) and Efron (2005) proposed transforming observed statistics into z-scores to facilitate the application of local FDR methods for identifying differentially expressed genes. Under the assumption that gene expression levels are normally distributed and identically distributed for infected and un-infected cells, the z-scores corresponding to non-differentially expressed genes follow a standard normal distribution. Building upon these ideas, McLachlan et al. (2006) introduced a two-component Gaussian mixture model that incorporates both z-score transformation and local FDR estimation. In this framework, the z-score distribution is modeled as 
+
+g(z) = πf 0(z) + (1 − π)f1(z), (1) where f0(z) denotes the null distribution corresponding to non-differentially expressed genes, 
+
+f1(z) represents the alternative distribution for differentially expressed genes, and π is the proportion of genes that are not differentially expressed. The null distribution f0(z) is typically known or assumed to be standard normal, while the alternative distribution f1(z) is also modeled parametrically as a normal distribution. This formulation enables probabilistic inference at the gene level and provides a coherent basis for ranking genes according to their posterior probabilities of being differentially expressed. Despite their computational convenience, parametric assumptions for the alternative distri-bution f1(z) in (1) have inherent limitations, particularly when the true distribution deviates from the assumed form. To address this issue, Bordes et al. (2006) proposed a semiparametric two-component mixture model in which the null component is specified, while the alterna-tive component is left completely unspecified but constrained to be symmetric. Their work established key identifiability results under symmetry assumptions and developed consistent estimation procedures based on moment equations and symmetrization techniques. Subsequent studies, including Ma and Yao (2015), Pommeret and Vandekerkhove (2019), and Milhaud et al. (2022), further extended this semiparametric framework. These contributions enhanced mod-eling flexibility by relaxing rigid parametric assumptions on the alternative distribution while maintaining identifiability. However, the assumption that the alternative density is symmetric can still be overly re-strictive in practice. To overcome this limitation, we propose a new semiparametric mixture modeling framework in which the null distribution is parametrically specified, while the al-ternative distribution is modeled using a semiparametric skew–normal scale mixture (SNSM) distribution. This semiparametric SNSM formulation provides enhanced flexibility by accom-modating a broad class of distributions—including both symmetric and asymmetric unimodal forms—without requiring a model selection procedure. Estimation proceeds via a semipara-
+
+2metric maximum likelihood method, where the parameters of the skew-normal component are treated parametrically, and the mixing distribution is estimated nonparametrically using the nonparametric maximum likelihood estimator (NPMLE) framework of Lindsay (1995). Al-though not all distributions strictly fall within the class of skew-normal scale mixtures, the flexibility of the proposed semiparametric SNSM model is expected to mitigate potential issues arising from model misspecification. Recent studies, including Lee and Seo (2024), Seo and Oh (2024), and Oh et al. (2026), have successfully applied the semiparametric SNSM framework in various contexts—such as finite mixture models, robust regression, and accelerated failure time modeling—demonstrating its effectiveness in capturing diverse distributional characteris-tics without imposing rigid parametric assumptions. The remainder of this paper is organized as follows. Section 2 reviews the preprocessing steps used to obtain z-scores from microarray data, summarizes existing two-component mixture ap-proaches for differential expression analysis, and introduces the semiparametric SNSM distribu-tion. Section 3 presents the proposed semiparametric two-component mixture model—featuring a semiparametric SNSM alternative that accommodates both symmetric and asymmetric dis-tributions—establishes identifiability and consistency, and details the estimation procedure. Section 4 reports a comprehensive simulation study comparing the proposed method with ex-isting competitors. Section 5 applies the methodology to real gene-expression datasets. Finally, Section 6 concludes with a discussion of future research directions. 
+
+# 2 Literature Review 
+
+# 2.1 Data Preprocessing 
+
+Let X = ( xij )N ×M denote the gene expression matrix, where N is the number of genes and M is the number of tissue samples. Each row xi· = ( xi1, . . . , x iM ) represents the expression profile of gene i, and each sample j belongs to one of G experimental groups, labeled by gj ∈ { 1, . . . , G }.For each gene i, we test the null hypothesis that its mean expression level does not differ across groups. When G = 2, the equality of means can be assessed using the pooled two-sample t-statistic: 
+
+ti = ¯xi1 − ¯xi2
+
+sip 
+
+p1/m 1 + 1 /m 2
+
+, s2 
+
+> ip
+
+= (m1 − 1) s2 
+
+> i1
+
++ ( m2 − 1) s2
+
+> i2
+
+m1 + m2 − 2 ,
+
+where ¯ xig and s2 
+
+> ig
+
+denote the sample mean and variance of gene i in group g (g = 1 , 2), and mg is the number of samples in group g (so that m1 + m2 = M ). Under the null hypothesis, ti follows a t-distribution with ν = m1 + m2 − 2 degrees of freedom. For multi-group settings ( G > 2), the one-way ANOVA F -statistic is used analogously to test for equality of group means. As the number of hypothesis tests increases, the risk of type I errors rises sharply. Therefore, it is essential to perform simultaneous inference that accounts for multiple testing. Efron (2004), Efron (2005), and McLachlan et al. (2006) proposed transforming each observed test statistic 
+
+ti into a standard normal variable Zi to enable unified modeling across all genes. Let F0(·)denote the cumulative distribution function (CDF) of ti under the null hypothesis. Based on ti,McLachlan et al. (2006) proposed computing the two-sided p-value as 
+
+Pi = 1 − F0(ti) + F0(−ti), (2) which is then transformed into a one-sided upper-tail z-score via the probit (Gaussian quantile) transformation: 
+
+zi = Φ −1(1 − Pi), (3) 
+
+3where Φ −1(·) denotes the quantile function of the standard normal distribution. Under the as-sumption that gene expression levels are normally and identically distributed across groups, the 
+
+z-scores corresponding to non-differentially expressed genes follow a standard normal distribu-tion. That is, under the true null hypothesis, zi ∼ N (0 , 1), while larger positive values of zi
+
+indicate stronger evidence of differential expression for gene i.
+
+# 2.2 Two-Component Mixture Model 
+
+The transformed z-scores provide a standardized scale for assessing statistical evidence of dif-ferential expression. To move beyond conventional thresholding of p-values or z-scores, Efron et al. (2001) and Efron and Tibshirani (2002) proposed modeling the empirical distribution of test statistics using a two-component mixture model as in (1). This framework enables the com-putation of posterior probabilities, such as the local FDR, defined as the conditional probability that a gene is null given its observed z-score: 
+
+γ(z) = πf 0(z)
+
+g(z) , (4) where g(z) is the marginal density of z, f0(z) is the null density (typically standard normal), and π is the prior probability that a gene is not differentially expressed. A widely used specification for g(z) is the two-component Gaussian mixture model proposed by McLachlan et al. (2006): 
+
+g(z) = πϕ (z; 0 , 1) + (1 − π)ϕ(z; μ1, σ 21 ), (5) where ϕ(z; μ, σ 2) denotes the normal density with mean μ and variance σ2, and the alternative distribution is characterized by μ1 > 0 to reflect right-tailed enrichment. While this Gaussian specification is computationally convenient, it imposes strong parametric assumptions on the alternative distribution f1(z), which is typically unknown and may deviate from normality in real biological data. Such misspecification can bias local FDR estimation and compromise inference accuracy. To address these limitations, Bordes et al. (2006) introduced a semiparametric two-component mixture model in which the null distribution f0(z) is specified, while the alternative distribution 
+
+f1(z) is left unspecified but assumed to be symmetric about an unknown location. This sym-metry assumption is mild yet sufficient to ensure identifiability of the mixture components, and allows for modeling a broader range of symmetric but non-Gaussian distributions. Estimation methods based on projection or moment equations can be applied to consistently recover the mixture structure without fully specifying f1(z). Recent extensions have further broadened the applicability of this framework. For instance, Pommeret and Vandekerkhove (2019) and Milhaud et al. (2022) generalized the semiparametric mixture model to two-sample settings, allowing for direct comparison between two unknown alternative distributions. These developments reinforce the semiparametric mixture approach as a powerful and interpretable alternative to both fully parametric and nonparametric models, particularly in large-scale gene expression analysis where the null distribution is well understood but the alternative remains elusive. 
+
+# 2.3 Semiparametric Skew-Normal Scale Mixture Distribution 
+
+In the semiparametric two-component mixture model considered in this work, the null density 
+
+f0(z) is well represented by a standard normal distribution, reflecting the theoretical behavior 
+
+4of z-scores under the null hypothesis. In contrast, the alternative density f1(z) typically de-parts from normality, exhibiting features such as skewness, heavy tails, or scale heterogeneity. To flexibly accommodate these characteristics, we model f1(z) using a semiparametric SNSM distribution, which provides a unified framework capable of representing both symmetric and asymmetric families as well as a wide range of tail behaviors. The starting point is the skew-normal distribution introduced by Azzalini (1985). For a location parameter μ, scale parameter σ > 0, and shape parameter λ, its density is given by 
+
+fSN (z; μ, λ, σ ) = 2
+
+σ ϕ
+
+ z − μσ
+
+
+
+Φ
+
+
+
+λ z − μσ
+
+
+
+,
+
+where ϕ(·) and Φ( ·) denote the standard normal probability density and cumulative distribution functions, respectively. The shape parameter λ controls the magnitude and direction of skewness, and the model reduces to the Gaussian distribution when λ = 0. To extend this distribution toward heavier tails, Branco and Dey (2001) introduced the SNSM family. Let G be a mixing distribution on (0 , ∞); then the SNSM density takes the form 
+
+fSNSM (z; μ, λ, G ) = 
+
+Z 2
+
+σ ϕ
+
+ z − μσ
+
+
+
+Φ
+
+
+
+λ z − μσ
+
+
+
+dG (σ), (6) which reduces to the skew-normal when G is degenerate. Various skewed and heavy-tailed distributions arise as special cases for specific choices of G, including the skew-t, skew-slash, and skew-contaminated normal families. Moreover, setting λ = 0 yields Gaussian scale mixtures, which encompass the t-distribution, Laplace, logistic, and other well-known heavy-tailed models (Andrews and Mallows, 1974; Efron and Olshen, 1978; West, 1987). While many existing applications impose a parametric form on G in (6), doing so risks model misspecification if the true distribution of scales deviates from the chosen parametric family. Motivated by this, we treat G as an infinite-dimensional parameter and estimate it nonparametrically. Let z1, . . . , z N be independent observations from the SNSM distribution. For fixed ( μ, λ ), the log-likelihood function is ˜ℓN (G) = 
+
+> N
+
+X
+
+> i=1
+
+log fSNSM (zi; μ, λ, G ).
+
+Because G ranges over all probability measures on (0 , ∞), maximizing ˜ℓN (G) requires specialized tools from nonparametric mixture theory. Following the work of Lindsay (1995), one charac-terizes the NPMLE via directional derivatives. The directional derivative of ˜ℓN at a candidate mixing distribution ˆG in the direction of a point mass Hσ is 
+
+D ˆG(σ) = lim 
+
+> α→0
+
+˜ℓN
+
+n
+
+(1 − α) ˆG + αH σ
+
+o
+
+− ˜ℓN ( ˆG)
+
+α .
+
+The NPMLE ˆG satisfies the necessary and sufficient optimality conditions 
+
+D ˆG(σ) ≤ 0 for all σ > 0, D ˆG(σ∗) = 0 for all σ∗ ∈ S( ˆG), (7) where S( ˆG) denotes the support of ˆG.Models based on the NPMLE framework have been successfully applied in a wide range of settings, including linear and robust regression, heteroscedastic modeling, survival analysis, and finite mixture modeling (Seo and Lee, 2015; Xiang et al., 2016; Seo et al., 2017; Seo and Kang, 2023; Seo and Oh, 2024; Lee and Seo, 2024; Oh and Seo, 2024; Park and Seo, 2025; Oh et al., 2026). By adapting automatically to unknown distributional features without imposing restric-tive parametric assumptions, these models offer a flexible and robust approach to statistical modeling across diverse applications. 
+
+53 Proposed Method 
+
+# 3.1 Model Setup 
+
+To flexibly accommodate a broad class of alternative distributions in (1), including those exhibit-ing asymmetry or heavy-tailed behavior, we propose a semiparametric two-component mixture model. The null component is modeled by a standard normal density, whereas the alternative component is represented by a semiparametric SNSM, which provides a unified mechanism for capturing skewness and scale heterogeneity. Let Z denote the z-score obtained through the transformation in (3). We assume that the density of Z admits the mixture representation as 
+
+f (z) = π ϕ (z; 0 , 1) + (1 − π) fSNSM (z; μ, λ, G ), (8) where 
+
+• ϕ(z; 0 , 1) is the standard normal density defining the null component; 
+
+• π ∈ (0 , 1) is the prior proportion of null genes; 
+
+• fSNSM (z; μ, λ, G ) denotes the SNSM alternative density; 
+
+• μ > 0 is the location shift under the alternative; 
+
+• λ ≥ 0 is the skewness parameter; 
+
+• G is an unspecified mixing distribution over scale parameters σ > 0. Model (8) generalizes the classical Gaussian mixture model in (5) by replacing its para-metric normal alternative with a semiparametric SNSM distribution. This modification permits the alternative density to exhibit a wide range of shapes—including symmetric, skewed, light-tailed, and heavy-tailed behaviors—while retaining a parsimonious and interpretable framework through the finite-dimensional parameters ( μ, λ ) and the nonparametric scale mixing distribu-tion G. In this setting, because non-null genes tend to produce positive z-scores, imposing μ > 0and λ ≥ 0 ensures that the alternative component appropriately reflects the expected right-tail weight and prevents sign-reversal ambiguity. The identifiability of model (8) is not immediate because the mixing distribution G is left unspecified. The following theorem establishes identifiability of the parameters ( π, μ, λ, G ). 
+
+Theorem 1. Suppose 
+
+πϕ (z; 0 , 1) + (1 − π)fSNSM (z; μ, λ, G ) = ˜ πϕ (z; 0 , 1) + (1 − ˜π)fSNSM (z; ˜ μ, ˜λ, ˜G)
+
+for almost all z ∈ R. Then, it follows that 
+
+(π, μ, λ, G ) = (˜ π, ˜μ, ˜λ, ˜G).
+
+Proof. A proof is given in the Appendix A. 
+
+Remark 1. When λ = 0 and G is degenerate at a fixed scale value, model (8) reduces to the standard two-component Gaussian mixture model with distinct means, as given in (5) . Thus, Theorem 1 encompasses the classical two-component Gaussian mixture as a special case. 
+
+6Remark 2. Because the z-scores in (3) assign larger positive values to stronger evidence against the null, we restrict attention to the right-tailed setting with μ > 0. More generally, left-tailed alternatives can also be accommodated by allowing μ < 0 and aligning the direction of skewness through the constraint λ ≥ 0 when μ > 0 and λ ≤ 0 when μ < 0.
+
+The general consistency of maximum likelihood estimators in semiparametric mixture mod-els was demonstrated by Kiefer and Wolfowitz (1956). By verifying their regularity conditions for model (8), we obtain the following consistency result for the estimators of ( π, μ, λ, G ). 
+
+Theorem 2. Assume that the support of G is contained in [ℓ, ∞) for some constant ℓ > 0. If 
+
+Z ∞
+
+> ℓ
+
+log σ dG (σ) < ∞,
+
+then the MLE (ˆ π, ˆμ, ˆλ, ˆG)⊤ is consistent for (π, μ, λ, G )⊤.Proof. A proof is given in the Appendix B. 
+
+# 3.2 Expectation–Conditional Maximization Algorithm 
+
+Let zi ∈ R denote the z-score for gene i, for i = 1 , . . . , N . The observed log-likelihood corre-sponding to the two-component mixture model in (8) is 
+
+ℓ(θ, G ) = 
+
+> N
+
+X
+
+> i=1
+
+log 
+
+n
+
+π ϕ (zi; 0 , 1) + (1 − π) fSNSM (zi; μ, λ, G )
+
+o
+
+, (9) where θ = ( π, μ, λ ). Maximizing (9) is challenging due to the infinite-dimensional parameter G.We therefore adopt the expectation–conditional maximization (ECM) algorithm of Meng and Rubin (1993). Introduce the latent variable γ ∈ { 0, 1}, where γ = 1 if Z arises from the null component and γ = 0 otherwise. The complete log-likelihood is then 
+
+ℓc(θ, G ) = 
+
+> N
+
+X
+
+> i=1
+
+γi log {π ϕ (zi; 0 , 1) } +
+
+> N
+
+X
+
+> i=1
+
+(1 − γi) log {(1 − π) fSNSM (zi; μ, λ, G )} . (10) 
+
+E-step. Given current estimates ( θ(t), G (t)), the conditional expectation of (10) is 
+
+Q(θ, G | θ(t), G (t)) = E
+
+h
+
+ℓc(θ, G ) | z1, . . . , z N , θ(t), G (t)i
+
+,
+
+where the posterior probability that observation zi belongs to the null component is 
+
+γ(t) 
+
+> i
+
+= Pr( Ui = 1 | zi, θ(t), G (t)) = π(t)ϕ(zi; 0 , 1) 
+
+π(t)ϕ(zi; 0 , 1) + (1 − π(t))
+
+Z 2
+
+σ ϕ
+
+ zi−μ(t)
+
+> σ
+
+
+
+Φ
+
+
+
+λ(t) zi−μ(t)
+
+> σ
+
+
+
+dG (t)(σ)
+
+.
+
+Substituting γ(t) 
+
+> i
+
+into the expectation gives 
+
+Q(θ, G ) = 
+
+> N
+
+X
+
+> i=1
+
+γ(t)
+
+> i
+
+ log π + log ϕ(zi; 0 , 1) +
+
+> N
+
+X
+
+> i=1
+
+(1 − γ(t) 
+
+> i
+
+) log(1 − π)+
+
+> N
+
+X
+
+> i=1
+
+(1 − γ(t) 
+
+> i
+
+) log 
+
+Z 2
+
+σ ϕ
+
+ zi−μσ
+
+
+
+Φ
+
+
+
+λ zi−μσ
+
+
+
+dG (σ)
+
+
+
+.
+
+7CM-step 1: Updating G (NPMLE). Conditioning on θ(t), the update of G requires maximizing ˜ℓN (G) = 
+
+> N
+
+X
+
+> i=1
+
+(1 − γ(t) 
+
+> i
+
+) log 
+
+Z 2
+
+σ ϕ
+
+ zi−μ(t)
+
+> σ
+
+
+
+Φ
+
+
+
+λ(t) zi−μ(t)
+
+> σ
+
+
+
+dG (σ)
+
+
+
+.
+
+This is a convex but infinite-dimensional optimization problem. We employ directional-derivative based algorithms such as the vertex direction method (B¨ ohning, 1985), vertex exchange method (B¨ ohning, 1986), intra-simplex direction method (Lesperance and Kalbfleisch, 1992), or con-strained Newton method (CNM; Wang, 2007). The directional derivative at G(t) in the direction of Hσ is 
+
+DG(t) (σ) = 
+
+> N
+
+X
+
+> i=1
+
+(1 − γ(t) 
+
+> i
+
+)
+
+
+
+2
+
+σ ϕ  zi−μ(t)
+
+> σ
+
+Φ λ(t) zi−μ(t)
+
+> σ
+
+Z 2
+
+s ϕ  zi−μ(t)
+
+> s
+
+Φ λ(t) zi−μ(t)
+
+> s
+
+dG (t)(s)
+
+ −
+
+> N
+
+X
+
+> i=1
+
+(1 − γ(t) 
+
+> i
+
+).
+
+Updates proceed along directions with DG(t) (σ) > 0 until the NPMLE G(t+1) satisfies the optimality conditions of Lindsay (1995). 
+
+CM-step 2: Updating (π, μ, λ ). With G(t+1) fixed, the mixing proportion is updated as 
+
+π(t+1) = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+γ(t) 
+
+> i
+
+.
+
+The remaining parameters are updated by solving (μ(t+1) , λ (t+1) ) = arg max 
+
+> μ,λ N
+
+X
+
+> i=1
+
+(1 − γ(t) 
+
+> i
+
+) log 
+
+Z 2
+
+σ ϕ
+
+ zi−μσ
+
+
+
+Φ
+
+
+
+λ zi−μσ
+
+
+
+dG (t+1) (σ)
+
+
+
+,
+
+which can be efficiently performed using the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algo-rithm (Broyden, 1970; Fletcher, 1970; Goldfarb, 1970; Shanno, 1970). The E-step and the two CM-steps are iterated until convergence of the observed log-likelihood. 
+
+# 4 Simulation Study 
+
+We conduct a comprehensive Monte Carlo simulation study to evaluate the performance of three approaches for distinguishing differentially expressed genes from non–differentially expressed ones: (i) the parametric two-component Gaussian mixture model; (ii) the nonparametric semi-parametric two-component method, which models the alternative density nonparametrically un-der a symmetry constraint; and (iii) the proposed semiparametric SNSM mixture model, which allows skewness and heavy-tailed behavior through an unspecified scale mixing distribution. Throughout this section, these three approaches are referred to as the parametric, nonparamet-ric, and semiparametric methods, respectively, reflecting the degree of assumptions placed on the alternative distribution. The aim of the simulation study is to examine how these three methods perform under a broad range of alternative distributions differing in symmetry, skewness, and tail weight, and under varying degrees of sparsity in the non-null component and different total numbers of genes. Each synthetic dataset consists of independent observations 
+
+Zi ∼ π N (0 , 1) + (1 − π) f1, i = 1 , . . . , N, 
+
+8where the null component is standard normal and f1 denotes the alternative (non-null) distri-bution. To capture a diverse set of realistic scenarios, we consider six representative choices for 
+
+f1:Case I: f1 = N (μ, 1) (symmetric, light-tailed) ,
+
+Case II: f1 = 0 .9 N (μ, 1) + 0 .1 N (μ, 2) (symmetric, moderately heavy-tailed) ,
+
+Case III: f1 = Laplace( μ, 1) (symmetric, heavy-tailed) ,
+
+Case IV: f1 = t( μ, ν = 10) (symmetric, heavy-tailed) ,
+
+Case V: f1 = SN( μ, 1, λ = 5) (asymmetric) ,
+
+Case VI: f1 = Skew-t(μ, 1, λ = 5 , ν = 10) (asymmetric and heavy-tailed) .
+
+The alternative location is set to μ = 1 .645, corresponding to the 95% quantile of the standard normal distribution, providing a moderately separated but non-extreme signal strength on the z-scale. To investigate the effects of sparsity and dimensionality, we vary the null proportion and the total number of genes as 
+
+π ∈ { 0.3, 0.5, 0.7}, N ∈ { 1000 , 5000 }.
+
+Larger values of π correspond to sparser settings, with π = 0 .7 indicating that most genes follow the null distribution, while π = 0 .3 yields a comparatively dense non-null setting. For each combination of ( f1, π, N ), we generate 200 independent replications to obtain stable Monte Carlo performance measures. Because the true component membership is known in simulation, clustering accuracy is evaluated by classifying each observation as null or non-null according to its posterior proba-bility, using the maximum a posteriori (MAP) rule with threshold γ(z) = 0 .5. Performance is then quantified using the Adjusted Rand Index (ARI; Hubert and Arabie, 1985) and Adjusted Mutual Information (AMI; Vinh et al., 2010), computed across the 200 replications. Both ARI and AMI correct for chance agreement, with higher values indicating better alignment between estimated and true classifications. Across all simulation settings, the proposed semiparametric approach consistently attains the highest ARI and AMI values, demonstrating superior accuracy in recovering the true null and non-null classifications. Under symmetric and light-tailed alternatives (Case I), the three methods perform similarly, though the proposed estimator retains a slight but systematic ad-vantage. In symmetric yet heavy-tailed settings (Cases II–IV), the parametric Gaussian mixture deteriorates substantially due to tail misspecification, and while the nonparametric approach improves upon the parametric method, it remains clearly inferior to the proposed estimator, which more effectively accounts for scale heterogeneity through its flexible mixing distribution. Under asymmetric alternatives (Cases V–VI), the superiority of the proposed method is most striking, as neither the parametric nor the symmetric nonparametric model can accommodate skewness. Increasing the sample size from N = 1000 to N = 5000 improves the performance of all methods, but the semiparametric estimator continues to dominate, underscoring its robust-ness and adaptability across symmetric, asymmetric, light-tailed, and heavy-tailed alternatives. Figures 1–6 present the estimated null, alternative, and mixture densities obtained from the parametric, nonparametric, and proposed semiparametric approaches across the six simulation scenarios. In the normal setting (Case I), all three methods recover the overall mixture shape reasonably well. As the alternative distribution becomes heavier–tailed (Cases II–IV), the para-metric method exhibits pronounced distortions in the tails, reflecting its sensitivity to misspeci-fication, while the nonparametric method improves upon the parametric fit but remains limited 
+
+9Table 1: ARI and AMI under each simulation scenario when N = 1000 (Boldface indicates the best performance in each setting) Case π Parametric method Nonparametric method Semiparametric method ARI AMI ARI AMI ARI AMI 
+
+I
+
+0.3 0.3717 0.2336 0.3649 0.2292 0.3757 0.2471 
+
+0.5 0.3348 0.2627 0.3144 0.2463 0.3363 0.2642 
+
+0.7 0.3799 0.2426 0.3522 0.2287 0.3901 0.2468 
+
+II 
+
+0.3 0.2036 0.1249 0.3178 0.1977 0.3569 0.2303 
+
+0.5 0.1808 0.1493 0.2699 0.2132 0.3191 0.2521 
+
+0.7 0.3426 0.2325 0.3476 0.2253 0.3852 0.2412 
+
+III 
+
+0.3 0.3896 0.2495 0.4260 0.2845 0.4345 0.2987 
+
+0.5 0.3081 0.2473 0.3941 0.3095 0.4049 0.3180 
+
+0.7 0.3053 0.2275 0.3950 0.2671 0.4390 0.2926 
+
+IV 
+
+0.3 0.0035 0.0021 0.0659 0.0429 0.3579 0.2252 
+
+0.5 0.1661 0.1581 0.2111 0.1821 0.3374 0.2644 
+
+0.7 0.3778 0.2459 0.3442 0.2301 0.3868 0.2449 
+
+V
+
+0.3 0.8287 0.7312 0.8534 0.7604 0.8805 0.7868 
+
+0.5 0.7976 0.7434 0.7427 0.6898 0.8312 0.7567 
+
+0.7 0.7903 0.6839 0.7467 0.6439 0.7964 0.6769 
+
+V I 
+
+0.3 0.7892 0.6846 0.8401 0.7420 0.8753 0.7779 
+
+0.5 0.7672 0.7158 0.7434 0.6882 0.8281 0.7510 
+
+0.7 0.7798 0.6778 0.7299 0.6291 0.7986 0.6787 
+
+in accommodating tail heterogeneity. In contrast, the proposed method successfully adapts to variations in tail weight and shape by learning the underlying scale mixing distribution. Un-der asymmetric alternatives (Cases V–VI), the limitations of the competing methods become more apparent: the parametric method enforces symmetry and fails to capture right–skewed structure, and the nonparametric method cannot represent directional asymmetry. The pro-posed semiparametric approach, however, accurately recovers both skewness and heavy–tailed behavior, providing the closest match to the true alternative density across all scenarios. 
+
+# 5 Real Data Analysis 
+
+In real gene–expression studies, the true null or non–null status of each gene is unknown, and therefore external clustering metrics such as ARI or AMI cannot be computed. Instead, following the empirical Bayes framework of Efron et al. (2001) and Efron and Tibshirani (2002), we assess performance through posterior–probability–based error summaries. Under the two–component mixture model in (1), the local FDR is defined as the posterior probability that a gene with transformed statistic z belongs to the null component, as given in (4). For each gene i, we denote by ˆ γi the estimated posterior null probability obtained from the respective method. Given a threshold c, we declare gene i to be non–null whenever ˆ γi ≤ c. Let 
+
+Nr =
+
+> N
+
+X
+
+> i=1
+
+I[0 ,c ](ˆ γi)
+
+10 (a) Parametric method (b) Nonparametric method (c) Semiparametric method 
+
+Figure 1: Estimated density from each method with one simulated sample of Case I when 
+
+N = 5000   
+
+> (a) Parametric method (b) Nonparametric method (c) Semiparametric method
+
+Figure 2: Estimated density from each method with one simulated sample of Case II 
+
+when N = 5000   
+
+> (a) Parametric method (b) Nonparametric method (c) Semiparametric method
+
+Figure 3: Estimated density from each method with one simulated sample of Case III 
+
+when N = 5000 11 (a) Parametric method (b) Nonparametric method (c) Semiparametric method 
+
+Figure 4: Estimated density from each method with one simulated sample of Case IV 
+
+when N = 5000   
+
+> (a) Parametric method (b) Nonparametric method (c) Semiparametric method
+
+Figure 5: Estimated density from each method with one simulated sample of Case V
+
+when N = 5000   
+
+> (a) Parametric method (b) Nonparametric method (c) Semiparametric method
+
+Figure 6: Estimated density from each method with one simulated sample of Case V I 
+
+when N = 5000 12 Table 2: ARI and AMI under each simulation scenario when N = 5000 (Boldface indicates the best performance in each setting) Case π Parametric method Nonparametric method Semiparametric method ARI AMI ARI AMI ARI AMI 
+
+I
+
+0.3 0.3907 0.2452 0.3789 0.2380 0.3869 0.2541 
+
+0.5 0.3454 0.2666 0.3383 0.2612 0.3403 0.2650 0.7 0.3918 0.2456 0.3470 0.2252 0.3926 0.2471 
+
+II 
+
+0.3 0.1369 0.0812 0.3503 0.2155 0.3640 0.2318 
+
+0.5 0.1069 0.0864 0.2956 0.2280 0.3263 0.2531 
+
+0.7 0.3385 0.2287 0.3585 0.2287 0.3820 0.2358 
+
+III 
+
+0.3 0.4079 0.2581 0.4273 0.2869 0.4328 0.2975 
+
+0.5 0.3590 0.2870 0.3742 0.2935 0.4115 0.3224 
+
+0.7 0.2201 0.1727 0.4256 0.2869 0.4403 0.2917 
+
+IV 
+
+0.3 0.0000 0.0000 0.0202 0.0164 0.3841 0.2399 
+
+0.5 0.1773 0.1845 0.2453 0.2164 0.3460 0.2673 
+
+0.7 0.3933 0.2548 0.3774 0.2462 0.3931 0.2467 
+
+V
+
+0.3 0.8271 0.7287 0.8687 0.7758 0.8804 0.7846 
+
+0.5 0.7958 0.7402 0.7385 0.6805 0.8316 0.7551 
+
+0.7 0.7911 0.6836 0.7443 0.6387 0.7984 0.6773 
+
+V I 
+
+0.3 0.7937 0.6890 0.8600 0.7625 0.8766 0.7776 
+
+0.5 0.7699 0.7169 0.7740 0.7112 0.8298 0.7507 
+
+0.7 0.7798 0.6757 0.6308 0.5403 0.7971 0.6750 
+
+denote the total number of selected genes. Following McLachlan et al. (2006), the estimated FDR is 
+
+[FDR( c) = 
+
+> N
+
+X
+
+> i=1
+
+ˆγj I[0 ,c ](ˆ γi)
+
+Nr
+
+,
+
+which estimates the expected proportion of null genes among the declared discoveries. Con-versely, the false negative rate (FNR) measures the proportion of truly non–null genes that fail to be selected. Its empirical Bayes estimator is 
+
+[FNR( c) = 
+
+> N
+
+X
+
+> i=1
+
+(1 − ˆγi) I(c, ∞)(ˆ γi)
+
+> N
+
+X
+
+> i=1
+
+(1 − ˆγi)
+
+,
+
+which averages the posterior probabilities of being non–null over the unselected genes. These posterior–probability–based summaries provide practical and interpretable tools for comparing the competing mixture–modeling approaches in real datasets, where the true null and non–null labels are unobserved. In this context, methods achieving lower values of FDR and FNR are considered to exhibit superior differential–expression detection performance. 
+
+13 5.1 Colon Cancer Data 
+
+Alon et al. (1999) obtained microarray gene–expression measurements from colon cancer and normal colon tissues using Affymetrix oligonucleotide arrays. The dataset contains expression levels for more than 6500 genes across 40 tumor samples and 22 normal samples. Following the filtering strategy used in McLachlan et al. (2002), McLachlan et al. (2006), and Pommeret and Vandekerkhove (2019), we restrict the analysis to the N = 2000 genes with the highest minimal intensity across samples to reduce the impact of low–expression noise. Using the preprocessing procedure described in Section 2.1, we compute for each gene a pooled two–sample t–statistic comparing tumor and normal tissues, and then transform these statistics into z–scores via the mapping in (3). Genes yielding z = −∞ which occurs when the observed test statistic provides essentially no evidence against the null hypothesis are excluded from downstream analysis. After this filtering step, a total of 971 genes remain. For these trans-formed z–scores, we apply the three mixture–modeling approaches examined in the simulation study—the parametric method, the nonparametric method, and the proposed semiparametric method—to identify differentially expressed genes and to compare their behavior on real data. Figures 7–8 summarize the results. Across all thresholds c, the proposed semiparametric method yields the lowest FDR and FNR, indicating more reliable identification of differen-tially expressed genes. The parametric and nonparametric methods show differing behavior: the parametric Gaussian mixture achieves uniformly lower FDR than the nonparametric estimator, whereas the FNR curves exhibit a threshold-dependent pattern. For c < 0.3, the parametric method has smaller FNR, while for c > 0.3 the nonparametric method performs better. The estimated alternative densities in Figure 8 provide additional insight. The nonparamet-ric density is irregular and unstable, while the parametric model enforces a symmetric normal form that limits its ability to capture subtle departures from normality. The proposed semipara-metric method produces a smooth and stable estimate that aligns closely with the empirical distribution, suggesting that the underlying alternative distribution in this dataset is neither strongly skewed nor heavy-tailed.  
+
+> (a) FDR (b) FNR
+
+Figure 7: Estimated FDR and FNR for the colon cancer dataset across a range of thresh-olds 14 (a) Parametric method (b) Nonparametric method (c) Semiparametric method 
+
+Figure 8: Estimated null, alternative, and mixture densities for the colon cancer dataset 
+
+# 5.2 Leukemia Data 
+
+Golub et al. (1999) analyzed microarray gene–expression profiles from patients with acute leukemia, distinguishing Acute Lymphoblastic Leukemia (ALL) from Acute Myeloid Leukemia (AML) using Affymetrix high–density oligonucleotide arrays. The dataset consists of M = 72 tissue samples (47 ALL and 25 AML) and N = 7129 genes. Following the preprocessing pipeline of Dudoit et al. (2002), we apply filtering to remove uninformative genes and then perform log–transformation and column–wise and row–wise standardization, yielding 3731 re-tained genes. Using the procedure in Section 2.1, we further restrict attention to 1853 informa-tive genes. For these transformed z–scores, we fit the parametric, nonparametric, and proposed semiparametric mixture models to compute posterior probabilities and estimate FDR and FNR. Figures 9–10 display the results for the leukemia dataset. For the FDR curves, all three methods behave similarly when the threshold c is small, but clear differences emerge once c
+
+exceeds approximately 0 .2. Beyond this point, the proposed semiparametric method achieves the lowest FDR across the entire range, while the parametric method yields slightly lower FDR than the nonparametric approach. A different pattern is observed for the FNR: for relatively large thresholds ( c > 0.4), the nonparametric method attains the smallest FNR, whereas for more stringent thresholds ( c < 0.4), the proposed semiparametric method achieves the lowest FNR, outperforming both competitors. Taken together, these results indicate that the proposed method provides the most favorable balance between false discoveries and false negatives across practically relevant choices of c.The estimated alternative densities in Figure 10 further clarify these differences. The non-parametric estimator shows substantial variability, particularly in the tails, indicating sensitivity to sampling fluctuations, whereas the parametric Gaussian mixture enforces a symmetric nor-mal form that cannot accommodate the evident asymmetry and heavy–tailed behavior present in the data. By contrast, the proposed semiparametric approach yields a smooth and stable density estimate that successfully captures both skewness and tail heaviness, consistent with the more flexible structure of the SNSM formulation. 
+
+# 6 Discussion 
+
+This paper introduces a semiparametric two-component mixture model for large–scale infer-ence in gene-expression studies, in which the null distribution is fixed as standard normal and the alternative component is modeled by a semiparametric skew-normal scale mixture with an 
+
+15 (a) FDR (b) FNR 
+
+Figure 9: Estimated FDR and FNR for the leukemia dataset across a range of thresholds   
+
+> (a) Parametric method (b) Nonparametric method (c) Semiparametric method
+
+Figure 10: Estimated null, alternative, and mixture densities for the leukemia dataset 
+
+unspecified scale mixing distribution. By combining a finite–dimensional parametrization for location and skewness with a nonparametric maximum likelihood estimator for the scale dis-tribution, the proposed model provides substantially greater flexibility than fully parametric approaches while avoiding the instability that often affects fully nonparametric methods. The numerical study demonstrates that the proposed method achieves consistently higher accuracy in separating null and non–null genes across a wide range of symmetric, skewed, light–tailed, and heavy–tailed alternatives. When the parametric Gaussian mixture is misspec-ified, the performance gains of the proposed method are particularly pronounced, and it also avoids the instability inherent in fully nonparametric estimators. Analyses of the colon can-cer and leukemia datasets further support these findings: the proposed approach yields lower false discovery and false negative rates across practically relevant thresholds, and the estimated alternative densities exhibit moderate deviations from normality that are captured without unnecessary complexity. Overall, the proposed semiparametric mixture model provides a flexi-ble, robust, and computationally tractable framework for differential gene–expression analysis, offering improved performance without imposing restrictive distributional assumptions. As a direction for future work, it would be of interest to relax the assumption of a stan-
+
+16 dard normal null distribution. Allowing for an empirical or nonparametric null component, for example under mild symmetry constraints, within the proposed framework could further im-prove robustness in identifying differential gene expression while maintaining identifiability and computational tractability. Such an extension would broaden the applicability of the proposed model beyond the strictly specified marginal setting considered here. It would also be valuable to incorporate covariate information directly into the mixture struc-ture. In many gene-expression studies, gene-specific or sample-specific covariates may provide additional information relevant to differential expression. Extending the proposed semiparamet-ric alternative to covariate-dependent mixture formulations (e.g., Nguyen and McLachlan, 2016; Oh and Seo, 2023; Oh and Seo, 2024; Chamroukhi et al., 2024; Hwang et al., 2025) may further enhance flexibility and detection power while preserving the stability of the alternative den-sity specification. Such developments would allow the framework to accommodate structured heterogeneity beyond the marginal mixture setting considered here. 
+
+# References 
+
+Alon, U., Barkai, N., Notterman, D. A., Gish, K., Ybarra, S., Mack, D., and Levine, A. J. (1999). Broad patterns of gene expression revealed by clustering analysis of tumor and normal colon tissues probed by oligonucleotide arrays. Proceedings of the National Academy of Sciences ,96(12):6745–6750. Andrews, D. F. and Mallows, C. L. (1974). Scale mixtures of normal distributions. Journal of the Royal Statistical Society: Series B (Methodological) , 36(1):99–102. Azzalini, A. (1985). A class of distributions which includes the normal ones. Scandinavian journal of statistics , 12(2):171–178. Benjamini, Y. and Hochberg, Y. (1995). Controlling the false discovery rate: a practical and powerful approach to multiple testing. Journal of the Royal statistical society: series B (Methodological) , 57(1):289–300. Bordes, L., Delmas, C., and Vandekerkhove, P. (2006). Semiparametric estimation of a two-component mixture model where one component is known. Scandinavian journal of statistics ,33(4):733–752. Branco, M. D. and Dey, D. K. (2001). A general class of multivariate skew-elliptical distributions. 
+
+Journal of Multivariate Analysis , 79(1):99–113. Broyden, C. G. (1970). The convergence of a class of double-rank minimization algorithms: 2. the new algorithm. IMA journal of applied mathematics , 6(3):222–231. B¨ ohning, D. (1985). Numerical estimation of a probability measure. Journal of statistical planning and inference , 11:57–69. B¨ ohning, D. (1986). A vertex-exchange-method in D-optimal design theory. Metrika , 33:337– 347. Chamroukhi, F., Pham, N. T., Hoang, V. H., and McLachlan, G. J. (2024). Functional mixtures-of-experts. Statistics and Computing , 34(3):98. 
+
+17 Dudoit, S., Fridlyand, J., and Speed, T. P. (2002). Comparison of discrimination methods for the classification of tumors using gene expression data. Journal of the American statistical association , 97(457):77–87. Efron, B. (2004). Large-scale simultaneous hypothesis testing: the choice of a null hypothesis. 
+
+Journal of the American Statistical Association , 99(465):96–104. Efron, B. (2005). Local false discovery rates. Efron, B. and Olshen, R. A. (1978). How broad is the class of normal scale mixtures? The Annals of Statistics , 6(5):1159–1164. Efron, B. and Tibshirani, R. (2002). Empirical bayes methods and false discovery rates for microarrays. Genetic epidemiology , 23(1):70–86. Efron, B., Tibshirani, R., Storey, J. D., and Tusher, V. (2001). Empirical bayes analysis of a microarray experiment. Journal of the American statistical association , 96(456):1151–1160. Fletcher, R. (1970). A new approach to variable metric algorithms. The computer journal ,13(3):317–322. Ghosh, D. and Chinnaiyan, A. M. (2005). Classification and selection of biomarkers in genomic data using lasso. BioMed Research International , 2005(2):147–154. Goldfarb, D. (1970). A family of variable-metric methods derived by variational means. Math-ematics of computation , 24(109):23–26. Golub, T. R., Slonim, D. K., Tamayo, P., Huard, C., Gaasenbeek, M., Mesirov, J. P., Coller, H., Loh, M. L., Downing, J. R., Caligiuri, M. A., et al. (1999). Molecular classification of cancer: class discovery and class prediction by gene expression monitoring. science , 286(5439):531– 537. Guo, S., Guo, D., Chen, L., and Jiang, Q. (2017). A l1-regularized feature selection method for local dimension reduction on microarray data. Computational biology and chemistry ,67:92–101. Hubert, L. and Arabie, P. (1985). Comparing partitions. Journal of Classification , 2(1):193–218. Hwang, Y., Seo, B., and Oh, S. (2025). Mixture of partially linear experts. Stat , 14(2):e70062. Kiefer, J. and Wolfowitz, J. (1956). Consistency of the maximum likelihood estimator in the presence of infinitely many incidental parameters. The Annals of Mathematical Statistics ,27(4):887–906. Lee, H. and Seo, B. (2024). Finite mixture of semiparametric multivariate skew-normal distri-butions. Communications in Statistics-Simulation and Computation , 53(11):5659–5679. Lee, M.-L. T., Kuo, F. C., Whitmore, G., and Sklar, J. (2000). Importance of replication in microarray gene expression studies: statistical methods and evidence from repetitive cdna hybridizations. Proceedings of the National Academy of Sciences , 97(18):9834–9839. Lesperance, M. L. and Kalbfleisch, J. D. (1992). An algorithm for computing the nonparametric MLE of a mixing distribution. Journal of the American Statistical Association , 87:120–126. 
+
+18 Lindsay, B. G. (1995). Mixture Models: Theory, Geometry and Applications . Institute of Math-ematical Statistics and American Statistical Association. Ma, S., Song, X., and Huang, J. (2007). Supervised group lasso with applications to microarray data analysis. BMC bioinformatics , 8(1):60. Ma, Y. and Yao, W. (2015). Flexible estimation of a semiparametric two-component mixture model with one parametric component. Electronic Journal of Statistics , 9(1):444–474. McLachlan, G. J., Bean, R. W., and Jones, L. B.-T. (2006). A simple implementation of a normal mixture approach to differential gene expression in multiclass microarrays. Bioinformatics ,22(13):1608–1615. McLachlan, G. J., Bean, R. W., and Peel, D. (2002). A mixture model-based approach to the clustering of microarray expression data. Bioinformatics , 18(3):413–422. Meng, X.-L. and Rubin, D. B. (1993). Maximum likelihood estimation via the ecm algorithm: A general framework. Biometrika , 80(2):267–278. Milhaud, X., Pommeret, D., Salhi, Y., and Vandekerkhove, P. (2022). Semiparametric two-sample admixture components comparison test: The symmetric case. Journal of Statistical Planning and Inference , 216:135–150. Nguyen, H. D. and McLachlan, G. J. (2016). Laplace mixture of linear experts. Computational Statistics & Data Analysis , 93:177–191. Oh, S., Lee, H., Kang, S., and Seo, B. (2026). Adaptive accelerated failure time modeling with a semiparametric skewed error distribution. Computational Statistics & Data Analysis ,219:108357. Oh, S. and Seo, B. (2023). Merging components in linear gaussian cluster-weighted models. 
+
+Journal of Classification , 40:25–51. Oh, S. and Seo, B. (2024). Semiparametric mixture of linear regressions with nonparametric gaussian scale mixture errors. Advances in Data Analysis and Classification , 18(1):5–31. Park, S.-Y. and Seo, B. (2025). Penalized maximum likelihood estimation with nonparametric gaussian scale mixture errors. Computational Statistics & Data Analysis , 211:108206. Pommeret, D. and Vandekerkhove, P. (2019). Semiparametric density testing in the contami-nation model. Electronic Journal of Statistics , 13:4743–4793. Seo, B. and Kang, S. (2023). Accelerated failure time modeling via nonparametric mixtures. 
+
+Biometrics , 79(1):165–177. Seo, B. and Lee, T. (2015). A new algorithm for maximum likelihood estimation in normal scale-mixture generalized autoregressive conditional heteroskedastic models. Journal of Statistical Computation and Simulation , 85:202–215. Seo, B., Noh, J., Lee, T., and Yoon, Y. J. (2017). Adaptive robust regression with continuous gaussian scale mixture errors. Journal of the Korean Statistical Society , 46(1):113–125. Seo, B. and Oh, S. (2024). Adaptive learning in robust linear regression with a semiparametric skew-normal scale mixture distribution. Stat , 13(4):e70026. 
+
+19 Shanno, D. F. (1970). Conditioning of quasi-newton methods for function minimization. Math-ematics of computation , 24(111):647–656. Tibshirani, R. (1996). Regression shrinkage and selection via the lasso. Journal of the Royal Statistical Society Series B: Statistical Methodology , 58(1):267–288. Vinh, N. X., Epps, J., and Bailey, J. (2010). Information theoretic measures for clusterings comparison: Variants, properties, normalization and correction for chance. The Journal of Machine Learning Research , 11:2837–2854. Wang, Y. (2007). On fast computation of the non-parametric maximum likelihood estimate of a mixing distribution. Journal of the Royal Statistical Society, Series B, Methodological ,69:185–198. West, M. (1987). On scale mixtures of normal distributions. Biometrika , 74(3):646–648. Xiang, S., Yao, W., and Seo, B. (2016). Semiparametric mixture: Continuous scale mixture approach. Computational Statistics and Data Analysis , 103:413–425. Zhang, H. H., Ahn, J., Lin, X., and Park, C. (2006). Gene selection using support vector machines with non-convex penalty. bioinformatics , 22(1):88–95. 
+
+# Appendix A: Proof of Theorem 1 
+
+Assume there exist (˜ π, ˜μ, ˜λ, ˜G) such that 
+
+πϕ (z; 0 , 1) + (1 − π)fSNSM (z; μ, λ, G ) = ˜ πϕ (z; 0 , 1) + (1 − ˜π)fSNSM (z; ˜ μ, ˜λ, ˜G). (11) Taking characteristic functions on both sides, we obtain: 
+
+ψz (t) = π exp( −t2/2) + (1 − π) exp( iμt )ψG,λ (t),
+
+and ˜ψz (t) = ˜ π exp( −t2/2) + (1 − ˜π) exp( i˜μt )ψ ˜G, ˜λ(t),
+
+where i = √−1 and ψG,λ (t) denotes the characteristic function of the zero-location SNSM distribution with ( λ, G ). Equating both characteristic functions yields 
+
+π exp( −t2/2) + (1 − π) exp( iμt )ψG,λ (t) = ˜ π exp( −t2/2) + (1 − ˜π) exp( i˜μt )ψ ˜G, ˜λ(t). (12) Multiplying both sides of (12) by exp( t2/2) gives: 
+
+π + (1 − π) exp( iμt )ψG,λ (t) = ˜ π + (1 − ˜π) exp( i˜μt )ψ ˜G, ˜λ(t).
+
+Rearranging terms, we obtain: 
+
+π − ˜π = (1 − ˜π) exp( i˜μt )ψ ˜G, ˜λ(t) − (1 − π) exp( iμt )ψG,λ (t). (13) The two terms on the right-hand side of (13) are characteristic functions of the SNSM densities 
+
+fSNSM (·; ˜ μ, ˜λ, ˜G) and fSNSM (·; μ, λ, G ), respectively. Since both are integrable densities, their 
+
+20 characteristic functions vanish at infinity by the Riemann–Lebesgue lemma. Hence, letting |t| → ∞ in (13) yields π − ˜π = 0, and therefore: 
+
+π = ˜ π and (1 − π) exp( iμt )ψG,λ (t) = (1 − ˜π) exp( i˜μt )ψ ˜G, ˜λ(t) ∀t ∈ R.
+
+Substituting π = ˜ π into (13), we obtain exp( iμt )ψG,λ (t) = exp( i˜μt )ψ ˜G, ˜λ(t), ∀t ∈ R. (14) Since ψG,λ (0) = ψ ˜G, ˜λ(0) = 1 and both characteristic functions are continuous, there exists δ > 0such that ψG,λ (t)̸ = 0 and ψ ˜G, ˜λ(t)̸ = 0 for all |t| < δ . Thus, for |t| < δ , from (14) we obtain 
+
+ψG,λ (t)
+
+ψ ˜G, ˜λ(t) = exp {i(˜ μ − μ)t}. (15) The right-hand side of (15) is the characteristic function of a point-mass distribution at (˜ μ −
+
+μ), that is, a pure location shift. Hence, (15) implies that if X ∼ SNSM(0 , λ, G ) and Y ∼
+
+SNSM(0 , ˜λ, ˜G), then X d
+
+= Y + (˜ μ − μ). In particular, the zero-location parameterization is fixed by construction (i.e., the location parameter is not absorbed into ( λ, G )). Therefore, two distributions in the subfamily {SNSM(0 , λ, G )} cannot differ by a nonzero translation. Hence, we must have ˜ μ − μ = 0, that is, 
+
+μ = ˜ μ. 
+
+Since μ = ˜ μ, it follows from (14) that 
+
+ψG,λ (t) = ψ ˜G, ˜λ(t), ∀t ∈ R.
+
+We now prove that ψG,λ (t) = ψ ˜G, ˜λ(t) implies G = ˜G and λ = ˜λ. Note that 
+
+ψG,λ (t) = 
+
+Z
+
+exp 
+
+
+
+− t2σ2
+
+2
+
+
+
+dG (σ) + i
+
+Z
+
+exp 
+
+
+
+− t2σ2
+
+2
+
+
+
+e
+
+ Γ( λ)σt 
+
+√2
+
+
+
+dG (σ),ψ ˜G, ˜λ(t) = 
+
+Z
+
+exp 
+
+
+
+− t2σ2
+
+2
+
+
+
+d ˜G(σ) + i
+
+Z
+
+exp 
+
+
+
+− t2σ2
+
+2
+
+
+
+e Γ( ˜λ)σt 
+
+√2
+
+!
+
+d ˜G(σ),
+
+where Γ( λ) = λ/ √1 + λ2 and e(z) denotes the complementary error function: 
+
+e(z) = − 2i
+
+√π
+
+Z iz 
+
+> 0
+
+exp( −t2)dt. 
+
+Equating the real and imaginary parts of ψG,λ (t) and ψ ˜G, ˜λ(t), we obtain: 
+
+Z
+
+exp 
+
+
+
+− t2σ2
+
+2
+
+
+
+dG (σ) = 
+
+Z
+
+exp 
+
+
+
+− t2σ2
+
+2
+
+
+
+d ˜G(σ), (16) 
+
+Z
+
+exp 
+
+
+
+− t2σ2
+
+2
+
+
+
+e
+
+ Γ( λ)σt 
+
+√2
+
+
+
+dG (σ) = 
+
+Z
+
+exp 
+
+
+
+− t2σ2
+
+2
+
+
+
+e Γ( ˜λ)σt 
+
+√2
+
+!
+
+d ˜G(σ). (17) Equation (16) implies G = ˜G by the uniqueness of the Laplace transform. Substituting into (17) and using the injectivity of e(·), we obtain Γ( λ) = Γ( ˜λ), and hence λ = ˜λ. Therefore, identifiability holds. 
+
+21 Appendix B: Proof of Theorem 2 
+
+Let us define the following metric: 
+
+d
+
+
+
+(π, μ, λ, G ), (ˆ π, ˆμ, ˆλ, ˆG)
+
+
+
+= |π − ˆπ| + |μ − ˆμ| + |λ − ˆλ| +
+
+Z
+
+|G(σ) − ˆG(σ)|e−| σ| dτ (σ),
+
+where τ denotes the Lebesgue measure on R+.Kiefer and Wolfowitz (1956) established that under five assumptions—including continuity (Assumption 2), identifiability (Assumption 4), and integrability (Assumption 5)—the MLE converges in probability: 
+
+d
+
+
+
+(π, μ, λ, G ), (ˆ π, ˆμ, ˆλ, ˆG)
+
+ p
+
+→ 0.
+
+The semiparametric SNSM density in (8) trivially satisfies Assumptions 1, 2, and 3. Assumption 4 (identifiability) is established in Theorem 1. Since the support of G is restricted to [ ℓ, ∞), the density in (8) is uniformly bounded. Thus, it remains to verify Assumption 5, which requires: 
+
+−E [log {πϕ (z) + (1 − π)fSNSM (z; μ, λ, G )}] < ∞.
+
+Because π ∈ (0 , 1), we have − log π < ∞ and − log(1 − π) < ∞. Moreover, the normal and skew-normal densities have finite first moments, implying −E[log ϕ(z)] < ∞ and 
+
+Z ∞−∞ 
+
+f (z; μ, λ, σ ) [log |z|]+ dz < ∞.
+
+By the condition R ∞ 
+
+> ℓ
+
+log σ dG (σ) < ∞, it follows that 
+
+E [log |Z|]+ < ∞,
+
+and thus 
+
+−
+
+Z ∞−∞ 
+
+log {f (z; μ, λ, G )} f (z; μ, λ, G )dz < ∞,
+
+by Lemma in Section 2 of Kiefer and Wolfowitz (1956). This verifies Assumption 5 and completes the proof. 
+
+22

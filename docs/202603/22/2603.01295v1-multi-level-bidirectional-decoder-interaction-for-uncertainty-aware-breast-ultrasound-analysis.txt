@@ -1,0 +1,342 @@
+Title: Multi-Level Bidirectional Decoder Interaction for Uncertainty-Aware Breast Ultrasound Analysis
+
+URL Source: https://arxiv.org/pdf/2603.01295v1
+
+Published Time: Tue, 03 Mar 2026 03:02:55 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Multi-Level Bidirectional Decoder Interaction for Uncertainty-Aware Breast Ultrasound Analysis 
+
+Abdullah Al Shafi 1,∗, Md Kawsar Mahmud Khan Zunayed 1,∗, Safin Ahmmed 1,Sk Imran Hossain 1, and Engelbert Mephu Nguifo 2 
+
+> 1
+
+Khulna University of Engineering and Technology, Bangladesh  
+
+> 2
+
+University Clermont Auvergne, France {abdullah.shafi99, zunayedofficial}@gmail.com, {safinahmmed, imran}@cse.kuet.ac.bd, engelbert.mephu_nguifo@uca.fr 
+
+Abstract. Breast ultrasound interpretation requires simultaneous lesion segmentation and tissue classification. However, conventional multi-task learning approaches suffer from task interference and rigid coordination strategies that fail to adapt to instance-specific prediction difficulty. We propose a multi-task framework addressing these limitations through multi-level decoder interaction and uncertainty-aware adaptive coordina-tion. Task Interaction Modules operate at all decoder levels, establishing bidirectional segmentation-classification communication during spatial reconstruction through attention weighted pooling and multiplicative modulation. Unlike prior single-level or encoder-only approaches, this multi-level design captures scale specific task synergies across semantic-to-spatial scales, producing complementary task interaction streams. Uncertainty-Proxy Attention adaptively weights base versus enhanced features at each level using feature activation variance, enabling per-level and per-sample task balancing without heuristic tuning. To support instance-adaptive prediction, multi-scale context fusion captures morpho-logical cues across varying lesion sizes. Evaluation on multiple publicly available breast ultrasound datasets demonstrates competitive perfor-mance, including 74.5% lesion IoU and 90.6% classification accuracy on BUSI dataset. Ablation studies confirm that multi-level task interaction provides significant performance gains, validating that decoder-level bidi-rectional communication is more effective than conventional encoder-only parameter sharing. The code is available at: https://github.com/C-loud-Nine/Uncertainty-Aware-Multi-Level-Decoder-Interaction. 
+
+Keywords: Multi-task learning · Breast ultrasound · Lesion segmenta-tion · Task interaction · Uncertainty-aware attention. 
+
+## 1 Introduction 
+
+Breast cancer affects over 2.3 million women annually, making early detection through medical imaging essential for improving patient outcomes [3]. Ultrasound 
+
+> ∗
+
+These authors contributed equally to this work.  
+
+> arXiv:2603.01295v1 [cs.CV] 1 Mar 2026 2Shafi et al.
+
+serves as a critical diagnostic modality due to its real-time capabilities and absence of ionizing radiation, yet interpretation remains challenging. Lesions exhibit substantial morphological variation, posterior acoustic shadowing obscures boundaries, and speckle noise degrades image quality [9, 13]. While specialized architectures exist for segmentation [22, 25] or classification [10, 12], single-task approaches fail to exploit the complementary nature of boundary delineation and semantic characterization. Multi-task learning (MTL) addresses this through parameter sharing [5], predominantly employing encoder-level architectures [8, 11, 19]. However, this paradigm restricts task communication to abstract feature extraction. Once tasks enter separate decoders, representations diverge, preventing the exploitation of complementary information during spatial reconstruction where boundary precision and semantic understanding are mutually informative. The decoder reconstruction phase presents untapped potential for task co-ordination. During progressive upsampling, segmentation recovers geometric detail while classification aggregates discriminative pattern. These processes are inherently complementary where boundary localization constrains classification decisions and semantic understanding resolves ambiguous boundaries. While soft-sharing mechanisms [20] and multi-scale feature propagation [24] enable task interaction in natural images, these static methods lack the spatial specificity required to resolve the severe speckle noise and boundary ambiguity inherent to ultrasound. Furthermore, current MTL strategies rely on static loss weighting or task-level uncertainty estimates [8, 17] that are shared across all samples, without adapting to per-instance prediction confidence. Based on the above discussions, we propose multi-level decoder interaction with uncertainty-aware adaptive coordination. Task Interaction Modules operate at all decoder resolutions, establishing bidirectional communication during spatial reconstruction through attention-weighted pooling (segmentation-to-classification) and multiplicative modulation (classification-to-segmentation). This enables pro-gressive task refinement, capturing scale-specific synergies from semantic context to boundary details. To address instance heterogeneity, an Uncertainty Proxy Attention mechanism uses feature activation variance for efficient per-instance adaptive weighting without Bayesian overhead. Evaluation on BUSI [2] and BUSI-WHU [15] demonstrates consistent improvements over encoder-sharing multi-task methods and transformer-based segmentation baselines, with ablation studies confirming the contribution of multi-level decoder interaction over single-level and encoder-only paradigms. 
+
+## 2 Method 
+
+The architecture employs a transfer learning encoder with five hierarchical stages feeding a four-level decoder ( D1–D4) that reconstructs spatial resolution via transposed convolutions and attention-gated skip connections. Task Interaction Modules at each decoder level enable bidirectional segmentation-classification communication, with Uncertainty Proxy Attention adaptively weighting contri-butions based on feature activation variance. The decoder produces pixel-wise Uncertainty-Aware Multi-Level Decoder Interaction 3Task 
+
+> Interaction
+> Module
+> (TIM)
+> Uncertainty
+> Proxy
+> Attention
+> (UPA)
+
+~     
+
+> GAP +
+> Dense
+> mean variance normalize
+> mean variance normalize
+> fadoptive()
+> fadoptive()
+> wc
+> ws
+> Dense
+> Dense
+> fmod ()
+> GAP +
+> Dense
+> GAP +
+> Dense
+> Dense
+> Classification Labels
+> Output Mask Input Image
+> Channel
+> Attention
+> Spatial
+> Attention
+> GAP +
+> Dense
+> Weighted
+> Fusion
+
+~      
+
+> Backbone Layer
+> Encoder Layer
+> Decoder Layer
+> Reshape Layer
+> Decoder Signal
+> Encoder Signal
+> Enhanced Classification
+> Signal
+> Final Segmentation
+> Signal
+> Enhanced Segmentation
+> Signal
+> Final Classification
+> Signal
+> Convolution Layer
+> Batch Normalization
+> Layer
+> Attention Gate
+> Multiplication
+> Concatenation
+
+Fig. 1. Overview of the proposed architecture. Multi-scale fusion modules augment encoder features. TIM enables bidirectional task interaction at all four decoder levels (D1–D4). UPA adaptively modulates information flow at each level. Dual heads generate segmentation masks and classification predictions jointly. 
+
+segmentation masks, while classification aggregates multi-scale encoder features with task-interaction streams from all decoder levels. Multi-scale context fusion addresses lesion size variation through parallel dilated convolutions. Figure 1 illustrates the architecture. 
+
+2.1 Task Interaction Module 
+
+Task Interaction Module (TIM) enables bidirectional feature exchange between segmentation and classification at each decoder level ℓ ∈ { 1, 2, 3, 4}. Classifica-tion features f ℓ
+
+clf ∈ RB×256 are initialized from each encoder stage via global average pooling and MLP projection. Given decoder features Dℓ ∈ RB×hℓ×wℓ×cℓ
+
+and initialized classification features, TIM produces enhanced representations 4 Shafi et al. 
+
+(Denh  
+
+> ℓ
+
+, f ℓ, enh clf ) through two complementary pathways. Instead of standard uniform pooling, the segmentation branch uses learned attention to inject boundary-aware spatial context into the classification features: 
+
+αℓ = ReLU (Conv 1×1(Dℓ)) , f ctx seg = ϕ(GAP (αℓ)) (1) 
+
+gclf = σ(MLP (f ctx seg )) , f ℓ, enh clf = f ℓ 
+
+> clf
+
++ gclf ⊙ f ctx seg (2) where ϕ = BN ◦ Dense 256 . The gating mechanism gclf ∈ RB×256 enables instance-adaptive integration, selectively incorporating segmentation context to prevent error propagation in ambiguous cases. In the reverse direction, classification supplies semantic priors to refine spatial localization through multiplicative modulation. The classification vector projects to decoder channel space, broadcasts spatially, and modulates decoder features: 
+
+f proj clf = ψ(f ℓ
+
+> clf
+
+), f spat clf = Reshape (f proj clf , [1 , 1, c ℓ]) (3) 
+
+gseg = σ(MLP (GAP (Dℓ))) , μℓ = 1 + τ · gseg ⊙ f spat clf (4) 
+
+Denh  
+
+> ℓ
+
+= Dℓ ⊙ μℓ (5) where ψ = σ ◦ Dense cℓ constrains f proj clf ∈ [0 , 1] , and instance-adaptive gating 
+
+gseg ∈ RB×cℓ modulates enhancement strength per sample. Since both gating and projected classification features are sigmoid-bounded to [0 , 1] , the modulation factor μℓ ∈ [1 .0, 1.7] with τ = 0 .7, ensuring bounded amplification that maintains numerical stability. This multiplicative formulation enables features aligned with semantic priors to receive stronger amplification than uncertain regions. TIM operates with level-specific channel dimensions cℓ, capturing scale-appropriate task interactions from coarse semantic context at early decoder stages to fine-grained spatial detail at later stages. UPA subsequently regulates the enhancement strength of these interactions at each level, as described next. 
+
+2.2 Uncertainty Proxy Attention 
+
+Task interaction impact varies across instances. Clear lesions with homogeneous texture benefit from strong enhancement, while ambiguous cases with posterior shadowing or heterogeneous patterns require conservative weighting to avoid error propagation. Uncertainty Proxy Attention adaptively interpolates between base and enhanced features at each decoder level using feature activation variance as an efficient uncertainty proxy. This requires only a single forward pass. Feature activation variance serves as a reliable proxy for prediction confidence since high spatial or channel dispersion indicates inconsistent activations characteristic of uncertain representations, with the mapping to enhancement strength learned end-to-end without Monte Carlo sampling or manual calibration. For enhanced features Denh  
+
+> ℓ
+
+∈ RB×hℓ×wℓ×cℓ and f ℓ, enh clf ∈ RB×256 from TIM, variance is computed as: 
+
+useg = Ec
+
+ 1
+
+hℓwℓ
+
+X
+
+> h,w
+
+(Denh  
+
+> ℓ,c,h,w
+
+− μc)2
+
+ , uclf = Var (f ℓ, enh clf ) (6) Uncertainty-Aware Multi-Level Decoder Interaction 5
+
+where spatial variance is averaged across channels for segmentation. High variance indicates diverse activations suggesting lower confidence. Normalized uncertainties 
+
+˜u = u/ ( ¯u + ϵ) ensure comparable scales. Adaptive weights are learned via lightweight MLP: 
+
+[ωseg , ω clf ] = Softmax (MLP 2(ReLU (MLP 32 ([˜ useg , ˜uclf ])))) (7) Softmax creates task competition: higher uncertainty in one task increases reliance on the other. Final features interpolate via residual weighting: 
+
+Dfinal  
+
+> ℓ
+
+= Dℓ + ωseg (Denh  
+
+> ℓ
+
+− Dℓ), f ℓ, final clf = f ℓ 
+
+> clf
+
++ ωclf (f ℓ, enh clf − f ℓ
+
+> clf
+
+) (8) where ω ∈ [0 , 1] controls enhancement strength: ω = 0 preserves base features (rejecting uncertain enhancements), ω = 1 fully adopts enhanced features. This enables per-level and per-instance adaptive coordination without manual tuning, allowing the network to learn when task interaction helps versus when independent predictions are more reliable. 
+
+2.3 Multi-Scale Context and Attention Mechanisms 
+
+Breast ultrasound lesions exhibit substantial size variation (5–40mm diameter), requiring adaptive receptive field selection. Hierarchical Multi-scale fusion (HMSF) employs three parallel dilated separable convolutions ( r ∈ { 1, 2, 4}) with effective receptive fields of 3 ×3, 5 ×5, and 9 ×9 pixels. Unlike standard ASPP [7], separable convolutions reduce parameters while maintaining multi-scale coverage. Squeeze-and-excitation-inspired attention [14] learns instance-specific scale importance: 
+
+Fr = SepConv (r)3×3(X), r ∈ { 1, 2, 4}, g = ReLU (MLP C/ 8(GAP (X))) (9) 
+
+α = Softmax (MLP 3(g)) , Y = Conv 1×1
+
+> 3
+
+X
+
+> i=1
+
+αiFri
+
+!
+
+(10) where softmax enforces scale competition (emphasizing appropriate receptive fields per lesion) rather than SE-Net’s channel recalibration. Small benign lesions (5–10mm) require fine detail while large masses (20–40mm) benefit from broader context. Attention gates [21] at skip connections suppress background speckle while preserving lesion boundaries using decoder-level semantic guidance. These mechanisms provide scale-adaptive and spatially-selective features, enabling TIM and UPA to operate on contextually-enriched representations. 
+
+2.4 Multi-Task Loss Formulation 
+
+The multi-task objective Ltotal = 0 .80 Lseg + 0 .20 Lclf balances dense spatial pre-diction with global classification, where Lseg = LFT +0 .25 Lboundary +0 .15 Ltexture .Focal Tversky loss [1] addresses class imbalance with asymmetric penalties α = 0 .3
+
+and β = 0 .7 and for hard sample focus γ = 0 .75 . Boundary regularization applies geometric curvature filtering via kernel Kcurv (x, y ) = ( x2 − y2)e−r2/2σ2
+
+, σ=1.0,6 Shafi et al. 
+
+to detect contour deviations, while texture regularization measures gradient standard deviation consistency via horizontal Sobel operator Sx:
+
+Lboundary = E
+
+h
+
+|(Kcurv ∗ Mbin ) − (Kcurv ∗ ˆMbin )|
+
+i
+
+(11) 
+
+Ltexture = E
+
+h
+
+|std (Sx ∗ M ) − std (Sx ∗ ˆM )|
+
+i
+
+(12) These geometric constraints ensure anatomically coherent boundaries comple-menting region-based optimization. Classification employs focal cross-entropy [18] to emphasize hard samples. 
+
+## 3 Experiments and Results 
+
+3.1 Datasets and Implementation 
+
+Experiments employ BUSI [2] (780 images: 133 normal, 437 benign, 210 ma-lignant) and BUSI-WHU [15] (927 images: 561 benign, 387 malignant). Data is split 70/15/15 (train/validation/test) with normal cases assigned null seg-mentation masks. Training employs rotation, flipping, and elastic deformation augmentation, with class imbalance addressed through Focal Tversky loss. An ImageNet-pretrained EfficientNet backbone [23] serves as the encoder with early layers frozen. Models are trained for 100 epochs with batch size 24 and input resolution 224 × 224 , using Adam optimization ( lr = 3 × 10 −4, α = 0 .03 ) with cosine annealing decaying to lr min = 1 .5 × 10 −6 and early stopping on validation performance (patience = 10 ). 
+
+3.2 Quantitative Evaluation 
+
+Table 1 presents quantitative comparison against CNN, transformer, and multi-task learning baselines. The baselines use official implementations where available, with single-task models extended via classification heads for MTL evaluation. The proposed method achieves 74.50% IoU and 90.60% classification accuracy on BUSI, outperforming transformer baselines by 1.7–4.2% IoU and MTL methods by 1.6–5.6% IoU. Unlike encoder-level sharing [8,19] or attention-based weighting [11], the key distinction lies in decoder-level interaction. This enables mutual task guidance during spatial reconstruction, where classification semantics constrain segmentation and lesion boundaries resolve classification ambiguities. BUSI-WHU results demonstrate consistent performance across datasets with 86.40% IoU and 95.00% accuracy. Significant gains across segmentation (92.70% vs 91.60% Dice compared to MISSFormer) and classification (95.00% vs 94.50% accuracy compared to MTL-OCA) validate decoder-level coordination superiority. Figure 2 illustrates improved boundary localization in posterior shadowing regions and enhanced classification reliability on heterogeneous textures. Uncertainty-Aware Multi-Level Decoder Interaction 7
+
+Table 1. Comparison on BUSI and BUSI-WHU datasets. Best results in bold .                                                                                           
+
+> Method BUSI (780 images) BUSI-WHU (927 images)
+> Seg Clf Seg Clf
+> IoU Dice Acc F1 IoU Dice Acc F1
+> CNN-Based
+> U-Net [22] †66.80 80.05 86.50 84.70 77.50 87.30 90.80 89.10 Attention U-Net [21] †68.20 81.05 87.80 86.00 79.20 88.40 92.10 90.50 UNet++ [25] †69.50 81.95 88.21 86.90 80.70 89.30 92.80 91.41
+> Transformer-Based
+> TransUNet [6] 70.30 82.55 ––81.60 89.90 ––Swin-UNet [4] 71.50 83.40 ––83.00 90.70 ––MISSFormer [16] 72.80 84.25 ––84.60 91.60 ––
+> Multi-Task Learning
+> MTAN [19] 68.90 81.60 87.20 85.40 80.00 88.90 91.60 90.00 MTANet [8] 72.10 83.80 89.30 87.60 83.70 91.10 93.90 92.30 MTL-OCA [11] 72.90 84.30 89.90 88.20 84.50 91.60 94.50 92.90
+> Proposed 74.50 85.25 90.60 89.84 86.40 92.70 95.00 94.74
+> †
+
+Segmentation models extended with classification heads. 
+
+3.3 Ablation Studies 
+
+Table 2 details component contributions on the BUSI dataset. The baseline employs a transfer learning encoder with a U-Net decoder and classification head. The integration of HMSF enhances lesion detection under appearance variations, yielding a 2.52% IoU gain and 4.06% higher sensitivity over the baseline. TIM alone contributes +1.77% IoU and +3.88% classification precision, confirming that bidirectional semantic-spatial communication benefits both tasks jointly. Addition of UPA further improves AUC from 94.41% to 97.31%, demonstrating Image GT U-Net Att-U-Net U-Net++ Swin-UNet Proposed 
+
+Fig. 2. Qualitative segmentation results on BUSI [2]. Columns show the input image, ground truth, and predictions from U-Net [22], Att-U-Net [21], UNet++ [25], Swin-UNet [4], and the proposed method. 8 Shafi et al. 
+
+Table 2. Impact of HMSF, TIM, and UPA modules on the BUSI dataset. Component contributions are assessed relative to a transfer learning-based encoder-decoder baseline. Best results in bold .
+
+Components Segmentation Classification HMSF TIM UPA IoU Dice Sens Prec Acc F1 AUC Prec 
+
+– – – 67.43 80.55 75.06 79.73 84.62 82.33 94.90 82.16 
+
+✓ – – 69.95 82.32 79.12 80.19 88.89 88.34 96.30 86.70 – ✓ – 69.20 81.80 79.83 79.76 86.32 84.00 94.41 86.04 – ✓ ✓ 69.74 82.17 83.07 79.32 88.89 88.34 97.31 87.24 
+
+✓ ✓ ✓ 74.50 85.25 80.87 85.47 90.60 89.84 97.66 89.95 D1 D2 D3 D4           
+
+> Decoder Level
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> Normalized l2 displacement
+> 0.93
+> 0.65
+> 0.88
+> 1.05
+> 0.10 0.15
+> 0.27
+> 0.36
+> Task Interaction Module
+> Seg →Clf Clf →Seg
+> D1 D2 D3 D4
+> Decoder Level
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Weight Distribution
+> 0.34
+> 0.66
+> 0.28
+> 0.72
+> 0.67
+> 0.33
+> 0.81
+> 0.19
+> Uncertainty-Proxy Attention
+> Seg Clf
+
+Fig. 3. Analysis of TIM and UPA modules across decoder levels. ( Left ) ℓ2 displacement indicates dominant segmentation-to-classification flow. ( Right ) UPA weight distributions show adaptive task balancing: higher levels assign greater weights to segmentation. 
+
+that uncertainty-regulated feature interpolation reduces over-commitment to unreliable cross-task signals in ambiguous cases. The full configuration achieves 7.07% IoU and 5.98% classification accuracy gains over baseline, indicating genuine functional synergy among proposed components. Figure 3 characterizes TIM and UPA behavior across decoder levels. Nor-malized ℓ2 displacement of cross-task features reveals consistent segmentation dominance. This occurs because dense segmentation tensors inject richer lesion pri-ors into compact classification vectors. However, the classification-to-segmentation pathway provides task-identity context that reduces false positives (precision drops 3.88% upon ablation). UPA weights reveal task-specific uncertainty prefer-ences: classification features receive higher weight at D1 and D2 where global semantic context is reliable, while segmentation features dominate at D3 and D4
+
+where fine-grained boundary reconstruction relies on enhanced spatial details. 
+
+## 4 Discussion and Conclusion 
+
+Multi-task learning for medical imaging typically restricts task communication to encoder-level parameter sharing, causing representations to diverge through independent decoders. The proposed method demonstrates that decoder-level interaction fundamentally addresses this limitation. TIM at every decoder level Uncertainty-Aware Multi-Level Decoder Interaction 9
+
+enables progressive refinement: segmentation provides boundary-aware context through spatial attention pooling, while classification supplies semantic guidance via multiplicative modulation. This operates during spatial reconstruction, where lesion boundaries constrain classification and semantic priors resolve ambiguous contours. UPA enables adaptive coordination through feature activation variance, essential for heterogeneous ultrasound cases. Evaluation achieves 74.50% IoU and 90.60% accuracy on BUSI, with 1.6– 5.6% IoU improvements over MTL baselines and 1.7–4.2% over transformer baselines. Ablation confirms TIM and UPA contribute +4.55% IoU on top of the multi-scale baseline, validating scale-specific decoder coordination. Cross-dataset results demonstrate architectural robustness. Limitations include single-anatomy 2D evaluation; future work should extend to volumetric multi-organ analysis. The proposed framework establishes decoder-level interaction as an effective alternative to standard encoder-sharing for medical multi-task learning. 
+
+Disclosure of Interests. The authors have no competing interests to declare that are relevant to the content of this article. 
+
+## References 
+
+1. Abraham, N., Khan, N.: A novel focal Tversky loss function with im-proved attention U-Net for lesion segmentation. In: ISBI. pp. 683–687 (2019). https://doi.org/10.1109/ISBI.2019.8759329 2. Al-Dhabyani, W., Gomaa, M., Khaled, H., Fahmy, A.: Dataset of breast ultrasound images. Data Brief 28 , 104863 (2020). https://doi.org/10.1016/j.dib.2019.104863 3. Bray, F., Laversanne, M., Sung, H., Ferlay, J., Siegel, R., Soerjomataram, I., et al.: Global cancer statistics 2022: GLOBOCAN estimates of inci-dence and mortality worldwide. CA Cancer J. Clin. 74 (3), 229–263 (2024). https://doi.org/10.3322/caac.21834 4. Cao, H., et al.: Swin-Unet: Unet-like pure transformer for medical image segmenta-tion. In: ECCV Workshops. pp. 205–218 (2022). https://doi.org/10.1007/978-3-031-25066-8_18 5. Caruana, R.: Multitask learning. Mach. Learn. 28 (1), 41–75 (1997). https://doi.org/10.1023/A:1007379606734 6. Chen, J., et al.: TransUNet: Transformers make strong encoders for medical image segmentation. arXiv (2021), arXiv:2102.04306 7. Chen, L.C., Papandreou, G., Kokkinos, I., Murphy, K., Yuille, A.: DeepLab: Seman-tic image segmentation with deep convolutional nets, atrous convolution, and fully connected CRFs. IEEE Trans. Pattern Anal. Mach. Intell. 40 (4), 834–848 (2018). https://doi.org/10.1109/TPAMI.2017.2699184 8. Chen, Y., et al.: MTANet: Multi-task attention network for medical im-age segmentation and classification. In: CVPR. pp. 12521–12530 (2023). https://doi.org/10.1109/CVPR52729.2023.01203 9. Cheng, H.D., Shan, J., Ju, W., Guo, Y., Zhang, L.: Automated breast cancer detection and classification using ultrasound images: A survey. Pattern Recognit. 
+
+43 (1), 299–317 (2010). https://doi.org/10.1016/j.patcog.2009.06.005 10 Shafi et al. 10. Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner, T., et al.: An image is worth 16x16 words: Transformers for image recognition at scale. In: ICLR (2021) 11. Gao, Y., Bai, H., Jia, Z., Zhang, J., Wang, L., Chen, X., et al.: Multi-task learning with optimal channel attention for breast ultrasound diagnosis. Front. Oncol. 15 ,1567577 (2025). https://doi.org/10.3389/fonc.2025.1567577 12. Gheflati, B., Rivaz, H.: Vision transformer for classification of breast ultrasound images. In: IEEE EMBC. pp. 480–483 (2022). https://doi.org/10.1109/EMBC48229.2022.9871560 13. Hooley, R., Scoutt, L., Philpotts, L.: Breast ultrasonography: state of the art. Radiology 268 (3), 642–659 (2013). https://doi.org/10.1148/radiol.13120864 14. Hu, J., Shen, L., Sun, G.: Squeeze-and-excitation networks. In: CVPR. pp. 7132–7141 (2018). https://doi.org/10.1109/CVPR.2018.00745 15. Huang, J., Zhang, J., Zhang, Y., Li, X., Ma, X., Deng, J., Shen, H., Wang, D., Mei, L., Lei, C.: BUSI-WHU: Breast cancer ultrasound image dataset (2025). https://doi.org/10.17632/k6cpmwybk3.3, mendeley Data, V3 16. Huang, X., Deng, Z., Li, D., Yuan, X.: MISSFormer: An effective medical im-age segmentation transformer. IEEE Trans. Med. Imag. 42 (5), 1573–1586 (2023). https://doi.org/10.1109/TMI.2022.3226789 17. Kendall, A., Gal, Y., Cipolla, R.: Multi-task learning using uncertainty to weigh losses for scene geometry and semantics. In: CVPR. pp. 7482–7491 (2018). https://doi.org/10.1109/CVPR.2018.00781 18. Lin, T.Y., Goyal, P., Girshick, R., He, K., Dollár, P.: Focal loss for dense object detection. In: ICCV. pp. 2980–2988 (2017). https://doi.org/10.1109/ICCV.2017.324 19. Liu, S., Johns, E., Davison, A.: End-to-end multi-task learning with attention. In: CVPR. pp. 1871–1880 (2019). https://doi.org/10.1109/CVPR.2019.00197 20. Misra, I., Shrivastava, A., Gupta, A., Hebert, M.: Cross-stitch net-works for multi-task learning. In: CVPR. pp. 3994–4003 (2016). https://doi.org/10.1109/CVPR.2016.433 21. Oktay, O., et al.: Attention U-Net: Learning where to look for the pancreas. arXiv (2018), arXiv:1804.03999 22. Ronneberger, O., Fischer, P., Brox, T.: U-Net: Convolutional networks for biomedical image segmentation. In: MICCAI. pp. 234–241 (2015). https://doi.org/10.1007/978-3-319-24574-4_28 23. Tan, M., Le, Q.: EfficientNet: Rethinking model scaling for convolutional neural networks. In: ICML. pp. 6105–6114 (2019) 24. Vandenhende, S., Georgoulis, S., Van Gool, L.: MTI-Net: Multi-scale task in-teraction networks for multi-task learning. In: ECCV. pp. 527–543 (2020). https://doi.org/10.1007/978-3-030-58536-5_31 25. Zhou, Z., Siddiquee, M., Tajbakhsh, N., Liang, J.: UNet++: A nested U-Net architecture for medical image segmentation. In: DLMIA. pp. 3–11 (2018). https://doi.org/10.1007/978-3-030-00889-5_1

@@ -6,79 +6,85 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-02-21 ~ 2026-03-22
-- 运行时间：2026-03-22 11:22:22 UTC
+- 最新运行日期：2026-03-22
+- 运行时间：2026-03-22 19:35:08 UTC
 - 运行状态：成功
-- 本次总论文数：19
-- 精读区：7
-- 速读区：12
+- 本次总论文数：21
+- 精读区：8
+- 速读区：13
 
 ### 今日简报（AI）
-本期深度研读 19 篇生物 AI 论文，重点攻克转录组数据建模与病理多模态智能体两大核心领域。
-满分力作 Count Bridges 重新定义了转录组解卷积，而 LAMMI-Pathology 框架则展示了工具驱动的病理智能新范式。
-建议读者重点关注生物大模型对拓扑结构的理解及多模态信号集成，这是提升基因预测效能的关键。
-- 详情：[/20260221-20260322/README](/20260221-20260322/README)
+今日深度解析 21 篇前沿成果，聚焦 PET 诊疗多智能体框架与病理图像流形压缩等医学 AI 突破。
+核心推荐 TheraAgent 框架利用自进化记忆提升诊疗推理，同时关注稀疏自编码器对单细胞大模型生物逻辑的深度剖析。
+建议读者重点研读 AI 如何通过多智能体
+- 详情：[/202603/22/README](/202603/22/README)
 
 ### 精读区论文标签
-1. [Count Bridges enable Modeling and Deconvolving Transcriptomic Data](/20260221-20260322/2603.04730v1-count-bridges-enable-modeling-and-deconvolving-transcriptomic-data)  
-   标签：评分：10.0/10、query:rna-int
-   evidence：转录组计数数据的计算去卷积
-2. [LAMMI-Pathology: A Tool-Centric Bottom-Up LVLM-Agent Framework for Molecularly Informed Medical Intelligence in Pathology](/20260221-20260322/2602.18773v1-lammi-pathology-a-tool-centric-bottom-up-lvlm-agent-framework-for-molecularly-informed-medical-intelligence-in-pathology)  
-   标签：评分：9.0/10、query:rna-int
-   evidence：利用空间转录组学的分子知情医学智能
-3. [Semiparametric Joint Inference for Sensitivity and Specificity at the Youden-Optimal Cut-Off](/20260221-20260322/2602.23045v1-semiparametric-joint-inference-for-sensitivity-and-specificity-at-the-youden-optimal-cut-off)  
+1. [TheraAgent: Multi-Agent Framework with Self-Evolving Memory and Evidence-Calibrated Reasoning for PET Theranostics](/202603/22/2603.13676v1-theraagent-multi-agent-framework-with-self-evolving-memory-and-evidence-calibrated-reasoning-for-pet-theranostics)  
    标签：评分：9.0/10、query:bio-ca
-   evidence：连续生物标志物敏感性和特异性的推断
-4. [Experience-Guided Self-Adaptive Cascaded Agents for Breast Cancer Screening and Diagnosis with Reduced Biopsy Referrals](/20260221-20260322/2602.23899v1-experience-guided-self-adaptive-cascaded-agents-for-breast-cancer-screening-and-diagnosis-with-reduced-biopsy-referrals)  
-   标签：评分：9.0/10、query:bio-ca
-   evidence：用于乳腺癌诊断的多智能体框架
-5. [Interpreting Net Survival: What We Estimate Versus What We Think We Estimate](/20260221-20260322/2603.01033v1-interpreting-net-survival-what-we-estimate-versus-what-we-think-we-estimate)  
-   标签：评分：9.0/10、query:bio-ca
-   evidence：癌症研究中净生存率的理论分析与解释
-6. [Causal Circuit Tracing Reveals Distinct Computational Architectures in Single-Cell Foundation Models: Inhibitory Dominance, Biological Coherence, and Cross-Model Convergence](/20260221-20260322/2603.01752v2-causal-circuit-tracing-reveals-distinct-computational-architectures-in-single-cell-foundation-models-inhibitory-dominance-biological-coherence-and-cross-model-convergence)  
-   标签：评分：9.0/10、query:rna-int
-   evidence：单细胞基础模型（如 scGPT）中的因果通路追踪
-7. [SCALE:Scalable Conditional Atlas-Level Endpoint transport for virtual cell perturbation prediction](/20260221-20260322/2603.17380v1-scalescalable-conditional-atlas-level-endpoint-transport-for-virtual-cell-perturbation-prediction)  
-   标签：评分：9.0/10、query:rna-int
-   evidence：基于单细胞测量的虚拟细胞扰动预测基础模型
+   evidence：前列腺癌的精准肿瘤学与结果预测
+2. [Histopathology Image Normalization via Latent Manifold Compaction](/202603/22/2602.24251v1-histopathology-image-normalization-via-latent-manifold-compaction)  
+   标签：评分：8.0/10、query:bio-ca
+   evidence：用于组织病理学图像归一化的无监督表示学习
+3. [TC-SSA: Token Compression via Semantic Slot Aggregation for Gigapixel Pathology Reasoning](/202603/22/2603.01143v1-tc-ssa-token-compression-via-semantic-slot-aggregation-for-gigapixel-pathology-reasoning)  
+   标签：评分：8.0/10、query:bio-ca
+   evidence：用于千兆像素病理推理的令牌压缩
+4. [The MAMA-MIA Challenge: Advancing Generalizability and Fairness in Breast MRI Tumor Segmentation and Treatment Response Prediction](/202603/22/2603.01250v1-the-mama-mia-challenge-advancing-generalizability-and-fairness-in-breast-mri-tumor-segmentation-and-treatment-response-prediction)  
+   标签：评分：8.0/10、query:bio-ca
+   evidence：深度学习用于乳腺癌肿瘤分割和治疗反应预测
+5. [Differential gene expression analysis via two-component mixture models with a semiparametric skew-normal scale mixture alternative](/202603/22/2603.01381v1-differential-gene-expression-analysis-via-two-component-mixture-models-with-a-semiparametric-skew-normal-scale-mixture-alternative)  
+   标签：评分：8.0/10、query:rna-int
+   evidence：通过混合模型进行差异基因表达分析
+6. [Graph Attention Based Prioritization of Disease Responsible Genes from Multimodal Alzheimer's Network](/202603/22/2603.02273v1-graph-attention-based-prioritization-of-disease-responsible-genes-from-multimodal-alzheimers-network)  
+   标签：评分：8.0/10、query:rna-int
+   evidence：微阵列、单细胞和单核RNA-seq的整合分析
+7. [Segmentation-before-Staining Improves Structural Fidelity in Virtual IHC-to-Multiplex IF Translation](/202603/22/2603.16160v1-segmentation-before-staining-improves-structural-fidelity-in-virtual-ihc-to-multiplex-if-translation)  
+   标签：评分：8.0/10、query:bio-ca
+   evidence：组织结构中多种生物标志物的定量分析
+8. [LoGSAM: Parameter-Efficient Cross-Modal Grounding for MRI Segmentation](/202603/22/2603.17576v1-logsam-parameter-efficient-cross-modal-grounding-for-mri-segmentation)  
+   标签：评分：8.0/10、query:bio-ca
+   evidence：利用 MRI 进行脑肿瘤分割和定位的深度学习
 
 ### 速读区论文标签
-1. [Extending Sequence Length is Not All You Need: Effective Integration of Multimodal Signals for Gene Expression Prediction](/20260221-20260322/2602.21550v1-extending-sequence-length-is-not-all-you-need-effective-integration-of-multimodal-signals-for-gene-expression-prediction)  
-   标签：评分：8.0/10、query:rna-int
-   evidence：整合多模态表观基因组信号进行基因表达预测
-2. [What Topological and Geometric Structure Do Biological Foundation Models Learn? Evidence from 141 Hypotheses](/20260221-20260322/2602.22289v1-what-topological-and-geometric-structure-do-biological-foundation-models-learn-evidence-from-141-hypotheses)  
-   标签：评分：8.0/10、query:rna-int
-   evidence：分析scGPT和Geneformer等生物基础模型
-3. [Disentangling Shared and Target-Enriched Topics via Background-Contrastive Non-negative Matrix Factorization](/20260221-20260322/2602.22387v1-disentangling-shared-and-target-enriched-topics-via-background-contrastive-non-negative-matrix-factorization)  
+1. [Multi-Level Bidirectional Decoder Interaction for Uncertainty-Aware Breast Ultrasound Analysis](/202603/22/2603.01295v1-multi-level-bidirectional-decoder-interaction-for-uncertainty-aware-breast-ultrasound-analysis)  
    标签：评分：8.0/10、query:bio-ca
-   evidence：从高维数据中提取生物信号的新型生物信息学方法
-4. [MM-NeuroOnco: A Multimodal Benchmark and Instruction Dataset for MRI-Based Brain Tumor Diagnosis](/20260221-20260322/2602.22955v1-mm-neuroonco-a-multimodal-benchmark-and-instruction-dataset-for-mri-based-brain-tumor-diagnosis)  
+   evidence：用于乳腺超声病变分割和分类的深度学习
+2. [Mathematical model of tumor-macrophage interactions: Elucidating the tumor-driven macrophage phenotype reprogramming](/202603/22/2603.02757v1-mathematical-model-of-tumor-macrophage-interactions-elucidating-the-tumor-driven-macrophage-phenotype-reprogramming)  
    标签：评分：8.0/10、query:bio-ca
-   evidence：用于脑肿瘤诊断和多模态MRI理解的深度学习
-5. [Bayesian calendar-time survival analysis with epidemic curve priors and variant-specific infection hazards](/20260221-20260322/2602.18677v1-bayesian-calendar-time-survival-analysis-with-epidemic-curve-priors-and-variant-specific-infection-hazards)  
+   evidence：癌症研究中肿瘤-免疫相互作用的数学模型
+3. [Sparse autoencoders reveal organized biological knowledge but minimal regulatory logic in single-cell foundation models: a comparative atlas of Geneformer and scGPT](/202603/22/2603.02952v1-sparse-autoencoders-reveal-organized-biological-knowledge-but-minimal-regulatory-logic-in-single-cell-foundation-models-a-comparative-atlas-of-geneformer-and-scgpt)  
+   标签：评分：8.0/10、query:rna-int
+   evidence：单细胞基础模型（如 Geneformer 和 scGPT）中的可解释特征
+4. [Supporting Workflow Reproducibility by Linking Bioinformatics Tools across Papers and Executable Code](/202603/22/2603.08195v1-supporting-workflow-reproducibility-by-linking-bioinformatics-tools-across-papers-and-executable-code)  
+   标签：评分：8.0/10、query:bio-ca
+   evidence：跨论文和代码链接生物信息学工具
+5. [Weakly Supervised Teacher-Student Framework with Progressive Pseudo-mask Refinement for Gland Segmentation](/202603/22/2603.08605v3-weakly-supervised-teacher-student-framework-with-progressive-pseudo-mask-refinement-for-gland-segmentation)  
+   标签：评分：8.0/10、query:bio-ca
+   evidence：用于结直肠癌组织病理学分级的深度学习
+6. [Confidence intervals for two-stage adaptive designs with subpopulation selection](/202603/22/2603.13583v1-confidence-intervals-for-two-stage-adaptive-designs-with-subpopulation-selection)  
+   标签：评分：7.0/10、query:tcm-bi
+   evidence：临床试验中具有亚组选择的自适应设计
+7. [A Bayesian Critique of Rank-Based Methods for Surrogate Marker Evaluation](/202603/22/2603.14381v1-a-bayesian-critique-of-rank-based-methods-for-surrogate-marker-evaluation)  
    标签：评分：7.0/10、query:bio-ca
-   evidence：包含生物标志物预测因子和感染风险的生存分析
-6. [PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling](/20260221-20260322/2602.19685v1-perturbdiff-functional-diffusion-for-single-cell-perturbation-modeling)  
-   标签：评分：7.0/10、query:rna-int
-   evidence：单细胞扰动建模与测序数据映射
-7. [Disease Progression and Subtype Modeling for Combined Discrete and Continuous Input Data](/20260221-20260322/2602.22018v1-disease-progression-and-subtype-modeling-for-combined-discrete-and-continuous-input-data)  
+   evidence：临床试验中替代标志物的贝叶斯评估
+8. [Multimodal Deep Learning for Early Prediction of Patient Deterioration in the ICU: Integrating Time-Series EHR Data with Clinical Notes](/202603/22/2603.14719v1-multimodal-deep-learning-for-early-prediction-of-patient-deterioration-in-the-icu-integrating-time-series-ehr-data-with-clinical-notes)  
    标签：评分：7.0/10、query:bio-ca
-   evidence：利用生物标志物数据进行疾病进展和亚型建模
-8. [CrossLLM-Mamba: Multimodal State Space Fusion of LLMs for RNA Interaction Prediction](/20260221-20260322/2602.22236v1-crossllm-mamba-multimodal-state-space-fusion-of-llms-for-rna-interaction-prediction)  
+   evidence：多模态深度学习用于患者死亡率早期预测
+9. [Fold-CP: A Context Parallelism Framework for Biomolecular Modeling](/202603/22/2603.14806v1-fold-cp-a-context-parallelism-framework-for-biomolecular-modeling)  
    标签：评分：7.0/10、query:bio-ca
-   evidence：使用Mamba预测RNA相互作用的生物信息学方法
-9. [Transfer Learning with Network Embeddings under Structured Missingness](/20260221-20260322/2602.19922v1-transfer-learning-with-network-embeddings-under-structured-missingness)  
-   标签：评分：6.0/10、query:rna-int
-   evidence：具有结构化缺失的异构数据集的迁移学习
-10. [permApprox: a general framework for accurate permutation p-value approximation](/20260221-20260322/2602.22975v1-permapprox-a-general-framework-for-accurate-permutation-p-value-approximation)  
+   evidence：用于生物分子建模的生物信息学框架
+10. [Performance evaluation of deep learning models for image analysis: considerations for visual control and statistical metrics](/202603/22/2603.13557v1-performance-evaluation-of-deep-learning-models-for-image-analysis-considerations-for-visual-control-and-statistical-metrics)  
    标签：评分：6.0/10、query:bio-ca
-   evidence：生物信息学假设检验中的置换 p 值近似
-11. [A Mathematical Model for Chemotherapy, Immunotherapy and Virotherapy Treatments of Cancer](/20260221-20260322/2602.23488v1-a-mathematical-model-for-chemotherapy-immunotherapy-and-virotherapy-treatments-of-cancer)  
+   evidence：诊断病理学中深度学习性能评估
+11. [Opportunistic Cardiac Health Assessment: Estimating Phenotypes from Localizer MRI through Multi-Modal Representations](/202603/22/2603.13590v1-opportunistic-cardiac-health-assessment-estimating-phenotypes-from-localizer-mri-through-multi-modal-representations)  
    标签：评分：6.0/10、query:bio-ca
-   evidence：癌症治疗模式的数学建模
-12. [Flow-Based Density Ratio Estimation for Intractable Distributions with Applications in Genomics](/20260221-20260322/2602.24201v1-flow-based-density-ratio-estimation-for-intractable-distributions-with-applications-in-genomics)  
+   evidence：估计表型作为心脏健康评估的生物标志物
+12. [Learning Generalizable 3D Medical Image Representations from Mask-Guided Self-Supervision](/202603/22/2603.13660v1-learning-generalizable-3d-medical-image-representations-from-mask-guided-self-supervision)  
    标签：评分：6.0/10、query:bio-ca
-   evidence：基因组学数据分布的概率建模
+   evidence：用于3D医学图像表示的自监督学习
+13. [Every Error has Its Magnitude: Asymmetric Mistake Severity Training for Multiclass Multiple Instance Learning](/202603/22/2603.13682v1-every-error-has-its-magnitude-asymmetric-mistake-severity-training-for-multiclass-multiple-instance-learning)  
+   标签：评分：6.0/10、query:bio-ca
+   evidence：用于全切片图像诊断的多实例学习
 
 
 <div class="dpr-home-promo-card">

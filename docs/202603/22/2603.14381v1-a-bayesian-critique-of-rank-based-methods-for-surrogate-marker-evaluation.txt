@@ -1,0 +1,786 @@
+Title: A Bayesian Critique of Rank-Based Methods for Surrogate Marker Evaluation
+
+URL Source: https://arxiv.org/pdf/2603.14381v1
+
+Published Time: Tue, 17 Mar 2026 02:16:11 GMT
+
+Number of Pages: 35
+
+Markdown Content:
+# A Bayesian Critique of Rank-Based Methods for Surrogate Marker Evaluation 
+
+Pietro Carlotti 1 and Layla Parast 21Department of Statistics and Data Sciences, University of Texas at Austin, 105 E 24th St D9800, Austin, TX 78705, pietro.carlotti@utexas.edu 
+
+> 2
+
+Department of Statistics and Data Sciences, University of Texas at Austin, 105 E 24th St D9800, Austin, TX 78705 1
+
+> arXiv:2603.14381v1 [stat.ME] 15 Mar 2026
+
+Abstract 
+
+Surrogate markers are often employed in clinical trials to replace primary out-comes that may be difficult, expensive, or time-consuming to measure directly. These markers can accelerate the evaluation of new treatments, provided they reliably cap-ture the causal relationship between treatment and true clinical benefit. Parast et al. [26] recently proposed a rank-based approach for evaluating surrogate markers, char-acterized by its nonparametric nature and minimal assumptions. While this method is useful in small-sample model-agnostic settings, it has several limitations, including a lack of clear causal interpretation, low statistical power, and insufficient robust-ness to different data-generating mechanisms. In this paper, we propose a Bayesian approach that addresses these shortcomings by focusing on causal treatment effect es-timands and, in doing so, improves power through covariate adjustment. We demon-strate the advantages of our proposed method through a simulation study designed to highlight gains in both accuracy and power. 
+
+Keywords: Bayesian Inference; Surrogate Markers; Clinical Trials; Causal Inference. 1 Introduction 
+
+Surrogate markers are often employed in clinical trials to replace primary outcomes that may be difficult, costly, or time-consuming to measure. These markers can accelerate the evaluation of new treatments, provided they reliably capture the causal relationship between treatment and true clinical benefit. For example, Lavine et al. [19] conducted a clinical trial evaluating various treatments for children with nonalcoholic fatty liver disease, in which the primary outcome, a measure of liver function, was obtained via liver biopsy, a very invasive procedure. Instead, this study examined treatment effectiveness using a surrogate marker, change in alanine aminotransferase (ALT), a blood-based enzyme that reflects liver function, thus substantially reducing patient burden. Notably, in the United States, new treatments can be approved early based on demonstrated effectiveness on a surrogate marker via the Food and Drug Administration’s (FDA) Accelerated Approval Program, established in 1992 [8]. Many drugs have been and continue to be approved through this mechanism [9]. A valid surrogate can substantially reduce trial burden, duration, and cost while still providing meaningful information about treatment efficacy, thereby enabling more timely access to effective treatments. However, establishing surrogate validity is a challenging statistical problem, requiring methods that are both robust and interpretable. On this account, surrogate evaluation has been an active area of research, particularly because the FDA does not provide a formal statistical definition of a valid surrogate. A recent review by Elliott [6] summarizes the state of proposed and currently used methods, including the proportion of treatment effect explained (PTE) framework [11, 30, 25, 24], the principal stratification framework [10, 13], and the meta-analytic framework [4, 2, 17]. Unfortunately, these methods often perform poorly in small trials, especially when using robust techniques such as kernel-based estimation within the PTE framework. To address 3this, Parast et al. [26] proposed a rank-based approach for evaluating surrogate markers in such settings. Although attractive for its nonparametric nature and minimal assumptions, this method has notable limitations, including unclear causal interpretation for its target estimands, low power, and limited robustness across data-generating mechanisms. In this paper, we improve upon this existing approach by proposing an imputation-based Bayesian alternative that extends the rank-based framework of Parast et al. [26]. Our approach is grounded in Bayesian causal inference, which treats unobserved potential outcomes as latent variables and samples them from their posterior predictive distributions [21]. By using this perspective, our method not only provides a causal interpretation but also allows for covariate adjustment, improved efficiency, and a flexible framework for in-ference. The paper is organized as follows. In Section 2, we review the existing rank-based approach for surrogate evaluation, outline its limitations, and emphasize how the choice of treatment effect estimands can influence conclusions about surrogate validity. In Sec-tion 3, we present our Bayesian methodology, including two parametric models for the data-generating process and a new criterion for the surrogate validation threshold. In Sec-tion 4, we present a simulation study comparing the performance of our proposed method to the existing approach. Finally, in Section 5 we discuss potential future extensions. 
+
+# 2 Methods 
+
+## 2.1 Notation 
+
+Let 𝑌 denote the primary outcome and 𝑆 the surrogate marker. Let 𝑍 ∈ {0, 1} be the treatment indicator, assigned at random, where 𝑍 = 1 indicates treatment and 𝑍 = 0 
+
+control. Without loss of generality, assume higher values of 𝑌 and 𝑆 correspond to greater clinical benefit. We adopt the potential outcomes framework to define causal effects [27]. 4For each unit 𝑖 ∈ {1, … , 𝑛} , let 𝑌 𝑔𝑖 and 𝑆 𝑔𝑖 denote the potential outcomes for the primary and surrogate under treatment 𝑔 ∈ {0, 1} . The potential outcomes for unit 𝑖 are 
+
+𝑃 𝑖 = (𝑌 0𝑖 , 𝑌 1𝑖 , 𝑆 0𝑖 , 𝑆 1𝑖 )⊤.
+
+We assume that for each unit 𝑖 , the vector of potential outcomes 𝑃 𝑖 is independently drawn from a joint distribution 𝐹 𝑖 , which may differ across units, and that the treatment assignment 𝑍 𝑖 is independently drawn from a Bernoulli distribution, with 𝑍 𝑖 ⟂⟂ 𝑃 𝑖 by design. Only the potential outcomes corresponding to the observed treatment assignment are observed. That is, each unit 𝑖 contributes either (i) 𝑃 1𝑖 = (𝑌 1𝑖 , 𝑆 1𝑖 )⊤ if 𝑍 𝑖 = 1 , or (ii) 𝑃 0𝑖 = (𝑌 0𝑖 , 𝑆 0𝑖 )⊤ if 𝑍 𝑖 = 0 . Then, the hierarchical process that generates the data is summarized as follows: 
+
+(𝑌 𝑖 , 𝑆 𝑖 )⊤ =⎧{{⎨{{⎩𝑃 1𝑖 , if 𝑍 𝑖 = 1, 𝑃 0𝑖 , if 𝑍 𝑖 = 0, 𝑖 = 1, … , 𝑛, 𝑃 𝑖 
+
+> ind.
+
+∼ 𝐹 𝑖 , 𝑖 = 1, … , 𝑛, 𝑍 𝑖 
+
+> i.i.d.
+
+∼ Bernoulli (𝑝), 𝑖 = 1, … , 𝑛, 
+
+(1) where 𝑝 is the known treatment assignment probability (e.g., 𝑝 = 0.5 for a balanced trial). In the next section, we describe the existing rank-based approach for evaluating a sur-rogate marker and call attention to its key limitations. 
+
+## 2.2 Existing Frequentist Rank-Based Approach 
+
+The main idea of Parast et al. [26] is that if 𝑆 is a valid surrogate for 𝑌 , then the treat-ment 𝑍 should exert a comparable effect, on a probabilistic scale, on both. Their method focuses on small-sample settings, where nonparametric kernel methods are infeasible and 5parametric models are difficult to validate. Motivated by this, they introduced the following probabilistic index: 
+
+𝑈 𝑌 = ℙ(𝑌 1𝑖 > 𝑌 0𝑗 ) + 12 ℙ(𝑌 1𝑖 = 𝑌 0𝑗 ), (2) as a measure of the treatment effect on the primary outcome 𝑌 , where 𝑖 and 𝑗 index two different units. This quantity is often referred to as the Mann-Whitney parameter [22, 29, 15, 3], as it is the estimand targeted by the corresponding hypothesis test. In this work, we restrict our attention to continuous outcomes 𝑌 , thereby excluding the possibility of ties in Equation (2). Therefore, a positive treatment effect on 𝑌 is concluded if 𝑈 𝑌 > 0.5 .The same reasoning applies to the surrogate 𝑆 , with 𝑈 𝑆 defined analogously. Then, the discrepancy in treatment effects is measured by their difference 𝛿 = 𝑈 𝑌 − 𝑈 𝑆 . Based on this definition, Parast et al. [26] propose that, if 𝑆 is a valid surrogate for 𝑌 , 𝛿 should be small, leading to the following hypothesis test: 
+
+⎧{{⎨{{⎩𝐻 0 ∶ 𝛿 ≥ 𝜀, 𝐻 1 ∶ 𝛿 < 𝜀, 
+
+(3) where 𝜀 is a pre-specified threshold for surrogate validation. To estimate the parameter of interest 𝛿 , Parast et al. [26] compute ̂ 𝑈 𝑌 and ̂ 𝑈 𝑆 using plug-in estimators, commonly known as the Mann–Whitney U-statistics: ̂𝑈 𝑌 = 1𝑛 1𝑛 0𝑛 1
+
+∑
+
+> 𝑖=1 𝑛 0
+
+∑
+
+> 𝑗=1
+
+1(𝑌 𝑖 > 𝑌 𝑗 ),̂ 𝑈 𝑆 = 1𝑛 1𝑛 0𝑛 1
+
+∑
+
+> 𝑖=1 𝑛 0
+
+∑
+
+> 𝑗=1
+
+1(𝑆 𝑖 > 𝑆 𝑗 ), 
+
+(4) where 𝑛 1 and 𝑛 0 are the treated and control sample sizes, and then estimate 𝛿 by ̂ 𝛿 =̂ 𝑈 𝑌 −̂ 𝑈 𝑆 . A confidence interval follows from the central limit theorem for U-statistics and 6closed-form variance estimators for correlated U-statistics. Parast et al. [26] conclude that 
+
+𝑆 is valid if the upper bound of this interval is less than the pre-specified threshold 𝜀 .
+
+## 2.3 Limitations of the Existing Approach 
+
+The nonparametric approach of Parast et al. [26] provides a method for surrogate eval-uation in small-sample settings, but it suffers from several notable limitations. First, it is worth questioning whether the treatment effect quantities considered truly capture the causal targets. In fact, in the causal inference literature rank-based statistics have been criticized for lacking clear causal interpretation [18]. For example, the Mann–Whitney test assesses whether two variables are equal in distribution, but this condition is not necessarily informative about causal effects. To illustrate this point, consider that since 𝑈 𝑌 represents the probability that a randomly selected treated unit has a higher 𝑌 than an independently selected control, it measures global distributional differences between groups. But is this the parameter we truly want to characterize? A more compelling target may be 
+
+𝑉 𝑌 = ℙ(𝑌 1𝑖 > 𝑌 0𝑖 ), (5) which represents the probability that a randomly selected unit has a better outcome 𝑌 
+
+under treatment than under control. If we define 𝑉 𝑆 analogously for the surrogate 𝑆 , then we can measure the discrepancy in treatment effects via 𝜃 = 𝑉 𝑌 − 𝑉 𝑆 . Notably, 𝑈 𝑌 and 
+
+𝑈 𝑆 are not equivalent to 𝑉 𝑌 and 𝑉 𝑆 , as discussed in detail by Fay et al. [7]. This difference propagates directly to the discrepancy parameters 𝛿 and 𝜃 . As we illustrate in Section 2.4, they can differ substantially even under relatively simple and well-behaved data-generating mechanisms, and therefore the choice between them may lead to opposing conclusions. Secondly, the assumptions underlying the Mann–Whitney statistic may be too restrictive. In particular, the test assumes potential outcomes for each observation are independent 7and identically distributed. The identical distribution assumption is often unrealistic, as potential outcomes are typically influenced by covariates that vary across units. Moreover, the numerical studies in Parast et al. [26] show that, while their estimation approach achieves minimal bias across various settings, the resulting test evaluating the surrogate suffers from low power. Approaches that prioritize higher power, even if they require some parametric assumptions, may better detect valid surrogates, especially in small-sample settings. Along these lines, leveraging baseline covariates is a natural strategy to increase power, as covariate adjustment is known to improve both power and efficiency in other settings by reducing residual outcome variability unrelated to treatment [31, 5, 32]. However, the rank-based framework of Parast et al. [26] does not easily allow for covariate adjustment. Incorporating baseline information would likely require a rank regression–type approach, representing a substantial methodological departure from the original framework. Hence, in Section 3, we describe our Bayesian imputation-based methodology addressing these limitations. In particular, our approach focuses on the causal treatment effect quan-tities 𝑉 𝑌 and 𝑉 𝑆 , improves power, and allows incorporation of baseline covariates. Before doing so, in the following section, we detail the difference between the discrepancy param-eters; this section may be skipped without loss of continuity by readers less interested in these subtleties. 
+
+## 2.4 Comparison between Discrepancy Parameters 
+
+As noted in Section 2.3, the parameters 𝑈 𝑌 and 𝑉 𝑌 are not equivalent, and this differ-ence propagates directly to the discrepancy parameters 𝛿 and 𝜃 . In practice, this means that, under the same data-generating mechanism, the two discrepancy parameters can take substantially different values, potentially leading to opposing conclusions about surrogate validity. To illustrate this point, it is useful to consider the analytical forms of 𝛿 and 𝜃 in a 8simple setting where the potential outcomes are drawn from a Gaussian distribution with parameters that depend on a baseline covariate 𝑋 :
+
+𝑃 𝑖 
+
+ind. 
+
+∼ 𝒩 4(𝜇 𝑋 𝑖 , Σ 𝑋 𝑖 ) , 𝑖 = 1, … , 𝑛, 𝑋 𝑖 
+
+i.i.d. 
+
+∼ 𝑓, 𝑖 = 1, … , 𝑛, 
+
+(6) where 𝜇 𝑋 𝑖 and Σ𝑋 𝑖 are the mean vector and covariance matrix that depend on 𝑋 𝑖 , and 𝑓 
+
+is the distribution of the covariate over some space 𝒳 . Under this model, it is easy to see that 
+
+𝑌 1𝑖 − 𝑌 0𝑖 ∣ 𝑋 𝑖 = 𝑥 ind. 
+
+∼ 𝒩 ( 𝜇 𝑥 1 − 𝜇 𝑥 3
+
+√Σ 𝑥 11 + Σ 𝑥 33 − 2Σ 𝑥 13 
+
+) , 𝑖 = 1, … , 𝑛, ∀ 𝑥 ∈ 𝒳. (7) Therefore, we have that 
+
+𝑉 𝑥 𝑌 = ℙ (𝑌 1𝑖 > 𝑌 0𝑖 ∣ 𝑋 𝑖 = 𝑥) = ℙ (𝑌 1𝑖 − 𝑌 0𝑖 > 0 ∣ 𝑋 𝑖 = 𝑥) = ℙ ( 𝑌 1𝑖 − 𝑌 0𝑖 − 𝜇 𝑥 1 + 𝜇 𝑥 3
+
+√Σ 𝑥 11 + Σ 𝑥 33 − 2Σ 𝑥 13 
+
+> −𝜇 𝑥 1 + 𝜇 𝑥 3
+
+√Σ 𝑥 11 + Σ 𝑥 33 − 2Σ 𝑥 13 
+
+∣ 𝑋 𝑖 = 𝑥) = ℙ (𝑍 > −𝜇 𝑥 1 + 𝜇 𝑥 3
+
+√Σ 𝑥 11 + Σ 𝑥 33 − 2Σ 𝑥 13 
+
+)= 1 − Φ ( −𝜇 𝑥 1 + 𝜇 𝑥 3
+
+√Σ 𝑥 11 + Σ 𝑥 33 − 2Σ 𝑥 13 
+
+)= Φ ( 𝜇 𝑥 1 − 𝜇 𝑥 3
+
+√Σ 𝑥 11 + Σ 𝑥 33 − 2Σ 𝑥 13 
+
+) , ∀ 𝑥 ∈ 𝒳, 
+
+(8) 9where 𝑍 ∼ 𝒩(0, 1) and Φ is the standard normal cumulative distribution function. Then, by the law of total probability, we can expand 𝑉 𝑌 as follows: 
+
+𝑉 𝑌 = ℙ (𝑌 1𝑖 > 𝑌 0𝑖 )= ∫ 
+
+> 𝒳
+
+𝑉 𝑥 𝑌 𝑓(𝑥) d𝑥 = ∫ 
+
+> 𝒳
+
+Φ ( 𝜇 𝑥 1 − 𝜇 𝑥 3
+
+√Σ 𝑥 11 + Σ 𝑥 33 − 2Σ 𝑥 13 
+
+) 𝑓(𝑥) d𝑥. 
+
+(9) Since the same reasoning applies to 𝑉 𝑆 , we can express 𝜃 as follows: 
+
+𝜃 = ∫ 
+
+> 𝒳
+
+𝜃 𝑥 𝑓(𝑥) d𝑥 = ∫ 
+
+> 𝒳
+
+(Φ ( 𝜇 𝑥 1 − 𝜇 𝑥 3
+
+√Σ 𝑥 11 + Σ 𝑥 33 − 2Σ 𝑥 13 
+
+) − Φ ( 𝜇 𝑥 2 − 𝜇 𝑥 4
+
+√Σ 𝑥 22 + Σ 𝑥 44 − 2Σ 𝑥 24 
+
+)) 𝑓(𝑥) d𝑥, 
+
+(10) where 𝜃 𝑥 = 𝑉 𝑥 𝑌 − 𝑉 𝑥 𝑆 ∀ 𝑥 ∈ 𝒳 . Instead, to derive an analytical expression for 𝛿 , we can start by noting that since 
+
+𝑌 1𝑖 − 𝑌 0𝑗 ∣ 𝑋 𝑖 = 𝑥 𝑖 , 𝑋 𝑗 = 𝑥 𝑗 ∼ 𝒩 ⎛⎜⎜⎝𝜇 𝑥 𝑖  
+
+> 1
+
+− 𝜇 𝑥 𝑗 
+
+> 3
+
+√Σ 𝑥 𝑖  
+
+> 11
+
++ Σ 𝑥 𝑗 
+
+> 33
+
+⎞⎟⎟⎠, ∀ 𝑥 𝑖 , 𝑥 𝑗 ∈ 𝒳, 𝑖, 𝑗 = 1, … , 𝑛, (11) 10 then we have that 
+
+𝑈 𝑥 𝑖 𝑥 𝑗  
+
+> 𝑌
+
+= ℙ (𝑌 1𝑖 > 𝑌 0𝑗 ∣ 𝑋 𝑖 = 𝑥 𝑖 , 𝑋 𝑗 = 𝑥 𝑗 )= ℙ ⎛⎜⎜⎝𝑌 1𝑖 − 𝑌 0𝑗 − 𝜇 𝑥 𝑖  
+
+> 1
+
++ 𝜇 𝑥 𝑗 
+
+> 3
+
+√Σ 𝑥 𝑖  
+
+> 11
+
++ Σ 𝑥 𝑗 
+
+> 33
+
+> −𝜇 𝑥 𝑖  
+
+> 1
+
++ 𝜇 𝑥 𝑗 
+
+> 3
+
+√Σ 𝑥 𝑖  
+
+> 11
+
++ Σ 𝑥 𝑗 
+
+> 33
+
+∣ 𝑋 𝑖 = 𝑥 𝑖 , 𝑋 𝑗 = 𝑥 𝑗 
+
+⎞⎟⎟⎠= ℙ ⎛⎜⎜⎝𝑍 > −𝜇 𝑥 𝑖  
+
+> 1
+
++ 𝜇 𝑥 𝑗 
+
+> 3
+
+√Σ 𝑥 𝑖  
+
+> 11
+
++ Σ 𝑥 𝑗 
+
+> 33
+
+⎞⎟⎟⎠= 1 − Φ ⎛⎜⎜⎝−𝜇 𝑥 𝑖  
+
+> 1
+
++ 𝜇 𝑥 𝑗 
+
+> 3
+
+√Σ 𝑥 𝑖  
+
+> 11
+
++ Σ 𝑥 𝑗 
+
+> 33
+
+⎞⎟⎟⎠= Φ ⎛⎜⎜⎝𝜇 𝑥 𝑖  
+
+> 1
+
+− 𝜇 𝑥 𝑗 
+
+> 3
+
+√Σ 𝑥 𝑖  
+
+> 11
+
++ Σ 𝑥 𝑗 
+
+> 33
+
+⎞⎟⎟⎠, ∀ 𝑥 𝑖 , 𝑥 𝑗 ∈ 𝒳, 𝑖, 𝑗 = 1, … , 𝑛, 
+
+(12) Then, by the law of total probability, we can expand 𝑈 𝑌 as follows: 
+
+𝑈 𝑌 = ℙ (𝑌 1𝑖 > 𝑌 0𝑗 )= ∫ 
+
+> 𝒳
+
+∫
+
+> 𝒳
+
+𝑈 𝑥 𝑖 ,𝑥 𝑗  
+
+> 𝑌
+
+𝑓(𝑥 𝑖 ) 𝑓(𝑥 𝑗 ) d𝑥 𝑖 d𝑥 𝑗 
+
+= ∫ 
+
+> 𝒳
+
+∫
+
+> 𝒳
+
+Φ ⎛⎜⎜⎝𝜇 𝑥 𝑖  
+
+> 1
+
+− 𝜇 𝑥 𝑗 
+
+> 3
+
+√Σ 𝑥 𝑖  
+
+> 11
+
++ Σ 𝑥 𝑗 
+
+> 33
+
+⎞⎟⎟⎠𝑓(𝑥 𝑖 ) 𝑓(𝑥 𝑗 ) d𝑥 𝑖 d𝑥 𝑗 .
+
+(13) Since the same reasoning applies to 𝑈 𝑆 , we can express 𝛿 as follows: 
+
+𝛿 = ∫ 
+
+> 𝒳
+
+∫
+
+> 𝒳
+
+𝛿 𝑥 𝑖 𝑥 𝑗 𝑓(𝑥 𝑖 ) 𝑓(𝑥 𝑗 ) d𝑥 𝑖 d𝑥 𝑗 
+
+= ∫ 
+
+> 𝒳
+
+∫
+
+> 𝒳
+
+⎛⎜⎜⎝Φ ⎛⎜⎜⎝𝜇 𝑥 𝑖  
+
+> 1
+
+− 𝜇 𝑥 𝑗 
+
+> 3
+
+√Σ 𝑥 𝑖  
+
+> 11
+
++ Σ 𝑥 𝑗 
+
+> 33
+
+⎞⎟⎟⎠− Φ ⎛⎜⎜⎝𝜇 𝑥 𝑖  
+
+> 2
+
+− 𝜇 𝑥 𝑗 
+
+> 4
+
+√Σ 𝑥 𝑖  
+
+> 22
+
++ Σ 𝑥 𝑗 
+
+> 44
+
+⎞⎟⎟⎠⎞⎟⎟⎠𝑓(𝑥 𝑖 ) 𝑓(𝑥 𝑗 ) d𝑥 𝑖 d𝑥 𝑗 ,
+
+(14) where 𝛿 𝑥 𝑖 𝑥 𝑗 = 𝑈 𝑥 𝑖 𝑥 𝑗  
+
+> 𝑌
+
+− 𝑈 𝑥 𝑖 𝑥 𝑗  
+
+> 𝑆
+
+∀ 𝑥 𝑖 , 𝑥 𝑗 ∈ 𝒳, 𝑖, 𝑗 = 1, … , 𝑛 .While it may appear that the formulas for 𝛿 and 𝜃 are similar, they are not exactly the 11 same. If we are willing to assume that Σ𝑥 13 = Σ 𝑥 24 = 0 ∀ 𝑥 ∈ 𝒳 then it follows that 
+
+𝑉 𝑥 𝑌 = 𝑈 𝑥𝑥 𝑌 and 𝑉 𝑥 𝑆 = 𝑈 𝑥𝑥 𝑆 ∀ 𝑥 ∈ 𝒳. (15) Moreover, if we define the function 
+
+𝑔(𝑥 𝑖 , 𝑥 𝑗 ) = Φ ⎛⎜⎜⎝𝜇 𝑥 𝑖  
+
+> 1
+
+− 𝜇 𝑥 𝑗 
+
+> 3
+
+√Σ 𝑥 𝑖  
+
+> 11
+
++ Σ 𝑥 𝑗 
+
+> 33
+
+⎞⎟⎟⎠− Φ ⎛⎜⎜⎝𝜇 𝑥 𝑖  
+
+> 2
+
+− 𝜇 𝑥 𝑗 
+
+> 4
+
+√Σ 𝑥 𝑖  
+
+> 22
+
++ Σ 𝑥 𝑗 
+
+> 44
+
+⎞⎟⎟⎠, (16) then it is easy to see that we can rewrite the two parameters as follows: 
+
+𝛿 = 𝔼 (𝑋 𝑖 ,𝑋 𝑗 )∼𝑓 2 (𝑔(𝑋 𝑖 , 𝑋 𝑗 )) = 𝔼 𝑋 𝑖 ∼𝑓 (𝔼 𝑋 𝑗 ∼𝑓 (𝑔(𝑋 𝑖 , 𝑋 𝑗 ))) 𝜃 = 𝔼 𝑋 𝑖 ∼𝑓 (𝑔(𝑋 𝑖 , 𝑋 𝑖 )) , 
+
+(17) which means that 𝜃 ≠ 𝛿 whenever 𝔼 𝑋 𝑗 ∼𝑓 (𝑔(𝑋 𝑖 , 𝑋 𝑗 )) and 𝑔(𝑋 𝑖 , 𝑋 𝑖 ) differ in expectation. This is a quite general formulation of the issue. Therefore, to better understand when problems arise, it might be more useful to reconsider the question by imposing some sim-plifying assumptions. To underscore the effect of 𝜇 𝑥 , suppose the potential outcomes are normalized in such a way that Σ𝑥 11 = Σ 𝑥 22 = Σ 𝑥 33 = Σ 𝑥 44 = 12 ∀ 𝑥 ∈ 𝒳 , thus simplifying 𝑔 to 
+
+𝑔(𝑥 𝑖 , 𝑥 𝑗 ) = Φ (𝜇 𝑥 𝑖  
+
+> 1
+
+− 𝜇 𝑥 𝑗  
+
+> 3
+
+) − Φ (𝜇 𝑥 𝑖  
+
+> 2
+
+− 𝜇 𝑥 𝑗  
+
+> 4
+
+) (18) Even in this very restrictive scenario, 𝔼 𝑋 𝑗 ∼𝑓 (𝑔(𝑋 𝑖 , 𝑋 𝑗 )) and 𝑔(𝑋 𝑖 , 𝑋 𝑖 ) may differ in ex-pectation even under very simple distributions 𝑓 for the baseline covariate. To see this, consider a setting where 𝑓 = Bernoulli (12 ). Although this choice may seem trivial, it can still have a meaningful interpretation in a clinical trial setting (e.g. 𝑋 represents smoker 12 vs non-smoker status). Then, we can derive a simple closed-form formula for 𝛿 and 𝜃 :
+
+𝜃 = 𝜃 0 + 𝜃 1
+
+2 , 𝛿 = 𝛿 00 + 𝛿 11 + 𝛿 01 + 𝛿 10 
+
+4 , (19) which implies that 
+
+|𝜃 − 𝛿| = ∣𝛿 00 + 𝛿 11 − 𝛿 01 − 𝛿 10 ∣4 . (20) This expression highlights that the discrepancy between the two parameters is driven by differences between comparisons within the same covariate group and comparisons across different covariate groups. Importantly, this effect does not arise from treatment effect heterogeneity but from differences in mean potential outcomes across covariate groups. To make this more concrete, consider an even simpler setting where 𝑆 is a perfect surrogate for 𝑌 and the treatment effect is homogeneous across all values of 𝑋 . Specifically, suppose that 
+
+𝜇 01 − 𝜇 03 = 𝜇 02 − 𝜇 04 = 𝜇 11 − 𝜇 13 = 𝜇 12 − 𝜇 14 = Δ, (21) for some constant Δ > 0 . Then, in this case, it follows that 
+
+𝛿 00 = Φ(Δ) − Φ(Δ) = 0 𝛿 11 = Φ(Δ) − Φ(Δ) = 0 𝛿 01 = Φ(Δ + 𝜇 03 − 𝜇 13) − Φ(Δ + 𝜇 04 − 𝜇 14)𝛿 10 = Φ(Δ + 𝜇 13 − 𝜇 03) − Φ(Δ + 𝜇 14 − 𝜇 04)
+
+(22) This shows that the discrepancy between 𝜃 and 𝛿 is driven by Δ and the difference between 13 means of 𝑌 and 𝑆 for control units across different 𝑋 groups. This implies that 
+
+|𝜃 − 𝛿| = 14|Φ(Δ + 𝑑 𝑌 ) − Φ(Δ + 𝑑 𝑆 ) + Φ(Δ − 𝑑 𝑌 ) − Φ(Δ − 𝑑 𝑆 )|, (23) where 𝑑 𝑌 = 𝜇 03 − 𝜇 13 and 𝑑 𝑆 = 𝜇 04 − 𝜇 14. Then, to understand how the discrepancy between 
+
+𝜃 and 𝛿 changes as a function of 𝑑 𝑌 and 𝑑 𝑆 , it is useful to consider the plot of this quantity in Figure 1 for a fixed value of Δ = 5 . It turns out that |𝜃 − 𝛿| is very large whenever 
+
+|𝑑 𝑌 | < Δ and |𝑑 𝑆 | > Δ or |𝑑 𝑌 | > Δ and |𝑑 𝑆 | < Δ (24) and the supremum of |𝜃 − 𝛿| is 14 , which is achieved if 𝑑 𝑌 = 0 and |𝑑 𝑆 | → +∞ , or vice versa. To understand the intuition behind this result, consider the setting where 𝑑 𝑌 = 0 and 
+
+𝑑 𝑆 >> Δ . In this case, we have that • 𝑈 00 𝑌 = Φ(Δ) and 𝑈 00 𝑆 = Φ(Δ) , therefore 𝛿 00 = Φ(Δ) − Φ(Δ) = 0 ,• 𝑈 11 𝑌 = Φ(Δ) and 𝑈 11 𝑆 = Φ(Δ) , therefore 𝛿 11 = Φ(Δ) − Φ(Δ) = 0 ,• 𝑈 01 𝑌 = Φ(Δ) and 𝑈 01 𝑆 ≈ 1 , therefore 𝛿 01 ≈ Φ(Δ) − 1 ,• 𝑈 10 𝑌 = Φ(Δ) and 𝑈 10 𝑆 ≈ 0 , therefore 𝛿 10 ≈ Φ(Δ) − 0 = Φ(Δ) .Hence, |𝜃 − 𝛿| = 14 |1 − 2Φ(Δ)| ≈ 14 for Δ large enough (e.g., Δ > 3 ) and, in particular, 
+
+𝜃 = 0 while 𝛿 ≈ 0.25 . This means that in this setting, even though 𝑆 is a perfect surrogate for 𝑌 , 𝛿 is substantially different from 0, while 𝜃 correctly captures the surrogate validity. The above discussion shows that the choice of discrepancy parameter is crucial, as different choices can lead to very different conclusions about surrogate validity. The rank-based approach focuses on 𝛿 , which may not capture the causal relationship between 𝑌 
+
+and 𝑆 even in simple settings. We therefore advocate focusing on 𝜃 instead. 14 3 Proposed Bayesian Imputation-Based Approach 
+
+The central idea of our approach is to estimate the parameter of interest and perform in-ference through its posterior distribution via Bayesian imputation. Specifically, we use the observed data to impute the unobserved potential outcomes from their posterior distribu-tion. After imputing the missing potential outcomes, we can perform either between-unit or within-unit comparisons between treatment and control groups using any chosen discrep-ancy metric. Therefore, following the discussion in Section 2.3, we focus on the following quantities: 
+
+𝑉 𝑌 = ℙ(𝑌 1𝑖 > 𝑌 0𝑖 ), 𝑉 𝑆 = ℙ(𝑆 1𝑖 > 𝑆 0𝑖 ), 𝜃 = 𝑉 𝑌 − 𝑉 𝑆 . (25) As is typically done in Bayesian analysis, we perform inference on 𝜃 by sampling from its posterior distribution. At each iteration of our sampling algorithm, we impute the unobserved 𝑌 𝑔𝑖 and 𝑆 𝑔𝑖 values (e.g., 𝑌 0𝑖 and 𝑆 0𝑖 for treated units) from their posterior distribution. Using both the observed and imputed outcomes, we compute the probabilities in Equation (25) via Monte Carlo estimators, and obtain a posterior sample for 𝜃 by taking their difference. Then, using posterior draws of 𝜃 , we can perform inference and assess whether 𝑆 is a valid surrogate. Specifically, we compute a one-sided credible interval for 𝜃 
+
+using a quantile of the 𝑇 posterior draws, after discarding the first 𝑏 iterations as burn-in: ̂𝜃 1−𝛼 = quantile (̂𝜃 (𝑏+1∶𝑇 ) , 1 − 𝛼) , (26) and perform the hypothesis test: 
+
+⎧{{⎨{{⎩𝐻 0 ∶ 𝜃 ≥ 𝜂, 𝐻 1 ∶ 𝜃 < 𝜂. 
+
+(27) 15 where 𝜂 is a pre-specified threshold for surrogate validation. We reject the null hypothesis if ̂𝜃 1−𝛼 < 𝜂 ; otherwise, we fail to reject it. The full procedure is summarized in Algorithm 1. The primary challenge of this methodology lies in sampling the unobserved potential outcomes. Clearly, for each unit 𝑖 , the sampling strategy to draw the missing potential out-comes from their posterior distribution crucially depends on the assumed data-generating mechanism, denoted as 𝐹 𝑖 in Equation (1). Therefore, in the next section, we propose two flexible parametric models that can be used for this sampling step. 
+
+## 3.1 Parametric Models for the Data Generating Mechanism 
+
+The first model we consider excludes covariates, and therefore more closely aligns with the setting of Parast et al. [26]. Specifically, we define 𝐹 𝑖 from Equation (1) as follows: 
+
+𝑃 𝑖 
+
+> i.i.d.
+
+∼ 𝒩 4(𝜇, Σ) , 𝑖 = 1, … , 𝑛, 𝜇 ∼ 𝒩 4(𝜇 0, Σ 0), Σ = diag (𝜎 1∶4 ) Ω diag (𝜎 1∶4 ), 𝜎 𝑘 
+
+> i.i.d.
+
+∼ Half-Normal (0, 𝑠), 𝑘 = 1, 2, 3, 4, Ω ∼ LKJ (𝜏), 
+
+(28) where we place a Gaussian prior on the mean vector 𝜇 and we adopt a separation strategy [1] for the covariance matrix Σ, decomposing it into a correlation matrix Ω and a scale vector 𝜎 1∶4 . This allows us to specify easily interpretable priors: an LKJ prior [20] for the correlation and a half-normal prior for the scale. However, one of the main advantages of our proposed Bayesian framework is its ability to naturally incorporate baseline covariates into the data-generating mechanism. To illus-trate this feature, we consider a second model that introduces covariates through a linear 16 regression structure, specifying 𝐹 𝑖 from Equation (1) as follows: 
+
+𝑃 𝑖 
+
+> ind.
+
+∼ 𝒩 4(𝐵𝑋 𝑖 , Σ) , 𝑖 = 1, … , 𝑛, 𝐵 = [𝛽 1 𝛽 2 𝛽 3 𝛽 4]⊤,𝛽 𝑘 
+
+> i.i.d.
+
+∼ 𝒩 𝑑 (𝜇 𝛽 , Σ 𝛽 ), 𝑘 = 1, 2, 3, 4, Σ = diag (𝜎 1∶4 ) Ω diag (𝜎 1∶4 ), 𝜎 𝑘 
+
+> i.i.d.
+
+∼ Half-Normal (0, 𝑠), 𝑘 = 1, 2, 3, 4, Ω ∼ LKJ (𝜏), 
+
+(29) where we place a Gaussian prior on the regression coefficients in the matrix 𝐵 and we adopt the same separation strategy for the covariance matrix Σ as in the first model. 
+
+## 3.2 Identifiability and Interpretation of the Posterior 
+
+Both formulations in Equations (28) and (29) are quite simple and intuitive. However, they are both plagued by a common non-identifiability issue. Specifically, it is a well-known fact in the causal inference literature that the joint distribution of the potential outcomes is not identifiable from the observed data, since only one potential outcome is observed for each unit. This issue is typically referred to as the “fundamental problem of causal inference” [16]. Therefore, to understand how this issue manifests in our setting, it is useful to take a closer look at the correlation matrix Ω in the two models: 
+
+Ω = ⎡⎢⎢⎢⎢⎢⎢⎣1 𝜌 𝑌 1𝑆 1 𝜌 𝑌 1𝑌 0 𝜌 𝑌 1𝑆 0
+
+𝜌 𝑌 1𝑆 1 1 𝜌 𝑆 1𝑌 0 𝜌 𝑆 1𝑆 0
+
+𝜌 𝑌 1𝑌 0 𝜌 𝑆 1𝑌 0 1 𝜌 𝑌 0𝑆 0
+
+𝜌 𝑌 1𝑆 0 𝜌 𝑆 1𝑆 0 𝜌 𝑌 0𝑆 0 1⎤⎥⎥⎥⎥⎥⎥⎦. (30) 17 It is easy to see that the green entries in the correlation matrix from Equation (30) are identifiable from the data, since they involve correlations between potential outcomes that are observed together in the data. In contrast, the remaining entries are not identifiable from the data, since they involve correlations between potential outcomes that are never observed together for any unit. Moreover, as we showed in Equation (10) for the Gaussian case, the red entries directly affect the computation of 𝜃 , while the orange entries do not. In principle, one could try to address this non-identifiability issue by imposing further assumptions on the correlation matrix Ω. For example, one could assume that all the non-identifiable entries are equal to zero, which would imply that the potential outcomes are independent of each other. However, this assumption is quite strong and is likely unrea-sonable in many applications. But if we are not willing to make such strong assumptions, how can we still make sense of the posterior distribution of 𝜃 obtained from our Bayesian imputation approach? The key insight is that, even though the posterior distribution of 𝜃 
+
+is not fully identified from the data, it still contains useful information about the parameter of interest. To understand this point, it is useful to consider the asymptotic behavior of the posterior distribution of 𝜃 in terms of concentration and, ideally, consistency. In particular, it is a well-known result in the Bayesian literature that, under suitable regularity conditions, the posterior distribution of a parameter concentrates around the true value of the parameter as the sample size increases. To formalize this intuition, let us be more precise about what we mean by regularity for the purpose of Bayesian posterior consitency: 
+
+Definition 1 (Regularity of a Bayesian model) Let the Bayesian model be defined as 
+
+𝐷 𝑖 ∣ 𝜙 i.i.d. 
+
+∼ 𝑓 𝜙 , 𝑖 = 1, … , 𝑛, 𝜙 ∼ 𝜋, 
+
+(31) 18 where 𝐷 𝑖 is the observed data for unit 𝑖 , 𝑓 𝜙 is the likelihood function parametrized by 𝜙 , and 
+
+𝜋 is a prior distribution over the parameter 𝜙 . We say that the Bayesian model is regular if the following conditions hold: 
+
+• Kullback-Leibler support of the prior : The prior 𝜋 assigns positive mass to every Kullback-Leibler neighborhood of the true parameter 𝜙 ∗, i.e., for every 𝜀 > 0 ,we have that 
+
+𝜋 ({𝜙 ∶ 𝐷 KL (𝑓 𝜙 ∗ ‖𝑓 𝜙 ) < 𝜀}) > 0, (32) 
+
+where 𝐷 KL (𝑓 𝜙 ∗ ‖𝑓 𝜙 ) is the Kullback-Leibler divergence between the true distribution 
+
+𝑓 𝜙 ∗ and the model distribution 𝑓 𝜙 .
+
+• Identifiability : The model is identifiable, i.e., for every 𝜙 ≠ 𝜙 ′, we have that 
+
+𝑓 𝜙 ≠ 𝑓 𝜙 ′ .
+
+Then, given the above definition of regularity, we can consider the following result which is commonly known as Schwartz’s theorem [28]: 
+
+Theorem 1 (Schwartz’s theorem) Let the true data-generating process be defined as 
+
+𝐷 𝑖 
+
+> i.i.d.
+
+∼ 𝑓 𝜙 ∗ , 𝑖 = 1, … , 𝑛, (33) 
+
+where 𝐷 𝑖 is the observed data for unit 𝑖 and 𝑓 𝜙 ∗ is the true distribution of the data, parametrized by 𝜙 ∗. Let the Bayesian model be defined as 
+
+𝐷 𝑖 ∣ 𝜙 i.i.d. 
+
+∼ 𝑓 𝜙 , 𝑖 = 1, … , 𝑛, 𝜙 ∼ 𝜋, 
+
+(34) 
+
+where 𝜋 is a prior distribution over the parameter 𝜙 . Then, if the Bayesian model is regular according to Definition 1, the posterior distribution of 𝜙 concentrates around the 
+
+19 true parameter 𝜙 ∗ as the sample size goes to infinity: 
+
+𝜋 (𝑈 𝑐 ∣ 𝐷 1∶𝑛 ) 𝑃 𝜙 ∗
+
+→ 0, (35) 
+
+for every neighborhood 𝑈 of 𝜙 ∗, where 𝑃 𝜙 ∗ is the probability measure induced by the true distribution 𝑓 𝜙 ∗ .
+
+The first condition of Schwartz’s theorem is a relatively mild condition that can be eas-ily satisfied by choosing reasonable priors, such as the ones we proposed in Section 3.1. However, the second condition of Schwartz’s theorem is not satisfied in our setting due to the non-identifiability issue discussed above. Therefore, we cannot guarantee that the posterior distribution of 𝜃 will concentrate around the true value of 𝜃 as the sample size increases. But then the question is: what can we say about the posterior distribution of 
+
+𝜃 in this case? The key insight is that, even though the posterior distribution of 𝜃 is not fully identified from the data, it still contains useful information about the parameter of interest. In particular, as the sample size increases, the posterior distribution of 𝜃 will concentrate around a set of values that are compatible with the observed data and the model assumptions. This intuition can be formalized considering this formulation found in [14]: 
+
+Theorem 2 Let the true data-generating process be defined as 
+
+𝐷 𝑖 
+
+> i.i.d.
+
+∼ 𝑓 𝜙 ∗ , 𝑖 = 1, … , 𝑛, (36) 
+
+where 𝐷 𝑖 is the observed data for unit 𝑖 and 𝑓 𝜙 ∗ is the true distribution of the data, parametrized by 𝜙 ∗. Let the parameter 𝜙 be decomposed as follows: 
+
+𝜙 = (𝜙 𝐼 , 𝜙 𝑁 ), (37) 20 where 𝜙 𝐼 is the identifiable part of the parameter and 𝜙 𝑁 is the non-identifiable part of the parameter. Let the Bayesian model be defined as 
+
+𝐷 𝑖 ∣ 𝜙 i.i.d. 
+
+∼ 𝑓 𝜙 𝐼 , 𝑖 = 1, … , 𝑛, 𝜙 ∼ 𝜋, 
+
+(38) 
+
+where 𝜋 is a prior distribution over the parameter 𝜙 . Then, if the identifiable component of the Bayesian model is regular according to Definition 1, the posterior distribution of 𝜙 
+
+concentrates around the set of values that are compatible with the observed data and the model assumptions as the sample size goes to infinity: 
+
+𝜋 (𝜙 𝐼 ∈ 𝑈 𝐼 , 𝜙 𝑁 ∈ 𝑈 𝑁 ∣ 𝐷 1∶𝑛 ) 𝑃 𝜙 ∗
+
+→ 1, (39) 
+
+for every neighborhood 𝑈 𝐼 of the identifiable component 𝜙 ∗𝐼 and every neighborhood 𝑈 𝑁 of the non-identifiable component 𝜙 ∗𝑁 , where 𝑃 𝜙 ∗ is the probability measure induced by the true distribution 𝑓 𝜙 ∗ . Whereas, the posterior distribution of the non-identifiable component 𝜙 𝑁 
+
+will behave as follows: 
+
+𝜋 (𝜙 𝑁 ∈ 𝑈 𝑁 ∣ 𝐷 1∶𝑛 ) 𝑃 𝜙 ∗
+
+→ 𝜋 (𝜙 𝑁 ∈ 𝑈 𝑁 ∣ 𝜙 𝐼 = 𝜙 ∗𝐼 ) , (40) 
+
+for every neighborhood 𝑈 𝑁 of the non-identifiable component 𝜙 ∗𝑁 , where 𝜋 (𝜙 𝑁 ∈ 𝑈 𝑁 ∣ 𝜙 𝐼 = 𝜙 ∗𝐼 )
+
+is the conditional prior distribution of the non-identifiable component given the identifiable component evaluated at its true value. 
+
+What this last result tells us is that, even though the posterior distribution of 𝜃 is not fully identified from the data, there is still a process of Bayesian learning that takes place as the sample size increases, and the posterior distribution of 𝜃 will concentrate around a set of values that are compatible with the observed data and the model assumptions. Therefore, 21 it is still possible to meaningfully perform inference on 𝜃 for the purpose of surrogate validation. However, it is important to keep in mind that due to the lack of concentration for the non-identifiable component of the parameter, there is a non-vanishing uncertainty in the posterior distribution of 𝜃 that persists even in the asymptotic limit. This feature of the proposed Bayesian imputation approach may appear to constitute an inherent limitation. Nevertheless, we argue that the methodology retains merit for at least two reasons. First, the identifiability issue is not unique to our proposed Bayesian imputation ap-proach, but rather it is a fundamental issue that arises in any approach that relies on the observed data to make inference about the joint distribution of the potential outcomes. Therefore, any method that attempts to assess surrogate validity using the observed data will have to contend with this issue in some form. Then, the non-vanishing uncertainty in the posterior distribution of 𝜃 can be seen as a reflection of the inherent uncertainty in the problem of surrogate validation. However, since the amount of uncertainty injected by the prior does not disappear even asymptotically, it becomes of crucial importance to choose reasonable priors that reflect our beliefs about the data-generating process. In this regard, given the prior specifications chosen in Equations (28) and (29) and, more specifically, the choice of the prior for the correlation matrix Ω, unless we have strong prior beliefs about the correlation structure of the potential outcomes, it is reasonable to choose a weakly infor-mative prior, such as an LKJ prior with 𝜏 = 1 , which corresponds to a uniform distribution over the space of correlation matrices. Second, even though our proposed Bayesian imputation approach does not showcase the desirable property of consistency, it still provides useful information about surrogate validity and, most importantly, it may still be preferable to alternative approaches that may not suffer by this non-identifiability issue but are unable to correctly capture the causal relationship between the surrogate and the primary outcome. For example, as we 22 showed in Section 2.3, the discrepancy parameter 𝛿 used by Parast et al. [26] may fail to capture the causal relationship between 𝑌 and 𝑆 even in very simple settings, while our approach targets a parameter 𝜃 that is able to correctly reflect surrogate validity. Hence, this suggests that using our approach can lead to more accurate assessments of surrogate validity than the rank-based approach of Parast et al. [26] and especially in small-sample settings where the lack of asymptotic consistency may not be as problematic. 
+
+## 3.3 Selection Procedure for the Validation Threshold 
+
+We now turn to the challenge of selecting the prespecified threshold used to assess surrogate validity, denoted 𝜀 by Parast et al. [26] and 𝜂 in Equation (27). As noted by Parast et al. [26], the distribution of ̂ 𝛿 is not fully specified under the null in Equation (3), so choosing the threshold 𝜀 is not a trivial task. They suggest choosing it to ensure a desired power to detect a treatment effect on 𝑆 . Here, we outline an alternative procedure for selecting 𝜂 in Equation (27), similar in spirit but better suited to our Bayesian framework, which relies on a Bayes factor, the standard tool for Bayesian hypothesis testing. The intuition is that we aim to set 𝜂 such that when 𝑉 𝑆 is close to 𝑉 𝑌 i.e., within 𝜂 , 𝑆 
+
+is a valid replacement of 𝑌 . To do this, we aim to identify 𝑣 𝑠 , which is defined as the value of 𝑉 𝑆 that ensures a power of (1 − 𝛽)100% for the following hypothesis test: 
+
+⎧{{⎨{{⎩𝐻 0 ∶ 𝑉 𝑆 = 12 ,𝐻 1 ∶ 𝑉 𝑆 > 12
+
+(41) implemented using a Bayes factor. Let 𝑣 𝑌 denote the hypothesized treatment effect on 𝑌 .One reasonable way to choose 𝑣 𝑌 is by using the posterior mean of 𝑉 𝑌 obtained from our Bayesian imputation framework. Then 𝑣 𝑌 − 𝑣 𝑆 reflects how far we are willing to let 𝑣 𝑆 be from 𝑣 𝑌 , while still ensuring a (1 − 𝛽)100% power. To this end, the value of 𝜂 is defined 23 as: 
+
+𝜂 = max {𝑣 𝑌 − 𝑣 𝑆 , 0}. (42) We now describe the details behind obtaining the value 𝑣 𝑠 . To compute a Bayes factor that can be used to conduct the hypothesis test described in Equation (41), we first need to specify a Bayesian model taking 𝑉 𝑆 as its unknown parameter: 
+
+𝑛̂ 𝑉 𝑆 ∣ 𝑉 𝑆 ∼ Binomial (𝑛, 𝑉 𝑆 ), and 𝑉 𝑆 ∼ 𝑝(𝑉 𝑆 ), (43) where the prior for 𝑉 𝑆 is a Beta distribution renormalized on (12 , 1) :
+
+𝑝(𝑉 𝑆 ) = Beta (𝑉 𝑆 ∣ 𝑎, 𝑏) ∫1
+
+> 12
+
+Beta (𝑣 ∣ 𝑎, 𝑏) 𝑑𝑣 ∀ 𝑉 𝑆 ∈ ( 12 , 1) , (44) with 𝑎, 𝑏 > 0 suitably chosen prior parameters, and ̂ 𝑉 𝑆 = 1𝑛 ∑𝑛 𝑖=1 1(𝑆 1𝑖 > 𝑆 0𝑖 ). Note that ̂ 𝑉 𝑆 cannot be computed directly from the observed data, since 𝑆 1𝑖 and 𝑆 0𝑖 are never jointly observed for any unit 𝑖 . However, as we shall see below, this is not an issue, because the procedure to select 𝑣 𝑠 only requires the sampling distribution of ̂ 𝑉 𝑆 under the null hypothesis and alternative hypothesis, rather than an observed value for it. Thus, the Bayes factor that is used to compare our competing hypotheses is: 
+
+𝐵𝐹 𝑛 = 𝑚 (̂𝑉 𝑆 ∣ 𝐻 1)𝑚 (̂𝑉 𝑆 ∣ 𝐻 0), (45) where 𝑚 (̂𝑉 𝑆 ∣ 𝐻 0) and 𝑚 (̂𝑉 𝑆 ∣ 𝐻 1) are the marginal likelihoods of ̂ 𝑉 𝑆 under the null and the alternative hypothesis, respectively. These quantities can be computed as follows: 
+
+𝑚 (̂𝑉 𝑆 ∣ 𝐻 0) = ( 𝑛 𝑛̂ 𝑉 𝑆 
+
+) 12𝑛 (46) 24 𝑚 (̂𝑉 𝑆 ∣ 𝐻 1) = ( 𝑛 𝑛̂ 𝑉 𝑆 
+
+)𝐵 1
+
+> 12
+
+(𝑎 + 𝑛̂ 𝑉 𝑆 , 𝑏 + 𝑛 − 𝑛̂ 𝑉 𝑆 )𝐵 1
+
+> 12
+
+(𝑎, 𝑏) (47) where 𝐵 𝑥 1 
+
+> 𝑥 0
+
+(𝑎, 𝑏) is the incomplete Beta function with parameters 𝑎, 𝑏 over the interval 
+
+[𝑥 0, 𝑥 1]. Therefore, we have that 
+
+𝐵𝐹 𝑛 =𝐵 1
+
+> 12
+
+(𝑎 + 𝑛̂ 𝑉 𝑆 , 𝑏 + 𝑛 − 𝑛̂ 𝑉 𝑆 )𝐵 1
+
+> 12
+
+(𝑎, 𝑏) 2𝑛 . (48) As usual, we would like to ensure a type I error probability of 𝛼 :
+
+ℙ(𝐵𝐹 𝑛 > 𝐵𝐹 𝑛,𝛼 ∣ 𝐻 0) = 𝛼. (49) The quantity 𝐵𝐹 𝑛,𝛼 must be computed numerically, which is feasible since 𝑛̂ 𝑉 𝑆 ranges between 0 and 𝑛 , and therefore 𝐵𝐹 𝑛 can take at most 𝑛 + 1 distinct values. Thus, 𝐵𝐹 𝑛,𝛼 
+
+can be obtained as the (1 − 𝛼) -quantile of 𝐵𝐹 𝑛 . Note that the distribution of 𝐵𝐹 𝑛 under the null hypothesis can be derived using the following formula: 
+
+ℙ(𝐵𝐹 𝑛 = 𝑥 𝑘 ∣ 𝐻 0) = ( 𝑛 𝑘 ) 12𝑛 for 𝑘 = 0, … , 𝑛, (50) where 
+
+𝑥 𝑘 =𝐵 1
+
+> 12
+
+(𝑎 + 𝑘, 𝑏 + 𝑛 − 𝑘) 𝐵 1
+
+> 12
+
+(𝑎, 𝑏) 2𝑛 for 𝑘 = 0, … , 𝑛. (51) The value of 𝐵𝐹 𝑛,𝛼 thus depends on the sample size 𝑛 , the probability of type I error 𝛼 
+
+and the prior parameters 𝑎, 𝑏 . Given 𝐵𝐹 𝑛,𝛼 , we can define 𝑣 𝑆 as the value such that 
+
+ℙ (𝐵𝐹 𝑛 > 𝐵𝐹 𝑛,𝛼 ∣ 𝑉 𝑆 = 𝑣 𝑆 > 12) = 1 − 𝛽. (52) 25 It useful to observe that ∀ 𝑣 𝑆 ∈ ( 12 , 1) ,
+
+𝑣 𝑆 ↦ ℙ(𝐵𝐹 𝑛 > 𝐵𝐹 𝑛,𝛼 ∣ 𝑉 𝑆 = 𝑣 𝑆 ) (53) is a monotone function. Therefore, there exists a unique 𝑣 𝑆 satisfying Equation (52). The probability can be evaluated using the same procedure as in Equations (50) and (51) for the distribution of 𝐵𝐹 𝑛 given 𝑉 𝑆 = 𝑣 𝑆 . Since the function is continuous and monotone, 𝑣 𝑆 
+
+can be obtained using standard numerical root-finding algorithms, such as uniroot in R.
+
+# 4 Simulation Study 
+
+We evaluated the performance of our proposed Bayesian imputation-based method against the frequentist rank-based approach of Parast et al. [26] in terms of test coverage and power via a simulation study in five settings. Specifically, in Settings 1 to 4, we replicated the data-generating mechanisms used by Parast et al. [26] to facilitate direct comparison. In Settings 1 to 3 the potential outcomes for the primary outcome were generated as Gaussian variables, but in setting 1 the surrogate was designed to be useless, since its potential outcomes were generated independently of the primary outcome, while in settings 2 and 3 the potential outcomes for the surrogate were obtained by applying a linear transformation of the primary outcome, with the addition of Gaussian noise. Moreover, in Setting 2, the surrogate was designed to be perfect, since the noise was negligible, while in Setting 3, the surrogate was designed to be imperfect, since the noise was more substantial. In contrast, in Setting 4 the outcome was generated from a non-Gaussian distribution and the surrogate was generated by applying a non-linear transformation with the addition of non-Gaussian noise. In all of these settings, we implemented the model in Equation (28) without covariates. Given the true data 26 generating mechanism, one would expect our proposed method to work well in Settings 1-3, but possibly not work well in Setting 4. In Setting 5, we purposefully aimed to break the frequentist rank-based method and highlight the advantage of our proposed approach based on the model in Equation (29) with covariates. In particular, in Setting 5, we generated a baseline covariate as 𝑋 𝑖 
+
+> i.i.d.
+
+∼
+
+Bernoulli (0.5) , and the distribution of 𝑃 𝑖 given 𝑋 𝑖 was defined as follows: 
+
+𝑃 𝑖 ∣ 𝑋 𝑖 
+
+> ind.
+
+∼ 𝑋 𝑖 𝒩 4 (𝜇 1, Σ 1) + (1 − 𝑋 𝑖 ) 𝒩 4 (𝜇 0, Σ 0) , 𝑖 = 1, … , 𝑛, (54) with the following specific parameter values: 
+
+𝜇 0 = (5, 5, 0, 0) ⊤, 𝜇 1 = (5, −5, 0, −10) ⊤,Σ0 = Σ 1 = ⎡⎢⎣𝐴 00 𝐴 ⎤⎥⎦, 𝐴 = ⎡⎢⎣1 11 2⎤⎥⎦. (55) This construction implies that, conditionally on the covariates, the potential outcomes are not identically distributed across units, violating a key assumption of the Mann-Whitney test. More specifically, we chose the generating parameters to maximize the discrepancy between 𝛿 and 𝜃 , which are equal to 0.25 and 0, respectively, while keeping the generating process as regular as possible. In fact, it is easy to verify that in this setting the surrogate is just a replica of the primary outcome with an addition of unitary Gaussian noise, with treatment effect homogeneity across the two subpopulations defined by 𝑋 and uncorrelated potential outcomes. Therefore, we would hope that any surrogate validation method would correctly identify 𝑆 as a valid surrogate. We ran 500 simulations for each setting, with a sample size of 𝑛 = 50 overall and a significance level of 𝛼 = 0.05 . For our Bayesian method, we ran 𝑇 = 500 posterior 27 sampling iterations with a burn-in period of 𝑏 = 125 . We set the prior parameters across the two models as follows: 𝜇 0 = (0, 0, 0, 0) ⊤, Σ0 = 10 𝐼 4, 𝑠 = 2 , 𝜏 = 1 , 𝜇 𝛽 = (0, 0, 0, 0) ⊤,
+
+Σ𝛽 = 10 𝐼 4. To compute the surrogate validation threshold 𝜂 , we set 𝛽 = 0.2 , and a uniform prior for 𝑉 𝑆 by setting 𝑎 = 𝑏 = 1 . We quantify performance in terms of coverage of the confidence/credible intervals of the true parameter ( 𝛿 for the frequentist method and 
+
+𝜃 for the Bayesian method) and power, by which we mean the proportion of simulation iterations where the method deemed the surrogate to be valid. In Setting 1, the surrogate is not valid, and thus, this is the Type 1 error rate. Results are shown in Table 1. In Settings 1 and 2, the rank-based method of Parast et al. [26] and the Bayesian imputation-based method perform similarly. In in Setting 3,improved performance is observed for the Bayesian method with higher coverage and higher power. As expected, in Setting 4, where the data-generating process is non-Gaussian and non-linear, the nonparametric rank-based method outperforms the Bayesian method in terms of power. Setting 5 highlights the true strength of our proposed Bayesian imputation-based method, where the frequentist method very rarely identifies the surrogate as valid, while our method correctly recognizes the surrogate as valid in all iterations. This is not surprising, since the data-generating process in Setting 5 was purposely designed to illustrate the limitations of the the rank-based method. The proposed Bayesian method is able to adjust for the binary covariate in this setting, and correctly capture surrogacy. The results demonstrate the power gains of our proposed methodology, though we also intentionally explore its limitations under model misspecification. 
+
+# 5 Discussion 
+
+We proposed a Bayesian imputation framework for surrogate evaluation in randomized clinical trials. Our method overcomes limitations of the frequentist rank-based approach, 28 including lack of causal interpretation, inability to use baseline covariates, and low power, particularly in in covariate-dependent settings. By imputing unobserved potential out-comes, it enables flexible treatment-control comparisons and inference on surrogate-primary associations. Incorporating baseline covariates improves applicability to complex scenarios, as shown in simulations where our method achieved perfect power versus 0.075 for the existing approach. While our approach overcomes some limitations of the rank-based approach, there is room for further improvement, which we are actively pursuing. A key limitation is the reliance on parametric assumptions about the data-generating mechanism, which are vul-nerable to model mis-specification. One possible direction, which we plan for future work, is to relax these assumptions by extending the framework to a Bayesian nonparametric setting [12], allowing a data-driven characterization of both the surrogate-outcome rela-tionship and the covariate-outcome association. However, this flexibility comes at a cost of increased computational complexity and larger required sample sizes [23]. Finally, sensitiv-ity analyses examining robustness of our conclusions to unidentified covariance parameters would also be useful, and we aim to incorporate such results into our framework and future software. 
+
+# References 
+
+[1] John Barnard, Robert McCulloch, and Xiao-Li Meng. Modeling covariance matrices in terms of standard deviations and correlations, with application to shrinkage. Statistica Sinica , pages 1281–1311, 2000. [2] Tomasz Burzykowski, Geert Molenberghs, and Marc Buyse. The evaluation of surro-gate endpoints . Springer, 2005. 29 [3] Marc Buyse. Generalized pairwise comparisons of prioritized outcomes in the two-sample problem. Statistics in medicine , 29(30):3245–3257, 2010. [4] Marc Buyse and Geert Molenberghs. Criteria for the validation of surrogate endpoints in randomized experiments. Biometrics , pages 1014–1029, 1998. [5] Elizabeth Colantuoni and Michael Rosenblum. Leveraging prognostic baseline vari-ables to gain precision in randomized trials. Statistics in medicine , 34(18):2602–2617, 2015. [6] Michael R Elliott. Surrogate endpoints in clinical trials. Annual Review of Statistics and its Application , 10:75–96, 2023. [7] Michael P Fay, Erica H Brittain, Joanna H Shih, Dean A Follmann, and Erin E Gabriel. Causal estimands and confidence intervals associated with wilcoxon-mann-whitney tests in randomized experiments. Statistics in Medicine , 37(20):2923–2937, 2018. [8] FDA. U.s. food and drug administration, accelerated approval program. FDA — NDA and BLA Approvals, 1992. URL https://www.fda.gov/drugs/nda-and-bla-approvals/accelerated-approval-program. [9] FDA. Table of surrogate endpoints that were the basis of drug approval or licen-sure. https://www.fda.gov/drugs/development-resources/table-surrogate-endpoints-were-basis-drug-approval-or-licensure, 2025. [10] Constantine E Frangakis and Donald B Rubin. Principal stratification in causal infer-ence. Biometrics , 58(1):21–29, 2002. [11] Laurence S Freedman, Barry I Graubard, and Arthur Schatzkin. Statistical validation of intermediate endpoints for chronic diseases. Statistics in medicine , 11(2):167–178, 1992. 30 [12] Subhashis Ghosal and Aad W Van der Vaart. Fundamentals of nonparametric Bayesian inference , volume 44. Cambridge University Press, 2017. [13] Peter B Gilbert and Michael G Hudgens. Evaluating candidate principal surrogate endpoints. Biometrics , 64(4):1146–1154, 2008. [14] Paul Gustafson. Bayesian inference for partially identified models. The international journal of biostatistics , 6(2), 2010. [15] Wassily Hoeffding. A class of statistics with asymptotically normal distribution. In 
+
+Breakthroughs in statistics: Foundations and basic theory , pages 308–334. Springer, 1992. [16] Paul W Holland. Statistics and causal inference. Journal of the American statistical Association , 81(396):945–960, 1986. [17] Ying Huang and Peter B Gilbert. Comparing biomarkers as principal surrogate end-points. Biometrics , 67(4):1442–1451, 2011. [18] Guido W Imbens and Donald B Rubin. Causal inference in statistics, social, and biomedical sciences . Cambridge university press, 2015. [19] Joel E Lavine, Jeffrey B Schwimmer, Jean P Molleston, Ann O Scheimann, Karen F Murray, Stephanie H Abrams, Philip Rosenthal, Arun J Sanyal, Patricia R Robuck, Elizabeth M Brunt, et al. Treatment of nonalcoholic fatty liver disease in children: Tonic trial design. Contemporary clinical trials , 31(1):62–70, 2010. [20] Daniel Lewandowski, Dorota Kurowicka, and Harry Joe. Generating random corre-lation matrices based on vines and extended onion method. Journal of multivariate analysis , 100(9):1989–2001, 2009. 31 [21] Fan Li, Peng Ding, and Fabrizia Mealli. Bayesian causal inference: a critical review. 
+
+Philosophical Transactions of the Royal Society A , 381(2247):20220153, 2023. [22] Henry B Mann and Donald R Whitney. On a test of whether one of two random variables is stochastically larger than the other. The annals of mathematical statistics ,pages 50–60, 1947. [23] Jeffrey W Miller and Matthew T Harrison. Mixture models with a prior on the number of components. Journal of the American Statistical Association , 113(521):340–356, 2018. [24] Layla Parast. Surrogate marker evaluation: A tutorial using r. Statistics in Medicine ,44(10-12):e70048, 2025. [25] Layla Parast, Mary M McDermott, and Lu Tian. Robust estimation of the proportion of treatment effect explained by surrogate marker information. Statistics in Medicine ,35(10):1637–1653, 2016. [26] Layla Parast, Tianxi Cai, and Lu Tian. A rank-based approach to evaluate a surrogate marker in a small sample setting. Biometrics , 80(1):ujad035, 2024. [27] Donald B Rubin. Estimating causal effects of treatments in randomized and nonran-domized studies. Journal of educational Psychology , 66(5):688, 1974. [28] Lorraine Schwartz. On bayes procedures. Zeitschrift für Wahrscheinlichkeitstheorie und verwandte Gebiete , 4(1):10–26, 1965. [29] Olivier Thas, Jan De Neve, Lieven Clement, and Jean-Pierre Ottoy. Probabilistic index models. Journal of the Royal Statistical Society Series B: Statistical Methodology , 74 (4):623–671, 2012. 32 [30] Yue Wang and Jeremy MG Taylor. A measure of the proportion of treatment effect explained by a surrogate marker. Biometrics , 58(4):803–812, 2002. [31] Min Zhang, Anastasios A Tsiatis, and Marie Davidian. Improving efficiency of in-ferences in randomized clinical trials using auxiliary covariates. Biometrics , 64(3): 707–715, 2008. [32] Zhiwei Zhang and Shujie Ma. Machine learning methods for leveraging baseline co-variate information to improve the efficiency of clinical trials. Statistics in Medicine ,38(10):1703–1714, 2019. 
+
+Figure 1: Heatmap of |𝜃 − 𝛿| as a function of 𝑑 𝑆 and 𝑑 𝑌 with Δ = 5 .33 Table 1: Simulation results comparing the frequentist rank-based method and the proposed Bayesian imputation-based method in terms of coverage and power in Settings 1–5, sum-marized over 500 replications with 𝑛 = 50 per replication. Bolding indicates the better performing method. 
+
+Setting Valid Surrogate Coverage Power 
+
+Frequentist Bayesian Frequentist Bayesian 1 No 0.98 1.00 0.00 0.00 2 Yes 0.98 1.00 1.00 1.00 3 Yes 0.90 0.98 0.54 0.64 
+
+4 (Misspecified) Yes 0.96 1.00 0.56 0.06 5 (Binary Covariate) Yes 0.925 0.975 0.075 1.00 
+
+34 Algorithm 1 Bayesian Imputation-Based Approach. 
+
+Require: Observed data {𝑌 𝑖 , 𝑆 𝑖 , 𝑍 𝑖 , 𝑋 𝑖 }𝑛 𝑖=1 , prior parameters, number of posterior itera-tions 𝑇 , burn-in 𝑏 , surrogate threshold 𝜂 , significance level 𝛼 
+
+1: for 𝑡 = 1 to 𝑇 do 
+
+2: for 𝑖 = 1 to 𝑛 do 
+
+3: if 𝑍 𝑖 = 1 then 
+
+4: Sample 𝑃 (𝑡) 0𝑖 ∼ 𝑝 (𝑃 (𝑡) 0𝑖 ∣ 𝑃 1𝑖 , 𝑋 𝑖 , 𝑍 𝑖 = 1) 
+
+5: else 
+
+6: Sample 𝑃 (𝑡) 1𝑖 ∼ 𝑝 (𝑃 (𝑡) 1𝑖 ∣ 𝑃 0𝑖 , 𝑋 𝑖 , 𝑍 𝑖 = 0) 
+
+7: end if 
+
+8: end for 
+
+9: ̂ 𝑉 (𝑡) 𝑌 ← 1𝑛 ∑𝑛 𝑖=1 1(𝑌 (𝑡) 1𝑖 > 𝑌 (𝑡) 0𝑖 )
+
+10: ̂ 𝑉 (𝑡) 𝑆 ← 1𝑛 ∑𝑛 𝑖=1 1(𝑆 (𝑡) 1𝑖 > 𝑆 (𝑡) 0𝑖 )
+
+11: ̂ 𝜃 (𝑡) ←̂ 𝑉 (𝑡) 𝑌 −̂ 𝑉 (𝑡) 𝑆 
+
+12: end for 
+
+13: ̂ 𝜃 1−𝛼 ← quantile (̂𝜃 (𝑏+1∶𝑇 ) , 1 − 𝛼) 
+
+14: if ̂ 𝜃 1−𝛼 < 𝜂 then 
+
+15: Reject 𝐻 0
+
+16: else 
+
+17: Fail to reject 𝐻 0
+
+18: end if 
+
+35
